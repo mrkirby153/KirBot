@@ -3,10 +3,14 @@ package me.mrkirby153.KirBot;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import me.mrkirby153.KirBot.utils.BotConfiguration;
+import net.dv8tion.jda.core.AccountType;
 import net.dv8tion.jda.core.JDA;
+import net.dv8tion.jda.core.JDABuilder;
+import net.dv8tion.jda.core.exceptions.RateLimitedException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.security.auth.login.LoginException;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -54,9 +58,55 @@ public class KirBot {
         // Load configuration
         loadConfiguration();
 
+        // Connect to Discord
+        connectToDiscord();
 
     }
 
+    /**
+     * Shuts down the robot
+     *
+     * @param reason   The reason why the robot is shutting down
+     * @param exitCode An exit code to terminate with
+     */
+    public void shutdown(String reason, int exitCode) {
+        if (reason != null && !reason.isEmpty())
+            logger.info("Shutting down: " + reason);
+        else
+            logger.info("Shutting down");
+
+        System.exit(exitCode);
+    }
+
+    /**
+     * Shuts down the robot with exit code -99
+     *
+     * @param reason The reason why the robot is shutting down
+     */
+    public void shutdown(String reason) {
+        shutdown(reason, -99);
+    }
+
+    /**
+     * Connects the robot to discord
+     */
+    private void connectToDiscord() {
+        logger.info("Connecting to Discord");
+        if (this.configuration.discordAPIKey == null || this.configuration.discordAPIKey.isEmpty()) {
+            logger.error("No API key is set, the robot will now shut down");
+            this.shutdown("No API key set", -1);
+        }
+        try {
+            jda = new JDABuilder(AccountType.BOT).setToken(this.configuration.discordAPIKey).buildBlocking();
+        } catch (LoginException | InterruptedException | RateLimitedException e) {
+            logger.error("Encountered an error when attempting to connect to Discord", e);
+            shutdown("Error when connecting to Discord", -2);
+        }
+    }
+
+    /**
+     * Loads the configuration from file
+     */
     private void loadConfiguration() {
         logger.info("Loading configuration from " + CONFIG_LOCATION.getAbsolutePath());
 
@@ -80,7 +130,7 @@ public class KirBot {
         }
 
         // Load the configuration
-        try{
+        try {
             FileReader reader = new FileReader(CONFIG_LOCATION);
 
             this.configuration = GSON.fromJson(reader, BotConfiguration.class);
@@ -88,7 +138,7 @@ public class KirBot {
             reader.close();
 
             logger.info("Configuration file loaded successfully");
-        } catch (IOException e){
+        } catch (IOException e) {
             logger.error("Encountered an error when reading the configuration file", e);
         }
     }

@@ -2,6 +2,7 @@ package me.mrkirby153.KirBot;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import jline.console.ConsoleReader;
 import me.mrkirby153.KirBot.utils.BotConfiguration;
 import net.dv8tion.jda.core.AccountType;
 import net.dv8tion.jda.core.JDA;
@@ -61,6 +62,10 @@ public class KirBot {
         // Connect to Discord
         connectToDiscord();
 
+
+        logger.info("Initialization complete");
+        // Initialize console
+        initializeConsole();
     }
 
     /**
@@ -70,11 +75,18 @@ public class KirBot {
      * @param exitCode An exit code to terminate with
      */
     public void shutdown(String reason, int exitCode) {
-        if (reason != null && !reason.isEmpty())
+        if (reason != null) {
             logger.info("Shutting down: " + reason);
-        else
+        } else {
             logger.info("Shutting down");
+        }
 
+        if (jda != null) {
+            logger.info("Disconnecting from Discord");
+            jda.shutdown();
+        }
+
+        logger.info("Good bye!");
         System.exit(exitCode);
     }
 
@@ -101,6 +113,32 @@ public class KirBot {
         } catch (LoginException | InterruptedException | RateLimitedException e) {
             logger.error("Encountered an error when attempting to connect to Discord", e);
             shutdown("Error when connecting to Discord", -2);
+        }
+    }
+
+    /**
+     * Initializes the console for accepting commands
+     */
+    private void initializeConsole() {
+        ConsoleReader reader;
+        try {
+            reader = new ConsoleReader();
+            reader.setBellEnabled(false);
+        } catch (IOException e) {
+            logger.error("An error was encountered when initializing the console", e);
+            shutdown("Error initializing console", -3);
+            return;
+        }
+
+        String line;
+        try {
+            while ((line = reader.readLine("> ")) != null) {
+                if (line.equalsIgnoreCase("shutdown")) {
+                    shutdown(null, 0);
+                }
+            }
+        } catch (IOException e) {
+            logger.error("An error occurred when processing input from the console", e);
         }
     }
 

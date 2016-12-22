@@ -1,0 +1,14 @@
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+
+# Maven
+log/
+target/
+
+# .bak files
+*.bak
+
+classes/
+*dependency-reduced-pom.xml

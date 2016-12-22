@@ -12,3 +12,8 @@ target/
 
 classes/
 *dependency-reduced-pom.xml
+
+# KirBot
+config.json
+logs/
+data/

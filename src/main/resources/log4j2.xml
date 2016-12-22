@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Confugration status="INFO">
+    <Appenders>
+        <Console target="SYSTEM_OUT" name="Console">
+            <PatternLayout pattern="[%d{yyy-MM-DD HH:mm:ss.SSS}] [%t/%level] %msg%n"/>
+        </Console>
+        <RollingRandomAccessFile name="File" fileName="logs/latest.log" filePattern="logs/%d{yyy-MM-DD}-%i.log.gz">
+            <PatternLayout pattern="[%d{yyy-MM-DD HH:mm:ss.SSS}] [%t/%level] %msg%n"/>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+            </Policies>
+        </RollingRandomAccessFile>
+    </Appenders>
+    <Loggers>
+        <Root level="info">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="File"/>
+        </Root>
+    </Loggers>
+</Confugration>

@@ -1,7 +1,9 @@
 package me.mrkirby153.KirBot.utils;
 
 import net.dv8tion.jda.core.JDA;
+import net.dv8tion.jda.core.Permission;
 import net.dv8tion.jda.core.entities.Guild;
+import net.dv8tion.jda.core.entities.Member;
 
 /**
  * A guild that the robot is a part of
@@ -31,8 +33,13 @@ public class DiscordGuild {
         this.commandPrefix = commandPrefix;
     }
 
-    public String getId() {
-        return guildId;
+    /**
+     * Gets the {@link Guild JDA Guild}
+     *
+     * @return The guild
+     */
+    public Guild getGuild() {
+        return this.guild;
     }
 
     /**
@@ -42,6 +49,35 @@ public class DiscordGuild {
      */
     public void setGuild(Guild guild) {
         this.guild = guild;
+    }
+
+    public String getId() {
+        return guildId;
+    }
+
+    /**
+     * Checks if the bot has the given permission on this guild
+     *
+     * @param p The permission to check
+     * @return True if the robot has the given permission on the guild
+     */
+    public boolean hasPermission(Permission p) {
+        Member self = guild.getMember(jda.getSelfUser());
+        return self.hasPermission(p);
+    }
+
+    /**
+     * Checks if the bot has all the given permissions on this guild
+     *
+     * @param permissions The permissions to check
+     * @return True if the robot has all the given permissions on the guild
+     */
+    public boolean hasPermissions(Permission... permissions) {
+        for (Permission p : permissions) {
+            if (!hasPermission(p))
+                return false;
+        }
+        return true;
     }
 
     /**

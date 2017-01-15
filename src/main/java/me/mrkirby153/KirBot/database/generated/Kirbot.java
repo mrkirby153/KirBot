@@ -4,19 +4,18 @@
 package me.mrkirby153.KirBot.database.generated;
 
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import javax.annotation.Generated;
-
+import me.mrkirby153.KirBot.database.generated.tables.Commands;
 import me.mrkirby153.KirBot.database.generated.tables.Guild;
 import me.mrkirby153.KirBot.database.generated.tables.GuildPermissions;
 import me.mrkirby153.KirBot.database.generated.tables.Users;
-
 import org.jooq.Catalog;
 import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
+
+import javax.annotation.Generated;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 
 /**
@@ -32,12 +31,17 @@ import org.jooq.impl.SchemaImpl;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Kirbot extends SchemaImpl {
 
-    private static final long serialVersionUID = 241026964;
+    private static final long serialVersionUID = -1794961014;
 
     /**
      * The reference instance of <code>kirbot</code>
      */
     public static final Kirbot KIRBOT = new Kirbot();
+
+    /**
+     * The table <code>kirbot.commands</code>.
+     */
+    public final Commands COMMANDS = me.mrkirby153.KirBot.database.generated.tables.Commands.COMMANDS;
 
     /**
      * The table <code>kirbot.guild</code>.
@@ -79,6 +83,7 @@ public class Kirbot extends SchemaImpl {
 
     private final List<Table<?>> getTables0() {
         return Arrays.<Table<?>>asList(
+            Commands.COMMANDS,
             Guild.GUILD,
             GuildPermissions.GUILD_PERMISSIONS,
             Users.USERS);

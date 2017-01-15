@@ -3,6 +3,7 @@ package me.mrkirby153.KirBot;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import jline.console.ConsoleReader;
+import me.mrkirby153.KirBot.command.CommandHandler;
 import me.mrkirby153.KirBot.database.DatabaseHandler;
 import me.mrkirby153.KirBot.database.generated.Tables;
 import me.mrkirby153.KirBot.guild.BotGuild;
@@ -10,6 +11,7 @@ import me.mrkirby153.KirBot.utils.BotConfiguration;
 import net.dv8tion.jda.core.AccountType;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.JDABuilder;
+import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.events.guild.GuildJoinEvent;
 import net.dv8tion.jda.core.events.guild.GuildLeaveEvent;
 import net.dv8tion.jda.core.exceptions.RateLimitedException;
@@ -67,8 +69,23 @@ public class KirBot extends ListenerAdapter {
      */
     private HashMap<String, BotGuild> guilds = new HashMap<>();
 
+    /**
+     * The command handler
+     */
+    private CommandHandler commandHandler;
+
     protected KirBot() {
 
+    }
+
+    /**
+     * Gets the {@link BotGuild} from a {@link Guild}
+     *
+     * @param guild The guild
+     * @return The {@link BotGuild}
+     */
+    public BotGuild getGuild(Guild guild) {
+        return guilds.get(guild.getId());
     }
 
     /**
@@ -152,7 +169,7 @@ public class KirBot extends ListenerAdapter {
             this.shutdown("No API key set", -1);
         }
         try {
-            jda = new JDABuilder(AccountType.BOT).setToken(this.configuration.discordAPIKey).addListener(this).buildBlocking();
+            jda = new JDABuilder(AccountType.BOT).setToken(this.configuration.discordAPIKey).addListener(this).addListener(commandHandler = new CommandHandler(this)).buildBlocking();
         } catch (LoginException | InterruptedException | RateLimitedException e) {
             logger.error("Encountered an error when attempting to connect to Discord", e);
             shutdown("Error when connecting to Discord", -2);

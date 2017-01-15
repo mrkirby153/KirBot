@@ -1,9 +1,11 @@
 package me.mrkirby153.KirBot.guild;
 
 import me.mrkirby153.KirBot.KirBot;
+import me.mrkirby153.KirBot.command.CustomCommand;
 import me.mrkirby153.KirBot.database.generated.Tables;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.entities.Guild;
+import org.jooq.Record;
 
 /**
  * A guild on the server
@@ -63,5 +65,13 @@ public class BotGuild {
      */
     public String getCommandPrefix() {
         return KirBot.DATABASE.create().select().from(Tables.GUILD).where(Tables.GUILD.GUILD_ID.eq(this.guildId)).fetchOne(Tables.GUILD.COMMAND_PREFIX);
+    }
+
+    public CustomCommand getCommand(String name) {
+        Record result = KirBot.DATABASE.create().select().from(Tables.COMMANDS).where(Tables.COMMANDS.NAME.eq(name), Tables.COMMANDS.GUILD.eq(id)).fetchOne();
+
+        if (result == null)
+            return null;
+        return new CustomCommand(result.get(Tables.COMMANDS.TYPE), result.get(Tables.COMMANDS.NAME), result.get(Tables.COMMANDS.DATA));
     }
 }

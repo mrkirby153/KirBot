@@ -35,7 +35,7 @@ import org.jooq.impl.TableImpl;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Guild extends TableImpl<GuildRecord> {
 
-    private static final long serialVersionUID = 882531756;
+    private static final long serialVersionUID = 1095335435;
 
     /**
      * The reference instance of <code>kirbot.guild</code>
@@ -63,7 +63,7 @@ public class Guild extends TableImpl<GuildRecord> {
     /**
      * The column <code>kirbot.guild.command_prefix</code>.
      */
-    public final TableField<GuildRecord, String> COMMAND_PREFIX = createField("command_prefix", org.jooq.impl.SQLDataType.CHAR.length(1).defaultValue(org.jooq.impl.DSL.inline("!", org.jooq.impl.SQLDataType.CHAR)), this, "");
+    public final TableField<GuildRecord, String> COMMAND_PREFIX = createField("command_prefix", org.jooq.impl.SQLDataType.CHAR.length(1).nullable(false).defaultValue(org.jooq.impl.DSL.inline("!", org.jooq.impl.SQLDataType.CHAR)), this, "");
 
     /**
      * Create a <code>kirbot.guild</code> table reference

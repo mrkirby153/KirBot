@@ -6,6 +6,7 @@ package me.mrkirby153.KirBot.database.generated;
 
 import javax.annotation.Generated;
 
+import me.mrkirby153.KirBot.database.generated.tables.Commands;
 import me.mrkirby153.KirBot.database.generated.tables.Guild;
 import me.mrkirby153.KirBot.database.generated.tables.GuildPermissions;
 import me.mrkirby153.KirBot.database.generated.tables.Users;
@@ -23,6 +24,11 @@ import me.mrkirby153.KirBot.database.generated.tables.Users;
 )
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Tables {
+
+    /**
+     * The table <code>kirbot.commands</code>.
+     */
+    public static final Commands COMMANDS = me.mrkirby153.KirBot.database.generated.tables.Commands.COMMANDS;
 
     /**
      * The table <code>kirbot.guild</code>.

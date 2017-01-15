@@ -7,6 +7,9 @@ import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.entities.Guild;
 import org.jooq.Record;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * A guild on the server
  */
@@ -67,11 +70,31 @@ public class BotGuild {
         return KirBot.DATABASE.create().select().from(Tables.GUILD).where(Tables.GUILD.GUILD_ID.eq(this.guildId)).fetchOne(Tables.GUILD.COMMAND_PREFIX);
     }
 
+    /**
+     * Gets a custom command by its name
+     *
+     * @param name The command
+     * @return The custom command
+     */
     public CustomCommand getCommand(String name) {
         Record result = KirBot.DATABASE.create().select().from(Tables.COMMANDS).where(Tables.COMMANDS.NAME.eq(name), Tables.COMMANDS.GUILD.eq(id)).fetchOne();
 
         if (result == null)
             return null;
+
         return new CustomCommand(result.get(Tables.COMMANDS.TYPE), result.get(Tables.COMMANDS.NAME), result.get(Tables.COMMANDS.DATA));
+    }
+
+    /**
+     * Geta a list of all the custom commands
+     *
+     * @return The commands
+     */
+    public List<CustomCommand> customCommands() {
+        List<CustomCommand> commands = new ArrayList<>();
+        for (Record record : KirBot.DATABASE.create().select().from(Tables.COMMANDS).where(Tables.COMMANDS.GUILD.eq(id)).fetch()) {
+            commands.add(getCommand(record.get(Tables.COMMANDS.NAME)));
+        }
+        return commands;
     }
 }

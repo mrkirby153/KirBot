@@ -19,14 +19,39 @@ public class BotConfiguration {
      */
     public String dataLocation = "data";
 
-    public File getDataLocation(){
+    /**
+     * The database host
+     */
+    public String databaseHost = "localhost";
+
+    /**
+     * The database port port
+     */
+    public int databasePort = 3306;
+
+    /**
+     * The username when connecting to the database
+     */
+    public String databaseUsername = "root";
+
+    /**
+     * The password to use when connecting to the database
+     */
+    public String databasePassword = "";
+
+    /**
+     * The database
+     */
+    public String database = "";
+
+    public File getDataLocation() {
         File file = new File(dataLocation);
-        if(!file.exists())
+        if (!file.exists())
             file.mkdirs();
         return file;
     }
 
-    public File dataStore(String file){
+    public File dataStore(String file) {
         return new File(getDataLocation(), file);
     }
 

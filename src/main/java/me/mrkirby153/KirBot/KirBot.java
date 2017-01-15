@@ -2,27 +2,29 @@ package me.mrkirby153.KirBot;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
 import jline.console.ConsoleReader;
+import me.mrkirby153.KirBot.database.DatabaseHandler;
+import me.mrkirby153.KirBot.database.generated.Tables;
+import me.mrkirby153.KirBot.guild.BotGuild;
 import me.mrkirby153.KirBot.utils.BotConfiguration;
-import me.mrkirby153.KirBot.utils.DiscordGuild;
 import net.dv8tion.jda.core.AccountType;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.JDABuilder;
-import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.events.guild.GuildJoinEvent;
 import net.dv8tion.jda.core.events.guild.GuildLeaveEvent;
 import net.dv8tion.jda.core.exceptions.RateLimitedException;
 import net.dv8tion.jda.core.hooks.ListenerAdapter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jooq.Record;
 
 import javax.security.auth.login.LoginException;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.HashSet;
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * Main Application class for the discord robot
@@ -44,6 +46,11 @@ public class KirBot extends ListenerAdapter {
      */
     public static Logger logger = LogManager.getLogger("KirBot");
 
+    /**
+     * The database
+     */
+    public static DatabaseHandler DATABASE;
+
 
     /**
      * The robot's configuration
@@ -58,7 +65,7 @@ public class KirBot extends ListenerAdapter {
     /**
      * A list of guilds that the robot is a part of
      */
-    private HashSet<DiscordGuild> guilds = new HashSet<>();
+    private HashMap<String, BotGuild> guilds = new HashMap<>();
 
     protected KirBot() {
 
@@ -70,6 +77,9 @@ public class KirBot extends ListenerAdapter {
     public void initialize() {
         // Load configuration
         loadConfiguration();
+
+        // Load database
+        initializeDatabase();
 
         // Connect to Discord
         connectToDiscord();
@@ -85,33 +95,15 @@ public class KirBot extends ListenerAdapter {
     @Override
     public void onGuildJoin(GuildJoinEvent event) {
         logger.info("Joined guild " + event.getGuild().getName() + " (" + event.getGuild().getId() + ") registering");
-        this.guilds.add(new DiscordGuild(event.getGuild().getId()));
-        saveGulds();
+        DATABASE.create().insertInto(Tables.GUILD, Tables.GUILD.GUILD_ID).values(event.getGuild().getId()).execute();
+        loadGuilds();
     }
 
     @Override
     public void onGuildLeave(GuildLeaveEvent event) {
         logger.info("No longer a member of the guild " + event.getGuild().getName() + " (" + event.getGuild().getId() + ") removing from database");
-        this.guilds.removeIf(discordGuild -> event.getGuild().getId().equals(discordGuild.getId()));
-        saveGulds();
-    }
-
-    /**
-     * Save the guilds to a database
-     */
-    public void saveGulds() {
-        File guildDatabase = this.configuration.dataStore("guilds.json");
-
-        try {
-            FileWriter writer = new FileWriter(guildDatabase);
-
-            writer.write(GSON.toJson(this.guilds));
-            writer.close();
-
-            logger.info("Guilds saved successfully!");
-        } catch (IOException e) {
-            logger.error("Encountered an error when saving the guild database");
-        }
+        DATABASE.create().delete(Tables.GUILD).where(Tables.GUILD.GUILD_ID.eq(event.getGuild().getId())).execute();
+        loadGuilds();
     }
 
     /**
@@ -141,6 +133,11 @@ public class KirBot extends ListenerAdapter {
             jda.shutdown();
         }
 
+        if (DATABASE != null) {
+            logger.info("Disconnecting from the database");
+            DATABASE.close();
+        }
+
         logger.info("Good bye!");
         System.exit(exitCode);
     }
@@ -160,6 +157,12 @@ public class KirBot extends ListenerAdapter {
             logger.error("Encountered an error when attempting to connect to Discord", e);
             shutdown("Error when connecting to Discord", -2);
         }
+    }
+
+    private void initializeDatabase() {
+        logger.info(String.format("Connecting to database `%s` at %s:%s with username %s", configuration.database, configuration.databaseHost, configuration.databasePort, configuration.databaseUsername));
+        DATABASE = new DatabaseHandler(this, configuration.databaseHost, configuration.databasePort, configuration.databaseUsername, configuration.databasePassword, configuration.database);
+        logger.info("Connected to database!");
     }
 
     /**
@@ -228,56 +231,15 @@ public class KirBot extends ListenerAdapter {
     }
 
     /**
-     * Load the guilds from a file
+     * Load the guilds
      */
-    private void loadGuilds() {
-        File guildDatabase = this.configuration.dataStore("guilds.json");
-        logger.info("Loading guild information from " + guildDatabase.getAbsolutePath());
-        if (!guildDatabase.exists()) {
-            logger.info("Guild database does not exist, creating...");
-            if (this.guilds == null)
-                this.guilds = new HashSet<>();
-            try {
-                FileWriter writer = new FileWriter(guildDatabase);
-                writer.write(GSON.toJson(this.guilds));
-                writer.close();
-                logger.info("Default database written successfully!");
-            } catch (IOException e) {
-                logger.error("Encountered an error when loading the guild database", e);
-            }
-        }
-
-        try {
-            FileReader reader = new FileReader(guildDatabase);
-            this.guilds = GSON.fromJson(reader, new TypeToken<HashSet<DiscordGuild>>() {
-            }.getType());
-
-            reader.close();
-        } catch (IOException e) {
-            logger.error("Encountered an error when reading the guild database", e);
-        }
-
-        if (jda != null) {
-            boolean changed = false;
-            for (Guild g : jda.getGuilds()) {
-                boolean exists = false;
-                for (DiscordGuild dg : this.guilds) {
-                    if (g.getId().equals(dg.getId())) {
-                        exists = true;
-                    }
-                }
-                if (!exists) {
-                    logger.info("Added to guild " + g.getName() + " while offline, registering");
-                    this.guilds.add(new DiscordGuild(g.getId()));
-                    changed = true;
-                }
-            }
-            if (changed)
-                saveGulds();
-        }
-        for(DiscordGuild g : this.guilds){
-            g.setJDA(this.jda);
-            g.setGuild(this.jda.getGuildById(g.getId()));
+    public void loadGuilds() {
+        this.guilds.clear();
+        List<Record> results = DATABASE.create().select().from(Tables.GUILD).fetch();
+        for (Record r : results) {
+            int id = r.get(Tables.GUILD.ID);
+            String guildId = r.get(Tables.GUILD.GUILD_ID);
+            this.guilds.put(guildId, new BotGuild(id, guildId, jda));
         }
     }
 }

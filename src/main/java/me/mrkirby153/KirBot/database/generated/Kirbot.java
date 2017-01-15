@@ -4,18 +4,20 @@
 package me.mrkirby153.KirBot.database.generated;
 
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import javax.annotation.Generated;
+
 import me.mrkirby153.KirBot.database.generated.tables.Commands;
 import me.mrkirby153.KirBot.database.generated.tables.Guild;
 import me.mrkirby153.KirBot.database.generated.tables.GuildPermissions;
 import me.mrkirby153.KirBot.database.generated.tables.Users;
+
 import org.jooq.Catalog;
 import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
-
-import javax.annotation.Generated;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 
 /**

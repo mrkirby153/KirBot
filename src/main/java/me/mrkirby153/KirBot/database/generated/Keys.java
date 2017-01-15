@@ -49,7 +49,6 @@ public class Keys {
     // -------------------------------------------------------------------------
 
     public static final UniqueKey<CommandsRecord> KEY_COMMANDS_ID_UNIQUE = UniqueKeys0.KEY_COMMANDS_ID_UNIQUE;
-    public static final UniqueKey<CommandsRecord> KEY_COMMANDS_PRIMARY = UniqueKeys0.KEY_COMMANDS_PRIMARY;
     public static final UniqueKey<GuildRecord> KEY_GUILD_PRIMARY = UniqueKeys0.KEY_GUILD_PRIMARY;
     public static final UniqueKey<GuildRecord> KEY_GUILD_ID_UNIQUE = UniqueKeys0.KEY_GUILD_ID_UNIQUE;
     public static final UniqueKey<GuildPermissionsRecord> KEY_GUILD_PERMISSIONS_PRIMARY = UniqueKeys0.KEY_GUILD_PERMISSIONS_PRIMARY;
@@ -63,7 +62,7 @@ public class Keys {
     // -------------------------------------------------------------------------
 
     public static final ForeignKey<CommandsRecord, GuildRecord> FK_COMMANDS_GUILD1 = ForeignKeys0.FK_COMMANDS_GUILD1;
-    public static final ForeignKey<GuildPermissionsRecord, GuildRecord> FK_GUILD_PERMISSIONS_GUILD = ForeignKeys0.FK_GUILD_PERMISSIONS_GUILD;
+    public static final ForeignKey<GuildPermissionsRecord, GuildRecord> FK_GUILD_PERMISSIONS_GUILD1 = ForeignKeys0.FK_GUILD_PERMISSIONS_GUILD1;
     public static final ForeignKey<GuildPermissionsRecord, UsersRecord> FK_GUILD_PERMISSIONS_USERS1 = ForeignKeys0.FK_GUILD_PERMISSIONS_USERS1;
 
     // -------------------------------------------------------------------------
@@ -79,10 +78,9 @@ public class Keys {
 
     private static class UniqueKeys0 extends AbstractKeys {
         public static final UniqueKey<CommandsRecord> KEY_COMMANDS_ID_UNIQUE = createUniqueKey(Commands.COMMANDS, "KEY_commands_id_UNIQUE", Commands.COMMANDS.ID);
-        public static final UniqueKey<CommandsRecord> KEY_COMMANDS_PRIMARY = createUniqueKey(Commands.COMMANDS, "KEY_commands_PRIMARY", Commands.COMMANDS.GUILD);
         public static final UniqueKey<GuildRecord> KEY_GUILD_PRIMARY = createUniqueKey(Guild.GUILD, "KEY_guild_PRIMARY", Guild.GUILD.ID);
         public static final UniqueKey<GuildRecord> KEY_GUILD_ID_UNIQUE = createUniqueKey(Guild.GUILD, "KEY_guild_id_UNIQUE", Guild.GUILD.ID);
-        public static final UniqueKey<GuildPermissionsRecord> KEY_GUILD_PERMISSIONS_PRIMARY = createUniqueKey(GuildPermissions.GUILD_PERMISSIONS, "KEY_guild_permissions_PRIMARY", GuildPermissions.GUILD_PERMISSIONS.ID, GuildPermissions.GUILD_PERMISSIONS.GUILD, GuildPermissions.GUILD_PERMISSIONS.USER);
+        public static final UniqueKey<GuildPermissionsRecord> KEY_GUILD_PERMISSIONS_PRIMARY = createUniqueKey(GuildPermissions.GUILD_PERMISSIONS, "KEY_guild_permissions_PRIMARY", GuildPermissions.GUILD_PERMISSIONS.ID);
         public static final UniqueKey<GuildPermissionsRecord> KEY_GUILD_PERMISSIONS_ID_UNIQUE = createUniqueKey(GuildPermissions.GUILD_PERMISSIONS, "KEY_guild_permissions_id_UNIQUE", GuildPermissions.GUILD_PERMISSIONS.ID);
         public static final UniqueKey<UsersRecord> KEY_USERS_PRIMARY = createUniqueKey(Users.USERS, "KEY_users_PRIMARY", Users.USERS.ID);
         public static final UniqueKey<UsersRecord> KEY_USERS_ID_UNIQUE = createUniqueKey(Users.USERS, "KEY_users_id_UNIQUE", Users.USERS.ID);
@@ -91,7 +89,7 @@ public class Keys {
 
     private static class ForeignKeys0 extends AbstractKeys {
         public static final ForeignKey<CommandsRecord, GuildRecord> FK_COMMANDS_GUILD1 = createForeignKey(me.mrkirby153.KirBot.database.generated.Keys.KEY_GUILD_PRIMARY, Commands.COMMANDS, "fk_commands_guild1", Commands.COMMANDS.GUILD);
-        public static final ForeignKey<GuildPermissionsRecord, GuildRecord> FK_GUILD_PERMISSIONS_GUILD = createForeignKey(me.mrkirby153.KirBot.database.generated.Keys.KEY_GUILD_PRIMARY, GuildPermissions.GUILD_PERMISSIONS, "fk_guild_permissions_guild", GuildPermissions.GUILD_PERMISSIONS.GUILD);
+        public static final ForeignKey<GuildPermissionsRecord, GuildRecord> FK_GUILD_PERMISSIONS_GUILD1 = createForeignKey(me.mrkirby153.KirBot.database.generated.Keys.KEY_GUILD_PRIMARY, GuildPermissions.GUILD_PERMISSIONS, "fk_guild_permissions_guild1", GuildPermissions.GUILD_PERMISSIONS.GUILD);
         public static final ForeignKey<GuildPermissionsRecord, UsersRecord> FK_GUILD_PERMISSIONS_USERS1 = createForeignKey(me.mrkirby153.KirBot.database.generated.Keys.KEY_USERS_PRIMARY, GuildPermissions.GUILD_PERMISSIONS, "fk_guild_permissions_users1", GuildPermissions.GUILD_PERMISSIONS.USER);
     }
 }

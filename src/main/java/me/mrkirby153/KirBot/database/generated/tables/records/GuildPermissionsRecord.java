@@ -10,7 +10,7 @@ import me.mrkirby153.KirBot.database.generated.enums.GuildPermissionsPermission;
 import me.mrkirby153.KirBot.database.generated.tables.GuildPermissions;
 
 import org.jooq.Field;
-import org.jooq.Record3;
+import org.jooq.Record1;
 import org.jooq.Record4;
 import org.jooq.Row4;
 import org.jooq.impl.UpdatableRecordImpl;
@@ -29,7 +29,7 @@ import org.jooq.impl.UpdatableRecordImpl;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class GuildPermissionsRecord extends UpdatableRecordImpl<GuildPermissionsRecord> implements Record4<Integer, Integer, Integer, GuildPermissionsPermission> {
 
-    private static final long serialVersionUID = 906857983;
+    private static final long serialVersionUID = 106429889;
 
     /**
      * Setter for <code>kirbot.guild_permissions.id</code>.
@@ -95,8 +95,8 @@ public class GuildPermissionsRecord extends UpdatableRecordImpl<GuildPermissions
      * {@inheritDoc}
      */
     @Override
-    public Record3<Integer, Integer, Integer> key() {
-        return (Record3) super.key();
+    public Record1<Integer> key() {
+        return (Record1) super.key();
     }
 
     // -------------------------------------------------------------------------

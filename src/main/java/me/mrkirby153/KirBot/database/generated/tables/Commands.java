@@ -37,7 +37,7 @@ import org.jooq.impl.TableImpl;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Commands extends TableImpl<CommandsRecord> {
 
-    private static final long serialVersionUID = -1428000274;
+    private static final long serialVersionUID = 637283070;
 
     /**
      * The reference instance of <code>kirbot.commands</code>
@@ -119,16 +119,8 @@ public class Commands extends TableImpl<CommandsRecord> {
      * {@inheritDoc}
      */
     @Override
-    public UniqueKey<CommandsRecord> getPrimaryKey() {
-        return Keys.KEY_COMMANDS_PRIMARY;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public List<UniqueKey<CommandsRecord>> getKeys() {
-        return Arrays.<UniqueKey<CommandsRecord>>asList(Keys.KEY_COMMANDS_ID_UNIQUE, Keys.KEY_COMMANDS_PRIMARY);
+        return Arrays.<UniqueKey<CommandsRecord>>asList(Keys.KEY_COMMANDS_ID_UNIQUE);
     }
 
     /**

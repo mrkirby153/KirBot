@@ -37,7 +37,7 @@ import org.jooq.impl.TableImpl;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class GuildPermissions extends TableImpl<GuildPermissionsRecord> {
 
-    private static final long serialVersionUID = -321666888;
+    private static final long serialVersionUID = 2116610991;
 
     /**
      * The reference instance of <code>kirbot.guild_permissions</code>
@@ -131,7 +131,7 @@ public class GuildPermissions extends TableImpl<GuildPermissionsRecord> {
      */
     @Override
     public List<ForeignKey<GuildPermissionsRecord, ?>> getReferences() {
-        return Arrays.<ForeignKey<GuildPermissionsRecord, ?>>asList(Keys.FK_GUILD_PERMISSIONS_GUILD, Keys.FK_GUILD_PERMISSIONS_USERS1);
+        return Arrays.<ForeignKey<GuildPermissionsRecord, ?>>asList(Keys.FK_GUILD_PERMISSIONS_GUILD1, Keys.FK_GUILD_PERMISSIONS_USERS1);
     }
 
     /**

@@ -4,8 +4,11 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import jline.console.ConsoleReader;
 import me.mrkirby153.KirBot.command.CommandHandler;
+import me.mrkirby153.KirBot.command.commands.custom.CommandAddCommand;
 import me.mrkirby153.KirBot.command.commands.CommandClean;
 import me.mrkirby153.KirBot.command.commands.CommandHelp;
+import me.mrkirby153.KirBot.command.commands.custom.CommandModifyCommand;
+import me.mrkirby153.KirBot.command.commands.custom.CommandRemoveCommand;
 import me.mrkirby153.KirBot.database.DatabaseHandler;
 import me.mrkirby153.KirBot.database.generated.Tables;
 import me.mrkirby153.KirBot.guild.BotGuild;
@@ -61,21 +64,18 @@ public class KirBot extends ListenerAdapter {
      * The robot's configuration
      */
     public BotConfiguration configuration;
-
-    /**
-     * The main JDA instance of the robot
-     */
-    private JDA jda;
-
-    /**
-     * A list of guilds that the robot is a part of
-     */
-    private HashMap<String, BotGuild> guilds = new HashMap<>();
-
     /**
      * The command handler
      */
     public CommandHandler commandHandler;
+    /**
+     * The main JDA instance of the robot
+     */
+    private JDA jda;
+    /**
+     * A list of guilds that the robot is a part of
+     */
+    private HashMap<String, BotGuild> guilds = new HashMap<>();
 
     protected KirBot() {
 
@@ -306,6 +306,9 @@ public class KirBot extends ListenerAdapter {
         logger.info("Registering commands...");
         CommandHandler.INSTANCE.registerCommand(new CommandHelp(), "help");
         CommandHandler.INSTANCE.registerCommand(new CommandClean(), "clean");
+        CommandHandler.INSTANCE.registerCommand(new CommandAddCommand(), "addCommand");
+        CommandHandler.INSTANCE.registerCommand(new CommandRemoveCommand(), "deleteCommand");
+        CommandHandler.INSTANCE.registerCommand(new CommandModifyCommand(), "modifyCommand");
         logger.info("Commands registered!");
     }
 }

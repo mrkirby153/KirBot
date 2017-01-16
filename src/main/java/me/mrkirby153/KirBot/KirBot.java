@@ -12,6 +12,7 @@ import me.mrkirby153.KirBot.command.commands.custom.CommandRemoveCommand;
 import me.mrkirby153.KirBot.database.DatabaseHandler;
 import me.mrkirby153.KirBot.database.generated.Tables;
 import me.mrkirby153.KirBot.guild.BotGuild;
+import me.mrkirby153.KirBot.message.MessageHandler;
 import me.mrkirby153.KirBot.utils.BotConfiguration;
 import net.dv8tion.jda.core.AccountType;
 import net.dv8tion.jda.core.JDA;
@@ -136,6 +137,8 @@ public class KirBot extends ListenerAdapter {
         loadGuilds();
 
         registerCommands();
+
+        MessageHandler.init(jda);
 
         logger.info("Initialization complete");
         // Initialize console

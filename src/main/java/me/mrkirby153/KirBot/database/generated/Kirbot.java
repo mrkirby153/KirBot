@@ -11,8 +11,10 @@ import java.util.List;
 import javax.annotation.Generated;
 
 import me.mrkirby153.KirBot.database.generated.tables.Commands;
+import me.mrkirby153.KirBot.database.generated.tables.Feeds;
 import me.mrkirby153.KirBot.database.generated.tables.Guild;
 import me.mrkirby153.KirBot.database.generated.tables.GuildPermissions;
+import me.mrkirby153.KirBot.database.generated.tables.PostedMessages;
 import me.mrkirby153.KirBot.database.generated.tables.Users;
 
 import org.jooq.Catalog;
@@ -33,7 +35,7 @@ import org.jooq.impl.SchemaImpl;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Kirbot extends SchemaImpl {
 
-    private static final long serialVersionUID = -1794961014;
+    private static final long serialVersionUID = 1151521266;
 
     /**
      * The reference instance of <code>kirbot</code>
@@ -46,6 +48,11 @@ public class Kirbot extends SchemaImpl {
     public final Commands COMMANDS = me.mrkirby153.KirBot.database.generated.tables.Commands.COMMANDS;
 
     /**
+     * The table <code>kirbot.feeds</code>.
+     */
+    public final Feeds FEEDS = me.mrkirby153.KirBot.database.generated.tables.Feeds.FEEDS;
+
+    /**
      * The table <code>kirbot.guild</code>.
      */
     public final Guild GUILD = me.mrkirby153.KirBot.database.generated.tables.Guild.GUILD;
@@ -54,6 +61,11 @@ public class Kirbot extends SchemaImpl {
      * The table <code>kirbot.guild_permissions</code>.
      */
     public final GuildPermissions GUILD_PERMISSIONS = me.mrkirby153.KirBot.database.generated.tables.GuildPermissions.GUILD_PERMISSIONS;
+
+    /**
+     * The table <code>kirbot.posted_messages</code>.
+     */
+    public final PostedMessages POSTED_MESSAGES = me.mrkirby153.KirBot.database.generated.tables.PostedMessages.POSTED_MESSAGES;
 
     /**
      * The table <code>kirbot.users</code>.
@@ -86,8 +98,10 @@ public class Kirbot extends SchemaImpl {
     private final List<Table<?>> getTables0() {
         return Arrays.<Table<?>>asList(
             Commands.COMMANDS,
+            Feeds.FEEDS,
             Guild.GUILD,
             GuildPermissions.GUILD_PERMISSIONS,
+            PostedMessages.POSTED_MESSAGES,
             Users.USERS);
     }
 }

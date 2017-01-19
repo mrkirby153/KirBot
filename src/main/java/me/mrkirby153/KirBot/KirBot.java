@@ -4,15 +4,17 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import jline.console.ConsoleReader;
 import me.mrkirby153.KirBot.command.CommandHandler;
-import me.mrkirby153.KirBot.command.commands.custom.CommandAddCommand;
 import me.mrkirby153.KirBot.command.commands.CommandClean;
+import me.mrkirby153.KirBot.command.commands.CommandFeed;
 import me.mrkirby153.KirBot.command.commands.CommandHelp;
+import me.mrkirby153.KirBot.command.commands.custom.CommandAddCommand;
 import me.mrkirby153.KirBot.command.commands.custom.CommandModifyCommand;
 import me.mrkirby153.KirBot.command.commands.custom.CommandRemoveCommand;
 import me.mrkirby153.KirBot.database.DatabaseHandler;
 import me.mrkirby153.KirBot.database.generated.Tables;
 import me.mrkirby153.KirBot.guild.BotGuild;
 import me.mrkirby153.KirBot.message.MessageHandler;
+import me.mrkirby153.KirBot.rss.FeedUpdater;
 import me.mrkirby153.KirBot.utils.BotConfiguration;
 import net.dv8tion.jda.core.AccountType;
 import net.dv8tion.jda.core.JDA;
@@ -34,6 +36,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Main Application class for the discord robot
@@ -65,6 +68,7 @@ public class KirBot extends ListenerAdapter {
      * The robot's configuration
      */
     public BotConfiguration configuration;
+
     /**
      * The command handler
      */
@@ -73,13 +77,20 @@ public class KirBot extends ListenerAdapter {
      * The main JDA instance of the robot
      */
     private JDA jda;
+
     /**
      * A list of guilds that the robot is a part of
      */
     private HashMap<String, BotGuild> guilds = new HashMap<>();
 
+    private FeedUpdater feedUpdater;
+
     protected KirBot() {
 
+    }
+
+    public FeedUpdater getFeedUpdater() {
+        return feedUpdater;
     }
 
     /**
@@ -90,6 +101,19 @@ public class KirBot extends ListenerAdapter {
      */
     public BotGuild getGuild(Guild guild) {
         return guilds.get(guild.getId());
+    }
+
+    /**
+     * Gets the {@link BotGuild} by its id
+     * @param id The id
+     * @return The {@link BotGuild}
+     */
+    public BotGuild getGuildById(int id) {
+        for(Map.Entry<String, BotGuild> e : guilds.entrySet()){
+            if(e.getValue().getId() == id)
+                return e.getValue();
+        }
+        return null;
     }
 
     public JDA getJda() {
@@ -139,6 +163,8 @@ public class KirBot extends ListenerAdapter {
         registerCommands();
 
         MessageHandler.init(jda);
+        feedUpdater = new FeedUpdater(jda, this);
+
 
         logger.info("Initialization complete");
         // Initialize console
@@ -206,6 +232,11 @@ public class KirBot extends ListenerAdapter {
         if (jda != null) {
             logger.info("Disconnecting from Discord");
             jda.shutdown();
+        }
+
+        if(feedUpdater != null){
+            logger.info("Stopping feed updater");
+            feedUpdater.stop();
         }
 
         if (DATABASE != null) {
@@ -312,6 +343,7 @@ public class KirBot extends ListenerAdapter {
         CommandHandler.INSTANCE.registerCommand(new CommandAddCommand(), "addCommand");
         CommandHandler.INSTANCE.registerCommand(new CommandRemoveCommand(), "deleteCommand");
         CommandHandler.INSTANCE.registerCommand(new CommandModifyCommand(), "modifyCommand");
+        CommandHandler.INSTANCE.registerCommand(new CommandFeed(this), "rss");
         logger.info("Commands registered!");
     }
 }

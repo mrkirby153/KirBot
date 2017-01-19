@@ -43,6 +43,10 @@ public class BotGuild {
         this.guild = jda.getGuildById(guildId);
     }
 
+    public Guild getGuild() {
+        return guild;
+    }
+
     /**
      * Gets the guild id
      *

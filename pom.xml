@@ -68,50 +68,6 @@
                     </archive>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.jooq</groupId>
-                <artifactId>jooq-codegen-maven</artifactId>
-                <version>3.9.0</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>install</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <dependencies>
-                    <dependency>
-                        <groupId>mysql</groupId>
-                        <artifactId>mysql-connector-java</artifactId>
-                        <version>6.0.5</version>
-                    </dependency>
-                </dependencies>
-                <configuration>
-                    <jdbc>
-                        <driver>com.mysql.jdbc.Driver</driver>
-                        <url>jdbc:mysql://localhost:3306/kirbot</url>
-                        <user>root</user>
-                        <password></password>
-                    </jdbc>
-                    <generator>
-                        <name>org.jooq.util.JavaGenerator</name>
-
-                        <database>
-                            <name>org.jooq.util.mysql.MySQLDatabase</name>
-
-                            <inputSchema>kirbot</inputSchema>
-
-                            <includes>.*</includes>
-                        </database>
-
-                        <target>
-                            <packageName>me.mrkirby153.KirBot.database.generated</packageName>
-
-                            <directory>src/main/java</directory>
-                        </target>
-                    </generator>
-                </configuration>
-            </plugin>
         </plugins>
     </build>
 
@@ -157,6 +113,16 @@
             <version>5.1.17</version>
             <type>jar</type>
             <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>jhtml</groupId>
+            <artifactId>html2md</artifactId>
+            <version>LATEST</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>LATEST</version>
         </dependency>
     </dependencies>
 </project>

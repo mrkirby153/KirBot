@@ -7,8 +7,10 @@ package me.mrkirby153.KirBot.database.generated;
 import javax.annotation.Generated;
 
 import me.mrkirby153.KirBot.database.generated.tables.Commands;
+import me.mrkirby153.KirBot.database.generated.tables.Feeds;
 import me.mrkirby153.KirBot.database.generated.tables.Guild;
 import me.mrkirby153.KirBot.database.generated.tables.GuildPermissions;
+import me.mrkirby153.KirBot.database.generated.tables.PostedMessages;
 import me.mrkirby153.KirBot.database.generated.tables.Users;
 
 
@@ -31,6 +33,11 @@ public class Tables {
     public static final Commands COMMANDS = me.mrkirby153.KirBot.database.generated.tables.Commands.COMMANDS;
 
     /**
+     * The table <code>kirbot.feeds</code>.
+     */
+    public static final Feeds FEEDS = me.mrkirby153.KirBot.database.generated.tables.Feeds.FEEDS;
+
+    /**
      * The table <code>kirbot.guild</code>.
      */
     public static final Guild GUILD = me.mrkirby153.KirBot.database.generated.tables.Guild.GUILD;
@@ -39,6 +46,11 @@ public class Tables {
      * The table <code>kirbot.guild_permissions</code>.
      */
     public static final GuildPermissions GUILD_PERMISSIONS = me.mrkirby153.KirBot.database.generated.tables.GuildPermissions.GUILD_PERMISSIONS;
+
+    /**
+     * The table <code>kirbot.posted_messages</code>.
+     */
+    public static final PostedMessages POSTED_MESSAGES = me.mrkirby153.KirBot.database.generated.tables.PostedMessages.POSTED_MESSAGES;
 
     /**
      * The table <code>kirbot.users</code>.

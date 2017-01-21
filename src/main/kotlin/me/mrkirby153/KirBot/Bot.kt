@@ -45,5 +45,6 @@ object Bot {
     fun stop() {
         jda.shutdown()
         LOG.info("Bot is disconnecting from Discord")
+        System.exit(0)
     }
 }

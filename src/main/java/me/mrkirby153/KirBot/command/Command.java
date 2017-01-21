@@ -19,4 +19,6 @@ public @interface Command {
 
     String name();
 
+    boolean deleteCallingMessage() default true;
+
 }

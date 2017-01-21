@@ -1,8 +1,11 @@
 package me.mrkirby153.KirBot.command
 
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.command.executors.TestJavaCommand
-import me.mrkirby153.KirBot.command.executors.TestKotlinCommand
+import me.mrkirby153.KirBot.command.executors.CommandExecutor
+import me.mrkirby153.KirBot.command.executors.ShutdownCommand
+import me.mrkirby153.KirBot.server.Server
+import me.mrkirby153.KirBot.server.ServerRepository
+import net.dv8tion.jda.core.events.message.MessageReceivedEvent
 import kotlin.reflect.KClass
 
 /**
@@ -13,8 +16,7 @@ object CommandManager {
     val commands = mutableMapOf<String, CommandExecutor>()
 
     init {
-        register(TestJavaCommand::class)
-        register(TestKotlinCommand::class)
+        register(ShutdownCommand::class)
     }
 
     /**
@@ -40,5 +42,23 @@ object CommandManager {
 
     fun register(cls: KClass<out CommandExecutor>) {
         register(cls.java)
+    }
+
+    fun call(event: MessageReceivedEvent) {
+        var message = event.message.rawContent
+
+        if (!message.startsWith("!"))
+            return
+        message = message.substring(1)
+        val parts: Array<String> = message.split(" ").toTypedArray()
+
+        val command = parts[0]
+
+        val args = if (parts.isNotEmpty()) parts.drop(1).toTypedArray() else arrayOf<String>()
+
+        val executor = CommandManager.commands[command.toLowerCase()]
+
+        val server : Server = ServerRepository.getServer(event.guild) ?: return
+        executor?.execute(server, event.author, event.channel, args)
     }
 }

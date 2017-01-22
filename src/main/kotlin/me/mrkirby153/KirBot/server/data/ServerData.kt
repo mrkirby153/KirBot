@@ -7,7 +7,7 @@ import me.mrkirby153.KirBot.utils.child
 import me.mrkirby153.KirBot.utils.createFileIfNotExist
 import java.io.FileWriter
 
-class ServerData(val server: Server) {
+class ServerData(@Transient var server: Server) {
 
     val commands = mutableMapOf<String, CustomServerCommand>()
 
@@ -20,9 +20,10 @@ class ServerData(val server: Server) {
 
         val writer = FileWriter(file)
         writer.write(json)
+        writer.flush()
         writer.close()
     }
 
 }
 
-data class CustomServerCommand(val type: CommandType = CommandType.TEXT, val clearance: Clearance, val command: String)
+data class CustomServerCommand(val type: CommandType = CommandType.TEXT, var clearance: Clearance, val command: String)

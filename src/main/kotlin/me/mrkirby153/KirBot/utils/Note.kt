@@ -1,5 +1,6 @@
 package me.mrkirby153.KirBot.utils
 
+import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.server.Server
 import net.dv8tion.jda.core.EmbedBuilder
 import net.dv8tion.jda.core.entities.Message
@@ -7,6 +8,7 @@ import net.dv8tion.jda.core.exceptions.PermissionException
 import java.awt.Color
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
 
 class Note(val server: Server, private val message: Message) : Message by message {
 
@@ -20,13 +22,17 @@ class Note(val server: Server, private val message: Message) : Message by messag
         return channel.sendMessage(eb.build()).submit().toNote()
     }
 
-    fun delete() : Boolean {
-        try{
+    fun delete(): Boolean {
+        try {
             deleteMessage().queue()
             return true
-        } catch (e : PermissionException){
+        } catch (e: PermissionException) {
             return false
         }
+    }
+
+    fun delete(seconds: Long) {
+        Bot.scheduler.schedule({ delete() }, seconds, TimeUnit.SECONDS)
     }
 
     fun edit(msg: String) = editMessage(msg).submit().toNote()
@@ -34,7 +40,7 @@ class Note(val server: Server, private val message: Message) : Message by messag
     @JvmOverloads
     fun replyEmbed(title: String?, msg: String?,
                    color: Color? = Color.WHITE, thumb:
-                    String? = null, img : String? = null): Future<Note> = channel.sendMessage(makeEmbed(title, msg, color, img, thumb, author)).submit().toNote()
+                   String? = null, img: String? = null): Future<Note> = channel.sendMessage(makeEmbed(title, msg, color, img, thumb, author)).submit().toNote()
 
     private fun Future<Message>.toNote(): Future<Note> = object : CompletableFuture<Note>() {
         override fun get(): Note = Note(server, this@toNote.get())

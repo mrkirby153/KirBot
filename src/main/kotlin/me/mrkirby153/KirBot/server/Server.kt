@@ -53,11 +53,12 @@ class Server(guild: Guild) : GuildManager(guild), Guild by guild {
     fun data(): ServerData {
         val fileName: String = id + ".json"
         val file = ServerRepository.serverDirectory.child(fileName)
-        if(!file.exists())
+        if (!file.exists())
             ServerData(this).save()
         val reader = FileReader(file)
 
         val server = ServerRepository.gson.fromJson(reader, ServerData::class.java)
+        server.server = this
         reader.close()
         return server
     }

@@ -22,6 +22,11 @@ class Note(val server: Server, private val message: Message) : Message by messag
         return channel.sendMessage(eb.build()).submit().toNote()
     }
 
+    fun success(msg: String): Future<Note>{
+        val eb = EmbedBuilder().setAuthor("Success", null, null).setDescription(msg).setColor(Color.GREEN)
+        return channel.sendMessage(eb.build()).submit().toNote()
+    }
+
     fun delete(): Boolean {
         try {
             deleteMessage().queue()

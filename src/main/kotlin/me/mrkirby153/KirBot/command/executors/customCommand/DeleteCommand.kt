@@ -21,6 +21,6 @@ class DeleteCommand : CommandExecutor() {
         data.commands.remove(key)
         data.save()
 
-        note.info("Deleted command `" + args[0] + "`")
+        note.success("Deleted command `" + args[0] + "`")
     }
 }

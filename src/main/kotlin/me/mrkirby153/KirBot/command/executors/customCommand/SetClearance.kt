@@ -31,6 +31,6 @@ class SetClearance : CommandExecutor() {
         }
         data.commands[cmdName.toLowerCase()]?.clearance = clearance
         data.save()
-        note.info("Set command clearance to $clerance")
+        note.success("Set command clearance to $clerance")
     }
 }

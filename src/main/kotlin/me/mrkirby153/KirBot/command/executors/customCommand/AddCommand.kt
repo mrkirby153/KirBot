@@ -26,6 +26,6 @@ class AddCommand : CommandExecutor() {
         val serverData = server.data()
         serverData.commands[name.toLowerCase()] = CustomServerCommand(type, Clearance.USER, command)
         serverData.save()
-        note.info("Added command `$name`")
+        note.success("Added command `$name`")
     }
 }

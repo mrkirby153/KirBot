@@ -7,6 +7,7 @@ import me.mrkirby153.KirBot.command.executors.customCommand.AddCommand
 import me.mrkirby153.KirBot.command.executors.customCommand.DeleteCommand
 import me.mrkirby153.KirBot.command.executors.customCommand.ListCommands
 import me.mrkirby153.KirBot.command.executors.customCommand.SetClearance
+import me.mrkirby153.KirBot.command.executors.server.SetCommandPrefix
 import me.mrkirby153.KirBot.server.ServerRepository
 import me.mrkirby153.KirBot.server.data.CommandType
 import me.mrkirby153.KirBot.server.data.CustomServerCommand
@@ -38,6 +39,10 @@ object CommandManager {
         register(DeleteCommand::class)
         register(SetClearance::class)
         register(ListCommands::class)
+
+
+        // Server management commands
+        register(SetCommandPrefix::class)
     }
 
     /**

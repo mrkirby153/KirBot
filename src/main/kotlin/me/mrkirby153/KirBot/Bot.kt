@@ -24,6 +24,8 @@ object Bot {
 
     val token = "!"
 
+    val admins: List<String> = files.admins.run { this.readLines() }
+
 
     fun start(token: String) {
         if (initialized)

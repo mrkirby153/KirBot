@@ -9,4 +9,6 @@ class BotFiles {
     val data = File("data").apply { if (!exists()) mkdir() }
 
     val properties = data.child("config.properties").createFileIfNotExist()
+
+    val admins = data.child("admins").createFileIfNotExist()
 }

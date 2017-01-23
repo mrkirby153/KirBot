@@ -1,8 +1,10 @@
 package me.mrkirby153.KirBot.net
 
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.net.command.MinecraftBridge
 import java.net.ServerSocket
 import java.util.*
+import kotlin.reflect.KClass
 
 object NetworkManager : Runnable {
 
@@ -19,7 +21,7 @@ object NetworkManager : Runnable {
     private var managerThread: Thread? = null
 
     init {
-
+        register("minecraftbridge", MinecraftBridge::class)
     }
 
     override fun run() {
@@ -55,6 +57,8 @@ object NetworkManager : Runnable {
 
     fun register(name: String, clazz: Class<out NetworkMessageHandler>) {
         val instance = clazz.newInstance()
-        messages[name] = instance
+        messages[name.toLowerCase()] = instance
     }
+
+    fun register(name: String, clazz: KClass<out NetworkMessageHandler>) = register(name, clazz.java)
 }

@@ -13,6 +13,8 @@ class ServerData(@Transient var server: Server) {
 
     var commandPrefix: String = "!"
 
+    val authorizedServers = mutableListOf<AuthorizedServer>()
+
     fun save() {
         val fileName = server.id + ".json"
         val file = ServerRepository.serverDirectory.child(fileName).createFileIfNotExist()
@@ -24,6 +26,18 @@ class ServerData(@Transient var server: Server) {
         writer.close()
     }
 
+    fun authorizeServer(id: String, secret: String): Boolean {
+        authorizedServers
+                .filter { it.id == id }
+                .forEach { return false }
+        authorizedServers.add(AuthorizedServer(id, secret))
+        return true
+    }
+
+    fun isAuthorized(id: String, secret: String): Boolean = authorizedServers.contains(AuthorizedServer(id, secret))
+
 }
 
 data class CustomServerCommand(val type: CommandType = CommandType.TEXT, var clearance: Clearance, val command: String)
+
+data class AuthorizedServer(val id: String, val secret: String)

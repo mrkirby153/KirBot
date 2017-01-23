@@ -2,6 +2,7 @@ package me.mrkirby153.KirBot.net
 
 import com.google.gson.GsonBuilder
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.server.ServerRepository
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.Socket
@@ -46,6 +47,32 @@ class NetworkConnection(val id: String, val socket: Socket) : Thread() {
 
                 val networkMessage = gson.fromJson(json, NetworkMessage::class.java)
 
+                val handler = NetworkManager.messages[networkMessage.messageType.toLowerCase()] ?: continue
+
+                if (handler.requireAuth) {
+                    if (networkMessage.guild == null)
+                        continue
+                    val guild = Bot.jda.getGuildById(networkMessage.guild) ?: continue
+                    val data = ServerRepository.getServer(guild)?.data() ?: continue
+                    if (data.isAuthorized(networkMessage.serverId, networkMessage.serverSecret)) {
+                        try {
+                            handler.handle(networkMessage)
+                            write(NetworkMessage("", "", guild.id, "success", "success"))
+                        } catch (e: Exception) {
+                            write(NetworkMessage("", "", "", "error", "An error occurred when processing that message"))
+                        }
+                    } else {
+                        write(NetworkMessage("", "", "", "error", "Unauthorized"))
+                    }
+                } else {
+                    try {
+                        handler.handle(networkMessage)
+                        write(NetworkMessage("", "", "", "success", "success"))
+                    } catch (e: Exception) {
+                        write(NetworkMessage("", "", "", "error", "An error occurred when processing that message"))
+                    }
+                }
+
                 if (networkMessage.messageType == "disconnect") {
                     Bot.LOG.info("[Network $id] ${socket.inetAddress.hostAddress}:${socket.port} closed connection")
                     disconnect()
@@ -77,6 +104,10 @@ class NetworkConnection(val id: String, val socket: Socket) : Thread() {
         outputStream.write(bytes)
         outputStream.flush()
     }
+
+    fun write(any: Any) {
+        write(gson.toJson(any))
+    }
 }
 
-data class NetworkMessage(val serverId: String?, val serverSecret: String?, val messageType: String, val data: String)
+data class NetworkMessage(val serverId: String, val serverSecret: String, val guild: String?, val messageType: String, val data: String)

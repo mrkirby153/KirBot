@@ -1,5 +1,6 @@
 package me.mrkirby153.KirBot
 
+import me.mrkirby153.KirBot.net.NetworkManager
 import me.mrkirby153.KirBot.utils.readProperties
 import net.dv8tion.jda.core.AccountType
 import net.dv8tion.jda.core.JDA
@@ -42,6 +43,8 @@ object Bot {
         jda.selfUser.manager.setName("KirBot").queue()
 
         LOG.info("Bot is connecting to discord")
+
+        NetworkManager.start()
     }
 
     fun stop() {

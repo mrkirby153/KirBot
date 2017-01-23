@@ -1,0 +1,82 @@
+package me.mrkirby153.KirBot.net
+
+import com.google.gson.GsonBuilder
+import me.mrkirby153.KirBot.Bot
+import java.io.InputStream
+import java.io.OutputStream
+import java.net.Socket
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
+
+class NetworkConnection(val id: String, val socket: Socket) : Thread() {
+
+    var running = true
+
+    val gson = GsonBuilder().create()
+
+    val inputStream: InputStream = socket.inputStream
+    val outputStream: OutputStream = socket.outputStream
+
+
+    init {
+        isDaemon = true
+        name = "NetworkConnection-" + id
+        start()
+    }
+
+    override fun run() {
+        while (running) {
+            try {
+                val rawSize = ByteArray(4)
+                if (inputStream.read(rawSize) == -1) {
+                    Bot.LOG.info("[Network $id] Reached end of stream for ${socket.inetAddress.hostAddress}:${socket.port}")
+                    disconnect()
+                    continue
+                }
+                val msgLenBuff = ByteBuffer.wrap(rawSize)
+                msgLenBuff.order(ByteOrder.LITTLE_ENDIAN)
+                msgLenBuff.rewind()
+
+                val size = msgLenBuff.int
+
+                val rawMessage = ByteArray(size)
+                inputStream.read(rawMessage)
+
+                val json = String(rawMessage)
+
+                val networkMessage = gson.fromJson(json, NetworkMessage::class.java)
+
+                if (networkMessage.messageType == "disconnect") {
+                    Bot.LOG.info("[Network $id] ${socket.inetAddress.hostAddress}:${socket.port} closed connection")
+                    disconnect()
+                }
+
+            } catch (e: Exception) {
+                Bot.LOG.trace("[Network $id] An error occurred on connection ${this.id} $e")
+            }
+        }
+    }
+
+    fun disconnect() {
+        socket.shutdownInput()
+        running = false
+        socket.close()
+    }
+
+    fun terminate() {
+        disconnect()
+    }
+
+    fun write(message: String) {
+        val bytes = message.toByteArray()
+        val size = ByteBuffer.allocate(4)
+        size.order(ByteOrder.LITTLE_ENDIAN)
+        size.putInt(bytes.size)
+
+        outputStream.write(size.array())
+        outputStream.write(bytes)
+        outputStream.flush()
+    }
+}
+
+data class NetworkMessage(val serverId: String?, val serverSecret: String?, val messageType: String, val data: String)

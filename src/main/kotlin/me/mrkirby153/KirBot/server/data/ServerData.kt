@@ -6,14 +6,20 @@ import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.child
 import me.mrkirby153.KirBot.utils.createFileIfNotExist
 import java.io.FileWriter
+import java.security.SecureRandom
 
+private val validStrings = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 class ServerData(@Transient var server: Server) {
 
     val commands = mutableMapOf<String, CustomServerCommand>()
 
     var commandPrefix: String = "!"
 
-    val authorizedServers = mutableListOf<AuthorizedServer>()
+    var serverPassword = ""
+
+    init {
+        regeneratePassword()
+    }
 
     fun save() {
         val fileName = server.id + ".json"
@@ -26,18 +32,15 @@ class ServerData(@Transient var server: Server) {
         writer.close()
     }
 
-    fun authorizeServer(id: String, secret: String): Boolean {
-        authorizedServers
-                .filter { it.id == id }
-                .forEach { return false }
-        authorizedServers.add(AuthorizedServer(id, secret))
-        return true
+    fun regeneratePassword() {
+        val random = SecureRandom()
+        var password = ""
+        for(i in 1..10){
+            password += validStrings[random.nextInt(validStrings.lastIndex)]
+        }
+        this.serverPassword = password
     }
-
-    fun isAuthorized(id: String, secret: String): Boolean = authorizedServers.contains(AuthorizedServer(id, secret))
 
 }
 
 data class CustomServerCommand(val type: CommandType = CommandType.TEXT, var clearance: Clearance, val command: String)
-
-data class AuthorizedServer(val id: String, val secret: String)

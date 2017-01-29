@@ -50,27 +50,18 @@ class NetworkConnection(val id: String, val socket: Socket) : Thread() {
                 val handler = NetworkManager.messages[networkMessage.messageType.toLowerCase()] ?: continue
 
                 if (handler.requireAuth) {
-                    if (networkMessage.guild == null)
+                    if (networkMessage.password == null)
                         continue
+                    val password = networkMessage.password
                     val guild = Bot.jda.getGuildById(networkMessage.guild) ?: continue
                     val data = ServerRepository.getServer(guild)?.data() ?: continue
-                    if (data.isAuthorized(networkMessage.serverId, networkMessage.serverSecret)) {
-                        try {
-                            handler.handle(networkMessage)
-                            write(NetworkMessage("", "", guild.id, "success", "success"))
-                        } catch (e: Exception) {
-                            write(NetworkMessage("", "", "", "error", "An error occurred when processing that message"))
-                        }
+                    if (data.serverPassword == password) {
+                        handleMessage(handler, networkMessage)
                     } else {
-                        write(NetworkMessage("", "", "", "error", "Unauthorized"))
+                        write(NetworkMessage(networkMessage.id, networkMessage.guild, null, "error", "Unauthorized"))
                     }
                 } else {
-                    try {
-                        handler.handle(networkMessage)
-                        write(NetworkMessage("", "", "", "success", "success"))
-                    } catch (e: Exception) {
-                        write(NetworkMessage("", "", "", "error", "An error occurred when processing that message"))
-                    }
+                    handleMessage(handler, networkMessage)
                 }
 
                 if (networkMessage.messageType == "disconnect") {
@@ -81,6 +72,15 @@ class NetworkConnection(val id: String, val socket: Socket) : Thread() {
             } catch (e: Exception) {
                 Bot.LOG.trace("[Network $id] An error occurred on connection ${this.id} $e")
             }
+        }
+    }
+
+    private fun handleMessage(handler: NetworkMessageHandler, networkMessage: NetworkMessage) {
+        try {
+            handler.handle(networkMessage)
+            write(NetworkMessage(networkMessage.id, networkMessage.guild, null, "success", "success"))
+        } catch (e: Exception) {
+            write(NetworkMessage(networkMessage.id, networkMessage.guild, null, "error", "An unknown error occurred when processing that message"))
         }
     }
 
@@ -110,4 +110,4 @@ class NetworkConnection(val id: String, val socket: Socket) : Thread() {
     }
 }
 
-data class NetworkMessage(val serverId: String, val serverSecret: String, val guild: String?, val messageType: String, val data: String)
+data class NetworkMessage(val id: String, val guild: String, val password: String?, val messageType: String, val data: String)

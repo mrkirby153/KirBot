@@ -8,16 +8,17 @@ import me.mrkirby153.KirBot.utils.Note
 import net.dv8tion.jda.core.entities.MessageChannel
 import net.dv8tion.jda.core.entities.User
 
-@Command(name = "authorize", clearance = Clearance.SERVER_ADMINISTRATOR, description = "Authorize the client to perform actions on the server")
-class CommandAuthorize : CommandExecutor() {
+@Command(name = "password", clearance = Clearance.SERVER_ADMINISTRATOR)
+class CommandPassword : CommandExecutor() {
     override fun execute(note: Note, server: Server, sender: User, channel: MessageChannel, args: Array<String>) {
-        if(args.size < 2){
-            note.error("Missing arguments: <id> <secret>")
-            return
-        }
         val data = server.data()
-        data.authorizeServer(args[0], args[1])
-        data.save()
-        note.success("Authorized server ${args[0]}")
+        if (args.size == 1) {
+            if (args[0] == "reset") {
+                data.regeneratePassword()
+                data.save()
+                note.info("Password has been reset!").get().delete(10)
+            }
+        }
+        note.info("Server Password\n" + "`" + data.serverPassword + "`\nThis message will be deleted in 10 seconds").get().delete(10)
     }
 }

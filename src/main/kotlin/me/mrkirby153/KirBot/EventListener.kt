@@ -9,9 +9,11 @@ class EventListener : ListenerAdapter() {
 
 
     override fun onMessageReceived(event: MessageReceivedEvent?) {
-        if (event == null)
+        if (event!!.author == Bot.jda.selfUser)
             return
-        ServerRepository.getServer(event.guild)?.handleMessageEvent(event)
+        val server = ServerRepository.getServer(event.guild) ?: return
+        server.handleBridge(event)
+            server.handleMessageEvent(event)
     }
 
     override fun onGuildLeave(event: GuildLeaveEvent?) {

@@ -72,4 +72,12 @@ object NetworkManager : Runnable {
     }
 
     fun register(name: String, clazz: KClass<out NetworkMessageHandler>) = register(name, clazz.java)
+
+    fun getConnection(server: String): NetworkConnection? {
+        for ((id, connection) in activeConnections) {
+            if (connection.server?.id == server)
+                return connection
+        }
+        return null
+    }
 }

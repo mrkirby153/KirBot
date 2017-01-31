@@ -17,6 +17,8 @@ class ServerData(@Transient var server: Server) {
 
     var serverPassword = ""
 
+    var bridgeChannel = ""
+
     init {
         regeneratePassword()
     }

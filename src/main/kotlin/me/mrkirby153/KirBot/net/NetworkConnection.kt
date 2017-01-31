@@ -71,6 +71,7 @@ class NetworkConnection(val id: String, val socket: Socket) : Runnable {
 
             } catch (e: Exception) {
                 Bot.LOG.fatal("[Network $id] An error occurred on connection ${this.id} $e")
+                disconnect()
             }
         }
     }
@@ -87,6 +88,7 @@ class NetworkConnection(val id: String, val socket: Socket) : Runnable {
     fun disconnect() {
         socket.shutdownInput()
         running = false
+        NetworkManager.activeConnections.remove(id)
         socket.close()
     }
 
@@ -95,14 +97,17 @@ class NetworkConnection(val id: String, val socket: Socket) : Runnable {
     }
 
     fun write(message: String) {
+        println("Writing \"$message\"")
         val bytes = message.toByteArray()
         val size = ByteBuffer.allocate(4)
         size.order(ByteOrder.LITTLE_ENDIAN)
         size.putInt(bytes.size)
 
-        outputStream.write(size.array())
-        outputStream.write(bytes)
-        outputStream.flush()
+        if(!socket.isClosed) {
+            outputStream.write(size.array())
+            outputStream.write(bytes)
+            outputStream.flush()
+        }
     }
 
     fun write(any: Any) {

@@ -9,7 +9,7 @@ import java.net.Socket
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
-class NetworkConnection(val id: String, val socket: Socket) : Thread() {
+class NetworkConnection(val id: String, val socket: Socket) : Runnable {
 
     var running = true
 
@@ -19,11 +19,6 @@ class NetworkConnection(val id: String, val socket: Socket) : Thread() {
     val outputStream: OutputStream = socket.outputStream
 
 
-    init {
-        isDaemon = true
-        name = "NetworkConnection-" + id
-        start()
-    }
 
     override fun run() {
         while (running) {

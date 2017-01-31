@@ -4,6 +4,8 @@ import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.net.command.MinecraftBridge
 import java.net.ServerSocket
 import java.util.*
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import kotlin.reflect.KClass
 
 object NetworkManager : Runnable {
@@ -17,6 +19,8 @@ object NetworkManager : Runnable {
     var activeConnections = mutableMapOf<String, NetworkConnection>()
 
     var messages = mutableMapOf<String, NetworkMessageHandler>()
+
+    private val executor = Executors.newCachedThreadPool()
 
     private var managerThread: Thread? = null
 
@@ -33,6 +37,7 @@ object NetworkManager : Runnable {
             Bot.LOG.info("Connect from ${clientSocket.inetAddress.hostAddress}:${clientSocket.port} (ID: $id)")
             val networkConnection = NetworkConnection(id, clientSocket)
             activeConnections[id] = networkConnection
+            executor.submit(networkConnection)
         }
     }
 
@@ -48,9 +53,15 @@ object NetworkManager : Runnable {
         managerThread?.start()
     }
 
-    fun stop(){
-        activeConnections.forEach {
-            it.value.disconnect()
+    fun stop() {
+        executor.shutdown()
+        try {
+            Bot.LOG.info("Attempting graceful shutdown of thread pool")
+            executor.shutdown()
+            executor.awaitTermination(10, TimeUnit.SECONDS)
+        } catch (e: InterruptedException) {
+            Bot.LOG.info("Killing thread pool")
+            executor.shutdownNow()
         }
         running = false
     }

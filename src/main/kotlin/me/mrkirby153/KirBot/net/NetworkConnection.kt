@@ -2,6 +2,7 @@ package me.mrkirby153.KirBot.net
 
 import com.google.gson.GsonBuilder
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.server.Server
 import me.mrkirby153.KirBot.server.ServerRepository
 import java.io.InputStream
 import java.io.OutputStream
@@ -18,6 +19,7 @@ class NetworkConnection(val id: String, val socket: Socket) : Runnable {
     val inputStream: InputStream = socket.inputStream
     val outputStream: OutputStream = socket.outputStream
 
+    var server: Server? = null
 
 
     override fun run() {
@@ -42,8 +44,11 @@ class NetworkConnection(val id: String, val socket: Socket) : Runnable {
 
                 val networkMessage = gson.fromJson(json, NetworkMessage::class.java)
 
+                if (networkMessage.messageType == "setServer") {
+                    server = ServerRepository.getServer(Bot.jda.getGuildById(networkMessage.guild)) ?: continue
+                    write(NetworkMessage(networkMessage.id, networkMessage.guild, null, "success", "Set Server"))
+                }
                 val handler = NetworkManager.messages[networkMessage.messageType.toLowerCase()] ?: continue
-
                 if (handler.requireAuth) {
                     if (networkMessage.password == null)
                         continue
@@ -65,7 +70,7 @@ class NetworkConnection(val id: String, val socket: Socket) : Runnable {
                 }
 
             } catch (e: Exception) {
-                Bot.LOG.trace("[Network $id] An error occurred on connection ${this.id} $e")
+                Bot.LOG.fatal("[Network $id] An error occurred on connection ${this.id} $e")
             }
         }
     }

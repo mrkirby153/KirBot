@@ -3,6 +3,7 @@ package me.mrkirby153.KirBot.command
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.executors.CommandExecutor
 import me.mrkirby153.KirBot.command.executors.ShutdownCommand
+import me.mrkirby153.KirBot.command.executors.UpdateNicknames
 import me.mrkirby153.KirBot.command.executors.customCommand.AddCommand
 import me.mrkirby153.KirBot.command.executors.customCommand.DeleteCommand
 import me.mrkirby153.KirBot.command.executors.customCommand.ListCommands
@@ -45,6 +46,8 @@ object CommandManager {
         // Server management commands
         register(SetCommandPrefix::class)
         register(CommandClean::class)
+
+        register(UpdateNicknames::class)
     }
 
     /**

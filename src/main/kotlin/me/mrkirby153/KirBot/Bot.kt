@@ -1,11 +1,13 @@
 package me.mrkirby153.KirBot
 
+import me.mrkirby153.KirBot.realname.RealnameUpdater
 import me.mrkirby153.KirBot.utils.readProperties
 import net.dv8tion.jda.core.AccountType
 import net.dv8tion.jda.core.JDA
 import net.dv8tion.jda.core.JDABuilder
 import net.dv8tion.jda.core.utils.SimpleLog
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 object Bot {
 
@@ -40,6 +42,9 @@ object Bot {
         }
         jda.addEventListener(EventListener())
         jda.selfUser.manager.setName("KirBot").queue()
+
+        LOG.info("Starting real name updater thread")
+        scheduler.scheduleAtFixedRate(RealnameUpdater(), 60, 60, TimeUnit.SECONDS)
 
         LOG.info("Bot is connecting to discord")
 

@@ -44,7 +44,7 @@ fun User.getClearance(server: Guild): Clearance {
 fun makeEmbed(title: String?, msg: String?, color: Color? = Color.WHITE, img: String? = null, thumb: String? = null, author: User? = null): MessageEmbed {
     return EmbedBuilder().run {
         setDescription(msg)
-        setTitle(title)
+        setTitle(title, null)
         setColor(color)
 
         if (author != null) {

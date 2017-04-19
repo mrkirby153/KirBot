@@ -4,7 +4,6 @@ import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.server.Server
 import net.dv8tion.jda.core.EmbedBuilder
 import net.dv8tion.jda.core.entities.Message
-import net.dv8tion.jda.core.exceptions.PermissionException
 import java.awt.Color
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
@@ -27,17 +26,8 @@ class Note(val server: Server, private val message: Message) : Message by messag
         return channel.sendMessage(eb.build()).submit().toNote()
     }
 
-    fun delete(): Boolean {
-        try {
-            deleteMessage().queue()
-            return true
-        } catch (e: PermissionException) {
-            return false
-        }
-    }
-
     fun delete(seconds: Long) {
-        Bot.scheduler.schedule({ delete() }, seconds, TimeUnit.SECONDS)
+        Bot.scheduler.schedule({ delete().queue() }, seconds, TimeUnit.SECONDS)
     }
 
     fun edit(msg: String) = editMessage(msg).submit().toNote()

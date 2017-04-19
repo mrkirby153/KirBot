@@ -43,7 +43,7 @@ class Server(guild: Guild) : GuildManager(guild), Guild by guild {
 
     fun deleteMessage(msg: Message): Boolean {
         try {
-            msg.deleteMessage().queue()
+           msg.delete().queue()
             return true
         } catch (e: PermissionException) {
             return false

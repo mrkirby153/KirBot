@@ -1,6 +1,5 @@
 package me.mrkirby153.KirBot
 
-import me.mrkirby153.KirBot.net.NetworkManager
 import me.mrkirby153.KirBot.utils.readProperties
 import net.dv8tion.jda.core.AccountType
 import net.dv8tion.jda.core.JDA
@@ -44,12 +43,10 @@ object Bot {
 
         LOG.info("Bot is connecting to discord")
 
-        NetworkManager.start()
     }
 
     fun stop() {
         jda.shutdown()
-        NetworkManager.stop()
         LOG.info("Bot is disconnecting from Discord")
         System.exit(0)
     }

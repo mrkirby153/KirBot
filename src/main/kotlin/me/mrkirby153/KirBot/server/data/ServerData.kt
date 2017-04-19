@@ -6,7 +6,6 @@ import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.child
 import me.mrkirby153.KirBot.utils.createFileIfNotExist
 import java.io.FileWriter
-import java.security.SecureRandom
 
 private val validStrings = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 class ServerData(@Transient var server: Server) {
@@ -14,14 +13,6 @@ class ServerData(@Transient var server: Server) {
     val commands = mutableMapOf<String, CustomServerCommand>()
 
     var commandPrefix: String = "!"
-
-    var serverPassword = ""
-
-    var bridgeChannel = ""
-
-    init {
-        regeneratePassword()
-    }
 
     fun save() {
         val fileName = server.id + ".json"
@@ -32,15 +23,6 @@ class ServerData(@Transient var server: Server) {
         writer.write(json)
         writer.flush()
         writer.close()
-    }
-
-    fun regeneratePassword() {
-        val random = SecureRandom()
-        var password = ""
-        for(i in 1..10){
-            password += validStrings[random.nextInt(validStrings.lastIndex)]
-        }
-        this.serverPassword = password
     }
 
 }

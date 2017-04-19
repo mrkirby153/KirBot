@@ -12,7 +12,6 @@ class EventListener : ListenerAdapter() {
         if (event!!.author == Bot.jda.selfUser)
             return
         val server = ServerRepository.getServer(event.guild) ?: return
-        server.handleBridge(event)
             server.handleMessageEvent(event)
     }
 

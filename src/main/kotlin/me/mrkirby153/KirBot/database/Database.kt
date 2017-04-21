@@ -1,6 +1,7 @@
 package me.mrkirby153.KirBot.database
 
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.realname.RealnameSetting
 import me.mrkirby153.KirBot.server.Server
 import me.mrkirby153.KirBot.user.Clearance
 import net.dv8tion.jda.core.entities.Member
@@ -53,11 +54,22 @@ object Database {
         ps.setString(1, server.id)
 
         val rs = ps.executeQuery()
-        while(rs.next()){
+        while (rs.next()) {
             cmds.add(DBCommand(rs.getString("id"), rs.getString("name"), server, rs.getString("data"),
                     Clearance.valueOf(rs.getString("clearance")), CommandType.valueOf(rs.getString("type"))))
         }
         return cmds
+    }
+
+    fun getRealnameSetting(server: Server): RealnameSetting? {
+        val ps = connection.prepareStatement("SELECT `realname` FROM `server_settings` WHERE `id` = ?")
+        ps.setString(1, server.id)
+
+        val rs = ps.executeQuery()
+        if (rs.next()) {
+            return RealnameSetting.valueOf(rs.getString("realname"))
+        }
+        return null
     }
 
 }

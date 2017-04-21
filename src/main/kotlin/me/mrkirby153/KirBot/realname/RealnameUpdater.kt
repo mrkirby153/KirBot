@@ -1,6 +1,7 @@
 package me.mrkirby153.KirBot.realname
 
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.database.Database
 import me.mrkirby153.KirBot.server.ServerRepository
 
 class RealnameUpdater : Runnable {

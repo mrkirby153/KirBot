@@ -12,8 +12,19 @@ class RealnameHandler(var server: Server) {
 
     @JvmOverloads
     fun updateNames(silent: Boolean = false) {
+        val realnameSetting = Database.getRealnameSetting(server)?: return
+        if(realnameSetting == RealnameSetting.OFF) {
+            server.members.forEach{
+                try {
+                    server.guild.controller.setNickname(it, null).queue()
+                } catch (e: PermissionException){
+                    // Ignore
+                }
+            }
+            return
+        }
         for (member in server.members) {
-            val name = Database.getRealname(false, member) ?: continue
+            val name = Database.getRealname(realnameSetting == RealnameSetting.FIRST_ONLY, member) ?: continue
             if (member.effectiveName != name) {
                 // Update name
                 // Check permission

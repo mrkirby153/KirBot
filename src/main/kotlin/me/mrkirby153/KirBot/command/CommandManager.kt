@@ -4,15 +4,11 @@ import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.executors.CommandExecutor
 import me.mrkirby153.KirBot.command.executors.ShutdownCommand
 import me.mrkirby153.KirBot.command.executors.UpdateNicknames
-import me.mrkirby153.KirBot.command.executors.customCommand.AddCommand
-import me.mrkirby153.KirBot.command.executors.customCommand.DeleteCommand
-import me.mrkirby153.KirBot.command.executors.customCommand.ListCommands
-import me.mrkirby153.KirBot.command.executors.customCommand.SetClearance
 import me.mrkirby153.KirBot.command.executors.server.CommandClean
-import me.mrkirby153.KirBot.command.executors.server.SetCommandPrefix
+import me.mrkirby153.KirBot.database.CommandType
+import me.mrkirby153.KirBot.database.DBCommand
+import me.mrkirby153.KirBot.database.Database
 import me.mrkirby153.KirBot.server.ServerRepository
-import me.mrkirby153.KirBot.server.data.CommandType
-import me.mrkirby153.KirBot.server.data.CustomServerCommand
 import me.mrkirby153.KirBot.utils.Note
 import me.mrkirby153.KirBot.utils.getClearance
 import net.dv8tion.jda.core.entities.MessageChannel
@@ -36,15 +32,7 @@ object CommandManager {
     init {
         register(ShutdownCommand::class)
 
-        // Custom command commands
-        register(AddCommand::class)
-        register(DeleteCommand::class)
-        register(SetClearance::class)
-        register(ListCommands::class)
-
-
         // Server management commands
-        register(SetCommandPrefix::class)
         register(CommandClean::class)
 
         register(UpdateNicknames::class)
@@ -82,7 +70,8 @@ object CommandManager {
 
         val server = ServerRepository.getServer(event.guild) ?: return
 
-        if (!message.startsWith(server.data().commandPrefix))
+        // TODO 4/20/2017 Accept custom command prefixes
+        if (!message.startsWith("!"))
             return
         message = message.substring(1)
         val parts: Array<String> = message.split(" ").toTypedArray()
@@ -96,10 +85,9 @@ object CommandManager {
 
         val note = Note(server, event.message)
         if (executor == null) {
-            // Check for custom server command
-            val customCommand = server.data().commands[command.toLowerCase()] ?: return
+            val customCommand = Database.getCustomCommand(command.toLowerCase(), server) ?: return
             if (customCommand.clearance.value > author.getClearance(server).value) {
-                note.error("You do not have permission to perform this command!")
+                note.error("You do not have permission to perform that tcommand!")
                 note.delete(10)
                 return
             }
@@ -115,11 +103,15 @@ object CommandManager {
         executor.execute(note, server, author, event.channel, args)
     }
 
-    private fun callCustomCommand(note: Note, channel: MessageChannel, customServerCommand: CustomServerCommand, args: Array<String>, sender: User) {
-        if (customServerCommand.type == CommandType.TEXT)
-            note.replyEmbed(null, customServerCommand.command)
-        else if (customServerCommand.type == CommandType.JS) {
-            executeJavascript(note, customServerCommand.command, channel, sender, args)
+    private fun callCustomCommand(note: Note, channel: MessageChannel, command: DBCommand, args: Array<String>, sender: User) {
+        if (command.type == CommandType.TEXT) {
+            var response = command.data
+            for (i in 0..args.size - 1) {
+                response = response.replace("%${i+1}", args[i])
+            }
+            note.replyEmbed(null, response)
+        } else if (command.type == CommandType.JAVASCRIPT) {
+            executeJavascript(note, command.data, channel, sender, args)
         }
     }
 
@@ -140,7 +132,12 @@ object CommandManager {
 
         try {
             scriptEngine.eval(script)
-            note.info(sw.buffer.toString())
+            val output = sw.buffer.toString()
+            if(output.length > 2048){
+                note.error("Output is too long")
+            } else {
+                note.replyEmbed(null, output)
+            }
         } catch (e: ScriptException) {
             note.error("An error occurred when executing the script: ```" + e.message + "```")
         }

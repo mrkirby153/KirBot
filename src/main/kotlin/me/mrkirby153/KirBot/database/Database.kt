@@ -1,6 +1,8 @@
 package me.mrkirby153.KirBot.database
 
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.server.Server
+import me.mrkirby153.KirBot.user.Clearance
 import net.dv8tion.jda.core.entities.Member
 import java.sql.Connection
 import java.sql.DriverManager
@@ -28,6 +30,34 @@ object Database {
             return rs.getString("name")
         else
             return null
+    }
+
+    fun getCustomCommand(cmd: String, server: Server): DBCommand? {
+        val ps = connection.prepareStatement("SELECT `id`, `server`, `name`, `data`, `clearance`, `type` FROM `custom_commands` WHERE `server` = ? AND `name` = ?")
+        ps.setString(1, server.id)
+        ps.setString(2, cmd)
+
+        val rs = ps.executeQuery()
+
+        if (rs.next())
+            return DBCommand(rs.getString("id"), rs.getString("name"), server, rs.getString("data"),
+                    Clearance.valueOf(rs.getString("clearance")), CommandType.valueOf(rs.getString("type")))
+        else
+            return null
+    }
+
+    fun getCustomCommands(server: Server): List<DBCommand> {
+        val cmds = mutableListOf<DBCommand>()
+
+        val ps = connection.prepareStatement("SELECT `id`, `server`, `name`, `data`, `clearance`, `type` FROM `custom_commands` WHERE `server` = ?")
+        ps.setString(1, server.id)
+
+        val rs = ps.executeQuery()
+        while(rs.next()){
+            cmds.add(DBCommand(rs.getString("id"), rs.getString("name"), server, rs.getString("data"),
+                    Clearance.valueOf(rs.getString("clearance")), CommandType.valueOf(rs.getString("type"))))
+        }
+        return cmds
     }
 
 }

@@ -52,15 +52,21 @@ class Server(guild: Guild) : GuildManager(guild), Guild by guild {
         }
     }
 
-    fun repository(): DataRepository? {
-        if (repository == null) {
+    @JvmOverloads
+    fun repository(forceUpdate: Boolean = false): DataRepository? {
+        if (repository == null || forceUpdate) {
             val fileName = "$id.json"
             val file = ServerRepository.serverDirectory.child(fileName)
             if(!file.exists()){
                 DataRepository(this).save()
                 return repository()
             }
-            return ServerRepository.gson.fromJson(file.reader(Charset.defaultCharset()), DataRepository::class.java)
+            val reader = file.reader(Charset.defaultCharset())
+            val server = ServerRepository.gson.fromJson(reader, DataRepository::class.java)
+            server.server = this
+            this.repository = server
+            reader.close()
+            return server
         } else {
             return repository
         }

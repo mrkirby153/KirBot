@@ -72,4 +72,14 @@ object Database {
         return null
     }
 
+    fun  requireRealname(server: Server): Boolean {
+        val ps = connection.prepareStatement("SELECT `require_realname` FROM `server_settings` WHERE `id` = ?")
+        ps.setString(1, server.id)
+
+        val rs = ps.executeQuery()
+        if(rs.next())
+            return rs.getBoolean("require_realname")
+        return false
+    }
+
 }

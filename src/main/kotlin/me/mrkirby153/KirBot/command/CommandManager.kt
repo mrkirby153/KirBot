@@ -87,7 +87,7 @@ object CommandManager {
         if (executor == null) {
             val customCommand = Database.getCustomCommand(command.toLowerCase(), server) ?: return
             if (customCommand.clearance.value > author.getClearance(server).value) {
-                note.error("You do not have permission to perform that tcommand!")
+                note.error("You do not have permission to perform that command!").get().delete(10)
                 note.delete(10)
                 return
             }
@@ -109,7 +109,7 @@ object CommandManager {
             for (i in 0..args.size - 1) {
                 response = response.replace("%${i+1}", args[i])
             }
-            note.replyEmbed(null, response)
+            channel.sendMessage(response).queue()
         } else if (command.type == CommandType.JAVASCRIPT) {
             executeJavascript(note, command.data, channel, sender, args)
         }

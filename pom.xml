@@ -126,8 +126,8 @@
         </dependency>
         <dependency>
             <groupId>net.dv8tion</groupId>
-            <artifactId>JDA</artifactId>
-            <version>3.0.0_157</version>
+            <artifactId>JDA_K</artifactId>
+            <version>3.0.0_26</version>
         </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>

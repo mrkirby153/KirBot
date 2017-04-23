@@ -12,19 +12,13 @@ import me.mrkirby153.KirBot.database.CommandType
 import me.mrkirby153.KirBot.database.DBCommand
 import me.mrkirby153.KirBot.database.Database
 import me.mrkirby153.KirBot.server.ServerRepository
-import me.mrkirby153.KirBot.utils.Note
 import me.mrkirby153.KirBot.utils.getClearance
 import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.Channel
 import net.dv8tion.jda.core.entities.MessageChannel
 import net.dv8tion.jda.core.entities.User
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent
-import java.io.PrintWriter
-import java.io.StringWriter
-import javax.script.ScriptContext
-import javax.script.ScriptEngineManager
-import javax.script.ScriptException
-import javax.script.SimpleBindings
+import java.util.concurrent.TimeUnit
 import kotlin.reflect.KClass
 
 /**
@@ -94,17 +88,20 @@ object CommandManager {
         val executor = CommandManager.commands[command.toLowerCase()]
 
 
-        val note = Note(server, event.message)
         if (executor == null) {
             val customCommand = Database.getCustomCommand(command.toLowerCase(), server) ?: return
             if (customCommand.clearance.value > author.getClearance(server).value) {
-                note.error("You do not have permission to perform that command!").get().delete(10)
-                note.delete(10)
+                event.message.send().error("You do not have permission to perform that command").queue({
+                    m ->
+                    m.delete().queueAfter(10, TimeUnit.SECONDS)
+                })
                 return
             }
-            callCustomCommand(note, event.channel, customCommand, args, author)
+            callCustomCommand(event.channel, customCommand, args, author)
             return
         }
+
+        executor.server = server
 
         // Verify permissions
         val missingPermissions = arrayListOf<Permission>()
@@ -115,32 +112,32 @@ object CommandManager {
         }
 
         if (missingPermissions.isNotEmpty()) {
-            note.error("I cannot perform that action because I'm missing the following permissions:\n "
-                    + missingPermissions.joinToString { " - ${it.name} \n" })
+            event.message.send().error("I cannot perform that action because I'm missing the following permissions: \n"
+                    + missingPermissions.joinToString { " i ${it.name} \n" }).queue()
             return
         }
 
         if (event.author.getClearance(event.guild).value < executor.clearance.value) {
-            note.error("You do not have permission to perform this command!")
-            note.delete(10)
+            event.message.send().error("You do not have permission to perform this command!").queue({
+                m ->
+                m.delete().queueAfter(10, TimeUnit.SECONDS)
+            })
             return
         }
-        executor.execute(note, server, author, event.channel, args)
+        executor.execute(event.message, args)
     }
 
-    private fun callCustomCommand(note: Note, channel: MessageChannel, command: DBCommand, args: Array<String>, sender: User) {
+    private fun callCustomCommand(channel: MessageChannel, command: DBCommand, args: Array<String>, sender: User) {
         if (command.type == CommandType.TEXT) {
             var response = command.data
             for (i in 0..args.size - 1) {
                 response = response.replace("%${i + 1}", args[i])
             }
             channel.sendMessage(response).queue()
-        } else if (command.type == CommandType.JAVASCRIPT) {
-            executeJavascript(note, command.data, channel, sender, args)
         }
     }
 
-    private fun executeJavascript(note: Note, script: String, channel: MessageChannel, sender: User, args: Array<String>) {
+    /*private fun executeJavascript(note: Note, script: String, channel: MessageChannel, sender: User, args: Array<String>) {
         val scriptEngine = ScriptEngineManager().getEngineByName("nashorn")
 
         val vars = arrayOf(EcmaVariable("channel", channel), EcmaVariable("sender", sender.name), EcmaVariable("args", args))
@@ -166,7 +163,7 @@ object CommandManager {
         } catch (e: ScriptException) {
             note.error("An error occurred when executing the script: ```" + e.message + "```")
         }
-    }
+    }*/
 
     private data class EcmaVariable(val name: String, val value: Any)
 }

@@ -4,9 +4,8 @@ import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.user.Clearance
 import net.dv8tion.jda.core.EmbedBuilder
 import net.dv8tion.jda.core.Permission
-import net.dv8tion.jda.core.entities.Guild
-import net.dv8tion.jda.core.entities.MessageEmbed
-import net.dv8tion.jda.core.entities.User
+import net.dv8tion.jda.core.entities.*
+import net.dv8tion.jda.core.requests.RestAction
 import java.awt.Color
 import java.io.File
 import java.util.*
@@ -40,6 +39,19 @@ fun User.getClearance(server: Guild): Clearance {
     return Clearance.USER
 }
 
+/**
+ * Send a standard success message
+ *
+ * @param msg The text to send.
+ * @return The Message created by this function
+ */
+fun ResponseBuilder.success(msg: String): RestAction<Message> {
+    return embed {
+        title = "Success"
+        description = msg
+        color = Color.GREEN
+    }.rest()
+}
 @JvmOverloads
 fun makeEmbed(title: String?, msg: String?, color: Color? = Color.WHITE, img: String? = null, thumb: String? = null, author: User? = null): MessageEmbed {
     return EmbedBuilder().run {

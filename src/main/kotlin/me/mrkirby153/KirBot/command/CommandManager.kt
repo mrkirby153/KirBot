@@ -8,6 +8,7 @@ import me.mrkirby153.KirBot.command.executors.moderation.CommandKick
 import me.mrkirby153.KirBot.command.executors.moderation.CommandMute
 import me.mrkirby153.KirBot.command.executors.moderation.CommandUnmute
 import me.mrkirby153.KirBot.command.executors.polls.CommandPoll
+import me.mrkirby153.KirBot.command.executors.search.CommandGoogle
 import me.mrkirby153.KirBot.command.executors.server.CommandClean
 import me.mrkirby153.KirBot.database.CommandType
 import me.mrkirby153.KirBot.database.DBCommand
@@ -37,6 +38,7 @@ object CommandManager {
 
         register(UpdateNicknames::class)
         register(CommandPoll::class)
+        register(CommandGoogle::class)
 
         // Moderation commands
         register(CommandKick::class)

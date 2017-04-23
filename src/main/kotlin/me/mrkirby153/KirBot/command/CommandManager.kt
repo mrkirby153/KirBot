@@ -11,6 +11,8 @@ import me.mrkirby153.KirBot.database.Database
 import me.mrkirby153.KirBot.server.ServerRepository
 import me.mrkirby153.KirBot.utils.Note
 import me.mrkirby153.KirBot.utils.getClearance
+import net.dv8tion.jda.core.Permission
+import net.dv8tion.jda.core.entities.Channel
 import net.dv8tion.jda.core.entities.MessageChannel
 import net.dv8tion.jda.core.entities.User
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent
@@ -52,6 +54,7 @@ object CommandManager {
         cmd.aliases = annotation.aliases
         cmd.clearance = annotation.clearance
         cmd.description = annotation.description
+        cmd.permissions = annotation.requiredPermissions
         commands[annotation.name.toLowerCase()] = cmd
 
         annotation.aliases.forEach { a -> commands[a.toLowerCase()] = cmd }
@@ -95,6 +98,20 @@ object CommandManager {
             return
         }
 
+        // Verify permissions
+        val missingPermissions = arrayListOf<Permission>()
+        executor.permissions.forEach { permission ->
+            if (!server.getMember(Bot.jda.selfUser).hasPermission(event.channel as Channel, permission)) {
+                missingPermissions.add(permission)
+            }
+        }
+
+        if (missingPermissions.isNotEmpty()) {
+            note.error("I cannot perform that action because I'm missing the following permissions:\n "
+                    + missingPermissions.joinToString { " - ${it.name} \n" })
+            return
+        }
+
         if (event.author.getClearance(event.guild).value < executor.clearance.value) {
             note.error("You do not have permission to perform this command!")
             note.delete(10)
@@ -107,7 +124,7 @@ object CommandManager {
         if (command.type == CommandType.TEXT) {
             var response = command.data
             for (i in 0..args.size - 1) {
-                response = response.replace("%${i+1}", args[i])
+                response = response.replace("%${i + 1}", args[i])
             }
             channel.sendMessage(response).queue()
         } else if (command.type == CommandType.JAVASCRIPT) {
@@ -133,7 +150,7 @@ object CommandManager {
         try {
             scriptEngine.eval(script)
             val output = sw.buffer.toString()
-            if(output.length > 2048){
+            if (output.length > 2048) {
                 note.error("Output is too long")
             } else {
                 note.replyEmbed(null, output)

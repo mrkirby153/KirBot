@@ -6,12 +6,14 @@ import me.mrkirby153.KirBot.command.executors.CommandExecutor
 import me.mrkirby153.KirBot.server.Server
 import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Note
+import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.MessageChannel
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.User
 import java.time.OffsetDateTime
 
-@Command(name = "clean", clearance = Clearance.BOT_MANAGER, description = "Delete the last messages in the channel")
+@Command(name = "clean", clearance = Clearance.BOT_MANAGER, description = "Delete the last messages in the channel",
+        requiredPermissions = arrayOf(Permission.MESSAGE_MANAGE, Permission.MESSAGE_WRITE))
 class CommandClean : CommandExecutor() {
 
     override fun execute(note: Note, server: Server, sender: User, channel: MessageChannel, args: Array<String>) {
@@ -26,7 +28,7 @@ class CommandClean : CommandExecutor() {
             }
             if (channel is TextChannel) {
                 channel.history.retrievePast(messageCount).queue { m ->
-                  val m1 =  m.filter { it.creationTime.isAfter(OffsetDateTime.now().minusDays(14)) }
+                    val m1 = m.filter { it.creationTime.isAfter(OffsetDateTime.now().minusDays(14)) }
                     channel.deleteMessages(m1).queue { v ->
                         note.success("Deleted $messageCount messages!").get().delete(10)
                     }

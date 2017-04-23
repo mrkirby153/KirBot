@@ -1,6 +1,5 @@
 package me.mrkirby153.KirBot.realname
 
-import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.Database
 import me.mrkirby153.KirBot.server.Server
 import net.dv8tion.jda.core.Permission
@@ -16,91 +15,89 @@ class RealnameHandler(var server: Server) {
     fun updateNames(silent: Boolean = false) {
         val realnameSetting = Database.getRealnameSetting(server) ?: return
         if (realnameSetting == RealnameSetting.OFF) {
-            server.members.forEach {
+            server.members.forEach({
                 updateUnidentified(it, false)
-                try {
-                    server.guild.controller.setNickname(it, null).queue()
-                } catch (e: PermissionException) {
-                    // Ignore
-                }
-            }
+                setNickname(server, it, null)
+            })
             return
         }
-        val identifiedMembers = mutableListOf<Member>()
+        // Members who have a real name in the database
+        val identifiedMemebrs = mutableListOf<Member>()
         for (member in server.members) {
-            if (member.user.isBot)
-                continue
-            val name = Database.getRealname(realnameSetting == RealnameSetting.FIRST_ONLY, member)
-            if (name == null) {
-                try {
-                    server.guild.controller.setNickname(member, null).queue()
-                } catch (e: PermissionException) {
-                    // Ignore
-                }
+            if (member.user.isBot) {
+                // Identify bots
+                identifiedMemebrs.add(member)
                 continue
             }
+            val name = Database.getRealname(realnameSetting == RealnameSetting.FIRST_ONLY, member)
+            if (name == null) {
+                // reset nickname
+                setNickname(server, member, null)
+                continue
+            }
+            identifiedMemebrs.add(member)
+            updateUnidentified(member, true)
             if (member.effectiveName != name) {
-                // Update name
-                // Check permission
-                val selfMember = server.selfMember
-                if (PermissionUtil.checkPermission(server.guild, selfMember, Permission.NICKNAME_MANAGE)) {
-                    try {
-                        server.guild.controller.setNickname(member, name).queue()
-                        updateUnidentified(member, true)
-                        identifiedMembers.add(member)
-                        if (!silent)
-                            Bot.LOG.info("Updated nickname for ${member.user.name}")
-                    } catch(e: PermissionException) {
-                        if (!silent)
-                            Bot.LOG.warn("Could not update the nickname of ${member.user.name} perhaps he's the server owner?")
-                    }
-                } else {
-                    if (!silent)
-                        Bot.LOG.warn("Missing permission NICKNAME_CHANGE ON ${server.id}")
-                }
-            } else {
-                updateUnidentified(member, true)
-                identifiedMembers.add(member)
+                setNickname(server, member, name)
             }
         }
         server.members.filter {
-            !identifiedMembers.contains(it)
+            !identifiedMemebrs.contains(it)
         }.forEach {
             updateUnidentified(it, false)
         }
     }
 
+    fun setNickname(server: Server, member: Member, name: String?) {
+        if (PermissionUtil.checkPermission(server.guild, server.selfMember, Permission.NICKNAME_MANAGE))
+            try {
+                server.guild.controller.setNickname(member, name).queue()
+            } catch (e: PermissionException) {
+                // Ignore
+            }
+    }
+
     fun updateUnidentified(member: Member, identified: Boolean) {
         if (!Database.requireRealname(server)) {
-            val repository = server.repository() ?: return
-            val unidentified = repository.get(String::class.java, "unidentified-role")
-            val id = repository.get(String::class.java, "identified-role")
-
-            if (unidentified != null)
-                try {
-                    server.roles.first { it.id == unidentified }.delete().queue()
-                } catch(e: NoSuchElementException) {
-                    // Ignore
-                }
-
-            if (id != null)
-                try {
-                    server.roles.first { it.id == id }.delete().queue()
-                } catch(e: NoSuchElementException) {
-                    // Ignore
-                }
-
-            repository.remove("unidentified-role")
-            repository.remove("identified-role")
+            cleanupRealNameRoles()
             return
         }
+        val unidentifiedRole = getUnidentifiedRole()
+        val identifiedRole = getIdentifiedRole()
         if (identified) {
-            server.controller.removeRolesFromMember(member, getUnidentifiedRole()).complete(true)
-            server.controller.addRolesToMember(member, getIdentifiedRole()).complete(true)
+            server.controller.removeRolesFromMember(member, unidentifiedRole).queue {
+                server.controller.addRolesToMember(member, identifiedRole).queue()
+            }
         } else {
-            server.controller.removeRolesFromMember(member, getIdentifiedRole()).complete(true)
-            server.controller.addRolesToMember(member, getUnidentifiedRole()).complete(true)
+            server.controller.removeRolesFromMember(member, identifiedRole).queue {
+                server.controller.addRolesToMember(member, unidentifiedRole).queue()
+            }
         }
+
+    }
+
+    private fun cleanupRealNameRoles() {
+        val repository = server.repository() ?: return
+        val unidentified = repository.get(String::class.java, "unidentified-role")
+        val id = repository.get(String::class.java, "identified-role")
+
+        if (unidentified != null)
+            try {
+                server.roles.first { it.id == unidentified }.delete().queue()
+            } catch(e: NoSuchElementException) {
+                // Ignore
+            }
+
+        if (id != null)
+            try {
+                server.roles.first { it.id == id }.delete().queue()
+            } catch(e: NoSuchElementException) {
+                // Ignore
+            }
+
+        repository.remove("unidentified-role")
+        repository.remove("identified-role")
+        return
     }
 
     fun getUnidentifiedRole(): Role {

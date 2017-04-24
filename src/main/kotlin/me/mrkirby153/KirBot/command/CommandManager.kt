@@ -14,6 +14,7 @@ import me.mrkirby153.KirBot.database.CommandType
 import me.mrkirby153.KirBot.database.DBCommand
 import me.mrkirby153.KirBot.database.Database
 import me.mrkirby153.KirBot.server.ServerRepository
+import me.mrkirby153.KirBot.utils.Cache
 import me.mrkirby153.KirBot.utils.getClearance
 import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.Channel
@@ -29,6 +30,8 @@ import kotlin.reflect.KClass
 object CommandManager {
 
     val commands = mutableMapOf<String, CommandExecutor>()
+
+    val commandPrefixCache = Cache<String, String>(1000 * 60)
 
     init {
         register(ShutdownCommand::class)
@@ -79,9 +82,16 @@ object CommandManager {
 
         val server = ServerRepository.getServer(event.guild) ?: return
 
-        // TODO 4/20/2017 Accept custom command prefixes
-        if (!message.startsWith("!"))
+        var commandPrefix = this.commandPrefixCache[server.id]
+
+        if (commandPrefix == null) {
+            commandPrefix = Database.getCommandPrefix(server)
+            this.commandPrefixCache.put(server.id, commandPrefix)
+        }
+
+        if (!message.startsWith(commandPrefix))
             return
+
         message = message.substring(1)
         val parts: Array<String> = message.split(" ").toTypedArray()
 

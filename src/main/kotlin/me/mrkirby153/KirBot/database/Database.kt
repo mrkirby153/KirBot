@@ -72,14 +72,22 @@ object Database {
         return null
     }
 
-    fun  requireRealname(server: Server): Boolean {
+    fun requireRealname(server: Server): Boolean {
         val ps = connection.prepareStatement("SELECT `require_realname` FROM `server_settings` WHERE `id` = ?")
         ps.setString(1, server.id)
 
         val rs = ps.executeQuery()
-        if(rs.next())
+        if (rs.next())
             return rs.getBoolean("require_realname")
         return false
     }
 
+    fun getCommandPrefix(server: Server): String {
+        val ps = connection.prepareStatement("SELECT `command_discriminator` FROM `server_settings` WHERE `id` = ?")
+        ps.setString(1, server.id)
+        val rs = ps.executeQuery()
+        if (rs.next())
+            return rs.getString("command_discriminator")
+        return "!"
+    }
 }

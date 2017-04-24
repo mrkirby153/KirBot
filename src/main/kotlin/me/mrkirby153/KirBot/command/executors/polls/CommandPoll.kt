@@ -33,6 +33,11 @@ class CommandPoll : CommandExecutor() {
             return
         }
 
+        if(options.size > 9){
+            message.send().error("You can only have 9 options in a poll!").queue()
+            return
+        }
+
         message.send().embed("Poll") {
             description = "Vote by clicking the reactions on the choices below! Results will be final in ${localizeTime(duration)}"
             field("Options") {
@@ -43,14 +48,16 @@ class CommandPoll : CommandExecutor() {
                 }
             }
         }.rest().queue {
+            val m = it
+            m.pin().queue()
             for(index in 0..options.size - 1){
                 it.addReaction("${'\u0030' + (index+1)}\u20E3").queue()
             }
 
             it.editMessage(it.embeds[0].edit().apply {
-                description = "Voting ended!"
-                clearFields()
+                description = "**Voting ended**! Check new message for results"
             }.build()).queueAfter(duration.toLong(), TimeUnit.SECONDS) {
+                m.unpin().queue()
                 it.send().embed("Poll Results") {
                     color = Color.CYAN
                     description = "Voting has ended! Here are the results!"

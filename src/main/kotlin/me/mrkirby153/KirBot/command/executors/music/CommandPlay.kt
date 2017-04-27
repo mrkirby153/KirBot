@@ -69,6 +69,7 @@ class CommandPlay : MusicCommand() {
     }
 
     fun connectToVoice(channel: VoiceChannel) {
+        server.musicManager.audioPlayer.volume = 100
         server.guild.audioManager.sendingHandler = server.musicManager.audioSender
         server.guild.audioManager.openAudioConnection(channel)
     }

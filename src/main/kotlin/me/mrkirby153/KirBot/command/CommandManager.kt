@@ -7,6 +7,7 @@ import me.mrkirby153.KirBot.command.executors.UpdateNicknames
 import me.mrkirby153.KirBot.command.executors.moderation.CommandKick
 import me.mrkirby153.KirBot.command.executors.moderation.CommandMute
 import me.mrkirby153.KirBot.command.executors.moderation.CommandUnmute
+import me.mrkirby153.KirBot.command.executors.music.*
 import me.mrkirby153.KirBot.command.executors.polls.CommandPoll
 import me.mrkirby153.KirBot.command.executors.search.CommandGoogle
 import me.mrkirby153.KirBot.command.executors.server.CommandClean
@@ -47,6 +48,15 @@ object CommandManager {
         register(CommandKick::class)
         register(CommandMute::class)
         register(CommandUnmute::class)
+
+        // Music commands
+        register(CommandPlay::class)
+        register(CommandQueue::class)
+        register(CommandSkip::class)
+        register(CommandStop::class)
+        register(CommandPause::class)
+        register(CommandVolume::class)
+        register(CommandToggleAdminMode::class)
     }
 
     /**

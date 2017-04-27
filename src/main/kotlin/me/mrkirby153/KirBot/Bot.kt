@@ -1,5 +1,12 @@
 package me.mrkirby153.KirBot
 
+import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager
+import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
+import com.sedmelluq.discord.lavaplayer.source.beam.BeamAudioSourceManager
+import com.sedmelluq.discord.lavaplayer.source.soundcloud.SoundCloudAudioSourceManager
+import com.sedmelluq.discord.lavaplayer.source.twitch.TwitchStreamAudioSourceManager
+import com.sedmelluq.discord.lavaplayer.source.vimeo.VimeoAudioSourceManager
+import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager
 import me.mrkirby153.KirBot.realname.RealnameUpdater
 import me.mrkirby153.KirBot.utils.readProperties
 import net.dv8tion.jda.core.AccountType
@@ -27,6 +34,14 @@ object Bot {
     val token = "!"
 
     val admins: List<String> = files.admins.run { this.readLines() }
+
+    val playerManager: AudioPlayerManager = DefaultAudioPlayerManager().apply {
+        registerSourceManager(YoutubeAudioSourceManager())
+        registerSourceManager(SoundCloudAudioSourceManager())
+        registerSourceManager(VimeoAudioSourceManager())
+        registerSourceManager(TwitchStreamAudioSourceManager())
+        registerSourceManager(BeamAudioSourceManager())
+    }
 
 
     fun start(token: String) {

@@ -37,7 +37,7 @@ class CommandPoll : CommandExecutor() {
             message.send().error("You can only have 9 options in a poll!").queue()
             return
         }
-
+        // TODO 4/25/2017 Fix the brokenness!
         message.send().embed("Poll") {
             description = "Vote by clicking the reactions on the choices below! Results will be final in ${localizeTime(duration)}"
             field("Options") {

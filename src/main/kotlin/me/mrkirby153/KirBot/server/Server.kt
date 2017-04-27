@@ -1,6 +1,7 @@
 package me.mrkirby153.KirBot.server
 
 import me.mrkirby153.KirBot.command.CommandManager
+import me.mrkirby153.KirBot.music.MusicManager
 import me.mrkirby153.KirBot.server.data.DataRepository
 import me.mrkirby153.KirBot.utils.child
 import net.dv8tion.jda.core.entities.ChannelType
@@ -17,6 +18,8 @@ import java.nio.charset.Charset
 class Server(guild: Guild) : GuildManager(guild), Guild by guild {
 
     private var repository: DataRepository? = null
+
+    val musicManager = MusicManager(this)
 
     fun handleMessageEvent(event: MessageReceivedEvent) {
         // Ignore PMs
@@ -57,7 +60,7 @@ class Server(guild: Guild) : GuildManager(guild), Guild by guild {
         if (repository == null || forceUpdate) {
             val fileName = "$id.json"
             val file = ServerRepository.serverDirectory.child(fileName)
-            if(!file.exists()){
+            if (!file.exists()) {
                 DataRepository(this).save()
                 return repository()
             }

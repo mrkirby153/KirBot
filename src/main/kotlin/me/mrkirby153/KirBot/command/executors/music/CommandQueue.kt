@@ -32,6 +32,7 @@ class CommandQueue : MusicCommand() {
                         appendln("**$displayedTracks.** [${formatDuration((track.duration / 1000).toInt())}] __[${track.info.title}](${track.info.uri})__")
                         if (length >= MessageEmbed.VALUE_MAX_LENGTH - 200 && queue.size - displayedTracks > 0) {
                             append(" And **${queue.size - displayedTracks}** more!")
+                            break
                         }
                     }
                 }

@@ -15,15 +15,15 @@ class CommandSkip : MusicCommand() {
             message.send().error("I'm not playing anything right now").queue()
             return
         }
+        if(server.musicManager.adminOnly){
+            forceSkip(message)
+            return
+        }
         if (!args.isEmpty()) {
             if (args[0].toLowerCase() == "force") {
                 val clearance = message.author.getClearance(server)
                 if (clearance.value >= Clearance.SERVER_ADMINISTRATOR.value) {
-                    message.send().embed("Music") {
-                        color = Color.CYAN
-                        description = "Playing next song..."
-                    }.rest().queue()
-                    server.musicManager.trackScheduler.playNext()
+                    forceSkip(message)
                     return
                 }
             }
@@ -76,5 +76,13 @@ class CommandSkip : MusicCommand() {
                 }.rest().queue()
             }
         }
+    }
+
+    private fun forceSkip(message: Message) {
+        message.send().embed("Music") {
+            color = Color.CYAN
+            description = "Playing next song..."
+        }.rest().queue()
+        server.musicManager.trackScheduler.playNext()
     }
 }

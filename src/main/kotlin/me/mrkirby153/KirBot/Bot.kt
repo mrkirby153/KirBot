@@ -7,7 +7,9 @@ import com.sedmelluq.discord.lavaplayer.source.soundcloud.SoundCloudAudioSourceM
 import com.sedmelluq.discord.lavaplayer.source.twitch.TwitchStreamAudioSourceManager
 import com.sedmelluq.discord.lavaplayer.source.vimeo.VimeoAudioSourceManager
 import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager
+import me.mrkirby153.KirBot.database.Database
 import me.mrkirby153.KirBot.realname.RealnameUpdater
+import me.mrkirby153.KirBot.server.ServerRepository
 import me.mrkirby153.KirBot.utils.readProperties
 import net.dv8tion.jda.core.AccountType
 import net.dv8tion.jda.core.JDA
@@ -62,6 +64,11 @@ object Bot {
         scheduler.scheduleAtFixedRate(RealnameUpdater(), 60, 60, TimeUnit.SECONDS)
 
         LOG.info("Bot is connecting to discord")
+
+        LOG.info("Updating names")
+        jda.guilds
+                .mapNotNull { ServerRepository.getServer(it) }
+                .forEach { Database.onJoin(it) }
 
     }
 

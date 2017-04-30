@@ -5,6 +5,7 @@ import me.mrkirby153.KirBot.realname.RealnameHandler
 import me.mrkirby153.KirBot.server.Server
 import me.mrkirby153.KirBot.server.ServerRepository
 import net.dv8tion.jda.core.entities.Member
+import net.dv8tion.jda.core.events.guild.GuildJoinEvent
 import net.dv8tion.jda.core.events.guild.GuildLeaveEvent
 import net.dv8tion.jda.core.events.guild.member.GuildMemberJoinEvent
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent
@@ -22,7 +23,14 @@ class EventListener : ListenerAdapter() {
     }
 
     override fun onGuildLeave(event: GuildLeaveEvent?) {
-        ServerRepository.servers.remove(event?.guild?.id)
+        val server = ServerRepository.getServer(event!!.guild!!) ?: return
+        Database.onLeave(server)
+        ServerRepository.servers.remove(event.guild.id)
+    }
+
+    override fun onGuildJoin(event: GuildJoinEvent?) {
+        val server = ServerRepository.getServer(event!!.guild!!) ?: return
+        Database.onJoin(server)
     }
 
     override fun onGuildMemberJoin(event: GuildMemberJoinEvent?) {

@@ -7,6 +7,7 @@ import me.mrkirby153.KirBot.user.Clearance
 import net.dv8tion.jda.core.entities.Member
 import java.sql.Connection
 import java.sql.DriverManager
+import java.sql.Timestamp
 
 object Database {
 
@@ -89,5 +90,37 @@ object Database {
         if (rs.next())
             return rs.getString("command_discriminator")
         return "!"
+    }
+
+    fun onJoin(server: Server) {
+        if (!serverExists(server)) {
+            val ps = connection.prepareStatement("INSERT INTO `server_settings` (`id`, `name`, `require_realname`, `realname`, `created_at`, `updated_at`) VALUES(?, ?, '0', 'OFF', ?, ?)")
+            ps.setString(1, server.id)
+            ps.setString(2, server.name)
+            ps.setTimestamp(3, Timestamp(System.currentTimeMillis()))
+            ps.setTimestamp(4, Timestamp(System.currentTimeMillis()))
+            ps.executeUpdate()
+        } else {
+            val ps = connection.prepareStatement("UPDATE `server_settings` SET `name` = ? WHERE `id` = ?")
+            ps.setString(1, server.name)
+            ps.setString(2, server.id)
+            ps.executeUpdate()
+        }
+    }
+
+    fun onLeave(server: Server){
+        val ps = connection.prepareStatement("DELETE FROM `server_settings` WHERE `id` = ?")
+        ps.setString(1, server.id)
+        ps.executeUpdate()
+    }
+
+    fun serverExists(server: Server): Boolean {
+        val ps = connection.prepareStatement("SELECT COUNT(*) AS `count` FROM `server_settings` WHERE `id` = ?")
+        ps.setString(1, server.id)
+        val rs = ps.executeQuery()
+        if (!rs.next())
+            return false
+        else
+            return rs.getInt("count") > 0
     }
 }

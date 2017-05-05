@@ -11,6 +11,7 @@ import net.dv8tion.jda.core.events.message.MessageReceivedEvent
 import net.dv8tion.jda.core.exceptions.PermissionException
 import net.dv8tion.jda.core.managers.GuildManager
 import java.nio.charset.Charset
+import java.util.regex.Pattern
 
 /**
  * Represent the bot
@@ -27,7 +28,44 @@ class Server(guild: Guild) : GuildManager(guild), Guild by guild {
         // Ignore PMs
         if (event.isFromType(ChannelType.PRIVATE))
             return
+        // Call message processors
+        var rawMsgText = event.message.content
+        // TODO 5/4/2017 Extract to own method
+        for (processor in CommandManager.messageProcessors) {
+            val proc = processor.newInstance()
+            proc.matches = emptyArray()
+            proc.server = this
+            // Compile regex
+            val pattern = Pattern.compile("(?<=${escape(proc.startSequence)})(.*?)(?=${escape(proc.endSequence)})")
+
+            val matches = mutableListOf<String>()
+            loop@ while (true) {
+                val matcher = pattern.matcher(rawMsgText)
+
+                if (matcher.find()) {
+                    val part = rawMsgText.substring(matcher.start(), matcher.end())
+                    matches.add(part)
+                    rawMsgText = rawMsgText.substring(startIndex = Math.min(matcher.end() + proc.endSequence.length, rawMsgText.length))
+                    if (rawMsgText.isEmpty())
+                        break@loop
+                } else {
+                    break@loop
+                }
+            }
+            proc.matches = matches.toTypedArray()
+            proc.process(event.message)
+            if (proc.stopProcessing)
+                break
+        }
         CommandManager.call(event)
+    }
+
+    private fun escape(string: String): String {
+        return buildString {
+            string.forEach {
+                this@buildString.append("\\$it")
+            }
+        }
     }
 
     fun kick(user: String): Boolean {

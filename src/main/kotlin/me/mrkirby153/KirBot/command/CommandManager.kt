@@ -13,6 +13,7 @@ import me.mrkirby153.KirBot.command.executors.music.*
 import me.mrkirby153.KirBot.command.executors.polls.CommandPoll
 import me.mrkirby153.KirBot.command.executors.search.CommandGoogle
 import me.mrkirby153.KirBot.command.executors.server.CommandClean
+import me.mrkirby153.KirBot.command.processors.LaTeXProcessor
 import me.mrkirby153.KirBot.database.CommandType
 import me.mrkirby153.KirBot.database.DBCommand
 import me.mrkirby153.KirBot.database.Database
@@ -33,6 +34,8 @@ import kotlin.reflect.KClass
 object CommandManager {
 
     val commands = mutableMapOf<String, CommandExecutor>()
+
+    val messageProcessors = mutableSetOf<Class<out MessageProcessor>>()
 
     val commandPrefixCache = Cache<String, String>(1000 * 60)
 
@@ -63,6 +66,10 @@ object CommandManager {
         register(CommandHelp::class)
 
         register(CommandRefresh::class)
+
+
+        /// ------ REGISTER MESSAGE PROCESSORS ------
+        registerProcessor(LaTeXProcessor::class)
     }
 
     /**
@@ -89,6 +96,10 @@ object CommandManager {
 
     fun register(cls: KClass<out CommandExecutor>) {
         register(cls.java)
+    }
+
+    fun registerProcessor(cls: KClass<out MessageProcessor>) {
+        messageProcessors.add(cls.java)
     }
 
     fun call(event: MessageReceivedEvent) {

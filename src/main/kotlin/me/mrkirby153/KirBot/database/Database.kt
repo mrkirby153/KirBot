@@ -188,4 +188,15 @@ object Database {
             Bot.LOG.info("Removing channel $it")
         }
     }
+
+    fun getLoggingChannel(server: Server): String? {
+        val ps = connection.prepareStatement("SELECT `log_channel` FROM `server_settings` WHERE `id` = ?")
+        ps.setString(1, server.id)
+        val rs = ps.executeQuery()
+        if (rs.next()) {
+            return rs.getString("log_channel")
+        } else {
+            return null
+        }
+    }
 }

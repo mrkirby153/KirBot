@@ -35,5 +35,6 @@ class CommandMute : CommandExecutor() {
         }
         override.manager.deny(Permission.MESSAGE_WRITE).queue()
         message.send().success("${user.effectiveName} has been muted!").queue()
+        server.logger.log("Mute", "${user.effectiveName} has been **muted** by ${message.author.name}")
     }
 }

@@ -6,6 +6,7 @@ import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.success
 import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.Message
+import java.awt.Color
 
 @Command(name = "kick", clearance = Clearance.BOT_MANAGER, description = "Kicks the given user",
         requiredPermissions = arrayOf(Permission.KICK_MEMBERS))
@@ -22,5 +23,6 @@ class CommandKick : CommandExecutor() {
         }
         server.kick(user.id)
         message.send().success("Kicked ${user.name}!").queue()
+        server.logger.log("Kick", "${user.name} has been **kicked** by ${message.author.name}", Color.GREEN)
     }
 }

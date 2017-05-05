@@ -21,6 +21,8 @@ class Server(guild: Guild) : GuildManager(guild), Guild by guild {
 
     val musicManager = MusicManager(this)
 
+    val logger = ServerLogger(this)
+
     fun handleMessageEvent(event: MessageReceivedEvent) {
         // Ignore PMs
         if (event.isFromType(ChannelType.PRIVATE))

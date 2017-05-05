@@ -47,5 +47,6 @@ class CommandUnmute : CommandExecutor() {
             override.delete().queue()
         }
         message.send().success("User unmuted!").queue()
+        server.logger.log("Mute", "${user.effectiveName} has been **unmuted** by ${message.author.name}")
     }
 }

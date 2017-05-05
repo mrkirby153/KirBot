@@ -53,7 +53,8 @@ class Server(guild: Guild) : GuildManager(guild), Guild by guild {
                 }
             }
             proc.matches = matches.toTypedArray()
-            proc.process(event.message)
+            if (proc.matches.isNotEmpty())
+                proc.process(event.message)
             if (proc.stopProcessing)
                 break
         }

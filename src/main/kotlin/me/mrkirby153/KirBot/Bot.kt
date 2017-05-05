@@ -62,6 +62,11 @@ object Bot {
 
         LOG.info("Starting real name updater thread")
         scheduler.scheduleAtFixedRate(RealnameUpdater(), 60, 60, TimeUnit.SECONDS)
+        scheduler.scheduleAtFixedRate({
+            for(guild in jda.guilds){
+                Database.updateChannels(ServerRepository.getServer(guild)!!)
+            }
+        }, 120, 120, TimeUnit.SECONDS)
 
         LOG.info("Bot is connecting to discord")
 

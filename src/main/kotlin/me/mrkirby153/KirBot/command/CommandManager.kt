@@ -5,6 +5,7 @@ import me.mrkirby153.KirBot.command.executors.CommandExecutor
 import me.mrkirby153.KirBot.command.executors.CommandHelp
 import me.mrkirby153.KirBot.command.executors.ShutdownCommand
 import me.mrkirby153.KirBot.command.executors.UpdateNicknames
+import me.mrkirby153.KirBot.command.executors.admin.CommandRefresh
 import me.mrkirby153.KirBot.command.executors.moderation.CommandKick
 import me.mrkirby153.KirBot.command.executors.moderation.CommandMute
 import me.mrkirby153.KirBot.command.executors.moderation.CommandUnmute
@@ -60,6 +61,8 @@ object CommandManager {
         register(CommandToggleAdminMode::class)
 
         register(CommandHelp::class)
+
+        register(CommandRefresh::class)
     }
 
     /**

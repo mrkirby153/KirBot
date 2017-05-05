@@ -67,3 +67,17 @@ fun makeEmbed(title: String?, msg: String?, color: Color? = Color.WHITE, img: St
         build()
     }
 }
+
+fun localizeTime(time: Int): String {
+    if (time < 60) {
+        return "$time seconds"
+    } else if (time < 3600) {
+        return "${time.toDouble() / 60} minutes"
+    } else if (time < 86400) {
+        return "${(time.toDouble() / 3600)} hours"
+    } else if (time < 604800) {
+        return "${time.toDouble() / 86400} days"
+    } else {
+        return "${time.toDouble() / 604800} weeks"
+    }
+}

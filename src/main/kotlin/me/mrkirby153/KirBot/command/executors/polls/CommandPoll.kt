@@ -3,6 +3,7 @@ package me.mrkirby153.KirBot.command.executors.polls
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.executors.CommandExecutor
 import me.mrkirby153.KirBot.user.Clearance
+import me.mrkirby153.KirBot.utils.localizeTime
 import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.Message
 import java.awt.Color
@@ -135,17 +136,5 @@ class CommandPoll : CommandExecutor() {
         return this.time[`val`] ?: return 0
     }
 
-    private fun localizeTime(time: Int): String {
-        if (time < 60) {
-            return "$time seconds"
-        } else if (time < 3600) {
-            return "${time.toDouble() / 60} minutes"
-        } else if (time < 86400) {
-            return "${(time.toDouble() / 3600)} hours"
-        } else if (time < 604800) {
-            return "${time.toDouble() / 86400} days"
-        } else {
-            return "${time.toDouble() / 604800} weeks"
-        }
-    }
+
 }

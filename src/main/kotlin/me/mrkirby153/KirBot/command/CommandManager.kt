@@ -112,6 +112,9 @@ object CommandManager {
 
         var message = event.message.rawContent
 
+        if(message.isEmpty())
+            return
+
         val author = event.author ?: return
 
         var commandPrefix = this.commandPrefixCache[guild.id]

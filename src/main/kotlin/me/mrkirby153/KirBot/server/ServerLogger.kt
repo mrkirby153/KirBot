@@ -2,10 +2,11 @@ package me.mrkirby153.KirBot.server
 
 import me.mrkirby153.KirBot.database.Database
 import me.mrkirby153.KirBot.utils.CachedValue
+import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.entities.MessageChannel
 import java.awt.Color
 
-class ServerLogger(val server: Server) {
+class ServerLogger(val server: Guild) {
     val channel: CachedValue<MessageChannel> = CachedValue(60 * 1000)
 
     @JvmOverloads

@@ -1,7 +1,7 @@
 package me.mrkirby153.KirBot.command.executors
 
-import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.server.Server
+import me.mrkirby153.KirBot.Shard
+import me.mrkirby153.KirBot.data.ServerData
 import me.mrkirby153.KirBot.user.Clearance
 import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.Guild
@@ -18,13 +18,17 @@ abstract class CommandExecutor {
 
     var permissions: Array<Permission> = arrayOf()
 
-    lateinit var server: Server
+    lateinit var shard: Shard
+
+    lateinit var serverData: ServerData
+
+    lateinit var guild: Guild
 
     abstract fun execute(message: Message, args: Array<String>)
 
     protected fun getUserByMention(mention: String): User? {
         val id = mention.replace("[<@!>]".toRegex(), "")
 
-        return Bot.jda.getUserById(id)
+        return shard.getUserById(id)
     }
 }

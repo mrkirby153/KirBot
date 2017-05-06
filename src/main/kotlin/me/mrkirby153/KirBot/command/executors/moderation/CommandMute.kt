@@ -16,7 +16,7 @@ class CommandMute : CommandExecutor() {
             return
         }
 
-        val user = server.getMember(getUserByMention(args[0]))
+        val user = guild.getMember(getUserByMention(args[0]))
 
         if (user == null) {
             message.send().error("Could not find a user by that name!").queue()
@@ -35,6 +35,6 @@ class CommandMute : CommandExecutor() {
         }
         override.manager.deny(Permission.MESSAGE_WRITE).queue()
         message.send().success("${user.effectiveName} has been muted!").queue()
-        server.logger.log("Mute", "${user.effectiveName} has been **muted** by ${message.author.name}")
+        serverData.logger.log("Mute", "${user.effectiveName} has been **muted** by ${message.author.name}")
     }
 }

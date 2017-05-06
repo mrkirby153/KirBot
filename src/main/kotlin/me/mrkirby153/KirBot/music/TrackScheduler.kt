@@ -4,9 +4,9 @@ import com.sedmelluq.discord.lavaplayer.player.AudioPlayer
 import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason
-import me.mrkirby153.KirBot.server.Server
+import net.dv8tion.jda.core.entities.Guild
 
-class TrackScheduler(val audioPlayer: AudioPlayer, val server: Server) : AudioEventAdapter() {
+class TrackScheduler(val audioPlayer: AudioPlayer, val server: Guild) : AudioEventAdapter() {
 
     val queue = mutableListOf<AudioTrack>()
 
@@ -54,7 +54,7 @@ class TrackScheduler(val audioPlayer: AudioPlayer, val server: Server) : AudioEv
     }
 
     fun reset() {
-        server.guild.audioManager.closeAudioConnection()
+        server.audioManager.closeAudioConnection()
         queue.clear()
         audioPlayer.stopTrack()
         playing = false

@@ -20,7 +20,7 @@ class CommandRefresh : CommandExecutor() {
 
         when (arg) {
             "channels" -> {
-                Database.updateChannels(server)
+                Database.updateChannels(guild)
                 message.send().success("Updated server channels!").queue()
             }
             else -> {

@@ -8,6 +8,8 @@ import net.dv8tion.jda.core.entities.*
 import net.dv8tion.jda.core.requests.RestAction
 import java.awt.Color
 import java.io.File
+import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
 import java.util.*
 
 fun File.child(path: String) = File(this, path)
@@ -67,17 +69,28 @@ fun makeEmbed(title: String?, msg: String?, color: Color? = Color.WHITE, img: St
         build()
     }
 }
-
-fun localizeTime(time: Int): String {
+fun localizeTime( time: Int): String {
     if (time < 60) {
         return "$time seconds"
     } else if (time < 3600) {
-        return "${time.toDouble() / 60} minutes"
+        return "${roundTime(2, time.toDouble() / 60)} minutes"
     } else if (time < 86400) {
-        return "${(time.toDouble() / 3600)} hours"
+        return "${(roundTime(2, time.toDouble() / 3600))} hours"
     } else if (time < 604800) {
-        return "${time.toDouble() / 86400} days"
+        return "${roundTime(2, time.toDouble() / 86400)} days"
     } else {
-        return "${time.toDouble() / 604800} weeks"
+        return "${roundTime(2, time.toDouble() / 604800)} weeks"
     }
+}
+
+fun roundTime(degree: Int, number: Double): Double{
+    if(degree == 0)
+        return Math.round(number).toDouble()
+    var format = "#.#"
+    for(i in (1..degree-1))
+        format += "#"
+
+    val sym = DecimalFormatSymbols(Locale.US)
+    val twoDform = DecimalFormat(format, sym)
+    return twoDform.format(number).toDouble()
 }

@@ -1,6 +1,7 @@
 package me.mrkirby153.KirBot.command
 
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.Shard
 import me.mrkirby153.KirBot.command.executors.CommandExecutor
 import me.mrkirby153.KirBot.command.executors.CommandHelp
 import me.mrkirby153.KirBot.command.executors.ShutdownCommand
@@ -15,18 +16,17 @@ import me.mrkirby153.KirBot.command.executors.polls.CommandPoll
 import me.mrkirby153.KirBot.command.executors.search.CommandGoogle
 import me.mrkirby153.KirBot.command.executors.server.CommandClean
 import me.mrkirby153.KirBot.command.processors.LaTeXProcessor
+import me.mrkirby153.KirBot.data.ServerData
 import me.mrkirby153.KirBot.database.CommandType
 import me.mrkirby153.KirBot.database.DBCommand
 import me.mrkirby153.KirBot.database.Database
-import me.mrkirby153.KirBot.server.ServerRepository
 import me.mrkirby153.KirBot.utils.Cache
 import me.mrkirby153.KirBot.utils.getClearance
 import net.dv8tion.jda.core.Permission
-import net.dv8tion.jda.core.entities.Channel
-import net.dv8tion.jda.core.entities.MessageChannel
-import net.dv8tion.jda.core.entities.User
+import net.dv8tion.jda.core.entities.*
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent
 import java.util.concurrent.TimeUnit
+import java.util.regex.Pattern
 import kotlin.reflect.KClass
 
 /**
@@ -104,22 +104,23 @@ object CommandManager {
         messageProcessors.add(cls.java)
     }
 
-    fun call(event: MessageReceivedEvent) {
+    fun call(event: MessageReceivedEvent, guildData: ServerData, shard: Shard, guild: Guild ) {
+        if (event.isFromType(ChannelType.PRIVATE))
+            return
+        // Call message processors
+        process(event, guildData, shard)
+
         var message = event.message.rawContent
 
         val author = event.author ?: return
 
-        val server = ServerRepository.getServer(event.guild) ?: return
-
-        var commandPrefix = this.commandPrefixCache[server.id]
+        var commandPrefix = this.commandPrefixCache[guild.id]
 
         if (commandPrefix == null) {
-            commandPrefix = Database.getCommandPrefix(server)
-            this.commandPrefixCache.put(server.id, commandPrefix)
+            commandPrefix = Database.getCommandPrefix(guild)
+            this.commandPrefixCache.put(guild.id, commandPrefix)
         }
 
-        if (!message.startsWith(commandPrefix))
-            return
 
         message = message.substring(1)
         val parts: Array<String> = message.split(" ").toTypedArray()
@@ -131,9 +132,21 @@ object CommandManager {
         val executor = CommandManager.commands[command.toLowerCase()]
 
 
+        if(event.message.rawContent.toLowerCase() == "~help"){
+            val help = commands["help"] ?: return
+            help.shard = shard
+            help.serverData = guildData
+            help.guild = guild
+            help.execute(event.message, args)
+            return
+        }
+
+        if (!event.message.rawContent.startsWith(commandPrefix))
+            return
+
         if (executor == null) {
-            val customCommand = Database.getCustomCommand(command.toLowerCase(), server) ?: return
-            if (customCommand.clearance.value > author.getClearance(server).value) {
+            val customCommand = Database.getCustomCommand(command.toLowerCase(), guild) ?: return
+            if (customCommand.clearance.value > author.getClearance(guild).value) {
                 event.message.send().error("You do not have permission to perform that command").queue({
                     m ->
                     m.delete().queueAfter(10, TimeUnit.SECONDS)
@@ -144,12 +157,14 @@ object CommandManager {
             return
         }
 
-        executor.server = server
+        executor.shard = shard
+        executor.serverData = guildData
+        executor.guild = guild
 
         // Verify permissions
         val missingPermissions = arrayListOf<Permission>()
         executor.permissions.forEach { permission ->
-            if (!server.getMember(Bot.jda.selfUser).hasPermission(event.channel as Channel, permission)) {
+            if (!guild.getMember(shard.selfUser).hasPermission(event.channel as Channel, permission)) {
                 missingPermissions.add(permission)
             }
         }
@@ -168,6 +183,47 @@ object CommandManager {
             return
         }
         executor.execute(event.message, args)
+    }
+
+    private fun process(event: MessageReceivedEvent, guildData: ServerData, shard: Shard) {
+        var rawMsgText = event.message.content
+        // TODO 5/4/2017 Extract to own method
+        for (processor in messageProcessors) {
+            val proc = processor.newInstance()
+            proc.matches = emptyArray()
+            proc.guildData = guildData
+            proc.shard = shard
+            // Compile regex
+            val pattern = Pattern.compile("(?<=${escape(proc.startSequence)})(.*?)(?=${escape(proc.endSequence)})")
+
+            val matches = mutableListOf<String>()
+            loop@ while (true) {
+                val matcher = pattern.matcher(rawMsgText)
+
+                if (matcher.find()) {
+                    val part = rawMsgText.substring(matcher.start(), matcher.end())
+                    matches.add(part)
+                    rawMsgText = rawMsgText.substring(startIndex = Math.min(matcher.end() + proc.endSequence.length, rawMsgText.length))
+                    if (rawMsgText.isEmpty())
+                        break@loop
+                } else {
+                    break@loop
+                }
+            }
+            proc.matches = matches.toTypedArray()
+            if (proc.matches.isNotEmpty())
+                proc.process(event.message)
+            if (proc.stopProcessing)
+                break
+        }
+    }
+
+    private fun escape(string: String): String {
+        return buildString {
+            string.forEach {
+                this@buildString.append("\\$it")
+            }
+        }
     }
 
     private fun callCustomCommand(channel: MessageChannel, command: DBCommand, args: Array<String>, sender: User) {

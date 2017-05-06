@@ -8,7 +8,7 @@ import net.dv8tion.jda.core.entities.Message
 class CommandVolume : MusicCommand() {
 
     override fun exec(message: Message, args: Array<String>) {
-        val audioPlayer = server.musicManager.audioPlayer
+        val audioPlayer = serverData.musicManager.audioPlayer
         if (args.isEmpty()) {
             message.send().info("Current Volume: **${audioPlayer.volume}**").queue()
             return

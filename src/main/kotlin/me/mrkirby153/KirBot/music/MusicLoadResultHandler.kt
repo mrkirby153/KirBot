@@ -4,11 +4,12 @@ import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
-import me.mrkirby153.KirBot.server.Server
+import me.mrkirby153.KirBot.data.ServerData
+import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.entities.MessageChannel
 import java.awt.Color
 
-class MusicLoadResultHandler(val server: Server, val channel: MessageChannel, val callback: (AudioTrack?) -> Unit) : AudioLoadResultHandler {
+class MusicLoadResultHandler(val server: ServerData, val channel: MessageChannel, val callback: (AudioTrack?) -> Unit) : AudioLoadResultHandler {
 
     override fun trackLoaded(p0: AudioTrack?) {
         if (p0 == null)

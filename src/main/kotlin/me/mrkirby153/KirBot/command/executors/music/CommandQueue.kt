@@ -9,10 +9,10 @@ import java.awt.Color
 @Command(name = "queue", description = "Shows the current play queue")
 class CommandQueue : MusicCommand() {
     override fun exec(message: Message, args: Array<String>) {
-        val queue = server.musicManager.trackScheduler.queue
-        val duration = server.musicManager.trackScheduler.queueLength()
+        val queue = serverData.musicManager.trackScheduler.queue
+        val duration = serverData.musicManager.trackScheduler.queueLength()
 
-        val np = server.musicManager.trackScheduler.nowPlaying
+        val np = serverData.musicManager.trackScheduler.nowPlaying
 
         var displayedTracks = 0
 

@@ -11,17 +11,17 @@ import java.util.concurrent.TimeUnit
 @Command(name = "skip", description = "Votes to skip the current song")
 class CommandSkip : MusicCommand() {
     override fun exec(message: Message, args: Array<String>) {
-        if (!server.musicManager.trackScheduler.playing) {
+        if (!serverData.musicManager.trackScheduler.playing) {
             message.send().error("I'm not playing anything right now").queue()
             return
         }
-        if(server.musicManager.adminOnly){
+        if(serverData.musicManager.adminOnly){
             forceSkip(message)
             return
         }
         if (!args.isEmpty()) {
             if (args[0].toLowerCase() == "force") {
-                val clearance = message.author.getClearance(server)
+                val clearance = message.author.getClearance(guild)
                 if (clearance.value >= Clearance.SERVER_ADMINISTRATOR.value) {
                     forceSkip(message)
                     return
@@ -29,7 +29,7 @@ class CommandSkip : MusicCommand() {
             }
         }
         // Start a vote
-        val currentlyPlaying = server.musicManager.trackScheduler.nowPlaying
+        val currentlyPlaying = serverData.musicManager.trackScheduler.nowPlaying
         message.send().embed("Music") {
             color = Color.CYAN
             description = buildString {
@@ -47,7 +47,7 @@ class CommandSkip : MusicCommand() {
                 clearFields()
             }.build()).queueAfter(30, TimeUnit.SECONDS) {
 
-                if(server.musicManager.trackScheduler.nowPlaying?.identifier != currentlyPlaying?.identifier){
+                if(serverData.musicManager.trackScheduler.nowPlaying?.identifier != currentlyPlaying?.identifier){
                     it.send().embed("Music"){
                         color = Color.CYAN
                         description = "Song has changed, canceling vote"
@@ -68,7 +68,7 @@ class CommandSkip : MusicCommand() {
                     description = buildString {
                         if (skip > stay) {
                             appendln("The vote has passed! Playing next song.")
-                            server.musicManager.trackScheduler.playNext()
+                            serverData.musicManager.trackScheduler.playNext()
                         } else {
                             appendln("The vote has failed! The song will stay.")
                         }
@@ -83,6 +83,6 @@ class CommandSkip : MusicCommand() {
             color = Color.CYAN
             description = "Playing next song..."
         }.rest().queue()
-        server.musicManager.trackScheduler.playNext()
+        serverData.musicManager.trackScheduler.playNext()
     }
 }

@@ -10,8 +10,8 @@ abstract class MusicCommand : CommandExecutor() {
     abstract fun exec(message: Message, args: Array<String>)
 
     override fun execute(message: Message, args: Array<String>) {
-        if (server.musicManager.adminOnly) {
-            if (server.getMember(message.author).getClearance(server).value < Clearance.SERVER_ADMINISTRATOR.value) {
+        if (serverData.musicManager.adminOnly) {
+            if (guild.getMember(message.author).getClearance(guild).value < Clearance.SERVER_ADMINISTRATOR.value) {
                 message.send().error("The DJ is in Admin-Only mode :cry: \nOnly those with the `ADMINISTRATOR` role can control the music").queue()
                 return
             }

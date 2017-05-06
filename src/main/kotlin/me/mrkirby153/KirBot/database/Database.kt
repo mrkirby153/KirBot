@@ -2,9 +2,9 @@ package me.mrkirby153.KirBot.database
 
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.realname.RealnameSetting
-import me.mrkirby153.KirBot.server.Server
 import me.mrkirby153.KirBot.user.Clearance
 import net.dv8tion.jda.core.entities.Channel
+import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.entities.Member
 import net.dv8tion.jda.core.entities.TextChannel
 import java.sql.Connection
@@ -36,7 +36,7 @@ object Database {
             return null
     }
 
-    fun getCustomCommand(cmd: String, server: Server): DBCommand? {
+    fun getCustomCommand(cmd: String, server: Guild): DBCommand? {
         val ps = connection.prepareStatement("SELECT `id`, `server`, `name`, `data`, `clearance`, `type` FROM `custom_commands` WHERE `server` = ? AND `name` = ?")
         ps.setString(1, server.id)
         ps.setString(2, cmd)
@@ -50,7 +50,7 @@ object Database {
             return null
     }
 
-    fun getCustomCommands(server: Server): List<DBCommand> {
+    fun getCustomCommands(server: Guild): List<DBCommand> {
         val cmds = mutableListOf<DBCommand>()
 
         val ps = connection.prepareStatement("SELECT `id`, `server`, `name`, `data`, `clearance`, `type` FROM `custom_commands` WHERE `server` = ?")
@@ -64,7 +64,7 @@ object Database {
         return cmds
     }
 
-    fun getRealnameSetting(server: Server): RealnameSetting? {
+    fun getRealnameSetting(server: Guild): RealnameSetting? {
         val ps = connection.prepareStatement("SELECT `realname` FROM `server_settings` WHERE `id` = ?")
         ps.setString(1, server.id)
 
@@ -75,7 +75,7 @@ object Database {
         return null
     }
 
-    fun requireRealname(server: Server): Boolean {
+    fun requireRealname(server: Guild): Boolean {
         val ps = connection.prepareStatement("SELECT `require_realname` FROM `server_settings` WHERE `id` = ?")
         ps.setString(1, server.id)
 
@@ -85,7 +85,7 @@ object Database {
         return false
     }
 
-    fun getCommandPrefix(server: Server): String {
+    fun getCommandPrefix(server: Guild): String {
         val ps = connection.prepareStatement("SELECT `command_discriminator` FROM `server_settings` WHERE `id` = ?")
         ps.setString(1, server.id)
         val rs = ps.executeQuery()
@@ -94,7 +94,7 @@ object Database {
         return "!"
     }
 
-    fun onJoin(server: Server) {
+    fun onJoin(server: Guild) {
         Database.updateChannels(server)
         if (!serverExists(server)) {
             val ps = connection.prepareStatement("INSERT INTO `server_settings` (`id`, `name`, `require_realname`, `realname`, `created_at`, `updated_at`) VALUES(?, ?, '0', 'OFF', ?, ?)")
@@ -111,14 +111,14 @@ object Database {
         }
     }
 
-    fun onLeave(server: Server) {
+    fun onLeave(server: Guild) {
         val ps = connection.prepareStatement("DELETE FROM `server_settings` WHERE `id` = ?")
         ps.setString(1, server.id)
         ps.executeUpdate()
         removeChannel(server)
     }
 
-    fun serverExists(server: Server): Boolean {
+    fun serverExists(server: Guild): Boolean {
         val ps = connection.prepareStatement("SELECT COUNT(*) AS `count` FROM `server_settings` WHERE `id` = ?")
         ps.setString(1, server.id)
         val rs = ps.executeQuery()
@@ -147,7 +147,7 @@ object Database {
         ps.executeUpdate()
     }
 
-    fun getChannels(server: Server): MutableList<String> {
+    fun getChannels(server: Guild): MutableList<String> {
         val chans = mutableListOf<String>()
         val ps = connection.prepareStatement("SELECT `id` FROM `channels` WHERE `server` = ?")
         ps.setString(1, server.id)
@@ -158,7 +158,7 @@ object Database {
         return chans
     }
 
-    fun removeChannel(server: Server) {
+    fun removeChannel(server: Guild) {
         val ps = connection.prepareStatement("DELETE FROM `channels` WHERE `server` = ?")
         ps.setString(1, server.id)
         ps.executeUpdate()
@@ -170,7 +170,7 @@ object Database {
         ps.executeUpdate()
     }
 
-    fun updateChannels(server: Server) {
+    fun updateChannels(server: Guild) {
         val chans = getChannels(server)
         val c = mutableListOf<Channel>()
         c.addAll(server.textChannels)
@@ -189,7 +189,7 @@ object Database {
         }
     }
 
-    fun getLoggingChannel(server: Server): String? {
+    fun getLoggingChannel(server: Guild): String? {
         val ps = connection.prepareStatement("SELECT `log_channel` FROM `server_settings` WHERE `id` = ?")
         ps.setString(1, server.id)
         val rs = ps.executeQuery()

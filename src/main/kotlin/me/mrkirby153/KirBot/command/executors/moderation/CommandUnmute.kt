@@ -17,7 +17,7 @@ class CommandUnmute : CommandExecutor() {
             return
         }
 
-        val user = server.getMember(getUserByMention(args[0]))
+        val user = guild.getMember(getUserByMention(args[0]))
 
         if (user == null) {
             message.send().error("Could not find a user by that name!").queue()
@@ -47,6 +47,6 @@ class CommandUnmute : CommandExecutor() {
             override.delete().queue()
         }
         message.send().success("User unmuted!").queue()
-        server.logger.log("Mute", "${user.effectiveName} has been **unmuted** by ${message.author.name}")
+        serverData.logger.log("Mute", "${user.effectiveName} has been **unmuted** by ${message.author.name}")
     }
 }

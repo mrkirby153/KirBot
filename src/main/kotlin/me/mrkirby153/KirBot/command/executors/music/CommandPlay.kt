@@ -11,10 +11,10 @@ import java.awt.Color
 class CommandPlay : MusicCommand() {
 
     override fun exec(message: Message, args: Array<String>) {
-        val member = server.getMember(message.author) ?: return
+        val member = guild.getMember(message.author) ?: return
 
-        if (server.selfMember.voiceState.inVoiceChannel() && member.voiceState.channel != server.selfMember.voiceState.channel) {
-            message.send().error("I'm already playing music in **${server.selfMember.voiceState.channel.name}**. Join me there").queue()
+        if (guild.selfMember.voiceState.inVoiceChannel() && member.voiceState.channel != guild.selfMember.voiceState.channel) {
+            message.send().error("I'm already playing music in **${guild.selfMember.voiceState.channel.name}**. Join me there").queue()
             return
         }
 
@@ -24,8 +24,8 @@ class CommandPlay : MusicCommand() {
         }
 
         if (args.isEmpty()) {
-            if (!server.musicManager.trackScheduler.playing) {
-                server.musicManager.trackScheduler.resume()
+            if (!serverData.musicManager.trackScheduler.playing) {
+                serverData.musicManager.trackScheduler.resume()
                 message.send().embed("Music") {
                     color = Color.CYAN
                     description = "Resumed!"
@@ -50,27 +50,27 @@ class CommandPlay : MusicCommand() {
             return
         }
 
-        Bot.playerManager.loadItem(url, MusicLoadResultHandler(server, message.channel, { track ->
+        Bot.playerManager.loadItem(url, MusicLoadResultHandler(serverData, message.channel, { track ->
             if (track != null)
                 message.send().embed("Music Queue") {
                     color = Color.CYAN
                     description = "Added __**[${track.info.title}](${track.info.uri})**__ to the queue!"
                 }.rest().queue()
-            if (!server.selfMember.voiceState.inVoiceChannel()) {
+            if (!guild.selfMember.voiceState.inVoiceChannel()) {
                 message.send().embed("Music") {
                     color = Color.CYAN
                     description = "Joined voice channel **${member.voiceState.channel.name}**"
                 }.rest().queue()
                 connectToVoice(member.voiceState.channel)
                 // Start the music
-                server.musicManager.trackScheduler.playNext()
+                serverData.musicManager.trackScheduler.playNext()
             }
         }))
     }
 
     fun connectToVoice(channel: VoiceChannel) {
-        server.musicManager.audioPlayer.volume = 100
-        server.guild.audioManager.sendingHandler = server.musicManager.audioSender
-        server.guild.audioManager.openAudioConnection(channel)
+        serverData.musicManager.audioPlayer.volume = 100
+        guild.audioManager.sendingHandler = serverData.musicManager.audioSender
+        guild.audioManager.openAudioConnection(channel)
     }
 }

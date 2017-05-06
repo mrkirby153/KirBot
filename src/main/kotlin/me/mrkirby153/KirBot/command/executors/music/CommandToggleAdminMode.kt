@@ -3,7 +3,6 @@ package me.mrkirby153.KirBot.command.executors.music
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.executors.CommandExecutor
 import me.mrkirby153.KirBot.user.Clearance
-import net.dv8tion.jda.core.AbstractEmbedBuilder
 import net.dv8tion.jda.core.entities.Message
 import java.awt.Color
 
@@ -14,16 +13,16 @@ class CommandToggleAdminMode : CommandExecutor() {
             if (args[0] == "status") {
                 message.send().embed("Admin Music Mode") {
                     color = Color.PINK
-                    description = if (server.musicManager.adminOnly) "ON" else "OFF"
+                    description = if (serverData.musicManager.adminOnly) "ON" else "OFF"
                 }.rest().queue()
                 return
             }
         }
-        server.musicManager.adminOnly = !server.musicManager.adminOnly
+        serverData.musicManager.adminOnly = !serverData.musicManager.adminOnly
 
         message.send().embed("Admin Music Mode") {
             color = Color.PINK
-            description = if (server.musicManager.adminOnly) "ON" else "OFF"
+            description = if (serverData.musicManager.adminOnly) "ON" else "OFF"
         }.rest().queue()
     }
 }

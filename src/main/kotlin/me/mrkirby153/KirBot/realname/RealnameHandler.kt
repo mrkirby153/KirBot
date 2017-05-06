@@ -1,15 +1,16 @@
 package me.mrkirby153.KirBot.realname
 
+import me.mrkirby153.KirBot.data.ServerData
 import me.mrkirby153.KirBot.database.Database
-import me.mrkirby153.KirBot.server.Server
 import net.dv8tion.jda.core.Permission
+import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.entities.Member
 import net.dv8tion.jda.core.entities.Role
 import net.dv8tion.jda.core.exceptions.PermissionException
 import net.dv8tion.jda.core.utils.PermissionUtil
 
 
-class RealnameHandler(var server: Server) {
+class RealnameHandler(var server: Guild, var serverData: ServerData) {
 
     @JvmOverloads
     fun updateNames(silent: Boolean = false) {
@@ -48,10 +49,10 @@ class RealnameHandler(var server: Server) {
         }
     }
 
-    fun setNickname(server: Server, member: Member, name: String?) {
-        if (PermissionUtil.checkPermission(server.guild, server.selfMember, Permission.NICKNAME_MANAGE))
+    fun setNickname(server: Guild, member: Member, name: String?) {
+        if (PermissionUtil.checkPermission(server, server.selfMember, Permission.NICKNAME_MANAGE))
             try {
-                server.guild.controller.setNickname(member, name).queue()
+                server.controller.setNickname(member, name).queue()
             } catch (e: PermissionException) {
                 // Ignore
             }
@@ -77,7 +78,7 @@ class RealnameHandler(var server: Server) {
     }
 
     private fun cleanupRealNameRoles() {
-        val repository = server.repository() ?: return
+        val repository = serverData.repository
         val unidentified = repository.get(String::class.java, "unidentified-role")
         val id = repository.get(String::class.java, "identified-role")
 
@@ -101,12 +102,12 @@ class RealnameHandler(var server: Server) {
     }
 
     fun getUnidentifiedRole(): Role {
-        val roleId = server.repository()?.get(String::class.java, "unidentified-role")
+        val roleId = serverData.repository.get(String::class.java, "unidentified-role")
         if (roleId == null) {
             // Create, save, and return the role
             val role = server.controller.createRole().complete(true)
             role.manager.setName("Unidentified").complete(true)
-            server.repository()?.put("unidentified-role", role.id)
+            serverData.repository.put("unidentified-role", role.id)
             return role
         } else {
             val role = server.roles.first { it.id == roleId }
@@ -115,12 +116,12 @@ class RealnameHandler(var server: Server) {
     }
 
     fun getIdentifiedRole(): Role {
-        val roleId = server.repository()?.get(String::class.java, "identified-role")
+        val roleId = serverData.repository.get(String::class.java, "identified-role")
         if (roleId == null) {
             // Create, save, and return the role
             val role = server.controller.createRole().complete(true)
             role.manager.setName("Identified").complete(true)
-            server.repository()?.put("identified-role", role.id)
+            serverData.repository.put("identified-role", role.id)
             return role
         } else {
             val role = server.roles.first { it.id == roleId }

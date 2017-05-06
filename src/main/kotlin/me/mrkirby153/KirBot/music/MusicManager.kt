@@ -2,9 +2,9 @@ package me.mrkirby153.KirBot.music
 
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.server.Server
+import net.dv8tion.jda.core.entities.Guild
 
-class MusicManager(val server: Server) {
+class MusicManager(val server: Guild) {
 
     val audioPlayer: AudioPlayer = Bot.playerManager.createPlayer()
 

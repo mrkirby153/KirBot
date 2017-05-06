@@ -21,8 +21,8 @@ class CommandKick : CommandExecutor() {
             message.send().error("I could not find a user by that name!").queue()
             return
         }
-        server.kick(user.id)
+        guild.controller.kick(user.id).queue()
         message.send().success("Kicked ${user.name}!").queue()
-        server.logger.log("Kick", "${user.name} has been **kicked** by ${message.author.name}", Color.GREEN)
+        serverData.logger.log("Kick", "${user.name} has been **kicked** by ${message.author.name}", Color.GREEN)
     }
 }

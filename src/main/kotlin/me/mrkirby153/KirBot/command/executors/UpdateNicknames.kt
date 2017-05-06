@@ -9,7 +9,7 @@ import net.dv8tion.jda.core.entities.Message
 @Command(name = "updatenames", clearance = Clearance.SERVER_ADMINISTRATOR)
 class UpdateNicknames : CommandExecutor() {
     override fun execute(message: Message, args: Array<String>) {
-        val realnameHandler = RealnameHandler(server)
+        val realnameHandler = RealnameHandler(guild, serverData)
         realnameHandler.updateNames()
         message.send().success("Real names were refreshed from the database!").queue()
     }

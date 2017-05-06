@@ -11,13 +11,20 @@ import java.awt.Color
 @Command(name = "stats", clearance = Clearance.USER, description = "Returns some statistics about the robot")
 class CommandStats : CommandExecutor() {
     override fun execute(message: Message, args: Array<String>) {
-        val jda = Bot.jda
+        var guilds = 0
+        var users = 0
+
+        for(shard in Bot.shards){
+            guilds += shard.guilds.size
+            users += shard.users.size
+        }
 
         message.send().embed("Bot Statistics") {
             color = Color.BLUE
 
-            field("Servers", true, jda.guilds.size)
-            field("Users", true, jda.users.size)
+            field("Servers", true, guilds)
+            field("Shard", true, "${shard.id} / ${Bot.numShards}")
+            field("Users", true, users)
             val time = System.currentTimeMillis() - Bot.startTime
             field("Uptime", true, localizeTime((time / 1000).toInt()))
         }.rest().queue()

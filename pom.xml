@@ -144,6 +144,11 @@
             <version>3.0.0_26</version>
         </dependency>
         <dependency>
+            <groupId>com.sedmelluq</groupId>
+            <artifactId>jda-nas</artifactId>
+            <version>1.0.5</version>
+        </dependency>
+        <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-core</artifactId>
             <version>2.5</version>

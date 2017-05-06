@@ -1,5 +1,6 @@
 package me.mrkirby153.KirBot
 
+import com.sedmelluq.discord.lavaplayer.jdaudp.NativeAudioSendFactory
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.source.beam.BeamAudioSourceManager
@@ -96,6 +97,7 @@ object Bot {
             } else {
                 setGame(Game.of("| ~help"))
             }
+            setAudioSendFactory(NativeAudioSendFactory())
             buildBlocking()
         }
     }

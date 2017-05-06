@@ -39,7 +39,8 @@ class CommandPlay : MusicCommand() {
             }.rest().queue()
         }
 
-        val url = args[0]
+        // Remove playlist from URL to prevent accidental queueing of playlists
+        val url = args[0].replace(Regex("&list=[A-Za-z0-9\\-+_]+"), "")
 
         if (!(url.contains("youtu") || url.contains("vimeo") || url.contains("soundcloud"))) {
             message.send().embed("Error") {

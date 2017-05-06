@@ -1,6 +1,8 @@
 package me.mrkirby153.KirBot.command.executors.music
 
 import me.mrkirby153.KirBot.command.Command
+import me.mrkirby153.KirBot.user.Clearance
+import me.mrkirby153.KirBot.utils.getClearance
 import net.dv8tion.jda.core.entities.Message
 import net.dv8tion.jda.core.entities.MessageEmbed
 import net.dv8tion.jda.core.u
@@ -9,6 +11,20 @@ import java.awt.Color
 @Command(name = "queue", description = "Shows the current play queue")
 class CommandQueue : MusicCommand() {
     override fun exec(message: Message, args: Array<String>) {
+        if(args.isNotEmpty()){
+            if(args[0] == "clear"){
+                if(message.author.getClearance(guild).value >= Clearance.SERVER_ADMINISTRATOR.value) {
+                    serverData.musicManager.trackScheduler.queue.clear()
+                    message.send().embed("Queue") {
+                        color = Color.CYAN
+                        description = "Queue Cleared!"
+                    }.rest().queue()
+                } else {
+                    message.send().error("You do not have permission to perform that command!").queue()
+                }
+                return
+            }
+        }
         val queue = serverData.musicManager.trackScheduler.queue
         val duration = serverData.musicManager.trackScheduler.queueLength()
 

@@ -54,6 +54,7 @@ fun ResponseBuilder.success(msg: String): RestAction<Message> {
         color = Color.GREEN
     }.rest()
 }
+
 @JvmOverloads
 fun makeEmbed(title: String?, msg: String?, color: Color? = Color.WHITE, img: String? = null, thumb: String? = null, author: User? = null): MessageEmbed {
     return EmbedBuilder().run {
@@ -69,7 +70,8 @@ fun makeEmbed(title: String?, msg: String?, color: Color? = Color.WHITE, img: St
         build()
     }
 }
-fun localizeTime( time: Int): String {
+
+fun localizeTime(time: Int): String {
     if (time < 60) {
         return "$time seconds"
     } else if (time < 3600) {
@@ -83,14 +85,32 @@ fun localizeTime( time: Int): String {
     }
 }
 
-fun roundTime(degree: Int, number: Double): Double{
-    if(degree == 0)
+fun roundTime(degree: Int, number: Double): Double {
+    if (degree == 0)
         return Math.round(number).toDouble()
     var format = "#.#"
-    for(i in (1..degree-1))
+    for (i in (1..degree - 1))
         format += "#"
 
     val sym = DecimalFormatSymbols(Locale.US)
     val twoDform = DecimalFormat(format, sym)
     return twoDform.format(number).toDouble()
+}
+
+inline fun <T : AutoCloseable, R> T.use(block: (T) -> R): R {
+    var closed = false
+    try {
+        return block(this)
+    } catch (e: Exception) {
+        closed = true
+        try {
+            this.close()
+        } catch (closeException: Exception) {
+        }
+        throw e
+    } finally {
+        if (!closed) {
+            this.close()
+        }
+    }
 }

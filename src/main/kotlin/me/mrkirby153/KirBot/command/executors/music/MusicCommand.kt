@@ -16,6 +16,8 @@ abstract class MusicCommand : CommandExecutor() {
                 return
             }
         }
+        if (!serverData.getMusicData().enabled)
+            return
         exec(message, args)
     }
 }

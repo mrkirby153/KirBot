@@ -3,6 +3,8 @@ package me.mrkirby153.KirBot.data
 import com.google.gson.GsonBuilder
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.Shard
+import me.mrkirby153.KirBot.database.Database
+import me.mrkirby153.KirBot.music.MusicData
 import me.mrkirby153.KirBot.music.MusicManager
 import me.mrkirby153.KirBot.server.ServerLogger
 import me.mrkirby153.KirBot.server.data.DataRepository
@@ -36,5 +38,7 @@ class ServerData(val id: Long, shard: Shard) {
     val musicManager = MusicManager(guild)
     val logger = ServerLogger(guild)
 
-
+    fun getMusicData(): MusicData {
+        return Database.getMusicData(guild)
+    }
 }

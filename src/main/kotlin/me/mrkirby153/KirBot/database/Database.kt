@@ -1,6 +1,7 @@
 package me.mrkirby153.KirBot.database
 
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.music.MusicData
 import me.mrkirby153.KirBot.realname.RealnameSetting
 import me.mrkirby153.KirBot.user.Clearance
 import net.dv8tion.jda.core.entities.Channel
@@ -197,6 +198,25 @@ object Database {
             return rs.getString("log_channel")
         } else {
             return null
+        }
+    }
+
+    fun getMusicData(server: Guild): MusicData {
+        val ps = connection.prepareStatement("SELECT * FROM `music_settings` WHERE `id` = ?")
+        ps.setString(1, server.id)
+
+        val rs = ps.executeQuery()
+        if (rs.next()) {
+            return MusicData(server.idLong, rs.getBoolean("enabled"), MusicData.WhitelistMode.valueOf(rs.getString("mode")),
+                    rs.getString("channels"), rs.getString("blacklist_songs"), rs.getInt("max_queue_length"), rs.getInt("max_song_length"),
+                    rs.getInt("skip_cooldown"), rs.getInt("skip_timer"), rs.getBoolean("playlists"))
+        } else {
+            connection.prepareStatement("INSERT INTO `music_settings` (`id`, `created_at`, `updated_at`) VALUES(?, ?, ?)").apply {
+                setString(1, server.id)
+                setTimestamp(2, Timestamp(System.currentTimeMillis()))
+                setTimestamp(3, Timestamp(System.currentTimeMillis()))
+            }.executeUpdate()
+            return MusicData(server.idLong)
         }
     }
 }

@@ -18,6 +18,14 @@ class DataRepository(@Transient var server: Guild) {
         return GSON.fromJson(data[key], type)
     }
 
+    fun getBoolean(key: String): Boolean? {
+        return get(Boolean::class.java, key)
+    }
+
+    fun getString(key: String, default: String?): String? {
+        return get(String::class.java, key) ?: default
+    }
+
     fun put(key: String, value: Any) {
         data.put(key, GSON.toJson(value))
         save()

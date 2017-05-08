@@ -15,38 +15,36 @@ class RealnameHandler(var server: Guild, var serverData: ServerData) {
     @JvmOverloads
     fun updateNames(silent: Boolean = false) {
         val realnameSetting = Database.getRealnameSetting(server) ?: return
-        if (realnameSetting == RealnameSetting.OFF) {
-            server.members.forEach({
-                updateUnidentified(it, false)
-                setNickname(server, it, null)
-            })
+        if(realnameSetting == RealnameSetting.OFF){
+            val reset = serverData.repository.getBoolean("has-reset-names") ?: false
+            if(!reset){
+                server.members.forEach{
+                    updateUnidentified(it, false)
+                    setNickname(server, it, null)
+                }
+                serverData.repository.put("has-reset-names", true)
+            }
             return
         }
-        // Members who have a real name in the database
-        val identifiedMemebrs = mutableListOf<Member>()
-        for (member in server.members) {
-            if (member.user.isBot) {
-                // Identify bots
-                identifiedMemebrs.add(member)
-                continue
+        serverData.repository.remove("has-reset-names")
+        // Members who have been identified
+        val identifiedMembers = mutableListOf<Member>()
+        server.members.forEach{ member ->
+            if(member.user.isBot){
+                identifiedMembers.add(member)
+                return@forEach
             }
             val name = Database.getRealname(realnameSetting == RealnameSetting.FIRST_ONLY, member)
-            if (name == null) {
-                // reset nickname
+            if(name == null){
                 setNickname(server, member, null)
-                continue
+                return@forEach
             }
-            identifiedMemebrs.add(member)
-            updateUnidentified(member, true)
-            if (member.effectiveName != name) {
+            identifiedMembers.add(member)
+            if(member.effectiveName != name)
                 setNickname(server, member, name)
-            }
         }
-        server.members.filter {
-            !identifiedMemebrs.contains(it)
-        }.forEach {
-            updateUnidentified(it, false)
-        }
+        server.members.filter { !identifiedMembers.contains(it) }.forEach{updateUnidentified(it, false)}
+        server.members.filter {  identifiedMembers.contains(it)}.forEach{updateUnidentified(it, true)}
     }
 
     fun setNickname(server: Guild, member: Member, name: String?) {
@@ -66,15 +64,19 @@ class RealnameHandler(var server: Guild, var serverData: ServerData) {
         val unidentifiedRole = getUnidentifiedRole()
         val identifiedRole = getIdentifiedRole()
         if (identified) {
-            server.controller.removeRolesFromMember(member, unidentifiedRole).queue {
-                server.controller.addRolesToMember(member, identifiedRole).queue()
+            if(member.roles.contains(unidentifiedRole)){
+                server.controller.removeRolesFromMember(member, unidentifiedRole).queue()
             }
+            if(!member.roles.contains(identifiedRole))
+                server.controller.addRolesToMember(member, identifiedRole).queue()
         } else {
-            server.controller.removeRolesFromMember(member, identifiedRole).queue {
+            if(!member.roles.contains(unidentifiedRole)){
                 server.controller.addRolesToMember(member, unidentifiedRole).queue()
             }
+            if(member.roles.contains(identifiedRole)){
+                server.controller.removeRolesFromMember(member, identifiedRole).queue()
+            }
         }
-
     }
 
     private fun cleanupRealNameRoles() {

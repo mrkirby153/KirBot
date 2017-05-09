@@ -9,7 +9,8 @@ import net.dv8tion.jda.core.entities.Message
 import net.dv8tion.jda.core.entities.TextChannel
 import java.awt.Color
 
-@Command(name = "unmute", description = "Unmutes a user", clearance = Clearance.BOT_MANAGER, requiredPermissions = arrayOf(Permission.MANAGE_CHANNEL))
+@Command(name = "unmute", description = "Unmutes a user", clearance = Clearance.BOT_MANAGER,
+        requiredPermissions = arrayOf(Permission.MANAGE_CHANNEL), category = "Moderation")
 class CommandUnmute : CommandExecutor() {
     override fun execute(message: Message, args: Array<String>) {
         if (args.isEmpty()) {

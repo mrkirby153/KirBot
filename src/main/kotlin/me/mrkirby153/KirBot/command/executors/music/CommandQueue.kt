@@ -8,7 +8,7 @@ import net.dv8tion.jda.core.entities.MessageEmbed
 import net.dv8tion.jda.core.u
 import java.awt.Color
 
-@Command(name = "queue", description = "Shows the current play queue")
+@Command(name = "queue", description = "Shows the current play queue", category = "Music")
 class CommandQueue : MusicCommand() {
     override fun exec(message: Message, args: Array<String>) {
         if(args.isNotEmpty()){

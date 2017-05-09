@@ -6,7 +6,7 @@ import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.success
 import net.dv8tion.jda.core.entities.Message
 
-@Command(name = "updatenames", clearance = Clearance.SERVER_ADMINISTRATOR)
+@Command(name = "updatenames", clearance = Clearance.SERVER_ADMINISTRATOR, category = "Nicknames")
 class UpdateNicknames : CommandExecutor() {
     override fun execute(message: Message, args: Array<String>) {
         val realnameHandler = RealnameHandler(guild, serverData)

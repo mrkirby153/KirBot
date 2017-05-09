@@ -8,7 +8,8 @@ import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.Message
 import net.dv8tion.jda.core.entities.TextChannel
 
-@Command(name = "mute", description = "Mute a given user", clearance = Clearance.BOT_MANAGER, requiredPermissions = arrayOf(Permission.MANAGE_CHANNEL))
+@Command(name = "mute", description = "Mute a given user", clearance = Clearance.BOT_MANAGER,
+        requiredPermissions = arrayOf(Permission.MANAGE_CHANNEL), category = "Moderation")
 class CommandMute : CommandExecutor() {
     override fun execute(message: Message, args: Array<String>) {
         if (args.isEmpty()) {

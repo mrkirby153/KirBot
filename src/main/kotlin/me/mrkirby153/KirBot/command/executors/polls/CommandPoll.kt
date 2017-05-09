@@ -10,7 +10,8 @@ import java.awt.Color
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 
-@Command(name = "poll", description = "Create polls!", clearance = Clearance.USER, requiredPermissions = arrayOf(Permission.MESSAGE_ADD_REACTION))
+@Command(name = "poll", description = "Create polls!", clearance = Clearance.USER,
+        requiredPermissions = arrayOf(Permission.MESSAGE_ADD_REACTION), category = "Fun")
 class CommandPoll : CommandExecutor() {
 
     val time = mutableMapOf<String, Int>()

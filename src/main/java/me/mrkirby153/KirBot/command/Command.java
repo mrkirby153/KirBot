@@ -24,4 +24,6 @@ public @interface Command {
 
     Permission[] requiredPermissions() default {Permission.MESSAGE_WRITE};
 
+    String category() default "Uncategorized";
+
 }

@@ -10,6 +10,8 @@ import net.dv8tion.jda.core.entities.User
 
 abstract class CommandExecutor {
 
+    lateinit var command: String
+
     var aliases: Array<String> = arrayOf<String>()
 
     var description: String = "No descrpition provided"
@@ -17,6 +19,8 @@ abstract class CommandExecutor {
     var clearance: Clearance = Clearance.USER
 
     var permissions: Array<Permission> = arrayOf()
+
+    var category: String = "Uncategoriezed"
 
     lateinit var shard: Shard
 

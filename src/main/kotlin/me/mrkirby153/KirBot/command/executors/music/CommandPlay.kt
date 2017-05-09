@@ -8,7 +8,7 @@ import net.dv8tion.jda.core.entities.Message
 import net.dv8tion.jda.core.entities.VoiceChannel
 import java.awt.Color
 
-@Command(name = "play", description = "Play some tunes")
+@Command(name = "play", description = "Play some tunes", category = "Music")
 class CommandPlay : MusicCommand() {
 
     override fun exec(message: Message, args: Array<String>) {

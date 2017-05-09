@@ -9,7 +9,7 @@ import net.dv8tion.jda.core.entities.Message
 import java.awt.Color
 
 @Command(name = "kick", clearance = Clearance.BOT_MANAGER, description = "Kicks the given user",
-        requiredPermissions = arrayOf(Permission.KICK_MEMBERS))
+        requiredPermissions = arrayOf(Permission.KICK_MEMBERS), category = "Moderation")
 class CommandKick : CommandExecutor() {
     override fun execute(message: Message, args: Array<String>) {
         if(args.isEmpty()){

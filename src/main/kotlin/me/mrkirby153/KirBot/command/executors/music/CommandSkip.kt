@@ -9,7 +9,7 @@ import net.dv8tion.jda.core.entities.Message
 import java.awt.Color
 import java.util.concurrent.TimeUnit
 
-@Command(name = "skip", description = "Votes to skip the current song")
+@Command(name = "skip", description = "Votes to skip the current song", category = "Music")
 class CommandSkip : MusicCommand() {
 
     val skipCooldown = mutableMapOf<Long, Long>()

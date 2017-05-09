@@ -89,6 +89,8 @@ object CommandManager {
         cmd.clearance = annotation.clearance
         cmd.description = annotation.description
         cmd.permissions = annotation.requiredPermissions
+        cmd.category = annotation.category
+        cmd.command = annotation.name
         commands[annotation.name.toLowerCase()] = cmd
 
         annotation.aliases.forEach { a -> commands[a.toLowerCase()] = cmd }
@@ -104,7 +106,7 @@ object CommandManager {
         messageProcessors.add(cls.java)
     }
 
-    fun call(event: MessageReceivedEvent, guildData: ServerData, shard: Shard, guild: Guild ) {
+    fun call(event: MessageReceivedEvent, guildData: ServerData, shard: Shard, guild: Guild) {
         if (event.isFromType(ChannelType.PRIVATE))
             return
         // Call message processors
@@ -112,7 +114,7 @@ object CommandManager {
 
         var message = event.message.rawContent
 
-        if(message.isEmpty())
+        if (message.isEmpty())
             return
 
         val author = event.author ?: return
@@ -135,7 +137,7 @@ object CommandManager {
         val executor = CommandManager.commands[command.toLowerCase()]
 
 
-        if(event.message.rawContent.toLowerCase() == "~help"){
+        if (event.message.rawContent.toLowerCase() == "~help") {
             val help = commands["help"] ?: return
             help.shard = shard
             help.serverData = guildData
@@ -186,6 +188,24 @@ object CommandManager {
             return
         }
         executor.execute(event.message, args)
+    }
+
+    fun getCommandsByCategory(): Map<String, Array<CommandExecutor>> {
+        val mutableMap = mutableMapOf<String, MutableList<CommandExecutor>>()
+        val processed = mutableListOf<CommandExecutor>()
+        commands.values.forEach {
+            if(it in processed)
+                return@forEach
+            val cmdArray = mutableMap[it.category.toLowerCase()] ?: mutableListOf<CommandExecutor>()
+            cmdArray.add(it)
+            mutableMap[it.category.toLowerCase()] = cmdArray
+        }
+
+        val toReturn = mutableMapOf<String, Array<CommandExecutor>>()
+        mutableMap.forEach{
+            toReturn[it.key.capitalize()] = it.value.toTypedArray()
+        }
+        return toReturn
     }
 
     private fun process(event: MessageReceivedEvent, guildData: ServerData, shard: Shard) {

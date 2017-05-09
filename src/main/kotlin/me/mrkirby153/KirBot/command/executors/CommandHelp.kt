@@ -18,21 +18,23 @@ class CommandHelp : CommandExecutor() {
                 color = Color.BLUE
                 description = "Below is a list of all the commands available.\n Type `${prefix}help <command>` for more info"
                 field("Command Prefix", false, prefix)
-                val executors = mutableListOf<CommandExecutor>()
-                for ((name, executor) in CommandManager.commands) {
-                    if (executors.contains(executor))
-                        continue
-                    executors.add(executor)
-                    field("", true) {
+                val usedExecutors = mutableListOf<CommandExecutor>()
+                for ((category, commands) in CommandManager.getCommandsByCategory()) {
+                    field(category, true) {
                         buildString {
-                            append("[").append(prefix).append(name).appendln("]()")
+                            commands.forEach {
+                                if(it in usedExecutors)
+                                    return@forEach
+                                usedExecutors.add(it)
+                                appendln("["+prefix + it.command+"]()")
+                            }
                         }
                     }
                 }
                 appendDescription(buildString {
                     append("\n\nFor custom commands available on this server, ")
                     // TODO 4/30/2017 Replace with correct, working URL
-                    appendln("Click Here" link "@ACTUAL_URL@/commands/${message.guild.id}")
+                    appendln("Click Here" link "https://kirbot.mrkirby153.tk/commands/${message.guild.id}")
                 })
             }.rest().queue()
         else {

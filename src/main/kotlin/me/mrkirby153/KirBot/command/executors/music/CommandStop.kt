@@ -5,7 +5,7 @@ import me.mrkirby153.KirBot.user.Clearance
 import net.dv8tion.jda.core.entities.Message
 import java.awt.Color
 
-@Command(name = "stop", description = "Stops and clears the music queue", clearance = Clearance.BOT_MANAGER)
+@Command(name = "stop", description = "Stops and clears the music queue", clearance = Clearance.BOT_MANAGER, category = "Music")
 class CommandStop : MusicCommand() {
     override fun exec(message: Message, args: Array<String>) {
         serverData.musicManager.trackScheduler.reset()

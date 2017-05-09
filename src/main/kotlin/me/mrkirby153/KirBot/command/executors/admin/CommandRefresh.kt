@@ -7,7 +7,7 @@ import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.success
 import net.dv8tion.jda.core.entities.Message
 
-@Command(name = "refresh", clearance = Clearance.BOT_OWNER)
+@Command(name = "refresh", clearance = Clearance.BOT_OWNER, category = "Admin")
 class CommandRefresh : CommandExecutor() {
 
     override fun execute(message: Message, args: Array<String>) {

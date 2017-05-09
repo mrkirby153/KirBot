@@ -11,7 +11,7 @@ import java.io.IOException
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
-@Command(name = "google", aliases = arrayOf("g"), description = " Google search!")
+@Command(name = "google", aliases = arrayOf("g"), description = " Google search!", category = "Fun")
 class CommandGoogle : CommandExecutor() {
 
     override fun execute(message: Message, args: Array<String>) {

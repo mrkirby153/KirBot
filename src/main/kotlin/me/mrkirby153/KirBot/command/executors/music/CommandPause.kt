@@ -4,7 +4,7 @@ import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.user.Clearance
 import net.dv8tion.jda.core.entities.Message
 
-@Command(name = "pause", clearance = Clearance.BOT_MANAGER, description = "Pauses the current song")
+@Command(name = "pause", clearance = Clearance.BOT_MANAGER, description = "Pauses the current song", category = "Music")
 class CommandPause : MusicCommand() {
     override fun exec(message: Message, args: Array<String>) {
         if (!serverData.musicManager.trackScheduler.playing) {

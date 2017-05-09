@@ -44,7 +44,7 @@ class CommandGoogle : CommandExecutor() {
                                 if (count >= 3) break
 
                                 val list = block.select(".r>a")
-                                if (list.isEmpty()) break
+                                if (list.isEmpty()) continue
 
                                 val entry = list[0]
                                 val title = entry.text()

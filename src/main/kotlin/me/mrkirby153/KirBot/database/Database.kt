@@ -221,7 +221,7 @@ object Database {
                             rs.getString("channels"), rs.getString("blacklist_songs"), rs.getInt("max_queue_length"), rs.getInt("max_song_length"),
                             rs.getInt("skip_cooldown"), rs.getInt("skip_timer"), rs.getBoolean("playlists"))
                 } else {
-                    connection.prepareStatement("INSERT INTO `music_settings` (`id`, `created_at`, `updated_at`) VALUES(?, ?, ?)").apply {
+                    connection.prepareStatement("INSERT INTO `music_settings` (`id`, `channels`, `blacklist_songs`, `created_at`, `updated_at`) VALUES(?, '', '', ?, ?)").apply {
                         setString(1, server.id)
                         setTimestamp(2, Timestamp(System.currentTimeMillis()))
                         setTimestamp(3, Timestamp(System.currentTimeMillis()))

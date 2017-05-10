@@ -6,6 +6,7 @@ import me.mrkirby153.KirBot.command.executors.CommandExecutor
 import me.mrkirby153.KirBot.command.executors.CommandHelp
 import me.mrkirby153.KirBot.command.executors.ShutdownCommand
 import me.mrkirby153.KirBot.command.executors.UpdateNicknames
+import me.mrkirby153.KirBot.command.executors.admin.CommandClearance
 import me.mrkirby153.KirBot.command.executors.admin.CommandRefresh
 import me.mrkirby153.KirBot.command.executors.admin.CommandStats
 import me.mrkirby153.KirBot.command.executors.moderation.CommandKick
@@ -68,6 +69,7 @@ object CommandManager {
 
         register(CommandRefresh::class)
         register(CommandStats::class)
+        register(CommandClearance::class)
 
 
         /// ------ REGISTER MESSAGE PROCESSORS ------

@@ -41,6 +41,8 @@ fun User.getClearance(server: Guild): Clearance {
     return Clearance.USER
 }
 
+fun User.getMember(server: Guild) = server.getMember(this)
+
 /**
  * Send a standard success message
  *

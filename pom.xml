@@ -186,5 +186,26 @@
             <version>${kotlin.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>ro.pippo</groupId>
+            <artifactId>pippo-jetty</artifactId>
+            <version>${pippo.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ro.pippo</groupId>
+            <artifactId>pippo-core</artifactId>
+            <version>${pippo.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ro.pippo</groupId>
+            <artifactId>pippo-jackson</artifactId>
+            <version>${pippo.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ro.pippo</groupId>
+            <artifactId>pippo-controller</artifactId>
+            <version>${pippo.version}</version>
+        </dependency>
+
     </dependencies>
 </project>

@@ -12,11 +12,15 @@ import me.mrkirby153.KirBot.database.Database
 import me.mrkirby153.KirBot.realname.RealnameUpdater
 import me.mrkirby153.KirBot.utils.localizeTime
 import me.mrkirby153.KirBot.utils.readProperties
+import me.mrkirby153.KirBot.web.WebApp
 import net.dv8tion.jda.core.AccountType
 import net.dv8tion.jda.core.JDA
 import net.dv8tion.jda.core.JDABuilder
 import net.dv8tion.jda.core.entities.Game
+import net.dv8tion.jda.core.entities.Guild
+import net.dv8tion.jda.core.entities.User
 import net.dv8tion.jda.core.utils.SimpleLog
+import ro.pippo.core.Pippo
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
@@ -36,6 +40,8 @@ object Bot {
     val numShards: Int = if (properties.getProperty("shards") == null) 1 else properties.getProperty("shards").toInt()
 
     val admins: List<String> = files.admins.run { this.readLines() }
+
+    lateinit var webServer: Pippo
 
     lateinit var shards: Array<Shard>
 
@@ -79,6 +85,12 @@ object Bot {
                 .flatMap { it.guilds }
                 .forEach { Database.onJoin(it) }
 
+        webServer = Pippo(WebApp())
+        webServer.server.port = properties.getProperty("webserver-port", "5656").toInt()
+        webServer.server.settings.host(properties.getProperty("webserver-host", "localhost"))
+        webServer.start()
+        LOG.info("Web server started on ${webServer.server.settings.host}:${webServer.server.port}")
+
     }
 
     fun stop() {
@@ -100,5 +112,23 @@ object Bot {
             setAudioSendFactory(NativeAudioSendFactory())
             buildBlocking()
         }
+    }
+
+    fun getUser(id: String): User? {
+        return getShardForUser(id)?.getUserById(id)
+    }
+
+    fun getShardForUser(id: String): Shard? {
+        return shards.firstOrNull { it.getUserById(id) != null }
+    }
+
+    fun getShardForGuild(id: String): Shard?{
+        return shards.firstOrNull{ it.getGuildById(id) != null}
+    }
+
+    fun getGuild(id: String): Guild? {
+        return shards
+                .firstOrNull { it.getGuildById(id) != null }
+                ?.getGuildById(id)
     }
 }

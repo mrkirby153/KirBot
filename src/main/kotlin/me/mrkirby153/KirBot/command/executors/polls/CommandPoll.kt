@@ -28,6 +28,11 @@ class CommandPoll : CommandExecutor() {
     override fun execute(message: Message, args: Array<String>) {
         // !poll 10m :dog:
         val duration = timeOffset(args[0])
+
+        if(duration > timeOffset("1w")){
+            message.send().error("Polls can only be less than 1 week.").queue()
+            return
+        }
         val options = args.drop(1).joinToString(" ").split(",").map(String::trim)
 
         if (options.size <= 1) {

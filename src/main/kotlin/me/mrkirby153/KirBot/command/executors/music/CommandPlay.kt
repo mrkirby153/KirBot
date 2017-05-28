@@ -2,6 +2,7 @@ package me.mrkirby153.KirBot.command.executors.music
 
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.Command
+import me.mrkirby153.KirBot.google.YoutubeSearch
 import me.mrkirby153.KirBot.music.MusicData
 import me.mrkirby153.KirBot.music.MusicLoadResultHandler
 import net.dv8tion.jda.core.entities.Message
@@ -66,7 +67,17 @@ class CommandPlay : MusicCommand() {
         }
 
         // Remove playlist from URL to prevent accidental queueing of playlists
-        val url = args[0].replace(Regex("&list=[A-Za-z0-9\\-+_]+"), "")
+        var url = args[0].replace(Regex("&list=[A-Za-z0-9\\-+_]+"), "")
+
+        if (!(url.contains("youtu") || url.contains("vimeo") || url.contains("soundcloud"))) {
+/*            message.send().embed("Error") {
+                color = Color.RED
+                description = "Please specify a valid URL"
+                field("Acceptable Services", false, " - YouTube \n - Vimeo \n - Soundcloud")
+            }.rest().queue()*/
+            println("Searching youtube.")
+            url = YoutubeSearch(args.joinToString(" ")).execute()
+        }
 
         // Check track blacklist
         if (!serverData.musicManager.adminOnly)
@@ -80,15 +91,6 @@ class CommandPlay : MusicCommand() {
                         return
                     }
                 }
-
-        if (!(url.contains("youtu") || url.contains("vimeo") || url.contains("soundcloud"))) {
-            message.send().embed("Error") {
-                color = Color.RED
-                description = "Please specify a valid URL"
-                field("Acceptable Services", false, " - YouTube \n - Vimeo \n - Soundcloud")
-            }.rest().queue()
-            return
-        }
 
         // Check queue length
         if (!serverData.musicManager.adminOnly)

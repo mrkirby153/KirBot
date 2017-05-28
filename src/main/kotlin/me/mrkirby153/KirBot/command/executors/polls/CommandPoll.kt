@@ -51,7 +51,6 @@ class CommandPoll : CommandExecutor() {
             }
         }.rest().queue {
             val m = it
-            m.pin().queue()
             for(index in 0..options.size - 1){
                 it.addReaction("${'\u0030' + (index+1)}\u20E3").queue()
             }

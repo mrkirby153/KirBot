@@ -3,30 +3,30 @@ package me.mrkirby153.KirBot.command.executors
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandManager
 import me.mrkirby153.KirBot.database.Database
-import net.dv8tion.jda.core.entities.Message
-import net.dv8tion.jda.core.link
+import me.mrkirby153.KirBot.utils.Context
+import me.mrkirby153.KirBot.utils.embed.link
 import java.awt.Color
 
 @Command(name = "help", aliases = arrayOf("h"), description = "Shows this help message")
 class CommandHelp : CommandExecutor() {
 
-    override fun execute(message: Message, args: Array<String>) {
-        val prefix = CommandManager.commandPrefixCache[message.guild.id] ?: Database.getCommandPrefix(message.guild)
+    override fun execute(context: Context, args: Array<String>) {
+        val prefix = CommandManager.commandPrefixCache[context.guild.id] ?: Database.getCommandPrefix(context.guild)
 
         if (args.isEmpty())
-            message.send().embed("Help") {
-                color = Color.BLUE
-                description = "Below is a list of all the commands available.\n Type `${prefix}help <command>` for more info"
+            context.send().embed("Help") {
+                setColor(Color.BLUE)
+                setDescription("Below is a list of all the commands available.\n Type `${prefix}help <command>` for more info")
                 field("Command Prefix", false, prefix)
                 val usedExecutors = mutableListOf<CommandExecutor>()
                 for ((category, commands) in CommandManager.getCommandsByCategory()) {
                     field(category, true) {
                         buildString {
                             commands.forEach {
-                                if(it in usedExecutors)
+                                if (it in usedExecutors)
                                     return@forEach
                                 usedExecutors.add(it)
-                                appendln("["+prefix + it.command+"]()")
+                                appendln("[" + prefix + it.command + "]()")
                             }
                         }
                     }
@@ -34,20 +34,20 @@ class CommandHelp : CommandExecutor() {
                 appendDescription(buildString {
                     append("\n\nFor custom commands available on this server, ")
                     // TODO 4/30/2017 Replace with correct, working URL
-                    appendln("Click Here" link "https://kirbot.mrkirby153.tk/commands/${message.guild.id}")
+                    appendln("Click Here" link "https://kirbot.mrkirby153.tk/commands/${context.guild.id}")
                 })
             }.rest().queue()
         else {
             val command = args[0]
             val executor = CommandManager.commands[command]
             if (executor == null)
-                message.send().embed("Help") {
-                    color = Color.RED
+                context.send().embed("Help") {
+                    setColor(Color.BLUE)
                     description = "There is no command by that name!"
                 }.rest().queue()
             else
-                message.send().embed("Command Information") {
-                    color = Color.BLUE
+                context.send().embed("Command Information") {
+                    setColor(Color.BLUE)
                     field("Name", false, prefix + command)
                     field("Description", false, executor.description)
                     field("Clearance", false, executor.clearance)

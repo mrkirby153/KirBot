@@ -2,9 +2,9 @@ package me.mrkirby153.KirBot.command.executors.search
 
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.executors.CommandExecutor
-import net.dv8tion.jda.core.b
-import net.dv8tion.jda.core.entities.Message
-import net.dv8tion.jda.core.link
+import me.mrkirby153.KirBot.utils.Context
+import me.mrkirby153.KirBot.utils.embed.b
+import me.mrkirby153.KirBot.utils.embed.link
 import org.jsoup.Jsoup
 import java.awt.Color
 import java.io.IOException
@@ -14,13 +14,13 @@ import java.nio.charset.StandardCharsets
 @Command(name = "google", aliases = arrayOf("g"), description = " Google search!", category = "Fun")
 class CommandGoogle : CommandExecutor() {
 
-    override fun execute(message: Message, args: Array<String>) {
+    override fun execute(context: Context, args: Array<String>) {
         if (args.isEmpty()) {
-            message.send().error("Please specify something to google!")
+            context.send().error("Please specify something to google!")
             return
         }
         try {
-            message.channel.sendTyping().queue {
+            context.channel.sendTyping().queue {
                 val query = args.joinToString(" ")
                 val blocks = Jsoup.connect("https://www.google.com/search?q=${URLEncoder.encode(query, StandardCharsets.UTF_8.displayName())}")
                         .userAgent("KirBot")
@@ -28,12 +28,12 @@ class CommandGoogle : CommandExecutor() {
                         .select(".g")
 
                 if (blocks.isEmpty()) {
-                    message.send().error("No search results for `$query`").queue()
+                    context.send().error("No search results for `$query`").queue()
                     return@queue
                 }
 
-                message.send().embed {
-                    color = Color.GREEN
+                context.send().embed {
+                    setColor(Color.GREEN)
                     setAuthor("Google Results", "https://www.google.com", "https://www.google.com/favicon.ico")
 
                     description {
@@ -62,7 +62,7 @@ class CommandGoogle : CommandExecutor() {
                 }.rest().queue()
             }
         } catch(e: IOException) {
-            message.send().error("Caught an exception while googling").queue()
+            context.send().error("Caught an exception while googling").queue()
             e.printStackTrace()
         }
     }

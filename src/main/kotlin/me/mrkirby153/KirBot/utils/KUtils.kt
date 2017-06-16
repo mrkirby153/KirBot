@@ -5,8 +5,10 @@ import me.mrkirby153.KirBot.Shard
 import me.mrkirby153.KirBot.user.Clearance
 import net.dv8tion.jda.core.EmbedBuilder
 import net.dv8tion.jda.core.Permission
-import net.dv8tion.jda.core.entities.*
-import net.dv8tion.jda.core.requests.RestAction
+import net.dv8tion.jda.core.entities.Guild
+import net.dv8tion.jda.core.entities.Member
+import net.dv8tion.jda.core.entities.MessageEmbed
+import net.dv8tion.jda.core.entities.User
 import java.awt.Color
 import java.io.File
 import java.text.DecimalFormat
@@ -42,25 +44,14 @@ fun User.getClearance(server: Guild): Clearance {
     return Clearance.USER
 }
 
+fun Member.getClearance(server: Guild): Clearance = this.user.getClearance(server)
+
 fun User.getMember(server: Guild) = server.getMember(this)
 
 fun Guild.shard(): Shard? {
     return Bot.getShardForGuild(this.id)
 }
 
-/**
- * Send a standard success message
- *
- * @param msg The text to send.
- * @return The Message created by this function
- */
-fun ResponseBuilder.success(msg: String): RestAction<Message> {
-    return embed {
-        title = "Success"
-        description = msg
-        color = Color.GREEN
-    }.rest()
-}
 
 @JvmOverloads
 fun makeEmbed(title: String?, msg: String?, color: Color? = Color.WHITE, img: String? = null, thumb: String? = null, author: User? = null): MessageEmbed {

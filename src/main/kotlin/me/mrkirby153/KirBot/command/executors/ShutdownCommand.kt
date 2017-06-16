@@ -3,16 +3,15 @@ package me.mrkirby153.KirBot.command.executors
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.user.Clearance
-import net.dv8tion.jda.core.entities.Message
+import me.mrkirby153.KirBot.utils.Context
 import java.awt.Color
 
 @Command(name = "shutdown", clearance = Clearance.BOT_OWNER, category = "Admin")
 class ShutdownCommand : CommandExecutor() {
-    override fun execute(message: Message, args: Array<String>) {
-        message.send().embed {
-            title = "Shut down"
-            description = "Good Bye :wave:"
-            color = Color.RED
+    override fun execute(context: Context, args: Array<String>) {
+        context.send().embed("Shut Down") {
+            setColor(Color.RED)
+            setDescription("Good Bye :wave:")
         }.rest().queue({ Bot.stop() })
     }
 }

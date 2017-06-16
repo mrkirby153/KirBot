@@ -22,10 +22,10 @@ import me.mrkirby153.KirBot.database.CommandType
 import me.mrkirby153.KirBot.database.DBCommand
 import me.mrkirby153.KirBot.database.Database
 import me.mrkirby153.KirBot.utils.Cache
+import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.getClearance
 import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.*
-import net.dv8tion.jda.core.events.message.MessageReceivedEvent
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 import kotlin.reflect.KClass
@@ -108,18 +108,18 @@ object CommandManager {
         messageProcessors.add(cls.java)
     }
 
-    fun call(event: MessageReceivedEvent, guildData: ServerData, shard: Shard, guild: Guild) {
-        if (event.isFromType(ChannelType.PRIVATE))
+    fun call(context: Context, guildData: ServerData, shard: Shard, guild: Guild) {
+        if (context.event.isFromType(ChannelType.PRIVATE))
             return
         // Call message processors
-        process(event, guildData, shard)
+        process(context, guildData, shard)
 
-        var message = event.message.rawContent
+        var message = context.message.rawContent
 
         if (message.isEmpty())
             return
 
-        val author = event.author ?: return
+        val author = context.author
 
         var commandPrefix = this.commandPrefixCache[guild.id]
 
@@ -139,28 +139,28 @@ object CommandManager {
         val executor = CommandManager.commands[command.toLowerCase()]
 
 
-        if (event.message.rawContent.toLowerCase() == "~help") {
+        if (context.message.rawContent.toLowerCase() == "~help") {
             val help = commands["help"] ?: return
             help.shard = shard
             help.serverData = guildData
             help.guild = guild
-            help.execute(event.message, args)
+            help.execute(context, args)
             return
         }
 
-        if (!event.message.rawContent.startsWith(commandPrefix))
+        if (!context.message.rawContent.startsWith(commandPrefix))
             return
 
         if (executor == null) {
             val customCommand = Database.getCustomCommand(command.toLowerCase(), guild) ?: return
             if (customCommand.clearance.value > author.getClearance(guild).value) {
-                event.message.send().error("You do not have permission to perform that command").queue({
+                context.send().error("You do not have permission to perform that command").queue({
                     m ->
                     m.delete().queueAfter(10, TimeUnit.SECONDS)
                 })
                 return
             }
-            callCustomCommand(event.channel, customCommand, args, author)
+            callCustomCommand(context.channel, customCommand, args, author)
             return
         }
 
@@ -171,25 +171,25 @@ object CommandManager {
         // Verify permissions
         val missingPermissions = arrayListOf<Permission>()
         executor.permissions.forEach { permission ->
-            if (!guild.getMember(shard.selfUser).hasPermission(event.channel as Channel, permission)) {
+            if (!guild.getMember(shard.selfUser).hasPermission(context.channel as Channel, permission)) {
                 missingPermissions.add(permission)
             }
         }
 
         if (missingPermissions.isNotEmpty()) {
-            event.message.send().error("I cannot perform that action because I'm missing the following permissions: \n"
+            context.send().error("I cannot perform that action because I'm missing the following permissions: \n"
                     + missingPermissions.joinToString { " i ${it.name} \n" }).queue()
             return
         }
 
-        if (event.author.getClearance(event.guild).value < executor.clearance.value) {
-            event.message.send().error("You do not have permission to perform this command!").queue({
+        if (context.author.getClearance(context.guild).value < executor.clearance.value) {
+            context.send().error("You do not have permission to perform this command!").queue({
                 m ->
                 m.delete().queueAfter(10, TimeUnit.SECONDS)
             })
             return
         }
-        executor.execute(event.message, args)
+        executor.execute(context, args)
     }
 
     fun getCommandsByCategory(): Map<String, Array<CommandExecutor>> {
@@ -210,8 +210,8 @@ object CommandManager {
         return toReturn
     }
 
-    private fun process(event: MessageReceivedEvent, guildData: ServerData, shard: Shard) {
-        var rawMsgText = event.message.content
+    private fun process(context: Context, guildData: ServerData, shard: Shard) {
+        var rawMsgText = context.message.content
         // TODO 5/4/2017 Extract to own method
         for (processor in messageProcessors) {
             val proc = processor.newInstance()
@@ -237,7 +237,7 @@ object CommandManager {
             }
             proc.matches = matches.toTypedArray()
             if (proc.matches.isNotEmpty())
-                proc.process(event.message)
+                proc.process(context)
             if (proc.stopProcessing)
                 break
         }
@@ -261,10 +261,10 @@ object CommandManager {
         }
     }
 
-    /*private fun executeJavascript(note: Note, script: String, channel: MessageChannel, sender: User, args: Array<String>) {
+    /*private fun executeJavascript(note: Note, script: String, context: MessageChannel, sender: User, args: Array<String>) {
         val scriptEngine = ScriptEngineManager().getEngineByName("nashorn")
 
-        val vars = arrayOf(EcmaVariable("channel", channel), EcmaVariable("sender", sender.name), EcmaVariable("args", args))
+        val vars = arrayOf(EcmaVariable("context", context), EcmaVariable("sender", sender.name), EcmaVariable("args", args))
 
         val bindings = SimpleBindings()
         for ((name, value) in vars) {

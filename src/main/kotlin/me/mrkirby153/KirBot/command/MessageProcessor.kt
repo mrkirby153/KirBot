@@ -2,7 +2,7 @@ package me.mrkirby153.KirBot.command
 
 import me.mrkirby153.KirBot.Shard
 import me.mrkirby153.KirBot.data.ServerData
-import net.dv8tion.jda.core.entities.Message
+import me.mrkirby153.KirBot.utils.Context
 
 
 abstract class MessageProcessor(val startSequence: String, val endSequence: String) {
@@ -15,5 +15,5 @@ abstract class MessageProcessor(val startSequence: String, val endSequence: Stri
 
     var stopProcessing = false
 
-    abstract fun process(message: Message)
+    abstract fun process(context: Context)
 }

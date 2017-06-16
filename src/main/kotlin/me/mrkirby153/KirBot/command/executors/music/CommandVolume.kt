@@ -2,15 +2,15 @@ package me.mrkirby153.KirBot.command.executors.music
 
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.user.Clearance
-import net.dv8tion.jda.core.entities.Message
+import me.mrkirby153.KirBot.utils.Context
 
 @Command(name = "volume", description = "Change the volume of the robot", clearance = Clearance.BOT_MANAGER, category = "Music")
 class CommandVolume : MusicCommand() {
 
-    override fun exec(message: Message, args: Array<String>) {
+    override fun exec(context: Context, args: Array<String>) {
         val audioPlayer = serverData.musicManager.audioPlayer
         if (args.isEmpty()) {
-            message.send().info("Current Volume: **${audioPlayer.volume}**").queue()
+            context.send().info("Current Volume: **${audioPlayer.volume}**").queue()
             return
         }
 
@@ -36,6 +36,6 @@ class CommandVolume : MusicCommand() {
 
             audioPlayer.volume = volume
         }
-        message.send().info("Set volume to __**${audioPlayer.volume}**__").queue()
+        context.send().info("Set volume to __**${audioPlayer.volume}**__").queue()
     }
 }

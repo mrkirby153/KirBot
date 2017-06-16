@@ -1,8 +1,8 @@
 package me.mrkirby153.KirBot.command.processors
 
 import me.mrkirby153.KirBot.command.MessageProcessor
+import me.mrkirby153.KirBot.utils.Context
 import net.dv8tion.jda.core.MessageBuilder
-import net.dv8tion.jda.core.entities.Message
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
@@ -13,9 +13,9 @@ class LaTeXProcessor : MessageProcessor("$$", "$$") {
 
     val preamble = "\\usepackage{amsmath}\n\\usepackage{amsfonts}\n\\usepackage{amssymb}"
 
-    override fun process(message: Message) {
-        val msg = message.send().text("Processing LaTeX....").submit(true)
-        message.channel.sendTyping().submit(true)
+    override fun process(context: Context) {
+        val msg = context.send().text("Processing LaTeX....").submit(true)
+        context.channel.sendTyping().submit(true)
         for (match in matches) {
             val url = getImageUrl(match)
             val u = URL(url)
@@ -26,9 +26,9 @@ class LaTeXProcessor : MessageProcessor("$$", "$$") {
             val m = MessageBuilder().apply {
                 append(match)
             }
-            message.channel.sendFile(input, "png", m.build()).queue()
+            context.channel.sendFile(input, "png", m.build()).queue()
         }
-        message.channel.deleteMessageById(msg.get().id).queue()
+        context.channel.deleteMessageById(msg.get().id).queue()
     }
 
     fun getImageUrl(latex: String): String? {

@@ -22,6 +22,10 @@
             <url>http://jcenter.bintray.com</url>
         </repository>
         <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+        <repository>
             <id>mrkirby153</id>
             <name>mrkirby153-main</name>
             <url>http://repo.mrkirby153.tk/nexus/content/groups/public</url>
@@ -139,9 +143,14 @@
             <version>2.6.2</version>
         </dependency>
         <dependency>
+            <groupId>com.github.JDA-Applications</groupId>
+            <artifactId>Kotlin-JDA</artifactId>
+            <version>v0.BETA.1</version>
+        </dependency>
+        <dependency>
             <groupId>net.dv8tion</groupId>
-            <artifactId>JDA_K</artifactId>
-            <version>3.0.0_26</version>
+            <artifactId>JDA</artifactId>
+            <version>3.1.1_212</version>
         </dependency>
         <dependency>
             <groupId>com.sedmelluq</groupId>

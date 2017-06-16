@@ -3,9 +3,9 @@ package me.mrkirby153.KirBot.command.executors
 import me.mrkirby153.KirBot.Shard
 import me.mrkirby153.KirBot.data.ServerData
 import me.mrkirby153.KirBot.user.Clearance
+import me.mrkirby153.KirBot.utils.Context
 import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.Guild
-import net.dv8tion.jda.core.entities.Message
 import net.dv8tion.jda.core.entities.User
 
 abstract class CommandExecutor {
@@ -28,7 +28,7 @@ abstract class CommandExecutor {
 
     lateinit var guild: Guild
 
-    abstract fun execute(message: Message, args: Array<String>)
+    abstract fun execute(context: Context, args: Array<String>)
 
     protected fun getUserByMention(mention: String): User? {
         val id = mention.replace("[<@!>]".toRegex(), "")

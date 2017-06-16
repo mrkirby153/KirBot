@@ -3,9 +3,10 @@ package me.mrkirby153.KirBot.command.executors.polls
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.executors.CommandExecutor
 import me.mrkirby153.KirBot.user.Clearance
+import me.mrkirby153.KirBot.utils.Context
+import me.mrkirby153.KirBot.utils.embed.embed
 import me.mrkirby153.KirBot.utils.localizeTime
 import net.dv8tion.jda.core.Permission
-import net.dv8tion.jda.core.entities.Message
 import java.awt.Color
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
@@ -25,28 +26,29 @@ class CommandPoll : CommandExecutor() {
         time.put("w", 604800)
     }
 
-    override fun execute(message: Message, args: Array<String>) {
+    override fun execute(context: Context, args: Array<String>) {
         // !poll 10m :dog:
         val duration = timeOffset(args[0])
 
         if(duration > timeOffset("1w")){
-            message.send().error("Polls can only be less than 1 week.").queue()
+            context.send().error("Polls can only be less than 1 week.").queue()
             return
         }
         val options = args.drop(1).joinToString(" ").split(",").map(String::trim)
 
         if (options.size <= 1) {
-            message.send().error("Please provide more than one option for the poll!").queue()
+            context.send().error("Please provide more than one option for the poll!").queue()
             return
         }
 
         if(options.size > 9){
-            message.send().error("You can only have 9 options in a poll!").queue()
+            context.send().error("You can only have 9 options in a poll!").queue()
             return
         }
         // TODO 4/25/2017 Fix the brokenness!
-        message.send().embed("Poll") {
-            description = "Vote by clicking the reactions on the choices below! Results will be final in ${localizeTime(duration)}"
+        context.send().embed("Poll") {
+            setColor(Color.GREEN)
+           setDescription("Vote by clicking the reactions on the choices below! Results will be final in ${localizeTime(duration)}")
             field("Options") {
                 buildString {
                     options.forEachIndexed { index, option ->
@@ -60,13 +62,14 @@ class CommandPoll : CommandExecutor() {
                 it.addReaction("${'\u0030' + (index+1)}\u20E3").queue()
             }
 
-            it.editMessage(it.embeds[0].edit().apply {
-                description = "**Voting ended**! Check new message for results"
+            it.editMessage(embed("Poll"){
+                setDescription("Voting has ended, Check newer messages for results!")
+                setColor(Color.RED)
             }.build()).queueAfter(duration.toLong(), TimeUnit.SECONDS) {
                 m.unpin().queue()
-                it.send().embed("Poll Results") {
-                    color = Color.CYAN
-                    description = "Voting has ended! Here are the results!"
+                context.send().embed("Poll Results") {
+                    setColor(Color.CYAN)
+                    setDescription("Voting has ended! Here are the results!")
 
                     var topVotes = 0
                     val winners = mutableListOf<Int>()

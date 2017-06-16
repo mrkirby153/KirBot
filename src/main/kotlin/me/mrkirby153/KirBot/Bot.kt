@@ -8,6 +8,7 @@ import com.sedmelluq.discord.lavaplayer.source.soundcloud.SoundCloudAudioSourceM
 import com.sedmelluq.discord.lavaplayer.source.twitch.TwitchStreamAudioSourceManager
 import com.sedmelluq.discord.lavaplayer.source.vimeo.VimeoAudioSourceManager
 import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager
+import me.mrkirby153.KirBot.data.ServerData
 import me.mrkirby153.KirBot.database.Database
 import me.mrkirby153.KirBot.realname.RealnameUpdater
 import me.mrkirby153.KirBot.utils.localizeTime
@@ -122,8 +123,8 @@ object Bot {
         return shards.firstOrNull { it.getUserById(id) != null }
     }
 
-    fun getShardForGuild(id: String): Shard?{
-        return shards.firstOrNull{ it.getGuildById(id) != null}
+    fun getShardForGuild(id: String): Shard? {
+        return shards.firstOrNull { it.getGuildById(id) != null }
     }
 
     fun getGuild(id: String): Guild? {
@@ -131,4 +132,6 @@ object Bot {
                 .firstOrNull { it.getGuildById(id) != null }
                 ?.getGuildById(id)
     }
+
+    fun getServerData(guild: Guild): ServerData? = getShardForGuild(guild.id)?.getServerData(guild)
 }

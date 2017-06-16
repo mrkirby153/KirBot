@@ -12,7 +12,7 @@ import me.mrkirby153.KirBot.utils.child
 import me.mrkirby153.KirBot.utils.mkdirIfNotExist
 import java.nio.charset.Charset
 
-class ServerData(val id: Long, shard: Shard) {
+class ServerData(val id: Long, val shard: Shard) {
 
     private val guild = shard.getGuildById(id)
 

@@ -2,26 +2,26 @@ package me.mrkirby153.KirBot.command.executors.music
 
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.user.Clearance
+import me.mrkirby153.KirBot.utils.Context
+import me.mrkirby153.KirBot.utils.embed.link
+import me.mrkirby153.KirBot.utils.embed.u
 import me.mrkirby153.KirBot.utils.getClearance
-import net.dv8tion.jda.core.entities.Message
 import net.dv8tion.jda.core.entities.MessageEmbed
-import net.dv8tion.jda.core.link
-import net.dv8tion.jda.core.u
 import java.awt.Color
 
 @Command(name = "queue", description = "Shows the current play queue", category = "Music")
 class CommandQueue : MusicCommand() {
-    override fun exec(message: Message, args: Array<String>) {
+    override fun exec(context: Context, args: Array<String>) {
         if(args.isNotEmpty()){
             if(args[0] == "clear"){
-                if(message.author.getClearance(guild).value >= Clearance.SERVER_ADMINISTRATOR.value) {
+                if(context.author.getClearance(guild).value >= Clearance.SERVER_ADMINISTRATOR.value) {
                     serverData.musicManager.trackScheduler.queue.clear()
-                    message.send().embed("Queue") {
-                        color = Color.CYAN
-                        description = "Queue Cleared!"
+                    context.send().embed("Queue") {
+                        setColor(Color.CYAN)
+                        setDescription("Queue Cleared!")
                     }.rest().queue()
                 } else {
-                    message.send().error("You do not have permission to perform that command!").queue()
+                    context.send().error("You do not have permission to perform that command!").queue()
                 }
                 return
             }
@@ -34,8 +34,8 @@ class CommandQueue : MusicCommand() {
         var displayedTracks = 0
 
         // Display the next five songs
-        message.send().embed("Music Queue") {
-            color = Color.CYAN
+        context.send().embed("Music Queue") {
+            setColor(Color.cyan)
             np?.let {
                 field("Now Playing", false, " ${formatDuration((np.duration / 1000).toInt())} __**[${np.info.title}](${np.info.uri})**__")
             }
@@ -57,7 +57,7 @@ class CommandQueue : MusicCommand() {
 
             field("Size", true, queue.size)
             field("Duration", true, formatDuration(duration))
-            field("", true, "Click Here to view the full queue" link "https://kirbot.mrkirby153.tk/${message.guild.id}/queue")
+            field("", true, "Click Here to view the full queue" link "https://kirbot.mrkirby153.tk/${context.guild.id}/queue")
         }.rest().queue()
     }
 

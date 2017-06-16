@@ -4,6 +4,7 @@ import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.Shard
 import me.mrkirby153.KirBot.command.CommandManager
 import me.mrkirby153.KirBot.database.Database
+import me.mrkirby153.KirBot.utils.Context
 import net.dv8tion.jda.core.events.guild.GuildJoinEvent
 import net.dv8tion.jda.core.events.guild.GuildLeaveEvent
 import net.dv8tion.jda.core.events.guild.voice.GuildVoiceLeaveEvent
@@ -17,7 +18,9 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
             return
         val serverData = shard.getServerData(event.guild)
 
-        CommandManager.call(event, serverData, shard, event.guild)
+        val context = Context(event)
+
+        CommandManager.call(context, serverData, shard, event.guild)
     }
 
     override fun onGuildLeave(event: GuildLeaveEvent?) {
@@ -30,12 +33,12 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
 
     override fun onGuildVoiceLeave(event: GuildVoiceLeaveEvent?) {
         val guild = event!!.guild
-        // Ignore if KirBot isn't in that channel
+        // Ignore if KirBot isn't in that context
         if (guild.audioManager.connectedChannel != event.channelLeft) {
             return
         }
 
-        val usersInChannel = guild.audioManager.connectedChannel.members.filter { it.id != guild.selfMember.id }.size
+        val usersInChannel = guild.audioManager.connectedChannel.members.filter { it.user.id != guild.selfMember.user.id }.size
 
         if(usersInChannel < 1){
             shard.getServerData(guild).musicManager.trackScheduler.reset()

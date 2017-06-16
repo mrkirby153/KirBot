@@ -194,7 +194,7 @@ object Database {
         }
         chans.forEach {
             removeChannel(it)
-            Bot.LOG.info("Removing channel $it")
+            Bot.LOG.info("Removing context $it")
         }
     }
 

@@ -4,13 +4,13 @@ import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.executors.CommandExecutor
 import me.mrkirby153.KirBot.user.Clearance
+import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.localizeTime
-import net.dv8tion.jda.core.entities.Message
 import java.awt.Color
 
 @Command(name = "stats", clearance = Clearance.USER, description = "Returns some statistics about the robot", category = "Miscellaneous")
 class CommandStats : CommandExecutor() {
-    override fun execute(message: Message, args: Array<String>) {
+    override fun execute(context: Context, args: Array<String>) {
         var guilds = 0
         var users = 0
 
@@ -19,8 +19,8 @@ class CommandStats : CommandExecutor() {
             users += shard.users.size
         }
 
-        message.send().embed("Bot Statistics") {
-            color = Color.BLUE
+        context.send().embed("Bot Statistics") {
+            setColor(Color.BLUE)
 
             field("Servers", true, guilds)
             field("Shard", true, "${shard.id} / ${Bot.numShards}")

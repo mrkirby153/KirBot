@@ -1,6 +1,7 @@
 package me.mrkirby153.KirBot.utils
 
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.Shard
 import me.mrkirby153.KirBot.user.Clearance
 import net.dv8tion.jda.core.EmbedBuilder
 import net.dv8tion.jda.core.Permission
@@ -42,6 +43,10 @@ fun User.getClearance(server: Guild): Clearance {
 }
 
 fun User.getMember(server: Guild) = server.getMember(this)
+
+fun Guild.shard(): Shard? {
+    return Bot.getShardForGuild(this.id)
+}
 
 /**
  * Send a standard success message

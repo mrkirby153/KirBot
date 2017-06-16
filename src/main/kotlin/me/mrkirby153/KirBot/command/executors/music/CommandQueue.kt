@@ -5,6 +5,7 @@ import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.getClearance
 import net.dv8tion.jda.core.entities.Message
 import net.dv8tion.jda.core.entities.MessageEmbed
+import net.dv8tion.jda.core.link
 import net.dv8tion.jda.core.u
 import java.awt.Color
 
@@ -56,6 +57,7 @@ class CommandQueue : MusicCommand() {
 
             field("Size", true, queue.size)
             field("Duration", true, formatDuration(duration))
+            field("", true, "Click Here to view the full queue" link "https://kirbot.mrkirby153.tk/${message.guild.id}/queue")
         }.rest().queue()
     }
 

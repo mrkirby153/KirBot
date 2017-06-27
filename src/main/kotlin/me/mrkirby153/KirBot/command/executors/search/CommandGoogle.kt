@@ -14,9 +14,12 @@ import java.nio.charset.StandardCharsets
 @Command(name = "google", aliases = arrayOf("g"), description = " Google search!", category = "Fun")
 class CommandGoogle : CommandExecutor() {
 
+    @Suppress("UNREACHABLE_CODE")
     override fun execute(context: Context, args: Array<String>) {
+        context.send().error("Google search has been temporarily disabled!").queue()
+        return
         if (args.isEmpty()) {
-            context.send().error("Please specify something to google!")
+            context.send().error("Please specify something to google!").queue()
             return
         }
         try {

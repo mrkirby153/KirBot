@@ -5,10 +5,7 @@ import me.mrkirby153.KirBot.Shard
 import me.mrkirby153.KirBot.user.Clearance
 import net.dv8tion.jda.core.EmbedBuilder
 import net.dv8tion.jda.core.Permission
-import net.dv8tion.jda.core.entities.Guild
-import net.dv8tion.jda.core.entities.Member
-import net.dv8tion.jda.core.entities.MessageEmbed
-import net.dv8tion.jda.core.entities.User
+import net.dv8tion.jda.core.entities.*
 import java.awt.Color
 import java.io.File
 import java.text.DecimalFormat
@@ -111,4 +108,21 @@ inline fun <T : AutoCloseable, R> T.use(block: (T) -> R): R {
             this.close()
         }
     }
+}
+
+fun TextChannel.hide(){
+    this.permissionOverrides.filter { it.allowed.contains(Permission.MESSAGE_READ)}.forEach {
+        val override = it
+        it.manager.clear(Permission.MESSAGE_READ).queue {
+            if(override.denied.isEmpty() && override.allowed.isEmpty())
+                override.delete().queue()
+        }
+    }
+    val public = this.getPermissionOverride(guild.publicRole) ?: this.createPermissionOverride(guild.publicRole).complete()
+    public.manager.deny(Permission.MESSAGE_READ).queue()
+}
+
+fun TextChannel.unhide(){
+    val public = this.getPermissionOverride(guild.publicRole) ?: return
+    public.manager.clear(Permission.MESSAGE_READ).queue()
 }

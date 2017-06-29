@@ -2,11 +2,11 @@ package me.mrkirby153.KirBot.web
 
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.realname.RealnameUpdater
+import me.mrkirby153.KirBot.utils.hide
 import me.mrkirby153.KirBot.utils.shard
-import ro.pippo.controller.Controller
-import ro.pippo.controller.GET
-import ro.pippo.controller.Path
-import ro.pippo.controller.Produces
+import me.mrkirby153.KirBot.utils.unhide
+import net.dv8tion.jda.core.Permission
+import ro.pippo.controller.*
 import ro.pippo.controller.extractor.Param
 
 @Path("/v1")
@@ -25,7 +25,9 @@ class ApiController : Controller() {
         val guild = Bot.getGuild(id) ?: return arrayOf(Channel("-1", "GUILD_NOT_FOUND", "NONE"))
         val channels = mutableListOf<Channel>()
         guild.voiceChannels.mapTo(channels) { Channel(it.id, it.name, "VOICE") }
-        guild.textChannels.mapTo(channels) { Channel(it.id, it.name, "TEXT") }
+        guild.textChannels.mapTo(channels) {
+            Channel(it.id, it.name, "TEXT", it.getPermissionOverride(guild.publicRole)?.denied?.contains(Permission.MESSAGE_READ) ?: false)
+        }
         return channels.toTypedArray()
     }
 
@@ -43,7 +45,9 @@ class ApiController : Controller() {
     fun text(@Param("id") id: String): Array<Channel> {
         val guild = Bot.getGuild(id) ?: return arrayOf(Channel("-1", "GUILD_NOT_FOUND", "NONE"))
         val channels = mutableListOf<Channel>()
-        guild.textChannels.mapTo(channels) { Channel(it.id, it.name, "TEXT") }
+        guild.textChannels.mapTo(channels) {
+            Channel(it.id, it.name, "TEXT", it.getPermissionOverride(guild.publicRole)?.denied?.contains(Permission.MESSAGE_READ) ?: false)
+        }
         return channels.toTypedArray()
     }
 
@@ -61,8 +65,35 @@ class ApiController : Controller() {
                 nowPlayingQueued, serverData.musicManager.trackScheduler.playing, queue.toTypedArray())
     }
 
+    @POST("/server/{id: [0-9]+}/channel/{channel: [0-9]+}/visibility")
+    @Produces(Produces.JSON)
+    fun hideChannel(@Param("id") id: String, @Param("channel") channel: String, @Param("visible") visible: Boolean): WebApp.Response {
+        val guild = Bot.getGuild(id) ?: return WebApp.Response(false, "Guild not found!")
+        val chan = guild.getTextChannelById(channel) ?: return WebApp.Response(false, "Channel not found!")
+        if (visible) {
+            chan.unhide()
+            return WebApp.Response(true, "Channel $channel shown")
+        } else {
+            chan.hide()
+            return WebApp.Response(true, "Channel $channel hidden")
+        }
+    }
 
-    data class Channel(val id: String, val channel_name: String, val type: String)
+    @POST("/server/{id: [0-9]+}/channel/{channel: [0-9]+}/grantAccess")
+    @Produces(Produces.JSON)
+    fun grantAccess(@Param("id") id: String, @Param("channel") channel: String, @Param("user") user: String): WebApp.Response {
+        val guild = Bot.getGuild(id) ?: return WebApp.Response(false, "Guild not found!")
+        val chan = guild.getTextChannelById(channel) ?: return WebApp.Response(false, "Channel not found!")
+
+        val us = Bot.getUser(user) ?: return WebApp.Response(false, "User not found!")
+        val member = guild.getMember(us)
+        val override = chan.getPermissionOverride(member) ?: chan.createPermissionOverride(member).complete()
+        override.manager.grant(Permission.MESSAGE_READ).queue()
+        return WebApp.Response(true, "Given access to $user")
+    }
+
+
+    data class Channel(val id: String, val channel_name: String, val type: String, val private: Boolean = false)
 
     data class MusicQueue(val length: Int, val nowPlaying: QueuedSong?, val playing: Boolean, val songs: Array<QueuedSong>?)
 

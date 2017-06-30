@@ -1,20 +1,15 @@
 package me.mrkirby153.KirBot.command.executors.polls
 
-import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.command.executors.CmdExecutor
-import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.embed.embed
 import me.mrkirby153.KirBot.utils.localizeTime
-import net.dv8tion.jda.core.Permission
 import java.awt.Color
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 
-@Command(name = "poll", description = "Create polls!", clearance = Clearance.USER,
-        requiredPermissions = arrayOf(Permission.MESSAGE_ADD_REACTION), category = "Fun")
 class CommandPoll : CmdExecutor() {
 
     val time = mutableMapOf<String, Int>()
@@ -32,16 +27,16 @@ class CommandPoll : CmdExecutor() {
         // !poll 10m :dog:
         val duration = timeOffset(cmdContext.string("duration") ?: "0s")
 
-        if(duration <= 0){
+        if (duration <= 0) {
             throw CommandException("Please specify a duration greater than zero!")
         }
 
-        if(duration > timeOffset("1w")){
+        if (duration > timeOffset("1w")) {
             throw CommandException("Polls can only be less than one week!")
         }
 
         val rawOptions = cmdContext.get<String>("options") ?: ""
-        if(rawOptions.isEmpty()){
+        if (rawOptions.isEmpty()) {
             throw CommandException("Please specify options for the poll")
         }
 
@@ -51,26 +46,26 @@ class CommandPoll : CmdExecutor() {
             throw CommandException("Please provide more than one option for the poll")
         }
 
-        if(options.size > 9){
+        if (options.size > 9) {
             throw CommandException("You can only have 9 options for the poll!")
         }
         context.send().embed("Poll") {
             setColor(Color.GREEN)
-           setDescription("Vote by clicking the reactions on the choices below! Results will be final in ${localizeTime(duration)}")
+            setDescription("Vote by clicking the reactions on the choices below! Results will be final in ${localizeTime(duration)}")
             field("Options") {
                 buildString {
                     options.forEachIndexed { index, option ->
-                        appendln("${'\u0030' + (index+1)}\u20E3 **$option**")
+                        appendln("${'\u0030' + (index + 1)}\u20E3 **$option**")
                     }
                 }
             }
         }.rest().queue {
             val m = it
-            for(index in 0..options.size - 1){
-                it.addReaction("${'\u0030' + (index+1)}\u20E3").queue()
+            for (index in 0..options.size - 1) {
+                it.addReaction("${'\u0030' + (index + 1)}\u20E3").queue()
             }
 
-            it.editMessage(embed("Poll"){
+            it.editMessage(embed("Poll") {
                 setDescription("Voting has ended, Check newer messages for results!")
                 setColor(Color.RED)
             }.build()).queueAfter(duration.toLong(), TimeUnit.SECONDS) {

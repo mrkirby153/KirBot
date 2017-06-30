@@ -1,14 +1,11 @@
 package me.mrkirby153.KirBot.command.executors.music
 
-import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.command.executors.CmdExecutor
 import me.mrkirby153.KirBot.music.MusicManager
-import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
 import java.awt.Color.PINK
 
-@Command(name = "musicadmin", description = "Toggles admin-only control of the DJ", clearance = Clearance.SERVER_ADMINISTRATOR, category = "Music")
 class CommandToggleAdminMode : CmdExecutor() {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val musicManager = context.data.musicManager
@@ -19,7 +16,7 @@ class CommandToggleAdminMode : CmdExecutor() {
             }
             shouldHalt = true
         }
-        if(shouldHalt)
+        if (shouldHalt)
             return
         musicManager.adminOnly = !musicManager.adminOnly
 

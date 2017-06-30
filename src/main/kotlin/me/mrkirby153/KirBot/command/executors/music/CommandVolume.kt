@@ -1,11 +1,8 @@
 package me.mrkirby153.KirBot.command.executors.music
 
-import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.args.CommandContext
-import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
 
-@Command(name = "volume", description = "Change the volume of the robot", clearance = Clearance.BOT_MANAGER, category = "Music")
 class CommandVolume : MusicCommand() {
 
     override fun exec(context: Context, cmdContext: CommandContext) {

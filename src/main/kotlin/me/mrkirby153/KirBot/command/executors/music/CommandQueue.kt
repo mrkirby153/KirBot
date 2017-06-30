@@ -1,6 +1,5 @@
 package me.mrkirby153.KirBot.command.executors.music
 
-import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.user.Clearance
@@ -11,7 +10,6 @@ import me.mrkirby153.KirBot.utils.getClearance
 import net.dv8tion.jda.core.entities.MessageEmbed
 import java.awt.Color
 
-@Command(name = "queue", description = "Shows the current play queue", category = "Music")
 class CommandQueue : MusicCommand() {
     override fun exec(context: Context, cmdContext: CommandContext) {
 

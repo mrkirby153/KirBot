@@ -1,7 +1,6 @@
 package me.mrkirby153.KirBot.command.executors.admin
 
 
-import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.command.executors.CmdExecutor
@@ -12,8 +11,6 @@ import net.dv8tion.jda.core.entities.TextChannel
 import java.time.OffsetDateTime
 import java.util.concurrent.TimeUnit
 
-@Command(name = "clean", clearance = Clearance.BOT_MANAGER, description = "Delete the last messages in the context",
-        requiredPermissions = arrayOf(Permission.MESSAGE_MANAGE, Permission.MESSAGE_WRITE), category = "Moderation")
 class CommandClean : CmdExecutor() {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val amount = cmdContext.number("amount")!!.toInt()

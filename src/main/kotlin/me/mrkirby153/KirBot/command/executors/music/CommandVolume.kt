@@ -1,15 +1,17 @@
 package me.mrkirby153.KirBot.command.executors.music
 
 import me.mrkirby153.KirBot.command.Command
+import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
 
 @Command(name = "volume", description = "Change the volume of the robot", clearance = Clearance.BOT_MANAGER, category = "Music")
 class CommandVolume : MusicCommand() {
 
-    override fun exec(context: Context, args: Array<String>) {
-        val audioPlayer = serverData.musicManager.audioPlayer
-        if (args.isEmpty()) {
+    override fun exec(context: Context, cmdContext: CommandContext) {
+        val audioPlayer = context.data.musicManager.audioPlayer
+
+        if (!cmdContext.has("volume")) {
             context.send().info("Current Volume: **${audioPlayer.volume}**").queue()
             return
         }
@@ -17,7 +19,8 @@ class CommandVolume : MusicCommand() {
         var add = false
         var sub = false
 
-        var num = args[0]
+        var num = cmdContext.string("volume") ?: "+0"
+
         if (num.startsWith("+")) {
             num = num.substring(1)
             add = true

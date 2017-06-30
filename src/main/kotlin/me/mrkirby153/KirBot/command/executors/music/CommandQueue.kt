@@ -1,6 +1,8 @@
 package me.mrkirby153.KirBot.command.executors.music
 
 import me.mrkirby153.KirBot.command.Command
+import me.mrkirby153.KirBot.command.CommandException
+import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.embed.link
@@ -11,21 +13,27 @@ import java.awt.Color
 
 @Command(name = "queue", description = "Shows the current play queue", category = "Music")
 class CommandQueue : MusicCommand() {
-    override fun exec(context: Context, args: Array<String>) {
-        if(args.isNotEmpty()){
-            if(args[0] == "clear"){
-                if(context.author.getClearance(guild).value >= Clearance.SERVER_ADMINISTRATOR.value) {
-                    serverData.musicManager.trackScheduler.queue.clear()
+    override fun exec(context: Context, cmdContext: CommandContext) {
+
+        var shouldHalt = false
+        cmdContext.has<String>("action") { action ->
+            if (action.equals("clear", true)) {
+                if (context.author.getClearance(context.guild).value >= Clearance.SERVER_ADMINISTRATOR.value) {
                     context.send().embed("Queue") {
                         setColor(Color.CYAN)
                         setDescription("Queue Cleared!")
                     }.rest().queue()
                 } else {
-                    context.send().error("You do not have permission to perform that command!").queue()
+                    throw CommandException("You do not have permission to perform that command!")
                 }
-                return
             }
+            shouldHalt = true
         }
+        if(shouldHalt)
+            return
+
+        val serverData = context.data
+
         val queue = serverData.musicManager.trackScheduler.queue
         val duration = serverData.musicManager.trackScheduler.queueLength()
 

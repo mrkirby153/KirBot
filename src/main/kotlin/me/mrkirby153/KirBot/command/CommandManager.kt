@@ -1,32 +1,31 @@
 package me.mrkirby153.KirBot.command
 
-import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.Shard
-import me.mrkirby153.KirBot.command.executors.CommandExecutor
+import me.mrkirby153.KirBot.command.args.ArgumentParseException
+import me.mrkirby153.KirBot.command.args.Arguments
+import me.mrkirby153.KirBot.command.args.CommandContext
+import me.mrkirby153.KirBot.command.args.elements.RestToString
 import me.mrkirby153.KirBot.command.executors.CommandHelp
-import me.mrkirby153.KirBot.command.executors.ShutdownCommand
 import me.mrkirby153.KirBot.command.executors.UpdateNicknames
-import me.mrkirby153.KirBot.command.executors.admin.CommandClearance
-import me.mrkirby153.KirBot.command.executors.admin.CommandRefresh
-import me.mrkirby153.KirBot.command.executors.admin.CommandStats
+import me.mrkirby153.KirBot.command.executors.admin.*
 import me.mrkirby153.KirBot.command.executors.moderation.CommandHideChannel
 import me.mrkirby153.KirBot.command.executors.moderation.CommandKick
 import me.mrkirby153.KirBot.command.executors.moderation.CommandMute
 import me.mrkirby153.KirBot.command.executors.moderation.CommandUnmute
 import me.mrkirby153.KirBot.command.executors.music.*
 import me.mrkirby153.KirBot.command.executors.polls.CommandPoll
-import me.mrkirby153.KirBot.command.executors.search.CommandGoogle
-import me.mrkirby153.KirBot.command.executors.server.CommandClean
 import me.mrkirby153.KirBot.command.processors.LaTeXProcessor
 import me.mrkirby153.KirBot.data.ServerData
 import me.mrkirby153.KirBot.database.CommandType
 import me.mrkirby153.KirBot.database.DBCommand
 import me.mrkirby153.KirBot.database.Database
+import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Cache
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.getClearance
 import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.*
+import java.awt.Color
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 import kotlin.reflect.KClass
@@ -36,177 +35,259 @@ import kotlin.reflect.KClass
  */
 object CommandManager {
 
-    val commands = mutableMapOf<String, CommandExecutor>()
-
     val messageProcessors = mutableSetOf<Class<out MessageProcessor>>()
 
     val commandPrefixCache = Cache<String, String>(1000 * 60)
 
+    val cmds = mutableListOf<CommandSpec>()
+
     init {
-        register(ShutdownCommand::class)
+        register(CommandSpec("shutdown") {
+            clearance = Clearance.BOT_OWNER
+            description = "Shuts down the robot"
+            executor = CommandShutdown()
+        })
 
-        // Server management commands
-        register(CommandClean::class)
+        register(CommandSpec("clean") {
+            clearance = Clearance.BOT_MANAGER
+            description = "Deletes the last messages in the channel"
+            permissions(Permission.MESSAGE_MANAGE)
+            arguments(Arguments.number("amount", min = 0.0, max = 100.0))
+            executor = CommandClean()
+        })
 
-        register(UpdateNicknames::class)
-        register(CommandPoll::class)
-        register(CommandGoogle::class)
+        register(CommandSpec("updateNames") {
+            description = "Updates nicknames from the database"
+            clearance = Clearance.SERVER_ADMINISTRATOR
+            executor = UpdateNicknames()
+        })
 
-        // Moderation commands
-        register(CommandKick::class)
-        register(CommandMute::class)
-        register(CommandUnmute::class)
-        register(CommandHideChannel::class)
+        register(CommandSpec("poll") {
+            description = "Creates a poll"
+            clearance = Clearance.USER
+            permissions(Permission.MESSAGE_ADD_REACTION)
+            arguments(Arguments.string("duration"), Arguments.rest("options", "Options"))
+            executor = CommandPoll()
+        })
 
-        // Music commands
-        register(CommandPlay::class)
-        register(CommandQueue::class)
-        register(CommandSkip::class)
-        register(CommandStop::class)
-        register(CommandPause::class)
-        register(CommandVolume::class)
-        register(CommandToggleAdminMode::class)
+        register(CommandSpec("kick") {
+            description = "Kicks a user"
+            clearance = Clearance.BOT_MANAGER
+            permissions(Permission.KICK_MEMBERS)
+            arguments(Arguments.user("user"))
+            executor = CommandKick()
+        })
 
-        register(CommandHelp::class)
+        register(CommandSpec("mute") {
+            description = "Mutes a user in the current channel"
+            clearance = Clearance.BOT_MANAGER
+            permissions(Permission.MANAGE_CHANNEL)
+            arguments(Arguments.user("user"))
+            executor = CommandMute()
+        })
 
-        register(CommandRefresh::class)
-        register(CommandStats::class)
-        register(CommandClearance::class)
+        register(CommandSpec("unmute") {
+            description = "Unmutes a muted user"
+            clearance = Clearance.BOT_MANAGER
+            permissions(Permission.MANAGE_CHANNEL)
+            arguments(Arguments.user("user"))
+            executor = CommandUnmute()
+        })
+
+        register(CommandSpec("hideChannel") {
+            description = "Hides the current channel from everyone"
+            clearance = Clearance.BOT_MANAGER
+            permissions(Permission.MANAGE_CHANNEL)
+            executor = CommandHideChannel()
+        })
+
+        register(CommandSpec("play") {
+            description = "Plays the following URL or searches youtube for the text"
+            arguments(Arguments.rest("data", "URL or Search"))
+            executor = CommandPlay()
+        })
+
+        register(CommandSpec("queue") {
+            description = "Displays the current play queue"
+            arguments(Arguments.string("action", false))
+            executor = CommandQueue()
+        })
+
+        register(CommandSpec("skip") {
+            description = "Starts a vote to skip the currently playing song"
+            arguments(Arguments.string("action", false))
+            executor = CommandSkip()
+        })
+
+        register(CommandSpec("stop") {
+            description = "Stops and clears the music queue"
+            clearance = Clearance.BOT_MANAGER
+            executor = CommandStop()
+        })
+
+        register(CommandSpec("pause") {
+            description = "Pauses the music"
+            clearance = Clearance.BOT_MANAGER
+            executor = CommandPause()
+        })
+
+        register(CommandSpec("volume") {
+            description = "Changes the robot's volume"
+            clearance = Clearance.BOT_MANAGER
+            arguments(Arguments.string("volume", false))
+            executor = CommandVolume()
+        })
+
+        register(CommandSpec("adminMode") {
+            description = "Toggles admin-only mode of the DJ"
+            clearance = Clearance.SERVER_ADMINISTRATOR
+            arguments(Arguments.string("action", false))
+            executor = CommandToggleAdminMode()
+        })
+
+
+        register(CommandSpec("stats") {
+            description = "Displays statistics about the robot"
+            clearance = Clearance.USER
+            executor = CommandStats()
+        })
+
+        register(CommandSpec("clearance") {
+            description = "Displays your current clearance level"
+            clearance = Clearance.BOT
+            executor = CommandClearance()
+        })
+
+        register(CommandSpec("refresh") {
+            clearance = Clearance.BOT_OWNER
+            arguments(Arguments.string("item"))
+            executor = CommandRefresh()
+        })
+
+        register(CommandSpec("help") {
+            arguments(Arguments.string("command", false))
+            executor = CommandHelp()
+        })
 
 
         /// ------ REGISTER MESSAGE PROCESSORS ------
         registerProcessor(LaTeXProcessor::class)
     }
 
-    /**
-     * Register a command
-     */
-    fun register(cls: Class<out CommandExecutor>) {
-        if (!cls.isAnnotationPresent(Command::class.java)) {
-            throw IllegalArgumentException("@Command annotation missing for ${cls.name}")
-        }
-        val cmd = cls.newInstance()
-
-        val annotation = cls.getAnnotation(Command::class.java)
-
-        cmd.aliases = annotation.aliases
-        cmd.clearance = annotation.clearance
-        cmd.description = annotation.description
-        cmd.permissions = annotation.requiredPermissions
-        cmd.category = annotation.category
-        cmd.command = annotation.name
-        commands[annotation.name.toLowerCase()] = cmd
-
-        annotation.aliases.forEach { a -> commands[a.toLowerCase()] = cmd }
-
-        Bot.LOG.info("Registered command ${annotation.name} (${cls.name}")
-    }
-
-    fun register(cls: KClass<out CommandExecutor>) {
-        register(cls.java)
+    fun register(spec: CommandSpec) {
+        cmds.add(spec)
     }
 
     fun registerProcessor(cls: KClass<out MessageProcessor>) {
         messageProcessors.add(cls.java)
     }
 
-    fun call(context: Context, guildData: ServerData, shard: Shard, guild: Guild) {
+    fun execute(context: Context, shard: Shard, guild: Guild) {
+        process(context, shard.getServerData(guild), shard)
         if (context.event.isFromType(ChannelType.PRIVATE))
             return
-        // Call message processors
-        process(context, guildData, shard)
 
         var message = context.message.rawContent
 
         if (message.isEmpty())
             return
 
-        val author = context.author
+        var prefix = this.commandPrefixCache[guild.id]
 
-        var commandPrefix = this.commandPrefixCache[guild.id]
-
-        if (commandPrefix == null) {
-            commandPrefix = Database.getCommandPrefix(guild)
-            this.commandPrefixCache.put(guild.id, commandPrefix)
+        if (prefix == null) {
+            prefix = Database.getCommandPrefix(guild)
+            this.commandPrefixCache[guild.id] = prefix
         }
 
+        // Drop the prefix
+        message = message.substring(prefix.length)
 
-        message = message.substring(1)
         val parts: Array<String> = message.split(" ").toTypedArray()
 
-        val command = parts[0]
+        val command = parts[0].toLowerCase()
 
         val args = if (parts.isNotEmpty()) parts.drop(1).toTypedArray() else arrayOf<String>()
 
-        val executor = CommandManager.commands[command.toLowerCase()]
+        for (i in 0..this.cmds.size - 1) {
+            val c = this.cmds[i]
+            if (c.aliases.map { it.toLowerCase() }.contains(command) || c.command.equals(command, true)) {
+                // Check permissions
+                val missingPerms = c.permissions.filter { !context.guild.selfMember.hasPermission(context.channel as TextChannel, it) }
+                if (missingPerms.isNotEmpty()) {
+                    context.send().embed("Missing Permissions") {
+                        setColor(Color.RED)
+                        setDescription(buildString {
+                            append("I cannot perform this action because I'm missing the following permissions:\n")
+                            append("`" + missingPerms.joinToString(",") + "`")
+                        })
+                    }.rest().queue()
+                    return
+                }
 
+                if (c.clearance.value > context.author.getClearance(context.guild).value) {
+                    context.send().error("You do not have permission to perform this command!").queue {
+                        it.delete().queueAfter(10, TimeUnit.SECONDS)
+                    }
+                    return
+                }
+                // parse arguments
+                val cmdContext = CommandContext()
 
-        if (context.message.rawContent.toLowerCase() == "~help") {
-            val help = commands["help"] ?: return
-            help.shard = shard
-            help.serverData = guildData
-            help.guild = guild
-            help.execute(context, args)
-            return
-        }
-
-        if (!context.message.rawContent.startsWith(commandPrefix))
-            return
-
-        if (executor == null) {
-            val customCommand = Database.getCustomCommand(command.toLowerCase(), guild) ?: return
-            if (customCommand.clearance.value > author.getClearance(guild).value) {
-                context.send().error("You do not have permission to perform that command").queue({
-                    m ->
-                    m.delete().queueAfter(10, TimeUnit.SECONDS)
-                })
+                var currentArg = 0
+                c.arguments.forEach { commandElement ->
+                    if (commandElement is RestToString) {
+                        cmdContext.put(commandElement.key, commandElement.customParse(args.clone().drop(currentArg)))
+                        return@forEach
+                    }
+                    try {
+                        if (currentArg < args.size) {
+                            commandElement.parse(args[currentArg++], cmdContext)
+                        } else {
+                            if (commandElement.required) {
+                                throw ArgumentParseException("The argument `${commandElement.key.capitalize()}` is required!")
+                            }
+                        }
+                    } catch (e: ArgumentParseException) {
+                        context.send().error(e.message ?: "An unknown error occurred!").queue()
+                        return
+                    } catch (e: Exception) {
+                        context.send().error("An unknown error occurred!").queue()
+                        e.printStackTrace()
+                        return
+                    }
+                }
+                try {
+                    c.executor.execute(context, cmdContext)
+                } catch(e: CommandException) {
+                    context.send().error(e.message ?: "An unknown error occurred!").queue()
+                } catch(e: Exception) {
+                    e.printStackTrace()
+                    context.send().error("An unknown error occurred!").queue()
+                }
                 return
             }
-            callCustomCommand(context.channel, customCommand, args, author)
-            return
         }
-
-        executor.shard = shard
-        executor.serverData = guildData
-        executor.guild = guild
-
-        // Verify permissions
-        val missingPermissions = arrayListOf<Permission>()
-        executor.permissions.forEach { permission ->
-            if (!guild.getMember(shard.selfUser).hasPermission(context.channel as Channel, permission)) {
-                missingPermissions.add(permission)
+        // Call custom commands
+        val customCommand = Database.getCustomCommand(command.toLowerCase(), guild) ?: return
+        if (customCommand.clearance.value > context.author.getClearance(guild).value) {
+            context.send().error("You do not have permission to perform that command").queue {
+                it.delete().queueAfter(10, TimeUnit.SECONDS)
             }
-        }
-
-        if (missingPermissions.isNotEmpty()) {
-            context.send().error("I cannot perform that action because I'm missing the following permissions: \n"
-                    + missingPermissions.joinToString { " i ${it.name} \n" }).queue()
             return
         }
-
-        if (context.author.getClearance(context.guild).value < executor.clearance.value) {
-            context.send().error("You do not have permission to perform this command!").queue({
-                m ->
-                m.delete().queueAfter(10, TimeUnit.SECONDS)
-            })
-            return
-        }
-        executor.execute(context, args)
+        callCustomCommand(context.channel, customCommand, args, context.author)
     }
 
-    fun getCommandsByCategory(): Map<String, Array<CommandExecutor>> {
-        val mutableMap = mutableMapOf<String, MutableList<CommandExecutor>>()
-        val processed = mutableListOf<CommandExecutor>()
-        commands.values.forEach {
-            if(it in processed)
-                return@forEach
-            val cmdArray = mutableMap[it.category.toLowerCase()] ?: mutableListOf<CommandExecutor>()
+    fun getCommandsByCategory(): Map<String, Array<CommandSpec>> {
+        val mutableMap = mutableMapOf<String, MutableList<CommandSpec>>()
+        cmds.forEach {
+            val cmdArray = mutableMap[it.category.toLowerCase()] ?: mutableListOf<CommandSpec>()
             cmdArray.add(it)
             mutableMap[it.category.toLowerCase()] = cmdArray
         }
 
-        val toReturn = mutableMapOf<String, Array<CommandExecutor>>()
-        mutableMap.forEach{
+        val toReturn = mutableMapOf<String, Array<CommandSpec>>()
+        mutableMap.forEach {
             toReturn[it.key.capitalize()] = it.value.toTypedArray()
         }
         return toReturn
@@ -263,33 +344,15 @@ object CommandManager {
         }
     }
 
-    /*private fun executeJavascript(note: Note, script: String, context: MessageChannel, sender: User, args: Array<String>) {
-        val scriptEngine = ScriptEngineManager().getEngineByName("nashorn")
-
-        val vars = arrayOf(EcmaVariable("context", context), EcmaVariable("sender", sender.name), EcmaVariable("args", args))
-
-        val bindings = SimpleBindings()
-        for ((name, value) in vars) {
-            bindings[name] = value
+    fun findCommand(command: String): CommandSpec? {
+        var foundCommand: CommandSpec? = null
+        cmds.forEach {
+            if (it.command.equals(command, true) || it.aliases.map(String::toLowerCase).contains(command.toLowerCase()))
+                foundCommand = it
+            return@forEach
         }
-        scriptEngine.setBindings(bindings, ScriptContext.GLOBAL_SCOPE)
-
-        val sw = StringWriter()
-        val pw = PrintWriter(sw)
-        scriptEngine.context.writer = pw
-
-        try {
-            scriptEngine.eval(script)
-            val output = sw.buffer.toString()
-            if (output.length > 2048) {
-                note.error("Output is too long")
-            } else {
-                note.replyEmbed(null, output)
-            }
-        } catch (e: ScriptException) {
-            note.error("An error occurred when executing the script: ```" + e.message + "```")
-        }
-    }*/
-
-    private data class EcmaVariable(val name: String, val value: Any)
+        return foundCommand
+    }
 }
+
+class CommandException(message: String) : Exception(message)

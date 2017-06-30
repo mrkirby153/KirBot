@@ -20,7 +20,8 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
 
         val context = Context(event)
 
-        CommandManager.call(context, serverData, shard, event.guild)
+//        CommandManager.call(context, serverData, shard, event.guild)
+        CommandManager.execute(context, shard, event.guild)
     }
 
     override fun onGuildLeave(event: GuildLeaveEvent?) {

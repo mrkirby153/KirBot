@@ -1,7 +1,9 @@
 package me.mrkirby153.KirBot.command.executors.polls
 
 import me.mrkirby153.KirBot.command.Command
-import me.mrkirby153.KirBot.command.executors.CommandExecutor
+import me.mrkirby153.KirBot.command.CommandException
+import me.mrkirby153.KirBot.command.args.CommandContext
+import me.mrkirby153.KirBot.command.executors.CmdExecutor
 import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.embed.embed
@@ -13,7 +15,7 @@ import java.util.regex.Pattern
 
 @Command(name = "poll", description = "Create polls!", clearance = Clearance.USER,
         requiredPermissions = arrayOf(Permission.MESSAGE_ADD_REACTION), category = "Fun")
-class CommandPoll : CommandExecutor() {
+class CommandPoll : CmdExecutor() {
 
     val time = mutableMapOf<String, Int>()
 
@@ -26,26 +28,32 @@ class CommandPoll : CommandExecutor() {
         time.put("w", 604800)
     }
 
-    override fun execute(context: Context, args: Array<String>) {
+    override fun execute(context: Context, cmdContext: CommandContext) {
         // !poll 10m :dog:
-        val duration = timeOffset(args[0])
+        val duration = timeOffset(cmdContext.string("duration") ?: "0s")
+
+        if(duration <= 0){
+            throw CommandException("Please specify a duration greater than zero!")
+        }
 
         if(duration > timeOffset("1w")){
-            context.send().error("Polls can only be less than 1 week.").queue()
-            return
+            throw CommandException("Polls can only be less than one week!")
         }
-        val options = args.drop(1).joinToString(" ").split(",").map(String::trim)
+
+        val rawOptions = cmdContext.get<String>("options") ?: ""
+        if(rawOptions.isEmpty()){
+            throw CommandException("Please specify options for the poll")
+        }
+
+        val options = rawOptions.split(",").map(String::trim)
 
         if (options.size <= 1) {
-            context.send().error("Please provide more than one option for the poll!").queue()
-            return
+            throw CommandException("Please provide more than one option for the poll")
         }
 
         if(options.size > 9){
-            context.send().error("You can only have 9 options in a poll!").queue()
-            return
+            throw CommandException("You can only have 9 options for the poll!")
         }
-        // TODO 4/25/2017 Fix the brokenness!
         context.send().embed("Poll") {
             setColor(Color.GREEN)
            setDescription("Vote by clicking the reactions on the choices below! Results will be final in ${localizeTime(duration)}")

@@ -1,40 +1,25 @@
 package me.mrkirby153.KirBot.command.executors.moderation
 
-import me.mrkirby153.KirBot.command.Command
-import me.mrkirby153.KirBot.command.executors.CommandExecutor
-import me.mrkirby153.KirBot.user.Clearance
+import me.mrkirby153.KirBot.command.CommandException
+import me.mrkirby153.KirBot.command.args.CommandContext
+import me.mrkirby153.KirBot.command.executors.CmdExecutor
 import me.mrkirby153.KirBot.utils.Context
+import me.mrkirby153.KirBot.utils.getMember
 import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.TextChannel
+import net.dv8tion.jda.core.entities.User
 
-@Command(name = "mute", description = "Mute a given user", clearance = Clearance.BOT_MANAGER,
-        requiredPermissions = arrayOf(Permission.MANAGE_CHANNEL), category = "Moderation")
-class CommandMute : CommandExecutor() {
-    override fun execute(context: Context, args: Array<String>) {
-        if (args.isEmpty()) {
-            context.send().error("Please mention a user to mute").queue()
-            return
-        }
+class CommandMute : CmdExecutor() {
+    override fun execute(context: Context, cmdContext: CommandContext) {
+        val user = cmdContext.get<User>("user") ?: throw CommandException("Please specify a user to mute")
 
-        val user = guild.getMember(getUserByMention(args[0]))
+        val member = user.getMember(context.guild) ?: throw CommandException("This user isn't a part of the guild!")
+        if(context.channel !is TextChannel)
+            throw CommandException("This command won't work in PMs")
 
-        if (user == null) {
-            context.send().error("Could not find a user by that name!").queue()
-            return
-        }
-
-        if (context.channel !is TextChannel) {
-            context.send().error("This command doesn't work in PMs :(").queue()
-            return
-        }
-
-        val channel = context.channel as TextChannel
-        var override = channel.getPermissionOverride(user)
-        if (override == null) {
-            override = channel.createPermissionOverride(user).complete(true)
-        }
+        val channel = context.channel
+        val override = channel.getPermissionOverride(member) ?: channel.createPermissionOverride(member).complete()
         override.manager.deny(Permission.MESSAGE_WRITE).queue()
-        context.send().success("${user.effectiveName} has been muted!").queue()
-        serverData.logger.log("Mute", "${user.effectiveName} has been **muted** by ${context.author.name}")
+        context.send().success("${member.effectiveName} has been muted!").queue()
     }
 }

@@ -1,17 +1,15 @@
 package me.mrkirby153.KirBot.command.executors.music
 
-import me.mrkirby153.KirBot.command.Command
-import me.mrkirby153.KirBot.user.Clearance
+import me.mrkirby153.KirBot.command.CommandException
+import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.utils.Context
 
-@Command(name = "pause", clearance = Clearance.BOT_MANAGER, description = "Pauses the current song", category = "Music")
 class CommandPause : MusicCommand() {
-    override fun exec(context: Context, args: Array<String>) {
-        if (!serverData.musicManager.trackScheduler.playing) {
-            context.send().error("I'm not playing anything right now").queue()
-            return
+    override fun exec(context: Context, cmdContext: CommandContext) {
+        if (!context.data.musicManager.trackScheduler.playing) {
+            throw CommandException("I'm not playing anything right now")
         }
-        serverData.musicManager.trackScheduler.pause()
+        context.data.musicManager.trackScheduler.pause()
         context.send().info("Paused the music!").queue()
     }
 }

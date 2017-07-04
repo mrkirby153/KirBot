@@ -169,6 +169,10 @@ object CommandManager {
             executor = CommandHelp()
         })
 
+        register(CommandSpec("history"){
+            executor = CommandHistory()
+        })
+
 
         /// ------ REGISTER MESSAGE PROCESSORS ------
         registerProcessor(LaTeXProcessor::class)

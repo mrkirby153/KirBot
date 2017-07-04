@@ -1,10 +1,12 @@
 package me.mrkirby153.KirBot.google
 
-import com.google.gson.JsonParser
 import me.mrkirby153.KirBot.Bot
-import java.net.URL
+import me.mrkirby153.KirBot.command.CommandException
+import me.mrkirby153.KirBot.utils.HttpUtils
+import okhttp3.Request
+import org.json.JSONObject
+import org.json.JSONTokener
 import java.net.URLEncoder
-import java.nio.charset.Charset
 
 class YoutubeSearch(val query: String) {
 
@@ -18,21 +20,23 @@ class YoutubeSearch(val query: String) {
     }
 
     fun execute(): String {
-        val url = URL(getQueryString())
-        val conn = url.openConnection()
+        val request = Request.Builder().url(getQueryString()).build()
 
+        val response = HttpUtils.CLIENT.newCall(request).execute()
 
-        val inputStream = conn.getInputStream()
+        if(!response.isSuccessful)
+            throw CommandException("Unexpected code $response")
 
-        val jsonObj = JsonParser().parse(inputStream.reader(Charset.defaultCharset())).asJsonObject
+        val jsonObject = JSONObject(JSONTokener(response.body()?.byteStream()))
 
-        if (jsonObj.get("error") != null) {
-            throw Exception(jsonObj.getAsJsonObject("error").get("message").asString)
+        jsonObject.optJSONObject("error")?.let {
+            throw CommandException(it.getString("message"))
         }
 
-        val jsonItems = jsonObj.getAsJsonArray("items")
-
-        return jsonItems[0].asJsonObject.getAsJsonObject("id").get("videoId").asString
+        val jsonArray = jsonObject.optJSONArray("items")
+        if(jsonArray == null || jsonArray.count() == 0)
+            throw CommandException("No items returned!")
+        return jsonArray.getJSONObject(0).getJSONObject("id").getString("videoId")
     }
 
     private fun getQueryString(): String {

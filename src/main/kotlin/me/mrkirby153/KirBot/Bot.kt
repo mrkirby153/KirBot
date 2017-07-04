@@ -11,6 +11,7 @@ import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager
 import me.mrkirby153.KirBot.data.ServerData
 import me.mrkirby153.KirBot.database.Database
 import me.mrkirby153.KirBot.realname.RealnameUpdater
+import me.mrkirby153.KirBot.utils.HttpUtils
 import me.mrkirby153.KirBot.utils.localizeTime
 import me.mrkirby153.KirBot.utils.readProperties
 import me.mrkirby153.KirBot.web.WebApp
@@ -91,6 +92,8 @@ object Bot {
         webServer.server.settings.host(properties.getProperty("webserver-host", "localhost"))
         webServer.start()
         LOG.info("Web server started on ${webServer.server.settings.host}:${webServer.server.port}")
+
+        HttpUtils.clearCache()
 
     }
 

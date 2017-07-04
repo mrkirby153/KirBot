@@ -222,6 +222,9 @@ object CommandManager {
             this.commandPrefixCache[guild.id] = prefix
         }
 
+        if(!message.startsWith(prefix))
+            return
+
         // Drop the prefix
         message = message.substring(prefix.length)
 

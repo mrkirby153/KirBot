@@ -8,6 +8,7 @@ import me.mrkirby153.KirBot.command.args.elements.RestToString
 import me.mrkirby153.KirBot.command.executors.CommandHelp
 import me.mrkirby153.KirBot.command.executors.UpdateNicknames
 import me.mrkirby153.KirBot.command.executors.admin.*
+import me.mrkirby153.KirBot.command.executors.game.CommandOverwatch
 import me.mrkirby153.KirBot.command.executors.moderation.CommandHideChannel
 import me.mrkirby153.KirBot.command.executors.moderation.CommandKick
 import me.mrkirby153.KirBot.command.executors.moderation.CommandMute
@@ -190,6 +191,14 @@ object CommandManager {
         register(CommandSpec("history"){
             executor = CommandHistory()
             category = CommandCategory.MISCELLANEOUS
+        })
+
+        register(CommandSpec("overwatch"){
+            executor = CommandOverwatch()
+            category = CommandCategory.FUN
+            arguments(Arguments.regex("battletag", "[A-Za-z0-9]+#[0-9]{4}", true,
+                    "Username#0000", "Please enter a valid battle tag (`Username#0000`)"),
+                    Arguments.string("region", false, "us, eu, kr"))
         })
 
 

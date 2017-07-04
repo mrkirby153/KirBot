@@ -38,8 +38,8 @@ object Arguments {
         return RestToString(key, name)
     }
 
-    fun regex(key: String, regex: String, required: Boolean = true, name: String = "Regex"): CommandElement{
-        return RegexElemenet(key, required, regex, name)
+    fun regex(key: String, regex: String, required: Boolean = true, name: String = "Regex", error: String? = null): CommandElement{
+        return RegexElemenet(key, required, regex, name, error)
     }
 
     fun url(key: String, required: Boolean = true): CommandElement {

@@ -15,7 +15,7 @@ class CommandSpec(val command: String, spec: (CommandSpec.() -> Unit)? = null) {
 
     val permissions = mutableListOf<Permission>()
 
-    var category: String = "Uncategoriezed"
+    var category: CommandCategory = CommandCategory.UNCATEGORIZED
 
     val arguments = mutableListOf<CommandElement>()
 

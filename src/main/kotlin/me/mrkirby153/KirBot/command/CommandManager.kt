@@ -46,6 +46,7 @@ object CommandManager {
             clearance = Clearance.BOT_OWNER
             description = "Shuts down the robot"
             executor = CommandShutdown()
+            category = CommandCategory.ADMIN
         })
 
         register(CommandSpec("clean") {
@@ -54,12 +55,14 @@ object CommandManager {
             permissions(Permission.MESSAGE_MANAGE)
             arguments(Arguments.number("amount", min = 0.0, max = 100.0))
             executor = CommandClean()
+            category = CommandCategory.MODERATION
         })
 
         register(CommandSpec("updateNames") {
             description = "Updates nicknames from the database"
             clearance = Clearance.SERVER_ADMINISTRATOR
             executor = UpdateNicknames()
+            category = CommandCategory.MISCELLANEOUS
         })
 
         register(CommandSpec("poll") {
@@ -68,6 +71,7 @@ object CommandManager {
             permissions(Permission.MESSAGE_ADD_REACTION)
             arguments(Arguments.string("duration"), Arguments.rest("options", "Options"))
             executor = CommandPoll()
+            category = CommandCategory.FUN
         })
 
         register(CommandSpec("kick") {
@@ -76,6 +80,7 @@ object CommandManager {
             permissions(Permission.KICK_MEMBERS)
             arguments(Arguments.user("user"))
             executor = CommandKick()
+            category = CommandCategory.MODERATION
         })
 
         register(CommandSpec("mute") {
@@ -84,6 +89,7 @@ object CommandManager {
             permissions(Permission.MANAGE_CHANNEL)
             arguments(Arguments.user("user"))
             executor = CommandMute()
+            category = CommandCategory.MODERATION
         })
 
         register(CommandSpec("unmute") {
@@ -92,6 +98,7 @@ object CommandManager {
             permissions(Permission.MANAGE_CHANNEL)
             arguments(Arguments.user("user"))
             executor = CommandUnmute()
+            category = CommandCategory.MODERATION
         })
 
         register(CommandSpec("hideChannel") {
@@ -99,36 +106,42 @@ object CommandManager {
             clearance = Clearance.BOT_MANAGER
             permissions(Permission.MANAGE_CHANNEL)
             executor = CommandHideChannel()
+            category = CommandCategory.MODERATION
         })
 
         register(CommandSpec("play") {
             description = "Plays the following URL or searches youtube for the text"
             arguments(Arguments.rest("data", "URL or Search"))
             executor = CommandPlay()
+            category = CommandCategory.MUSIC
         })
 
         register(CommandSpec("queue") {
             description = "Displays the current play queue"
             arguments(Arguments.string("action", false))
             executor = CommandQueue()
+            category = CommandCategory.MUSIC
         })
 
         register(CommandSpec("skip") {
             description = "Starts a vote to skip the currently playing song"
             arguments(Arguments.string("action", false))
             executor = CommandSkip()
+            category = CommandCategory.MUSIC
         })
 
         register(CommandSpec("stop") {
             description = "Stops and clears the music queue"
             clearance = Clearance.BOT_MANAGER
             executor = CommandStop()
+            category = CommandCategory.MUSIC
         })
 
         register(CommandSpec("pause") {
             description = "Pauses the music"
             clearance = Clearance.BOT_MANAGER
             executor = CommandPause()
+            category = CommandCategory.MUSIC
         })
 
         register(CommandSpec("volume") {
@@ -136,6 +149,7 @@ object CommandManager {
             clearance = Clearance.BOT_MANAGER
             arguments(Arguments.string("volume", false))
             executor = CommandVolume()
+            category = CommandCategory.MUSIC
         })
 
         register(CommandSpec("adminMode") {
@@ -143,6 +157,7 @@ object CommandManager {
             clearance = Clearance.SERVER_ADMINISTRATOR
             arguments(Arguments.string("action", false))
             executor = CommandToggleAdminMode()
+            category = CommandCategory.MUSIC
         })
 
 
@@ -150,12 +165,14 @@ object CommandManager {
             description = "Displays statistics about the robot"
             clearance = Clearance.USER
             executor = CommandStats()
+            category = CommandCategory.MISCELLANEOUS
         })
 
         register(CommandSpec("clearance") {
             description = "Displays your current clearance level"
             clearance = Clearance.BOT
             executor = CommandClearance()
+            category = CommandCategory.ADMIN
         })
 
         register(CommandSpec("refresh") {
@@ -167,10 +184,12 @@ object CommandManager {
         register(CommandSpec("help") {
             arguments(Arguments.string("command", false))
             executor = CommandHelp()
+            category = CommandCategory.MISCELLANEOUS
         })
 
         register(CommandSpec("history"){
             executor = CommandHistory()
+            category = CommandCategory.MISCELLANEOUS
         })
 
 
@@ -282,17 +301,17 @@ object CommandManager {
         callCustomCommand(context.channel, customCommand, args, context.author)
     }
 
-    fun getCommandsByCategory(): Map<String, Array<CommandSpec>> {
-        val mutableMap = mutableMapOf<String, MutableList<CommandSpec>>()
+    fun getCommandsByCategory(): Map<CommandCategory, Array<CommandSpec>> {
+        val mutableMap = mutableMapOf<CommandCategory, MutableList<CommandSpec>>()
         cmds.forEach {
-            val cmdArray = mutableMap[it.category.toLowerCase()] ?: mutableListOf<CommandSpec>()
+            val cmdArray = mutableMap[it.category] ?: mutableListOf<CommandSpec>()
             cmdArray.add(it)
-            mutableMap[it.category.toLowerCase()] = cmdArray
+            mutableMap[it.category] = cmdArray
         }
 
-        val toReturn = mutableMapOf<String, Array<CommandSpec>>()
+        val toReturn = mutableMapOf<CommandCategory, Array<CommandSpec>>()
         mutableMap.forEach {
-            toReturn[it.key.capitalize()] = it.value.toTypedArray()
+            toReturn[it.key] = it.value.toTypedArray()
         }
         return toReturn
     }

@@ -18,7 +18,7 @@ class CommandHelp : CmdExecutor() {
                 setDescription("Below is a list of all the commands available. \n Type `${prefix}help <command>` for more info")
                 field("Command Prefix", false, prefix)
                 for ((category, commands) in CommandManager.getCommandsByCategory()) {
-                    field(category, true) {
+                    field(category.friendlyName, true) {
                         buildString {
                             commands.forEach {
                                 appendln("[" + prefix + it.command + "]()")
@@ -28,7 +28,7 @@ class CommandHelp : CmdExecutor() {
                 }
                 appendDescription(buildString {
                     append("\n\nFor custom commands available on this server, ")
-                    appendln("Click Here" link "https://kirbot.mrkirby153.tk/commands/${context.guild.id}")
+                    appendln("Click Here" link "https://kirbot.mrkirby153.tk/${context.guild.id}/commands")
                 })
             }.rest().queue()
         } else {
@@ -59,26 +59,4 @@ class CommandHelp : CmdExecutor() {
             }.rest().queue()
         }
     }
-
-/*    override fun execute(context: Context, args: Array<String>) {
-        else {
-            val command = args[0]
-            val executor = CommandManager.commands[command]
-            if (executor == null)
-                context.send().embed("Help") {
-                    setColor(Color.BLUE)
-                    description = "There is no command by that name!"
-                }.rest().queue()
-            else
-                context.send().embed("Command Information") {
-                    setColor(Color.BLUE)
-                    field("Name", false, prefix + command)
-                    field("Description", false, executor.description)
-                    field("Clearance", false, executor.clearance)
-                    if (executor.aliases.isNotEmpty())
-                        field("Aliases", false, executor.aliases.joinToString(", "))
-                    field("Required Permissions", false, executor.permissions.joinToString(", "))
-                }.rest().queue()
-        }
-    }*/
 }

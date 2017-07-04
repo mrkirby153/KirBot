@@ -222,11 +222,16 @@ object CommandManager {
             this.commandPrefixCache[guild.id] = prefix
         }
 
-        if(!message.startsWith(prefix))
-            return
+        var mention = false
+        if(!message.startsWith(prefix)){
+            if(!context.message.mentionedUsers.contains(context.guild.jda.selfUser))
+                return
+            else
+                mention = true
+        }
 
         // Drop the prefix
-        message = message.substring(prefix.length)
+        message = if(mention) message.replace(Regex("<@!?[0-9]+>\\s?"), "") else message.substring(prefix.length)
 
         val parts: Array<String> = message.split(" ").toTypedArray()
 

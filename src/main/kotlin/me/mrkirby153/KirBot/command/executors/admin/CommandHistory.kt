@@ -1,15 +1,16 @@
 package me.mrkirby153.KirBot.command.executors.admin
 
-import com.google.gson.Gson
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.command.executors.CmdExecutor
 import me.mrkirby153.KirBot.utils.Context
+import me.mrkirby153.KirBot.utils.HttpUtils
 import net.dv8tion.jda.core.entities.MessageHistory
 import net.dv8tion.jda.core.entities.TextChannel
-import java.io.DataOutputStream
-import java.net.HttpURLConnection
-import java.net.URL
-import java.nio.charset.Charset
+import okhttp3.MediaType
+import okhttp3.Request
+import okhttp3.RequestBody
+import org.json.JSONObject
+import org.json.JSONTokener
 import java.time.format.DateTimeFormatter
 
 class CommandHistory : CmdExecutor() {
@@ -40,26 +41,12 @@ class CommandHistory : CmdExecutor() {
     }
 
     fun paste(content: String): String {
-        val url = URL("$HASTEBIN_URL/documents")
-        val connection = url.openConnection() as HttpURLConnection
-        connection.requestMethod = "POST"
-        connection.doInput = true
-        connection.doOutput = true
-        connection.setRequestProperty("User-Agent", "KirBot")
+        val body = RequestBody.create(MediaType.parse("application/x-www-form-urlencoded"), content)
 
-        // Send data
-        val os = DataOutputStream(connection.outputStream)
-        os.writeBytes(content)
-        os.flush()
-        os.close()
-
-        // Response
-        val reader = connection.inputStream.bufferedReader(Charset.defaultCharset())
-        val gson = Gson().fromJson(reader, JsonResponse::class.java)
-        connection.disconnect()
-        reader.close()
-        return "$HASTEBIN_URL/${gson.key}.txt"
-
+        val request = Request.Builder().url("$HASTEBIN_URL/documents").post(body).build()
+        val response = HttpUtils.CLIENT.newCall(request).execute()
+        val json  = JSONObject(JSONTokener(response.body()?.byteStream()))
+        return "$HASTEBIN_URL${json.optString("key")}.txt"
     }
 
     fun getHistory(channel: TextChannel): MessageHistory {

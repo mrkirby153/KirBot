@@ -48,6 +48,7 @@ object CommandManager {
             description = "Shuts down the robot"
             executor = CommandShutdown()
             category = CommandCategory.ADMIN
+            ignoreWhitelist = true
         })
 
         register(CommandSpec("clean") {
@@ -57,6 +58,7 @@ object CommandManager {
             arguments(Arguments.number("amount", min = 0.0, max = 100.0))
             executor = CommandClean()
             category = CommandCategory.MODERATION
+            ignoreWhitelist = true
         })
 
         register(CommandSpec("updateNames") {
@@ -73,6 +75,7 @@ object CommandManager {
             arguments(Arguments.string("duration"), Arguments.rest("options", "Options"))
             executor = CommandPoll()
             category = CommandCategory.FUN
+            ignoreWhitelist = true
         })
 
         register(CommandSpec("kick") {
@@ -82,6 +85,7 @@ object CommandManager {
             arguments(Arguments.user("user"))
             executor = CommandKick()
             category = CommandCategory.MODERATION
+            ignoreWhitelist = true
         })
 
         register(CommandSpec("mute") {
@@ -91,6 +95,7 @@ object CommandManager {
             arguments(Arguments.user("user"))
             executor = CommandMute()
             category = CommandCategory.MODERATION
+            ignoreWhitelist = true
         })
 
         register(CommandSpec("unmute") {
@@ -100,6 +105,7 @@ object CommandManager {
             arguments(Arguments.user("user"))
             executor = CommandUnmute()
             category = CommandCategory.MODERATION
+            ignoreWhitelist = true
         })
 
         register(CommandSpec("hideChannel") {
@@ -108,6 +114,7 @@ object CommandManager {
             permissions(Permission.MANAGE_CHANNEL)
             executor = CommandHideChannel()
             category = CommandCategory.MODERATION
+            ignoreWhitelist = true
         })
 
         register(CommandSpec("play") {
@@ -191,6 +198,7 @@ object CommandManager {
         register(CommandSpec("history"){
             executor = CommandHistory()
             category = CommandCategory.MISCELLANEOUS
+            ignoreWhitelist = true
         })
 
         register(CommandSpec("overwatch"){
@@ -247,10 +255,22 @@ object CommandManager {
         val command = parts[0].toLowerCase()
 
         val args = if (parts.isNotEmpty()) parts.drop(1).toTypedArray() else arrayOf<String>()
+        // Command Whitelist
+        var whitelist = shard.getServerData(guild).channelWhitelist.get()
+        if(whitelist == null) {
+            whitelist = Database.getWhitelistedChannels(guild)
+            shard.getServerData(guild).channelWhitelist.set(whitelist)
+        }
 
         for (i in 0..this.cmds.size - 1) {
             val c = this.cmds[i]
             if (c.aliases.map { it.toLowerCase() }.contains(command) || c.command.equals(command, true)) {
+                if(!whitelist.isEmpty()){
+                    if(context.channel.id !in whitelist && !c.ignoreWhitelist){
+                        return
+                    }
+                }
+
                 // Check permissions
                 val missingPerms = c.permissions.filter { !context.guild.selfMember.hasPermission(context.channel as TextChannel, it) }
                 if (missingPerms.isNotEmpty()) {
@@ -314,6 +334,10 @@ object CommandManager {
                 it.delete().queueAfter(10, TimeUnit.SECONDS)
             }
             return
+        }
+        if(!whitelist.isEmpty()){
+            if(context.channel.id !in whitelist && customCommand.respectWhitelist)
+                return
         }
         callCustomCommand(context.channel, customCommand, args, context.author)
     }

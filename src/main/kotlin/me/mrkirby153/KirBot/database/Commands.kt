@@ -8,4 +8,5 @@ enum class CommandType {
     JAVASCRIPT
 }
 
-data class DBCommand(val id: String, val name: String, val server: Guild, val data: String, val clearance: Clearance, val type: CommandType)
+data class DBCommand(val id: String, val name: String, val server: Guild, val data: String, val clearance: Clearance, val type: CommandType,
+                     val respectWhitelist: Boolean)

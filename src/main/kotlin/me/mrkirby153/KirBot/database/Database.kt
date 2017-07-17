@@ -42,14 +42,14 @@ object Database {
 
 
     fun getCustomCommand(cmd: String, server: Guild): DBCommand? {
-        val sql = "SELECT `id`, `server`, `name`, `data`, `clearance`, `type` FROM `custom_commands` WHERE `server` = ? AND `name` = ?"
+        val sql = "SELECT `id`, `server`, `name`, `data`, `clearance`, `type`, `respect_whitelist` FROM `custom_commands` WHERE `server` = ? AND `name` = ?"
         connection.prepareStatement(sql).use { ps ->
             ps.setString(1, server.id)
             ps.setString(2, cmd)
             ps.executeQuery().use { rs ->
                 if (rs.next())
                     return DBCommand(rs.getString("id"), rs.getString("name"), server, rs.getString("data"),
-                            Clearance.valueOf(rs.getString("clearance")), CommandType.valueOf(rs.getString("type")))
+                            Clearance.valueOf(rs.getString("clearance")), CommandType.valueOf(rs.getString("type")), rs.getBoolean("respect_whitelist"))
                 else
                     return null
             }
@@ -156,7 +156,7 @@ object Database {
         val chans = mutableListOf<String>()
         connection.prepareStatement("SELECT `id` FROM `channels` WHERE `server` = ?").use { ps ->
             ps.setString(1, server.id)
-            ps.executeQuery().use { rs->
+            ps.executeQuery().use { rs ->
                 while (rs.next()) {
                     chans.add(rs.getString("id"))
                 }
@@ -201,7 +201,7 @@ object Database {
     fun getLoggingChannel(server: Guild): String? {
         connection.prepareStatement("SELECT `log_channel` FROM `server_settings` WHERE `id` = ?").use { ps ->
             ps.setString(1, server.id)
-             ps.executeQuery().use { rs ->
+            ps.executeQuery().use { rs ->
                 if (rs.next()) {
                     return rs.getString("log_channel")
                 } else {
@@ -213,7 +213,7 @@ object Database {
     }
 
     fun getMusicData(server: Guild): MusicData {
-         connection.prepareStatement("SELECT * FROM `music_settings` WHERE `id` = ?").use { ps ->
+        connection.prepareStatement("SELECT * FROM `music_settings` WHERE `id` = ?").use { ps ->
             ps.setString(1, server.id)
             ps.executeQuery().use { rs ->
                 if (rs.next()) {
@@ -230,5 +230,20 @@ object Database {
                 }
             }
         }
+    }
+
+    fun getWhitelistedChannels(server: Guild): Array<String> {
+        connection.prepareCall("SELECT `cmd_whitelist` FROM `server_settings` WHERE `id` = ?").use {
+            it.setString(1, server.id)
+            it.executeQuery().use { rs ->
+                if (rs.next()){
+                    val string = rs.getString("cmd_whitelist")
+                    if(string.isEmpty())
+                        return emptyArray()
+                    return string.split(",").toTypedArray()
+                }
+            }
+        }
+        return emptyArray()
     }
 }

@@ -8,6 +8,7 @@ import me.mrkirby153.KirBot.music.MusicData
 import me.mrkirby153.KirBot.music.MusicManager
 import me.mrkirby153.KirBot.server.ServerLogger
 import me.mrkirby153.KirBot.server.data.DataRepository
+import me.mrkirby153.KirBot.utils.CachedValue
 import me.mrkirby153.KirBot.utils.child
 import me.mrkirby153.KirBot.utils.mkdirIfNotExist
 import java.nio.charset.Charset
@@ -16,6 +17,8 @@ class ServerData(val id: Long, val shard: Shard) {
 
     private val guild = shard.getGuildById(id)
 
+
+    val channelWhitelist = CachedValue<Array<String>>(1000 * 30)
 
     private val gson = with(GsonBuilder()) {
         setPrettyPrinting()

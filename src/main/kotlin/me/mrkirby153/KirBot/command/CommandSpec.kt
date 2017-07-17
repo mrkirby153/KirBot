@@ -19,6 +19,8 @@ class CommandSpec(val command: String, spec: (CommandSpec.() -> Unit)? = null) {
 
     val arguments = mutableListOf<CommandElement>()
 
+    var ignoreWhitelist = false
+
     lateinit var executor: CmdExecutor
 
     init {

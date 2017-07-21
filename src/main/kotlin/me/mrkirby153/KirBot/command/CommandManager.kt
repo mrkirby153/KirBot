@@ -9,10 +9,7 @@ import me.mrkirby153.KirBot.command.executors.CommandHelp
 import me.mrkirby153.KirBot.command.executors.UpdateNicknames
 import me.mrkirby153.KirBot.command.executors.admin.*
 import me.mrkirby153.KirBot.command.executors.game.CommandOverwatch
-import me.mrkirby153.KirBot.command.executors.moderation.CommandHideChannel
-import me.mrkirby153.KirBot.command.executors.moderation.CommandKick
-import me.mrkirby153.KirBot.command.executors.moderation.CommandMute
-import me.mrkirby153.KirBot.command.executors.moderation.CommandUnmute
+import me.mrkirby153.KirBot.command.executors.moderation.*
 import me.mrkirby153.KirBot.command.executors.music.*
 import me.mrkirby153.KirBot.command.executors.polls.CommandPoll
 import me.mrkirby153.KirBot.command.processors.LaTeXProcessor
@@ -207,6 +204,13 @@ object CommandManager {
             arguments(Arguments.regex("battletag", "[A-Za-z0-9]+#[0-9]{4}", true,
                     "Username#0000", "Please enter a valid battle tag (`Username#0000`)"),
                     Arguments.string("region", false, "us, eu, kr"))
+        })
+
+        register(CommandSpec("spamFilter"){
+            executor = CommandDisableSpamFilter()
+            category = CommandCategory.MODERATION
+            ignoreWhitelist = true
+            clearance = Clearance.BOT_MANAGER
         })
 
 

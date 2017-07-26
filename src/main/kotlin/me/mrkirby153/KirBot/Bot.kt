@@ -18,6 +18,7 @@ import me.mrkirby153.KirBot.web.WebApp
 import net.dv8tion.jda.core.AccountType
 import net.dv8tion.jda.core.JDA
 import net.dv8tion.jda.core.JDABuilder
+import net.dv8tion.jda.core.OnlineStatus
 import net.dv8tion.jda.core.entities.Game
 import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.entities.User
@@ -95,6 +96,9 @@ object Bot {
 
         HttpUtils.clearCache()
 
+        // Mark all shards as online
+        shards.forEach { it.presence.status = OnlineStatus.ONLINE }
+
     }
 
     fun stop() {
@@ -107,6 +111,7 @@ object Bot {
         return JDABuilder(AccountType.BOT).run {
             setToken(token)
             setAutoReconnect(true)
+            setStatus(OnlineStatus.IDLE)
             if (numShards > 1) {
                 useSharding(id, numShards)
                 setGame(Game.of("~help | Shard $id of $numShards"))

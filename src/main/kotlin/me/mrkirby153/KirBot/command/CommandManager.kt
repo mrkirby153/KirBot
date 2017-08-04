@@ -56,6 +56,7 @@ object CommandManager {
             executor = CommandClean()
             category = CommandCategory.MODERATION
             ignoreWhitelist = true
+            addExample("clean 10", "clean 5")
         })
 
         register(CommandSpec("updateNames") {
@@ -73,6 +74,7 @@ object CommandManager {
             executor = CommandPoll()
             category = CommandCategory.FUN
             ignoreWhitelist = true
+            addExample("poll 30m Option 1, Option 2, Option 3")
         })
 
         register(CommandSpec("kick") {
@@ -83,6 +85,7 @@ object CommandManager {
             executor = CommandKick()
             category = CommandCategory.MODERATION
             ignoreWhitelist = true
+            addExample("kick @Test Account")
         })
 
         register(CommandSpec("mute") {
@@ -93,6 +96,7 @@ object CommandManager {
             executor = CommandMute()
             category = CommandCategory.MODERATION
             ignoreWhitelist = true
+            addExample("mute @Test Account")
         })
 
         register(CommandSpec("unmute") {
@@ -103,6 +107,7 @@ object CommandManager {
             executor = CommandUnmute()
             category = CommandCategory.MODERATION
             ignoreWhitelist = true
+            addExample("unmute @Test Account")
         })
 
         register(CommandSpec("hideChannel") {
@@ -119,6 +124,7 @@ object CommandManager {
             arguments(Arguments.rest("data", "URL or Search"))
             executor = CommandPlay()
             category = CommandCategory.MUSIC
+            addExample("play Together Forever", "play https://www.youtube.com/watch?v=dQw4w9WgXcQ")
         })
 
         register(CommandSpec("queue") {
@@ -155,6 +161,7 @@ object CommandManager {
             arguments(Arguments.string("volume", false))
             executor = CommandVolume()
             category = CommandCategory.MUSIC
+            addExample("volume 10", "volume +10")
         })
 
         register(CommandSpec("adminMode") {
@@ -190,6 +197,7 @@ object CommandManager {
             arguments(Arguments.string("command", false))
             executor = CommandHelp()
             category = CommandCategory.MISCELLANEOUS
+            addExample("help", "help help")
         })
 
         register(CommandSpec("history"){
@@ -204,6 +212,7 @@ object CommandManager {
             arguments(Arguments.regex("battletag", "[A-Za-z0-9]+#[0-9]{4}", true,
                     "Username#0000", "Please enter a valid battle tag (`Username#0000`)"),
                     Arguments.string("region", false, "us, eu, kr"))
+            addExample("overwatch Username#0000")
         })
 
         register(CommandSpec("spamFilter"){

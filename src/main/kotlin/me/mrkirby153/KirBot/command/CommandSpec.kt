@@ -21,6 +21,8 @@ class CommandSpec(val command: String, spec: (CommandSpec.() -> Unit)? = null) {
 
     var ignoreWhitelist = false
 
+    var examples = mutableListOf<String>()
+
     lateinit var executor: CmdExecutor
 
     init {
@@ -35,5 +37,13 @@ class CommandSpec(val command: String, spec: (CommandSpec.() -> Unit)? = null) {
 
     fun permissions(vararg permissions: Permission){
         this.permissions.addAll(permissions)
+    }
+
+    fun addExample(example: String){
+        this.examples.add(example)
+    }
+
+    fun addExample(vararg examples: String){
+        examples.forEach { addExample(it) }
     }
 }

@@ -56,6 +56,15 @@ class CommandHelp : CmdExecutor() {
                     }
                     append("`")
                 })
+                if(spec.examples.isNotEmpty()){
+                    field((if(spec.examples.size == 1) "Example" else "Examples"), false, buildString{
+                        append("```")
+                        spec.examples.forEach {
+                            appendln(" + $prefix$it")
+                        }
+                        append("```")
+                    })
+                }
             }.rest().queue()
         }
     }

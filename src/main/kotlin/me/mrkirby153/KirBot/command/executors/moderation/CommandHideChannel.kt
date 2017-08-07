@@ -11,6 +11,7 @@ class CommandHideChannel : CmdExecutor() {
         val channel = (context.channel as? TextChannel) ?: return
         channel.hide()
         context.send().success("Channel hidden!").complete()
+        context.data.logger.log("Channel Hidden", "${context.author.name} has hidden #${context.channel.name}")
     }
 
 }

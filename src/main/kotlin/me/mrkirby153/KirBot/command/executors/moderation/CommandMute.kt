@@ -8,6 +8,7 @@ import me.mrkirby153.KirBot.utils.getMember
 import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.User
+import java.awt.Color
 
 class CommandMute : CmdExecutor() {
     override fun execute(context: Context, cmdContext: CommandContext) {
@@ -21,5 +22,6 @@ class CommandMute : CmdExecutor() {
         val override = channel.getPermissionOverride(member) ?: channel.createPermissionOverride(member).complete()
         override.manager.deny(Permission.MESSAGE_WRITE).queue()
         context.send().success("${member.effectiveName} has been muted!").queue()
+        context.data.logger.log("User Muted", "${context.author.name} has muted ${member.user.name} in #${context.channel.name}", Color.RED)
     }
 }

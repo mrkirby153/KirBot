@@ -5,10 +5,7 @@ import me.mrkirby153.KirBot.music.MusicData
 import me.mrkirby153.KirBot.realname.RealnameSetting
 import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.use
-import net.dv8tion.jda.core.entities.Channel
-import net.dv8tion.jda.core.entities.Guild
-import net.dv8tion.jda.core.entities.Member
-import net.dv8tion.jda.core.entities.TextChannel
+import net.dv8tion.jda.core.entities.*
 import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.Timestamp
@@ -236,9 +233,9 @@ object Database {
         connection.prepareCall("SELECT `cmd_whitelist` FROM `server_settings` WHERE `id` = ?").use {
             it.setString(1, server.id)
             it.executeQuery().use { rs ->
-                if (rs.next()){
+                if (rs.next()) {
                     val string = rs.getString("cmd_whitelist")
-                    if(string.isEmpty())
+                    if (string.isEmpty())
                         return emptyArray()
                     return string.split(",").toTypedArray()
                 }
@@ -246,4 +243,52 @@ object Database {
         }
         return emptyArray()
     }
+
+    fun logMessage(message: Message) {
+        connection.prepareStatement("INSERT INTO `server_messages` (`id`, `server_id`, `author`, `message`, `channel`, `created_at`, `updated_at`) VALUES (?, ?, ?, ?, ?, ?, ?)").use { ps ->
+            ps.setString(1, message.id)
+            ps.setString(2, message.guild.id)
+            ps.setString(3, message.author.id)
+            ps.setString(4, message.content)
+            ps.setString(5, message.channel.id)
+            ps.setTimestamp(6, Timestamp(System.currentTimeMillis()))
+            ps.setTimestamp(7, Timestamp(System.currentTimeMillis()))
+            ps.executeUpdate()
+        }
+    }
+
+    fun editMessage(message: Message): LogMessage? {
+        val msg = getMessage(message.id)
+        connection.prepareStatement("UPDATE `server_messages` SET `message` = ? WHERE `id` = ?").use({ ps ->
+            ps.setString(1, message.content)
+            ps.setString(2, message.id)
+            ps.executeUpdate()
+        })
+        return msg
+    }
+
+    fun deleteMessage(id: String): LogMessage? {
+        val msg = getMessage(id)
+        connection.prepareStatement("DELETE FROM `server_messages` WHERE `id` = ?").use { ps ->
+            ps.setString(1, id)
+            ps.executeUpdate()
+        }
+        return msg
+    }
+
+    fun getMessage(id: String): LogMessage? {
+        connection.prepareStatement("SELECT * from `server_messages` WHERE `id` = ?").use { ps ->
+            ps.setString(1, id)
+            ps.executeQuery().use { rs ->
+                if(rs.next())
+                return LogMessage(rs.getString("id"), rs.getString("server_id"), rs.getString("message"), rs.getString("author"), rs.getString("channel"),
+                        rs.getTimestamp("created_at"), rs.getTimestamp("updated_at"))
+                else
+                    return null
+            }
+        }
+    }
+
+    data class LogMessage(val id: String, val server: String, val message: String, val author: String, val channel: String,
+                          val createdAt: Timestamp, val updatedAt: Timestamp)
 }

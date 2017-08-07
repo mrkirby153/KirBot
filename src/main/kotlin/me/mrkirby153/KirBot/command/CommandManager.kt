@@ -1,5 +1,6 @@
 package me.mrkirby153.KirBot.command
 
+import com.google.common.cache.CacheBuilder
 import me.mrkirby153.KirBot.Shard
 import me.mrkirby153.KirBot.command.args.ArgumentParseException
 import me.mrkirby153.KirBot.command.args.Arguments
@@ -18,7 +19,6 @@ import me.mrkirby153.KirBot.database.CommandType
 import me.mrkirby153.KirBot.database.DBCommand
 import me.mrkirby153.KirBot.database.Database
 import me.mrkirby153.KirBot.user.Clearance
-import me.mrkirby153.KirBot.utils.Cache
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.getClearance
 import net.dv8tion.jda.core.Permission
@@ -35,7 +35,9 @@ object CommandManager {
 
     val messageProcessors = mutableSetOf<Class<out MessageProcessor>>()
 
-    val commandPrefixCache = Cache<String, String>(1000 * 60)
+    val commandPrefixCache = CacheBuilder.newBuilder().apply {
+        expireAfterWrite(60, TimeUnit.SECONDS)
+    }.build<String, String>()
 
     val cmds = mutableListOf<CommandSpec>()
 
@@ -245,11 +247,11 @@ object CommandManager {
         if (message.isEmpty())
             return
 
-        var prefix = this.commandPrefixCache[guild.id]
+        var prefix = this.commandPrefixCache.getIfPresent(guild.id)
 
         if (prefix == null) {
             prefix = Database.getCommandPrefix(guild)
-            this.commandPrefixCache[guild.id] = prefix
+            this.commandPrefixCache.put(guild.id, prefix)
         }
 
         var mention = false

@@ -112,6 +112,7 @@ object Bot {
             setToken(token)
             setAutoReconnect(true)
             setStatus(OnlineStatus.IDLE)
+            setBulkDeleteSplittingEnabled(false)
             if (numShards > 1) {
                 useSharding(id, numShards)
                 setGame(Game.of("~help | Shard $id of $numShards"))

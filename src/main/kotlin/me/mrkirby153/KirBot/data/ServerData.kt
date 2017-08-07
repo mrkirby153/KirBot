@@ -62,7 +62,7 @@ class ServerData(val id: Long, val shard: Shard) {
                 return false
             }
         } else {
-            return false
+            return true
         }
     }
 }

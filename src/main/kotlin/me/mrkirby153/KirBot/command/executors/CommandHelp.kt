@@ -10,7 +10,7 @@ import java.awt.Color
 
 class CommandHelp : CmdExecutor() {
     override fun execute(context: Context, cmdContext: CommandContext) {
-        val prefix = CommandManager.commandPrefixCache[context.guild.id] ?: Database.getCommandPrefix(context.guild)
+        val prefix = CommandManager.commandPrefixCache.getIfPresent(context.guild.id) ?: Database.getCommandPrefix(context.guild)
         val command = cmdContext.string("command")
         if (command == null) {
             context.send().embed("Help") {

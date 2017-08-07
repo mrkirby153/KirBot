@@ -35,5 +35,6 @@ class CommandUnmute : CmdExecutor() {
             override.delete().queue()
         }
         context.send().success("${member.effectiveName} has been unmuted!").queue()
+        context.data.logger.log("User Muted", "${context.author.name} has unmuted ${member.user.name} in #${context.channel.name}", Color.RED)
     }
 }

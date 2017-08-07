@@ -1,25 +1,28 @@
 package me.mrkirby153.KirBot.server
 
+import me.mrkirby153.KirBot.database.Database
 import me.mrkirby153.KirBot.utils.CachedValue
+import me.mrkirby153.KirBot.utils.embed.embed
 import net.dv8tion.jda.core.entities.Guild
-import net.dv8tion.jda.core.entities.MessageChannel
 import java.awt.Color
 
 class ServerLogger(val server: Guild) {
-    val channel: CachedValue<MessageChannel> = CachedValue(60 * 1000)
+    val channel: CachedValue<String> = CachedValue(60 * 1000)
 
     @JvmOverloads
-    fun log(subject: String, message: String, color: Color = Color.ORANGE) {
-/*        val chan = channel.get()
-        if (chan == null) {
-            val dataChan = Database.getLoggingChannel(server) ?: return
-            channel.set(server.getTextChannelById(dataChan))
-            log(subject, message)
-            return
+    fun log(subject: String, message: String, color: Color = Color.ORANGE, vararg fields: LogField) {
+        var chanId = channel.get()
+        if (chanId == null) {
+            chanId = Database.getLoggingChannel(server) ?: return
         }
-        chan.send().embed(subject){
-            this.color = color
-            description = message
-        }.rest().queue()*/
+        server.getTextChannelById(chanId)?.sendMessage(embed(subject) {
+            setDescription(message)
+            setColor(color)
+            fields.forEach {
+                addField(it.name, it.value, it.inline)
+            }
+        }.build())?.queue()
     }
 }
+
+data class LogField(val name: String, val value: String, val inline: Boolean)

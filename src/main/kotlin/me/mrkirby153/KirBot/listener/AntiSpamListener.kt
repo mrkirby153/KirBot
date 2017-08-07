@@ -1,11 +1,13 @@
 package me.mrkirby153.KirBot.listener
 
 import me.mrkirby153.KirBot.Shard
+import me.mrkirby153.KirBot.server.LogField
 import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.Message
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent
 import net.dv8tion.jda.core.hooks.ListenerAdapter
+import java.awt.Color
 import java.time.OffsetDateTime
 import java.util.concurrent.TimeUnit
 
@@ -30,12 +32,12 @@ class AntiSpamListener(val shard: Shard) : ListenerAdapter() {
         if (event.author.isBot)
             return
 
-        if(!shard.getServerData(event.guild).spamFilterEnabled(channel))
+        if (!shard.getServerData(event.guild).spamFilterEnabled(channel))
             return
 
         val lastMessage = lastMessageSent[event.author.id] ?: 0
         if (lastMessage != 0L) {
-            if (lastMessage + STRIKE_RESET_TIMEOUT <= System.currentTimeMillis()) {
+            if (lastMessage + STRIKE_RESET_TIMEOUT <= System.currentTimeMillis() && strikeLevel.containsKey(event.author.id)) {
                 println("[*] Resetting strikes for ${event.author.name}")
                 strikeLevel.remove(event.author.id)
             }
@@ -52,26 +54,28 @@ class AntiSpamListener(val shard: Shard) : ListenerAdapter() {
             }
 
             val strikes = strikeLevel[event.author.id] ?: 0
-            if(strikes == Math.floor(STRIKE_THRESHOLD * 0.75).toInt()){
-                event.channel.sendMessage(event.author.asMention+" Slow down your send rate or you will be temporarily muted!").queue()
+            if (strikes == Math.floor(STRIKE_THRESHOLD * 0.75).toInt()) {
+                event.channel.sendMessage(event.author.asMention + " Slow down your send rate or you will be temporarily muted!").queue()
             }
             if (strikes > STRIKE_THRESHOLD) {
                 println("[!] Muting ${event.author.name}")
                 val muteLevel = Math.min((this.muteLevel[event.author.id] ?: -1) + 1, MUTE_TIME.size)
+                shard.getServerData(event.guild).logger.log("Spam Filter", "${event.author.name} has hit the spam filter",
+                        Color.CYAN, LogField("Mute Time", "${MUTE_TIME[muteLevel]} minutes", false))
                 // Mute the user
                 val override = channel.getPermissionOverride(event.member) ?: channel.createPermissionOverride(event.member).complete()
                 override.manager.deny(Permission.MESSAGE_WRITE).queue {
                     event.channel.sendMessage(event.author.asMention + " You have been muted for ${MUTE_TIME[muteLevel]} minutes because of spam").queue()
 
                     // Purge messages in the last 2 minutes or the last 100 messages
-                    event.channel.history.retrievePast(100).queue{history ->
+                    event.channel.history.retrievePast(100).queue { history ->
                         val messagesToDelete = mutableListOf<Message>()
                         history.forEach {
-                            if(it.creationTime.isAfter(OffsetDateTime.now().minusMinutes(2)) && it.author == event.author){
+                            if (it.creationTime.isAfter(OffsetDateTime.now().minusMinutes(2)) && it.author == event.author) {
                                 messagesToDelete.add(it)
                             }
                         }
-                       channel.deleteMessages(messagesToDelete).queue()
+                        channel.deleteMessages(messagesToDelete).queue()
                     }
 
                     val ra =

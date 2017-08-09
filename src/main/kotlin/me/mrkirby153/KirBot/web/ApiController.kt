@@ -92,6 +92,15 @@ class ApiController : Controller() {
         return WebApp.Response(true, "Given access to $user")
     }
 
+    @POST("/server/{server: [0-9]+}/channel/{channel: [0-9]+}/message")
+    @Produces(Produces.JSON)
+    fun message(@Param("server") id: String, @Param("channel") channel: String, @Param("message") msg: String): WebApp.Response {
+        val server = Bot.getGuild(id) ?: return WebApp.Response(false, "Guild not found!")
+        val chan = server.getTextChannelById(channel) ?: return WebApp.Response(false, "Channel not found")
+
+        chan.sendMessage(msg).queue()
+        return WebApp.Response(true, "Sent \"$msg\" to #${chan.name}")
+    }
 
     data class Channel(val id: String, val channel_name: String, val type: String, val private: Boolean = false)
 

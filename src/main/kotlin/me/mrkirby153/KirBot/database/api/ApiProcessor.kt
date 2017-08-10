@@ -7,7 +7,6 @@ import okhttp3.Request
 import okhttp3.RequestBody
 import org.json.JSONObject
 import org.json.JSONTokener
-import java.io.IOException
 import java.util.*
 
 class ApiProcessor(private val API_ENDPOINT: String, private val apiKey: String) : Runnable {
@@ -20,6 +19,23 @@ class ApiProcessor(private val API_ENDPOINT: String, private val apiKey: String)
             return
         val apiRequest = queue.first
 
+        val json = run(apiRequest)
+        if (json != null) {
+            apiRequest.execute(apiRequest.parse(json))
+            queue.removeFirst()
+        }
+    }
+
+    fun queue(request: ApiRequest<*>) {
+        this.queue.add(request)
+    }
+
+    fun <T : ApiResponse> execute(request: ApiRequest<T>): T {
+        val json = run(request) ?: throw IllegalStateException("Received null json object?")
+            return request.parse(json)
+    }
+
+    private fun run(apiRequest: ApiRequest<*>): JSONObject? {
         val req = Request.Builder().run {
             url(API_ENDPOINT + apiRequest.url)
             header("api-token", apiKey)
@@ -39,48 +55,35 @@ class ApiProcessor(private val API_ENDPOINT: String, private val apiKey: String)
             build()
         }
 
-        try {
-            val resp = HttpUtils.CLIENT.newCall(req).execute()
+        val resp = HttpUtils.CLIENT.newCall(req).execute()
 
-            if (resp.code() == 429) {
-                // Hit API ratelimit
-                val header = resp.header("Retry-After")
-                if (header != null) {
-                    val retryAfter = Integer.parseInt(header)
-                    try {
-                        Thread.sleep((1000 * retryAfter).toLong())
-                    } catch (e: InterruptedException) {
-                        e.printStackTrace()
-                    }
-                    executeNext()
-                    return
+        if (resp.code() == 429) {
+            // Hit API ratelimit
+            val header = resp.header("Retry-After")
+            if (header != null) {
+                val retryAfter = Integer.parseInt(header)
+                try {
+                    Thread.sleep((1000 * retryAfter).toLong())
+                } catch (e: InterruptedException) {
+                    e.printStackTrace()
                 }
             }
-
-
-            if (resp.body() != null) {
-
-                val inputStream = resp.body()!!.string()
-                if (resp.code() != 200) {
-                    System.err.println("An error occurred when accessing ${req.url()} (${resp.code()})")
-                    System.err.println(inputStream)
-                }
-                val json = JSONObject(JSONTokener(inputStream))
-
-                val data = apiRequest.parse(json)
-
-                apiRequest.execute(data)
-                resp.close()
-                queue.removeFirst()
-            }
-        } catch (e: IOException) {
-            e.printStackTrace()
         }
 
-    }
 
-    fun queue(request: ApiRequest<*>) {
-        this.queue.add(request)
+        if (resp.body() != null) {
+
+            val inputStream = resp.body()!!.string()
+            if (resp.code() != 200) {
+                System.err.println("An error occurred when accessing ${req.url()} (${resp.code()})")
+                System.err.println(inputStream)
+            }
+            val json = JSONObject(JSONTokener(inputStream))
+
+            resp.close()
+            return json
+        }
+        return null
     }
 
     override fun run() {

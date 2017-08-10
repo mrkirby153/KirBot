@@ -6,8 +6,6 @@ abstract class ApiRequest<out T : ApiResponse>(val url: String, val method: Meth
 
     private var callback: ((T) -> Unit)? = null
 
-    internal var processor: ApiProcessor? = null
-
     internal fun execute(response: ApiResponse) {
         this.callback?.invoke(response as T)
     }
@@ -15,11 +13,12 @@ abstract class ApiRequest<out T : ApiResponse>(val url: String, val method: Meth
     abstract fun parse(json: JSONObject): T
 
     fun queue(callback: (T) -> Unit) {
-        if (processor == null) {
-            throw IllegalStateException("An API processor has not been set for " + javaClass)
-        }
         this.callback = callback
-        this.processor?.queue(this)
+        PanelAPI.API_PROCESSOR.queue(this)
+    }
+
+    fun execute(): T {
+        return PanelAPI.API_PROCESSOR.execute(this)
     }
 }
 

@@ -55,14 +55,14 @@ class CommandPoll : CmdExecutor() {
             field("Options") {
                 buildString {
                     options.forEachIndexed { index, option ->
-                        appendln("${'\u0030' + (index + 1)}\u20E3 **$option**")
+                        appendln("${'\u0030' + (index)}\u20E3 **$option**")
                     }
                 }
             }
         }.rest().queue {
             val m = it
             for (index in 0..options.size - 1) {
-                it.addReaction("${'\u0030' + (index + 1)}\u20E3").queue()
+                it.addReaction("${'\u0030' + (index)}\u20E3").queue()
             }
 
             it.editMessage(embed("Poll") {

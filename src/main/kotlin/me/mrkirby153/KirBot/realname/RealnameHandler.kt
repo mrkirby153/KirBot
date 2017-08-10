@@ -80,7 +80,6 @@ class RealnameHandler(var server: Guild, var serverData: ServerData) {
     }
 
     private fun cleanupRealNameRoles() {
-        println("Cleaning up real name roles...")
         val repository = serverData.repository
         val unidentified = repository.get(String::class.java, "unidentified-role")
         val id = repository.get(String::class.java, "identified-role")

@@ -38,19 +38,16 @@ class AntiSpamListener(val shard: Shard) : ListenerAdapter() {
         val lastMessage = lastMessageSent[event.author.id] ?: 0
         if (lastMessage != 0L) {
             if (lastMessage + STRIKE_RESET_TIMEOUT <= System.currentTimeMillis() && strikeLevel.containsKey(event.author.id)) {
-                println("[*] Resetting strikes for ${event.author.name}")
                 strikeLevel.remove(event.author.id)
             }
 
-            if ((muteLevelExpires[event.author.id] ?: 0) <= System.currentTimeMillis()) {
-                println("[*] Resetting mute level for ${event.author.name}")
+            if (muteLevel.containsKey(event.author.id) && (muteLevelExpires[event.author.id] ?: 0) <= System.currentTimeMillis()) {
                 muteLevelExpires.remove(event.author.id)
                 muteLevel.remove(event.author.id)
             }
 
             if (lastMessage + STRIKE_TIMING > System.currentTimeMillis()) {
                 strikeLevel[event.author.id] = (strikeLevel[event.author.id] ?: 0) + 1
-                println("[!] Issuing strike to ${event.author.name} (${strikeLevel[event.author.id]})")
             }
 
             val strikes = strikeLevel[event.author.id] ?: 0
@@ -58,7 +55,6 @@ class AntiSpamListener(val shard: Shard) : ListenerAdapter() {
                 event.channel.sendMessage(event.author.asMention + " Slow down your send rate or you will be temporarily muted!").queue()
             }
             if (strikes > STRIKE_THRESHOLD) {
-                println("[!] Muting ${event.author.name}")
                 val muteLevel = Math.min((this.muteLevel[event.author.id] ?: -1) + 1, MUTE_TIME.size)
                 shard.getServerData(event.guild).logger.log("Spam Filter", "${event.author.name} has hit the spam filter",
                         Color.CYAN, LogField("Mute Time", "${MUTE_TIME[muteLevel]} minutes", false))

@@ -102,6 +102,14 @@ object PanelAPI {
         }
     }
 
+    fun updateChannelName(channel: Channel): ApiRequest<VoidApiResponse>{
+        return object: ApiRequest<VoidApiResponse>("/channel/${channel.id}", Methods.PATCH, mapOf(Pair("name", channel.name))){
+            override fun parse(json: JSONObject): VoidApiResponse {
+                return VoidApiResponse()
+            }
+        }
+    }
+
     fun unregisterChannel(channel: String): ApiRequest<VoidApiResponse> {
         return object : ApiRequest<VoidApiResponse>("/channel/$channel", Methods.DELETE) {
             override fun parse(json: JSONObject): VoidApiResponse {

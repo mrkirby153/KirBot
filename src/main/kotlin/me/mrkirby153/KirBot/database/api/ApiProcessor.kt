@@ -2,6 +2,7 @@ package me.mrkirby153.KirBot.database.api
 
 
 import me.mrkirby153.KirBot.utils.HttpUtils
+import net.dv8tion.jda.core.utils.SimpleLog
 import okhttp3.FormBody
 import okhttp3.Request
 import okhttp3.RequestBody
@@ -9,10 +10,17 @@ import org.json.JSONObject
 import org.json.JSONTokener
 import java.util.*
 
-class ApiProcessor(private val API_ENDPOINT: String, private val apiKey: String) : Runnable {
+class ApiProcessor(private val API_ENDPOINT: String, private val apiKey: String, private val debug: Boolean = false) : Runnable {
     private val queue = LinkedList<ApiRequest<out ApiResponse>>()
 
     private var running = true
+
+    private var debugLogger = SimpleLog.getLog("ApiProcessor")
+
+    init {
+        if (debug)
+            debugLogger.level = SimpleLog.Level.DEBUG
+    }
 
     fun executeNext() {
         if (queue.size < 1)
@@ -23,6 +31,9 @@ class ApiProcessor(private val API_ENDPOINT: String, private val apiKey: String)
         if (json != null) {
             apiRequest.execute(apiRequest.parse(json))
             queue.removeFirst()
+        } else {
+            apiRequest.execute(apiRequest.parse(JSONObject()))
+            queue.removeFirst()
         }
     }
 
@@ -32,7 +43,7 @@ class ApiProcessor(private val API_ENDPOINT: String, private val apiKey: String)
 
     fun <T : ApiResponse> execute(request: ApiRequest<T>): T {
         val json = run(request) ?: throw IllegalStateException("Received null json object?")
-            return request.parse(json)
+        return request.parse(json)
     }
 
     private fun run(apiRequest: ApiRequest<*>): JSONObject? {
@@ -55,15 +66,19 @@ class ApiProcessor(private val API_ENDPOINT: String, private val apiKey: String)
             build()
         }
 
+        debugLogger.debug("Making ${req.method()} to ${req.url()}")
+
         val resp = HttpUtils.CLIENT.newCall(req).execute()
 
+        debugLogger.debug("Received code ${resp.code()}")
         if (resp.code() == 429) {
             // Hit API ratelimit
             val header = resp.header("Retry-After")
             if (header != null) {
                 val retryAfter = Integer.parseInt(header)
                 try {
-                    Thread.sleep((1000 * retryAfter).toLong())
+                    debugLogger.debug("Retrying after ${retryAfter} seconds")
+                    Thread.sleep(((1000 * retryAfter) + 250).toLong())
                 } catch (e: InterruptedException) {
                     e.printStackTrace()
                 }
@@ -78,10 +93,12 @@ class ApiProcessor(private val API_ENDPOINT: String, private val apiKey: String)
                 System.err.println("An error occurred when accessing ${req.url()} (${resp.code()})")
                 System.err.println(inputStream)
             }
-            val json = JSONObject(JSONTokener(inputStream))
+            if(inputStream.isNotBlank()) {
+                val json = JSONObject(JSONTokener(inputStream))
 
-            resp.close()
-            return json
+                resp.close()
+                return json
+            }
         }
         return null
     }

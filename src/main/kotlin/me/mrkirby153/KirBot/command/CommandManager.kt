@@ -1,6 +1,5 @@
 package me.mrkirby153.KirBot.command
 
-import com.google.common.cache.CacheBuilder
 import me.mrkirby153.KirBot.Shard
 import me.mrkirby153.KirBot.command.args.ArgumentParseException
 import me.mrkirby153.KirBot.command.args.Arguments
@@ -34,10 +33,6 @@ import kotlin.reflect.KClass
 object CommandManager {
 
     val messageProcessors = mutableSetOf<Class<out MessageProcessor>>()
-
-    val commandPrefixCache = CacheBuilder.newBuilder().apply {
-        expireAfterWrite(60, TimeUnit.SECONDS)
-    }.build<String, String>()
 
     val cmds = mutableListOf<CommandSpec>()
 
@@ -247,12 +242,9 @@ object CommandManager {
         if (message.isEmpty())
             return
 
-        var prefix = this.commandPrefixCache.getIfPresent(guild.id)
+        val guildSettings = shard.serverSettings[guild.id]
 
-        if (prefix == null) {
-            prefix = Database.getCommandPrefix(guild)
-            this.commandPrefixCache.put(guild.id, prefix)
-        }
+        val prefix = guildSettings.cmdDiscriminator
 
         var mention = false
         if(!message.startsWith(prefix)){

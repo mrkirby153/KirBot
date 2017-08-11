@@ -10,6 +10,7 @@ import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.Timestamp
 
+@Deprecated("Old API")
 object Database {
 
     var connection: Connection
@@ -91,7 +92,7 @@ object Database {
     fun onJoin(server: Guild) {
         Database.updateChannels(server)
         if (!serverExists(server)) {
-            connection.prepareStatement("INSERT INTO `server_settings` (`id`, `name`, `require_realname`, `realname`, `created_at`, `updated_at`) VALUES(?, ?, '0', 'OFF', ?, ?)").use { ps ->
+            connection.prepareStatement("INSERT INTO `server_settings` (`id`, `name`, `require_realname`, `realname`, `created_at`, `updated_at`, `cmd_whitelist`) VALUES(?, ?, '0', 'OFF', ?, ?, '')").use { ps ->
                 ps.setString(1, server.id)
                 ps.setString(2, server.name)
                 ps.setTimestamp(3, Timestamp(System.currentTimeMillis()))

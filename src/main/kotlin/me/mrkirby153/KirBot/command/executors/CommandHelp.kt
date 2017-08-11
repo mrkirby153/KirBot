@@ -3,14 +3,13 @@ package me.mrkirby153.KirBot.command.executors
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.CommandManager
 import me.mrkirby153.KirBot.command.args.CommandContext
-import me.mrkirby153.KirBot.database.Database
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.embed.link
 import java.awt.Color
 
 class CommandHelp : CmdExecutor() {
     override fun execute(context: Context, cmdContext: CommandContext) {
-        val prefix = CommandManager.commandPrefixCache.getIfPresent(context.guild.id) ?: Database.getCommandPrefix(context.guild)
+        val prefix = context.shard.serverSettings[context.guild.id].cmdDiscriminator
         val command = cmdContext.string("command")
         if (command == null) {
             context.send().embed("Help") {

@@ -12,7 +12,7 @@ abstract class ApiRequest<out T : ApiResponse>(val url: String, val method: Meth
 
     abstract fun parse(json: JSONObject): T
 
-    fun queue(callback: (T) -> Unit) {
+    fun queue(callback: ((T) -> Unit)? = null) {
         this.callback = callback
         PanelAPI.API_PROCESSOR.queue(this)
     }

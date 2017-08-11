@@ -10,6 +10,7 @@ import com.sedmelluq.discord.lavaplayer.source.vimeo.VimeoAudioSourceManager
 import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager
 import me.mrkirby153.KirBot.data.ServerData
 import me.mrkirby153.KirBot.database.api.ApiRequestProcessor
+import me.mrkirby153.KirBot.error.ErrorReporter
 import me.mrkirby153.KirBot.realname.RealnameUpdater
 import me.mrkirby153.KirBot.utils.HttpUtils
 import me.mrkirby153.KirBot.utils.localizeTime
@@ -61,6 +62,8 @@ object Bot {
 
 
     fun start(token: String) {
+        ErrorReporter.channel = properties.getProperty("error-channel", "")
+        ErrorReporter.guild = properties.getProperty("error-guild", "")
         if(debug){
             ApiRequestProcessor.debug()
             LOG.level = SimpleLog.Level.DEBUG

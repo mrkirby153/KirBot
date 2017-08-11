@@ -16,6 +16,7 @@ import me.mrkirby153.KirBot.command.executors.polls.CommandPoll
 import me.mrkirby153.KirBot.command.processors.LaTeXProcessor
 import me.mrkirby153.KirBot.data.ServerData
 import me.mrkirby153.KirBot.database.api.GuildCommand
+import me.mrkirby153.KirBot.error.ErrorReporter
 import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.getClearance
@@ -330,6 +331,7 @@ object CommandManager {
                 } catch(e: Exception) {
                     e.printStackTrace()
                     context.send().error("An unknown error occurred!").queue()
+                    ErrorReporter.reportError(e)
                 }
                 Bot.LOG.debug("Command executed successfully")
                 return

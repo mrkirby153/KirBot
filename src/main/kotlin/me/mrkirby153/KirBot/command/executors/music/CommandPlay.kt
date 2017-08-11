@@ -3,8 +3,8 @@ package me.mrkirby153.KirBot.command.executors.music
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
+import me.mrkirby153.KirBot.database.api.MusicSettings
 import me.mrkirby153.KirBot.google.YoutubeSearch
-import me.mrkirby153.KirBot.music.MusicData
 import me.mrkirby153.KirBot.music.MusicLoadResultHandler
 import me.mrkirby153.KirBot.utils.Context
 import net.dv8tion.jda.core.entities.VoiceChannel
@@ -12,7 +12,7 @@ import java.awt.Color
 
 class CommandPlay : MusicCommand() {
 
-    override fun exec(context: Context, cmdContext: CommandContext) {
+    override fun exec(context: Context, cmdContext: CommandContext, musicData: MusicSettings) {
         val member = context.member
 
         val guild = context.guild
@@ -27,24 +27,23 @@ class CommandPlay : MusicCommand() {
         }
 
         // Check context blacklist/whitelist
-        val musicData = context.data.getMusicData()
         val restrictMode = musicData.whitelistMode
 
         val channels = musicData.channels.filter { it.isNotEmpty() }
         val currentChannel = member.voiceState.channel
 
         when (restrictMode) {
-            MusicData.WhitelistMode.WHITELIST -> {
+            MusicSettings.WhitelistMode.WHITELIST -> {
                 if (!channels.contains(currentChannel.id)) {
                     throw CommandException("I cannot play music in your channel!")
                 }
             }
-            MusicData.WhitelistMode.BLACKLIST -> {
+            MusicSettings.WhitelistMode.BLACKLIST -> {
                 if (channels.contains(currentChannel.id)) {
                     throw CommandException("I cannot play music in your channel!")
                 }
             }
-            MusicData.WhitelistMode.OFF -> {
+            MusicSettings.WhitelistMode.OFF -> {
                 // Do nothing, whitelisting disabled
             }
         }

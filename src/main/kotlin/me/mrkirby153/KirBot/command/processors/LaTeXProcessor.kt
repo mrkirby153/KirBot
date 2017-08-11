@@ -26,7 +26,7 @@ class LaTeXProcessor : MessageProcessor("$$", "$$") {
             val m = MessageBuilder().apply {
                 append(match)
             }
-            context.channel.sendFile(input, "png", m.build()).queue()
+            context.channel.sendFile(input, "latex.png", m.build()).queue()
         }
         context.channel.deleteMessageById(msg.get().id).queue()
     }

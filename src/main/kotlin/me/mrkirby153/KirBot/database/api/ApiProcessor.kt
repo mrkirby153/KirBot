@@ -93,7 +93,7 @@ class ApiProcessor(private val API_ENDPOINT: String, private val apiKey: String,
                 System.err.println("An error occurred when accessing ${req.url()} (${resp.code()})")
                 System.err.println(inputStream)
             }
-            if(inputStream.isNotBlank()) {
+            if (inputStream.isNotBlank()) {
                 val json = JSONObject(JSONTokener(inputStream))
 
                 resp.close()
@@ -106,7 +106,13 @@ class ApiProcessor(private val API_ENDPOINT: String, private val apiKey: String,
     override fun run() {
         while (running) {
             if (queue.size > 0) {
-                executeNext()
+                try {
+                    executeNext()
+                } catch(e: Exception) {
+                    debugLogger.fatal("Caught exception when processing message!")
+                    e.printStackTrace()
+                    queue.removeFirst()
+                }
             }
             Thread.yield()
         }

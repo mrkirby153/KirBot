@@ -14,7 +14,7 @@ class CommandHelp : CmdExecutor() {
         if (command == null) {
             context.send().embed("Help") {
                 setColor(Color.BLUE)
-                setDescription("Below is a list of all the commands available. \n Type `${prefix}help <command>` for more info")
+                setDescription("Below is a list of all the customCommands available. \n Type `${prefix}help <command>` for more info")
                 field("Command Prefix", false, prefix)
                 for ((category, commands) in CommandManager.getCommandsByCategory()) {
                     field(category.friendlyName, true) {
@@ -26,8 +26,8 @@ class CommandHelp : CmdExecutor() {
                     }
                 }
                 appendDescription(buildString {
-                    append("\n\nFor custom commands available on this server, ")
-                    appendln("Click Here" link "https://kirbot.mrkirby153.tk/${context.guild.id}/commands")
+                    append("\n\nFor custom customCommands available on this server, ")
+                    appendln("Click Here" link "https://kirbot.mrkirby153.tk/${context.guild.id}/customCommands")
                 })
             }.rest().queue()
         } else {

@@ -1,6 +1,7 @@
 package me.mrkirby153.KirBot.database.api
 
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.realname.RealnameSetting
 import me.mrkirby153.KirBot.user.Clearance
 import net.dv8tion.jda.core.entities.Channel
 import net.dv8tion.jda.core.entities.Guild
@@ -28,11 +29,14 @@ object PanelAPI {
         return object : ApiRequest<Realnames>("/user/names", Methods.POST, mutableMapOf(Pair("names",
                 users.map { it.id }.joinToString(",")))) {
             override fun parse(json: JSONObject): Realnames {
-                val map = mutableMapOf<User, Realname>()
+                val map = mutableMapOf<User, Realname?>()
 
                 users.forEach {
-                    val obj = json.optJSONObject(it.id) ?: return@forEach
-                    map[it] = Realname(obj.getString("first_name"), obj.getString("last_name"))
+                    val obj = json.optJSONObject(it.id)
+                    if (obj == null)
+                        map[it] = null
+                    else
+                        map[it] = Realname(obj.getString("first_name"), obj.getString("last_name"))
                 }
                 return Realnames(map)
             }
@@ -58,8 +62,9 @@ object PanelAPI {
     fun guildSettings(guild: Guild): ApiRequest<GuildSettings> {
         return object : ApiRequest<GuildSettings>("/server/${guild.id}/settings") {
             override fun parse(json: JSONObject): GuildSettings {
-                return GuildSettings(json.getString("name"), json.getString("realname"), json.getInt("require_realname") == 1,
-                        json.getString("command_discriminator"), json.optString("log_channel"), json.getString("cmd_whitelist").split(","))
+                val whitelist = json.getString("cmd_whitelist")
+                return GuildSettings(json.getString("name"), RealnameSetting.valueOf(json.getString("realname")), json.getInt("require_realname") == 1,
+                        json.getString("command_discriminator"), json.optString("log_channel"), if (whitelist.isNotEmpty()) whitelist.split(",") else listOf())
             }
         }
     }
@@ -161,6 +166,21 @@ object PanelAPI {
             }
 
             callback?.invoke()
+        }
+    }
+
+    fun getMusicSettings(guid: Guild): ApiRequest<MusicSettings> {
+        return object : ApiRequest<MusicSettings>("/server/${guid.id}/music") {
+            override fun parse(json: JSONObject): MusicSettings {
+                val whitelist = if (json.getString("mode").equals("off", true)) "" else json.getString("channels")
+                val blacklistedSongs = if (json.getString("blacklist_songs").isEmpty()) arrayListOf<String>() else json.getString("blacklisted_songs").split(",")
+
+                return MusicSettings(json.getInt("enabled") == 1, json.getString("mode"),
+                        if (whitelist.isEmpty()) arrayOf<String>() else whitelist.split(",").toTypedArray(),
+                        blacklistedSongs.toTypedArray(), json.getInt("max_queue_length"),
+                        json.getInt("playlists") == 1, json.getInt("max_song_length"),
+                        json.getInt("skip_cooldown"), json.getInt("skip_timer"))
+            }
         }
     }
 }

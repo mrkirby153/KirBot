@@ -15,7 +15,7 @@ class MusicLoadResultHandler(val server: ServerData, val context: Context, val c
     override fun trackLoaded(p0: AudioTrack?) {
         if (p0 == null)
             return
-        val musicData = server.getMusicData()
+        val musicData = MusicManager.musicSettings[server.id.toString()] ?: return
         if (!server.musicManager.adminOnly)
             if (musicData.maxSongLength != -1 && (p0.duration / 1000) / 60 > musicData.maxSongLength) {
                 context.send().error("That song is too long! The maximum length song is ${localizeTime(musicData.maxSongLength * 60)}").queue()
@@ -30,8 +30,7 @@ class MusicLoadResultHandler(val server: ServerData, val context: Context, val c
     }
 
     override fun playlistLoaded(p0: AudioPlaylist?) {
-        val musicData = server.getMusicData()
-
+        val musicData = MusicManager.musicSettings[server.id.toString()] ?: return
         if (!server.musicManager.adminOnly) {
             if (!musicData.playlists) {
                 context.send().error("Playlist queueing is disabled!").queue()

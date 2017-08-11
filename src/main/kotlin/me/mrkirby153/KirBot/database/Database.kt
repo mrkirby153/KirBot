@@ -2,15 +2,15 @@ package me.mrkirby153.KirBot.database
 
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.music.MusicData
-import me.mrkirby153.KirBot.realname.RealnameSetting
-import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.use
-import net.dv8tion.jda.core.entities.*
+import net.dv8tion.jda.core.entities.Channel
+import net.dv8tion.jda.core.entities.Guild
+import net.dv8tion.jda.core.entities.Message
+import net.dv8tion.jda.core.entities.TextChannel
 import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.Timestamp
 
-@Deprecated("Old API")
 object Database {
 
     var connection: Connection
@@ -24,71 +24,8 @@ object Database {
         connection = DriverManager.getConnection("jdbc:mysql://$host:$port/$database", username, password)
     }
 
-    fun getRealname(firstNameOnly: Boolean, member: Member): String? {
-        val sql = if (firstNameOnly) "SELECT `first_name` AS `name` FROM `user_info` WHERE `id` = ?" else
-            "SELECT CONCAT(`first_name`, ' ', `last_name`) AS `name` FROM `user_info` WHERE `id` = ?"
-        connection.prepareStatement(sql).use { ps ->
-            ps.setString(1, member.user.id)
-            ps.executeQuery().use {
-                if (it.next())
-                    return it.getString("name")
-                else
-                    return null
-            }
-        }
-    }
 
-
-    fun getCustomCommand(cmd: String, server: Guild): DBCommand? {
-        val sql = "SELECT `id`, `server`, `name`, `data`, `clearance`, `type`, `respect_whitelist` FROM `custom_commands` WHERE `server` = ? AND `name` = ?"
-        connection.prepareStatement(sql).use { ps ->
-            ps.setString(1, server.id)
-            ps.setString(2, cmd)
-            ps.executeQuery().use { rs ->
-                if (rs.next())
-                    return DBCommand(rs.getString("id"), rs.getString("name"), server, rs.getString("data"),
-                            Clearance.valueOf(rs.getString("clearance")), CommandType.valueOf(rs.getString("type")), rs.getBoolean("respect_whitelist"))
-                else
-                    return null
-            }
-        }
-    }
-
-    fun getRealnameSetting(server: Guild): RealnameSetting? {
-        connection.prepareStatement("SELECT `realname` FROM `server_settings` WHERE `id` = ?").use { ps ->
-            ps.setString(1, server.id)
-            ps.executeQuery().use { rs ->
-                if (rs.next()) {
-                    return RealnameSetting.valueOf(rs.getString("realname"))
-                }
-                return null
-            }
-        }
-    }
-
-    fun requireRealname(server: Guild): Boolean {
-        connection.prepareStatement("SELECT `require_realname` FROM `server_settings` WHERE `id` = ?").use { ps ->
-            ps.setString(1, server.id)
-            ps.executeQuery().use { rs ->
-                if (rs.next())
-                    return rs.getBoolean("require_realname")
-                return false
-            }
-        }
-    }
-
-    fun getCommandPrefix(server: Guild): String {
-        connection.prepareStatement("SELECT `command_discriminator` FROM `server_settings` WHERE `id` = ?").use { ps ->
-            ps.setString(1, server.id)
-            ps.executeQuery().use { rs ->
-                if (rs.next())
-                    return rs.getString("command_discriminator")
-                return "!"
-            }
-        }
-
-    }
-
+    // TODO 8/10/2017 Finish registering/unregistetering channels and guilds
     fun onJoin(server: Guild) {
         Database.updateChannels(server)
         if (!serverExists(server)) {
@@ -193,20 +130,6 @@ object Database {
         chans.forEach {
             removeChannel(it)
             Bot.LOG.info("Removing context $it")
-        }
-    }
-
-    fun getLoggingChannel(server: Guild): String? {
-        connection.prepareStatement("SELECT `log_channel` FROM `server_settings` WHERE `id` = ?").use { ps ->
-            ps.setString(1, server.id)
-            ps.executeQuery().use { rs ->
-                if (rs.next()) {
-                    return rs.getString("log_channel")
-                } else {
-                    return null
-                }
-            }
-
         }
     }
 

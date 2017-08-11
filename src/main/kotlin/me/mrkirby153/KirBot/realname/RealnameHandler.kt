@@ -1,7 +1,8 @@
 package me.mrkirby153.KirBot.realname
 
 import me.mrkirby153.KirBot.data.ServerData
-import me.mrkirby153.KirBot.database.Database
+import me.mrkirby153.KirBot.database.api.PanelAPI
+import me.mrkirby153.KirBot.utils.getMember
 import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.entities.Member
@@ -14,51 +15,63 @@ class RealnameHandler(var server: Guild, var serverData: ServerData) {
 
     @JvmOverloads
     fun updateNames(silent: Boolean = false) {
-        val realnameSetting = Database.getRealnameSetting(server) ?: return
-        val unidentifiedRole = getUnidentifiedRole()
-        val identifiedRole = getIdentifiedRole()
+        PanelAPI.guildSettings(server).queue { settings ->
 
-        // Clean up roles if the server doesn't require real names
-        if (!Database.requireRealname(server)) {
-            cleanupRealNameRoles()
-        }
+            // Clean up roles if the server doesn't require real names
+            if (!settings.requireRealname) {
+                cleanupRealNameRoles()
+            }
 
-        if (realnameSetting == RealnameSetting.OFF) {
-            // Reset
-            if (!(serverData.repository.getBoolean("has-reset-names") ?: false)) {
-                server.members.forEach {
-                    server.controller.removeRolesFromMember(it, unidentifiedRole, identifiedRole)
-                    setNickname(it, null)
+            if (settings.realnameSetting == RealnameSetting.OFF) {
+                // Reset
+                if (!(serverData.repository.getBoolean("has-reset-names") ?: false)) {
+                    server.members.forEach {
+                        if (settings.requireRealname)
+                            server.controller.removeRolesFromMember(it, getUnidentifiedRole(), getIdentifiedRole())
+                        setNickname(it, null)
+                    }
+                    serverData.repository.put("has-reset-names", true)
                 }
-                serverData.repository.put("has-reset-names", true)
+                return@queue
             }
-            return
-        }
-        // Remove the old key
-        serverData.repository.remove("has-reset-names")
+            // Remove the old key
+            serverData.repository.remove("has-reset-names")
 
-        server.members.forEach { member ->
+            PanelAPI.getRealnames(server.members.map { it.user }).queue { (map) ->
+                map.forEach { user, realname ->
+                    if (user.isBot) {
+                        if (settings.requireRealname)
+                            server.controller.modifyMemberRoles(user.getMember(server), arrayListOf(getIdentifiedRole()), arrayListOf(getUnidentifiedRole()).toList()).queue()
+                        return@forEach
+                    }
 
-            // Identify all bots
-            if (member.user.isBot) {
-                server.controller.modifyMemberRoles(member, arrayOf(identifiedRole).toList(), arrayOf(unidentifiedRole).toList()).queue()
-                return@forEach
-            }
-
-            val name = Database.getRealname(realnameSetting == RealnameSetting.FIRST_ONLY, member)
-            if(name == null){
-                server.controller.modifyMemberRoles(member, arrayOf(unidentifiedRole).toList(), arrayOf(identifiedRole).toList()).queue()
-                setNickname(member, null)
-                return@forEach
-            } else {
-                server.controller.modifyMemberRoles(member, arrayOf(identifiedRole).toList(), arrayOf(unidentifiedRole).toList()).queue()
-                setNickname(member, name)
-                return@forEach
+                    if (realname == null) {
+                        if (settings.requireRealname)
+                            server.controller.modifyMemberRoles(user.getMember(server), arrayListOf(getUnidentifiedRole()), arrayListOf(getIdentifiedRole())).queue()
+                        setNickname(user.getMember(server), null)
+                    } else {
+                        var name: String? = ""
+                        when (settings.realnameSetting) {
+                            RealnameSetting.FIRST_ONLY -> {
+                                name = realname.firstName
+                            }
+                            RealnameSetting.FIRST_LAST -> {
+                                name = "${realname.firstName} ${realname.lastName}"
+                            }
+                            else -> {
+                                name = null
+                            }
+                        }
+                        if (settings.requireRealname)
+                            server.controller.modifyMemberRoles(user.getMember(server), arrayListOf(getIdentifiedRole()), arrayListOf(getUnidentifiedRole())).queue()
+                        setNickname(user.getMember(server), name)
+                    }
+                }
             }
         }
     }
 
-    fun setNickname( member: Member, name: String?) {
+    fun setNickname(member: Member, name: String?) {
         if (PermissionUtil.checkPermission(server, server.selfMember, Permission.NICKNAME_MANAGE))
             try {
                 server.controller.setNickname(member, name).queue()
@@ -67,14 +80,14 @@ class RealnameHandler(var server: Guild, var serverData: ServerData) {
             }
     }
 
-    fun addRoleToUser(member: Member, role: Role){
-        if(member.roles.contains(role))
+    fun addRoleToUser(member: Member, role: Role) {
+        if (member.roles.contains(role))
             return
         server.controller.addRolesToMember(member, role).complete()
     }
 
-    fun removeRoleFromUser(member: Member, role: Role){
-        if(!member.roles.contains(role))
+    fun removeRoleFromUser(member: Member, role: Role) {
+        if (!member.roles.contains(role))
             return
         server.controller.removeRolesFromMember(member, role).complete()
     }

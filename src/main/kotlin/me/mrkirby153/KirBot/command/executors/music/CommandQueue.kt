@@ -2,6 +2,7 @@ package me.mrkirby153.KirBot.command.executors.music
 
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
+import me.mrkirby153.KirBot.database.api.MusicSettings
 import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.embed.link
@@ -11,7 +12,7 @@ import net.dv8tion.jda.core.entities.MessageEmbed
 import java.awt.Color
 
 class CommandQueue : MusicCommand() {
-    override fun exec(context: Context, cmdContext: CommandContext) {
+    override fun exec(context: Context, cmdContext: CommandContext, musicData: MusicSettings) {
 
         var shouldHalt = false
         cmdContext.has<String>("action") { action ->

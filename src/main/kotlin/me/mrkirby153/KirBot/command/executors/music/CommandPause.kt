@@ -2,10 +2,11 @@ package me.mrkirby153.KirBot.command.executors.music
 
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
+import me.mrkirby153.KirBot.database.api.MusicSettings
 import me.mrkirby153.KirBot.utils.Context
 
 class CommandPause : MusicCommand() {
-    override fun exec(context: Context, cmdContext: CommandContext) {
+    override fun exec(context: Context, cmdContext: CommandContext, musicData: MusicSettings) {
         if (!context.data.musicManager.trackScheduler.playing) {
             throw CommandException("I'm not playing anything right now")
         }

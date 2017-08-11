@@ -1,6 +1,6 @@
 package me.mrkirby153.KirBot.server
 
-import me.mrkirby153.KirBot.database.Database
+import me.mrkirby153.KirBot.listener.LogListener
 import me.mrkirby153.KirBot.utils.CachedValue
 import me.mrkirby153.KirBot.utils.embed.embed
 import net.dv8tion.jda.core.entities.Guild
@@ -11,17 +11,15 @@ class ServerLogger(val server: Guild) {
 
     @JvmOverloads
     fun log(subject: String, message: String, color: Color = Color.ORANGE, vararg fields: LogField) {
-        var chanId = channel.get()
-        if (chanId == null) {
-            chanId = Database.getLoggingChannel(server) ?: return
-        }
-        server.getTextChannelById(chanId)?.sendMessage(embed(subject) {
-            setDescription(message)
-            setColor(color)
-            fields.forEach {
-                addField(it.name, it.value, it.inline)
-            }
-        }.build())?.queue()
+        val chanId: String = LogListener.logChannelCache[server.id] ?: return
+        if (chanId.isNotEmpty())
+            server.getTextChannelById(chanId)?.sendMessage(embed(subject) {
+                setDescription(message)
+                setColor(color)
+                fields.forEach {
+                    addField(it.name, it.value, it.inline)
+                }
+            }.build())?.queue()
     }
 }
 

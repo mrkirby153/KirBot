@@ -14,9 +14,7 @@ import me.mrkirby153.KirBot.command.executors.music.*
 import me.mrkirby153.KirBot.command.executors.polls.CommandPoll
 import me.mrkirby153.KirBot.command.processors.LaTeXProcessor
 import me.mrkirby153.KirBot.data.ServerData
-import me.mrkirby153.KirBot.database.CommandType
-import me.mrkirby153.KirBot.database.DBCommand
-import me.mrkirby153.KirBot.database.Database
+import me.mrkirby153.KirBot.database.api.GuildCommand
 import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.getClearance
@@ -264,11 +262,12 @@ object CommandManager {
         val args = if (parts.isNotEmpty()) parts.drop(1).toTypedArray() else arrayOf<String>()
         // Command Whitelist
 
+        val whitelistedChannels = shard.serverSettings[guild.id].whitelistedChannels
         for (i in 0..this.cmds.size - 1) {
             val c = this.cmds[i]
             if (c.aliases.map { it.toLowerCase() }.contains(command) || c.command.equals(command, true)) {
                 // Check channel whitelist
-                if (context.channel.id !in shard.serverSettings[guild.id].whitelistedChannels && !c.ignoreWhitelist) {
+                if (whitelistedChannels.isNotEmpty() && context.channel.id !in whitelistedChannels && !c.ignoreWhitelist) {
                     return
                 }
 
@@ -328,8 +327,8 @@ object CommandManager {
                 return
             }
         }
-        // Call custom commands
-        val customCommand = Database.getCustomCommand(command.toLowerCase(), guild) ?: return
+        // Call custom customCommands
+        val customCommand = shard.customCommands[guild.id].findCommand(command) ?: return
         if (customCommand.clearance.value > context.author.getClearance(guild).value) {
             context.send().error("You do not have permission to perform that command").queue {
                 it.delete().queueAfter(10, TimeUnit.SECONDS)
@@ -337,7 +336,7 @@ object CommandManager {
             return
         }
         // Check channel whitelisting
-        if (context.channel.id !in shard.serverSettings[guild.id].whitelistedChannels && customCommand.respectWhitelist)
+        if (whitelistedChannels.isNotEmpty() && context.channel.id !in whitelistedChannels && customCommand.respectWhitelist)
             return
         callCustomCommand(context.channel, customCommand, args, context.author)
     }
@@ -398,14 +397,12 @@ object CommandManager {
         }
     }
 
-    private fun callCustomCommand(channel: MessageChannel, command: DBCommand, args: Array<String>, sender: User) {
-        if (command.type == CommandType.TEXT) {
-            var response = command.data
-            for (i in 0..args.size - 1) {
-                response = response.replace("%${i + 1}", args[i])
-            }
-            channel.sendMessage(response).queue()
+    private fun callCustomCommand(channel: MessageChannel, command: GuildCommand, args: Array<String>, sender: User) {
+        var response = command.data
+        for (i in 0..args.size - 1) {
+            response = response.replace("%${i + 1}", args[i])
         }
+        channel.sendMessage(response).queue()
     }
 
     fun findCommand(command: String): CommandSpec? {

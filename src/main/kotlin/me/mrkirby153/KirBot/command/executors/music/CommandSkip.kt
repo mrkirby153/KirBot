@@ -1,6 +1,7 @@
 package me.mrkirby153.KirBot.command.executors.music
 
 import me.mrkirby153.KirBot.command.args.CommandContext
+import me.mrkirby153.KirBot.database.api.MusicSettings
 import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.embed.b
@@ -14,7 +15,7 @@ class CommandSkip : MusicCommand() {
 
     val skipCooldown = mutableMapOf<Long, Long>()
 
-    override fun exec(context: Context, cmdContext: CommandContext) {
+    override fun exec(context: Context, cmdContext: CommandContext, musicData: MusicSettings) {
         if (!context.data.musicManager.trackScheduler.playing) {
             context.send().error("I'm not playing anything right now").queue()
             return
@@ -32,7 +33,7 @@ class CommandSkip : MusicCommand() {
                 }
             }
         }
-        if(shouldHalt)
+        if (shouldHalt)
             return
         val skipIn = skipCooldown[context.author.idLong] ?: 0
         if (System.currentTimeMillis() < skipIn || skipIn == -1L) {
@@ -43,7 +44,7 @@ class CommandSkip : MusicCommand() {
         }
         // Start a vote
         val currentlyPlaying = context.data.musicManager.trackScheduler.nowPlaying
-        val musicData = context.data.getMusicData()
+
         context.send().embed("Music") {
             setColor(Color.CYAN)
             setDescription(buildString {

@@ -1,7 +1,11 @@
 package me.mrkirby153.KirBot.listener
 
+import com.google.common.cache.CacheBuilder
+import com.google.common.cache.CacheLoader
+import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.Shard
 import me.mrkirby153.KirBot.database.Database
+import me.mrkirby153.KirBot.database.api.PanelAPI
 import me.mrkirby153.KirBot.server.LogField
 import net.dv8tion.jda.core.events.message.MessageBulkDeleteEvent
 import net.dv8tion.jda.core.events.message.MessageDeleteEvent
@@ -9,8 +13,19 @@ import net.dv8tion.jda.core.events.message.MessageReceivedEvent
 import net.dv8tion.jda.core.events.message.guild.GuildMessageUpdateEvent
 import net.dv8tion.jda.core.hooks.ListenerAdapter
 import java.awt.Color
+import java.util.concurrent.TimeUnit
 
 class LogListener(private val shard: Shard) : ListenerAdapter() {
+
+    companion object {
+        val logChannelCache = CacheBuilder.newBuilder().expireAfterWrite(60, TimeUnit.SECONDS).build(
+                object : CacheLoader<String, String?>() {
+                    override fun load(key: String): String? {
+                        return PanelAPI.guildSettings(Bot.getGuild(key)!!).execute().logChannel
+                    }
+                }
+        )
+    }
 
 
     override fun onMessageDelete(event: MessageDeleteEvent) {
@@ -55,10 +70,7 @@ class LogListener(private val shard: Shard) : ListenerAdapter() {
     }
 
     override fun onMessageReceived(event: MessageReceivedEvent) {
-        var logChan = shard.getServerData(event.guild).logger.channel.get()
-        if (logChan == null)
-            logChan = Database.getLoggingChannel(event.guild)
-        if (event.channel.id == logChan)
+        if (event.channel.id == logChannelCache[event.guild.id])
             return
         Database.logMessage(event.message)
     }

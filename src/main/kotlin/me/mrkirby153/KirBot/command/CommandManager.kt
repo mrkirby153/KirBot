@@ -1,5 +1,6 @@
 package me.mrkirby153.KirBot.command
 
+import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.Shard
 import me.mrkirby153.KirBot.command.args.ArgumentParseException
 import me.mrkirby153.KirBot.command.args.Arguments
@@ -223,10 +224,12 @@ object CommandManager {
     }
 
     fun register(spec: CommandSpec) {
+        Bot.LOG.debug("Registering command \"${spec.command}\"")
         cmds.add(spec)
     }
 
     fun registerProcessor(cls: KClass<out MessageProcessor>) {
+        Bot.LOG.debug("Registering processor \"$cls\"")
         messageProcessors.add(cls.java)
     }
 
@@ -258,6 +261,8 @@ object CommandManager {
         val parts: Array<String> = message.split(" ").toTypedArray()
 
         val command = parts[0].toLowerCase()
+
+        Bot.LOG.debug("Attempting lookup for command $command on $guild")
 
         val args = if (parts.isNotEmpty()) parts.drop(1).toTypedArray() else arrayOf<String>()
         // Command Whitelist
@@ -291,6 +296,7 @@ object CommandManager {
                     return
                 }
                 // parse arguments
+                Bot.LOG.debug("Parsing arguments: [${args.joinToString(",")}]")
                 val cmdContext = CommandContext()
 
                 var currentArg = 0
@@ -316,6 +322,7 @@ object CommandManager {
                         return
                     }
                 }
+                Bot.LOG.debug("Executing command \"${c.command}\"")
                 try {
                     c.executor.execute(context, cmdContext)
                 } catch(e: CommandException) {
@@ -324,10 +331,12 @@ object CommandManager {
                     e.printStackTrace()
                     context.send().error("An unknown error occurred!").queue()
                 }
+                Bot.LOG.debug("Command executed successfully")
                 return
             }
         }
         // Call custom customCommands
+        Bot.LOG.debug("Checking for custom command \"$command\"")
         val customCommand = shard.customCommands[guild.id].findCommand(command) ?: return
         if (customCommand.clearance.value > context.author.getClearance(guild).value) {
             context.send().error("You do not have permission to perform that command").queue {
@@ -338,6 +347,7 @@ object CommandManager {
         // Check channel whitelisting
         if (whitelistedChannels.isNotEmpty() && context.channel.id !in whitelistedChannels && customCommand.respectWhitelist)
             return
+        Bot.LOG.debug("Found command $command, executing")
         callCustomCommand(context.channel, customCommand, args, context.author)
     }
 
@@ -382,8 +392,10 @@ object CommandManager {
                 }
             }
             proc.matches = matches.toTypedArray()
-            if (proc.matches.isNotEmpty())
+            if (proc.matches.isNotEmpty()) {
+                Bot.LOG.debug("Found match for processor ${proc.javaClass} [${proc.matches.joinToString(",")}]")
                 proc.process(context)
+            }
             if (proc.stopProcessing)
                 break
         }

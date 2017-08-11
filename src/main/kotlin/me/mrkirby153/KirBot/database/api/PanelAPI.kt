@@ -147,6 +147,7 @@ object PanelAPI {
     }
 
     fun updateChannels(guild: Guild, callback: (() -> Unit)? = null) {
+        Bot.LOG.debug("Updating channels on ${guild.name} (${guild.id})")
         getChannels(guild).queue { (text, voice) ->
             val channels = mutableListOf<String>()
             val toRegister = mutableListOf<String>()
@@ -161,6 +162,9 @@ object PanelAPI {
 
             toRegister.addAll(guild.textChannels.filter { it.id !in channels }.map { it.id })
             toRegister.addAll(guild.voiceChannels.filter { it.id !in channels }.map { it.id })
+
+            Bot.LOG.debug("Registering channels $toRegister")
+            Bot.LOG.debug("Unregistering channels $toUnregister")
 
             toRegister.forEach {
                 val c = guild.getTextChannelById(it) as? Channel ?: guild.getVoiceChannelById(it) as? Channel ?: return@forEach

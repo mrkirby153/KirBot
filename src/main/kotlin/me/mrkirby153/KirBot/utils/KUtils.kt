@@ -129,9 +129,12 @@ fun TextChannel.unhide(){
 }
 
 fun Guild.sync(){
+    Bot.LOG.debug("Syncing guild ${this.id}")
     PanelAPI.guildSettings(this).queue{ settings ->
-        if(settings.name != this.name)
+        if(settings.name != this.name) {
+            Bot.LOG.debug("Name has changed on ${this.name} syncing")
             PanelAPI.setServerName(this).queue()
+        }
         PanelAPI.updateChannels(this)
     }
 }

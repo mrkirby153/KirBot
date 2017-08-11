@@ -9,6 +9,7 @@ import com.sedmelluq.discord.lavaplayer.source.twitch.TwitchStreamAudioSourceMan
 import com.sedmelluq.discord.lavaplayer.source.vimeo.VimeoAudioSourceManager
 import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager
 import me.mrkirby153.KirBot.data.ServerData
+import me.mrkirby153.KirBot.database.api.ApiRequestProcessor
 import me.mrkirby153.KirBot.realname.RealnameUpdater
 import me.mrkirby153.KirBot.utils.HttpUtils
 import me.mrkirby153.KirBot.utils.localizeTime
@@ -56,8 +57,14 @@ object Bot {
         registerSourceManager(BeamAudioSourceManager())
     }
 
+    val debug = properties.getProperty("debug", "false").toBoolean()
+
 
     fun start(token: String) {
+        if(debug){
+            ApiRequestProcessor.debug()
+            LOG.level = SimpleLog.Level.DEBUG
+        }
         if (initialized)
             throw IllegalStateException("Bot has already been initialized!")
         initialized = true
@@ -73,7 +80,7 @@ object Bot {
         }
         val endTime = System.currentTimeMillis()
         LOG.info("\n\n\nSHARDS INITIALIZED! (${localizeTime(((endTime - startTime) / 1000).toInt())})")
-        LOG.info("Starting real name updater thread")
+        LOG.debug("Starting real name updater thread")
         scheduler.scheduleAtFixedRate(RealnameUpdater(), 60, 60, TimeUnit.SECONDS)
 
         LOG.info("Bot is connecting to discord")

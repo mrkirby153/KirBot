@@ -66,7 +66,7 @@ class CommandPlay : MusicCommand() {
         // Remove playlist from URL to prevent accidental queueing of playlists
         var url = data.replace(Regex("&list=[A-Za-z0-9\\-+_]+"), "")
         if (!(url.contains("youtu") || url.contains("vimeo") || url.contains("soundcloud"))) {
-            println("Searching youtube.")
+            Bot.LOG.debug("Searching youtube for \"$data\"")
             url = YoutubeSearch(data).execute()
         }
 

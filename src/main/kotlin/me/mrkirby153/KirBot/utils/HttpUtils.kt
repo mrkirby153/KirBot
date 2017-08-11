@@ -19,7 +19,7 @@ object HttpUtils {
     }
 
     fun clearCache(){
-        Bot.LOG.info("Cleared HTTP cache!")
+        Bot.LOG.debug("Cleared HTTP cache!")
         cacheDirectory.listFiles().forEach {
             it.deleteRecursively()
         }

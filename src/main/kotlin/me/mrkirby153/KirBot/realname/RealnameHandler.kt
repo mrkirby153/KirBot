@@ -1,5 +1,6 @@
 package me.mrkirby153.KirBot.realname
 
+import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.data.ServerData
 import me.mrkirby153.KirBot.database.api.PanelAPI
 import me.mrkirby153.KirBot.utils.getMember

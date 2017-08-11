@@ -1,5 +1,6 @@
 package me.mrkirby153.KirBot.database.api
 
+import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.realname.RealnameSetting
 import me.mrkirby153.KirBot.user.Clearance
 import net.dv8tion.jda.core.entities.User
@@ -43,6 +44,12 @@ class MusicSettings(val enabled: Boolean, whitelist: String, val channels: Array
         BLACKLIST,
         WHITELIST
     }
+}
+
+class ServerMessage(val id: String?, val channelId: String, val serverId: String, val authorId: String, val content: String) : ApiResponse {
+    val guild = Bot.getGuild(this.serverId)
+    val channel = guild?.getTextChannelById(this.channelId)
+    val author = Bot.getUser(this.authorId)
 }
 
 class VoidApiResponse : ApiResponse

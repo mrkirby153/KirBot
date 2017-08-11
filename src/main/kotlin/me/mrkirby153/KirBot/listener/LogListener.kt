@@ -4,7 +4,6 @@ import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.Shard
-import me.mrkirby153.KirBot.database.Database
 import me.mrkirby153.KirBot.database.api.PanelAPI
 import me.mrkirby153.KirBot.server.LogField
 import net.dv8tion.jda.core.events.message.MessageBulkDeleteEvent
@@ -29,49 +28,46 @@ class LogListener(private val shard: Shard) : ListenerAdapter() {
 
 
     override fun onMessageDelete(event: MessageDeleteEvent) {
-        val msg = Database.deleteMessage(event.messageId)
-        if (msg != null) {
-            val author = shard.getUserById(msg.author)
-            val chan = shard.getTextChannelById(msg.channel)
+        PanelAPI.deleteMessage(event.messageId).queue { msg ->
+            if (msg.id == "-1")
+                return@queue
+            val author = msg.author
+            val chan = msg.channel
 
             if (author != null && author.isBot)
-                return
+                return@queue
 
             val authorMsg = if (author != null) "by `${author.name}#${author.discriminator}`" else ""
             shard.getServerData(event.guild).logger
                     .log("Message Deleted ",
-                            "A message $authorMsg was deleted in `#${chan.name}`", Color.BLUE,
-                            LogField("Message", msg.message, true))
+                            "A message $authorMsg was deleted in `#${chan?.name}`", Color.BLUE,
+                            LogField("Message", msg.content, true))
         }
     }
 
     override fun onMessageBulkDelete(event: MessageBulkDeleteEvent) {
-        val msgs = mutableListOf<Database.LogMessage>()
-        event.messageIds.forEach { it ->
-            val msg = Database.deleteMessage(it)
-            if (msg != null)
-                msgs.add(msg)
-        }
+        PanelAPI.bulkDelete(event.messageIds).queue()
         shard.getServerData(event.guild).logger
-                .log("Message Deleted", "`${msgs.size}` messages have been deleted from #${event.channel.name}", Color.RED)
+                .log("Message Deleted", "`${event.messageIds.size}` messages have been deleted from #${event.channel.name}", Color.RED)
     }
 
     override fun onGuildMessageUpdate(event: GuildMessageUpdateEvent) {
-        val msg = Database.editMessage(event.message)
-        if (msg != null) {
-            val user = shard.getUserById(msg.author)
+        PanelAPI.editMessage(event.message).queue { msg ->
+            if(msg.id == "-1")
+                return@queue
+            val user = msg.author ?: return@queue
             if (user.isBot)
-                return
+                return@queue
             shard.getServerData(event.guild).logger
                     .log("Message Edit", "${user.name}#${user.discriminator} has edited their message",
                             Color.BLUE,
-                            LogField("Old", "```${msg.message}```", false), LogField("New", "```${event.message.content}```", false))
+                            LogField("Old", "```${msg.content}```", false), LogField("New", "```${event.message.content}```", false))
         }
     }
 
     override fun onMessageReceived(event: MessageReceivedEvent) {
         if (event.channel.id == logChannelCache[event.guild.id])
             return
-        Database.logMessage(event.message)
+        PanelAPI.logMessage(event.message).queue()
     }
 }

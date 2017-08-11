@@ -3,10 +3,7 @@ package me.mrkirby153.KirBot.database.api
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.realname.RealnameSetting
 import me.mrkirby153.KirBot.user.Clearance
-import net.dv8tion.jda.core.entities.Channel
-import net.dv8tion.jda.core.entities.Guild
-import net.dv8tion.jda.core.entities.TextChannel
-import net.dv8tion.jda.core.entities.User
+import net.dv8tion.jda.core.entities.*
 import org.json.JSONObject
 import java.util.concurrent.Executors
 
@@ -100,8 +97,8 @@ object PanelAPI {
         }
     }
 
-    fun updateChannelName(channel: Channel): ApiRequest<VoidApiResponse>{
-        return object: ApiRequest<VoidApiResponse>("/channel/${channel.id}", Methods.PATCH, mapOf(Pair("name", channel.name))){
+    fun updateChannelName(channel: Channel): ApiRequest<VoidApiResponse> {
+        return object : ApiRequest<VoidApiResponse>("/channel/${channel.id}", Methods.PATCH, mapOf(Pair("name", channel.name))) {
             override fun parse(json: JSONObject): VoidApiResponse {
                 return VoidApiResponse()
             }
@@ -191,6 +188,60 @@ object PanelAPI {
                         json.getInt("playlists") == 1, json.getInt("max_song_length"),
                         json.getInt("skip_cooldown"), json.getInt("skip_timer"))
             }
+        }
+    }
+
+    fun logMessage(message: Message): ApiRequest<ServerMessage> {
+        return object : ApiRequest<ServerMessage>("/message", Methods.PUT,
+                mapOf(Pair("server", message.guild.id), Pair("id", message.id), Pair("channel", message.channel.id),
+                        Pair("author", message.author.id), Pair("message", if(message.content.isNotEmpty()) message.content else " "))) {
+            override fun parse(json: JSONObject): ServerMessage {
+                return ServerMessage(json.getString("id"), json.getString("channel"),
+                        json.getString("server_id"), json.getString("author"), json.getString("message"))
+            }
+        }
+    }
+
+    fun getMessage(id: String): ApiRequest<ServerMessage> {
+        return object : ApiRequest<ServerMessage>("/message/$id") {
+            override fun parse(json: JSONObject): ServerMessage {
+                return ServerMessage(json.getString("id"), json.getString("channel"),
+                        json.getString("server_id"), json.getString("author"), json.getString("message"))
+            }
+        }
+    }
+
+    fun deleteMessage(id: String): ApiRequest<ServerMessage> {
+        return object : ApiRequest<ServerMessage>("/message/$id", Methods.DELETE) {
+            override fun parse(json: JSONObject): ServerMessage {
+                if (json.keySet().size < 1)
+                    return ServerMessage("-1", "-1", "-1", "-1", "-1")
+                else
+                    return ServerMessage(json.getString("id"), json.getString("channel"),
+                            json.getString("server_id"), json.getString("author"), json.getString("message"))
+            }
+        }
+    }
+
+    fun editMessage(message: Message): ApiRequest<ServerMessage> {
+        return object : ApiRequest<ServerMessage>("/message/${message.id}", Methods.PATCH, mapOf(Pair("message", message.content))) {
+            override fun parse(json: JSONObject): ServerMessage {
+                if (json.keySet().size < 1)
+                    return ServerMessage("-1", "-1", "-1", "-1", "-1")
+                else
+                    return ServerMessage(json.getString("id"), json.getString("channel"),
+                            json.getString("server_id"), json.getString("author"), json.getString("message"))
+            }
+
+        }
+    }
+
+    fun bulkDelete(messages: Collection<String>): ApiRequest<VoidApiResponse>{
+        return object: ApiRequest<VoidApiResponse>("/message/bulkDelete", Methods.DELETE, mapOf(Pair("messages", messages.joinToString(",")))){
+            override fun parse(json: JSONObject): VoidApiResponse {
+                return VoidApiResponse()
+            }
+
         }
     }
 }

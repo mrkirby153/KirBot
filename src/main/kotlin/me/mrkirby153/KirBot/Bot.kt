@@ -12,6 +12,7 @@ import me.mrkirby153.KirBot.data.ServerData
 import me.mrkirby153.KirBot.database.api.ApiRequestProcessor
 import me.mrkirby153.KirBot.error.ErrorReporter
 import me.mrkirby153.KirBot.realname.RealnameUpdater
+import me.mrkirby153.KirBot.redis.RedisConnector
 import me.mrkirby153.KirBot.utils.HttpUtils
 import me.mrkirby153.KirBot.utils.localizeTime
 import me.mrkirby153.KirBot.utils.readProperties
@@ -98,6 +99,8 @@ object Bot {
         webServer.server.settings.host(properties.getProperty("webserver-host", "localhost"))
         webServer.start()
         LOG.info("Web server started on ${webServer.server.settings.host}:${webServer.server.port}")
+
+        RedisConnector.listen()
 
         HttpUtils.clearCache()
 

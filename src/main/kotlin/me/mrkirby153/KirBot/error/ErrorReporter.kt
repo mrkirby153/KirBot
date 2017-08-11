@@ -16,10 +16,13 @@ object ErrorReporter {
     var guild = ""
 
     fun reportError(e: Throwable, thread: Thread? = null) {
+        e.printStackTrace()
         val temp = File.createTempFile("kirbot-error", ".log")
         val writer = temp.printWriter()
         e.printStackTrace(writer)
         writer.flush()
+        if(channel.isEmpty() || guild.isEmpty())
+            return
         Bot.getGuild(guild)?.getTextChannelById(channel)?.apply {
             sendMessage(embed("Exception caught") {
                 setColor(Color.RED)

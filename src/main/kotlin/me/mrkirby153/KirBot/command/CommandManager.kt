@@ -197,13 +197,13 @@ object CommandManager {
             addExample("help", "help help")
         })
 
-        register(CommandSpec("history"){
+        register(CommandSpec("history") {
             executor = CommandHistory()
             category = CommandCategory.MISCELLANEOUS
             ignoreWhitelist = true
         })
 
-        register(CommandSpec("overwatch"){
+        register(CommandSpec("overwatch") {
             executor = CommandOverwatch()
             category = CommandCategory.FUN
             arguments(Arguments.regex("battletag", "[A-Za-z0-9]+#[0-9]{4}", true,
@@ -212,7 +212,7 @@ object CommandManager {
             addExample("overwatch Username#0000")
         })
 
-        register(CommandSpec("spamFilter"){
+        register(CommandSpec("spamFilter") {
             executor = CommandDisableSpamFilter()
             category = CommandCategory.MODERATION
             ignoreWhitelist = true
@@ -247,15 +247,15 @@ object CommandManager {
         val prefix = guildSettings.cmdDiscriminator
 
         var mention = false
-        if(!message.startsWith(prefix)){
-            if(!context.message.mentionedUsers.contains(context.guild.jda.selfUser))
+        if (!message.startsWith(prefix)) {
+            if (!context.message.mentionedUsers.contains(context.guild.jda.selfUser))
                 return
             else
                 mention = true
         }
 
         // Drop the prefix
-        message = if(mention) message.replace(Regex("<@!?[0-9]+>\\s?"), "") else message.substring(prefix.length)
+        message = if (mention) message.replace(Regex("<@!?[0-9]+>\\s?"), "") else message.substring(prefix.length)
 
         val parts: Array<String> = message.split(" ").toTypedArray()
 
@@ -263,19 +263,13 @@ object CommandManager {
 
         val args = if (parts.isNotEmpty()) parts.drop(1).toTypedArray() else arrayOf<String>()
         // Command Whitelist
-        var whitelist = shard.getServerData(guild).channelWhitelist.get()
-        if(whitelist == null) {
-            whitelist = Database.getWhitelistedChannels(guild)
-            shard.getServerData(guild).channelWhitelist.set(whitelist)
-        }
 
         for (i in 0..this.cmds.size - 1) {
             val c = this.cmds[i]
             if (c.aliases.map { it.toLowerCase() }.contains(command) || c.command.equals(command, true)) {
-                if(!whitelist.isEmpty()){
-                    if(context.channel.id !in whitelist && !c.ignoreWhitelist){
-                        return
-                    }
+                // Check channel whitelist
+                if (context.channel.id !in shard.serverSettings[guild.id].whitelistedChannels && !c.ignoreWhitelist) {
+                    return
                 }
 
                 // Check permissions
@@ -342,10 +336,9 @@ object CommandManager {
             }
             return
         }
-        if(!whitelist.isEmpty()){
-            if(context.channel.id !in whitelist && customCommand.respectWhitelist)
-                return
-        }
+        // Check channel whitelisting
+        if (context.channel.id !in shard.serverSettings[guild.id].whitelistedChannels && customCommand.respectWhitelist)
+            return
         callCustomCommand(context.channel, customCommand, args, context.author)
     }
 

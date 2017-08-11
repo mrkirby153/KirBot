@@ -8,16 +8,14 @@ import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.User
 import org.json.JSONObject
+import java.util.concurrent.Executors
 
 object PanelAPI {
 
-    internal val API_PROCESSOR: ApiProcessor = ApiProcessor(Bot.properties.getProperty("api-endpoint"), Bot.properties.getProperty("api-key"), true)
+    internal val API_ENDPOINT = Bot.properties.getProperty("api-endpoint")
+    internal val API_KEY = Bot.properties.getProperty("api-key")
 
-    private val apiProcessorThread: Thread = Thread(API_PROCESSOR).apply {
-        name = "ApiProcessor"
-        isDaemon = true
-        start()
-    }
+    internal val executor = Executors.newFixedThreadPool(3)
 
     fun getRealname(user: User): ApiRequest<Realname> = object : ApiRequest<Realname>("/user/${user.id}/name") {
         override fun parse(json: JSONObject): Realname {

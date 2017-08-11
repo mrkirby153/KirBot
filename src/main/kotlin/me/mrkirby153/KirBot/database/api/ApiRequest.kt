@@ -14,11 +14,11 @@ abstract class ApiRequest<out T : ApiResponse>(val url: String, val method: Meth
 
     fun queue(callback: ((T) -> Unit)? = null) {
         this.callback = callback
-        PanelAPI.API_PROCESSOR.queue(this)
+        PanelAPI.executor.submit(ApiRequestProcessor(this))
     }
 
     fun execute(): T {
-        return PanelAPI.API_PROCESSOR.execute(this)
+        return ApiRequestProcessor.process(this) as T
     }
 }
 

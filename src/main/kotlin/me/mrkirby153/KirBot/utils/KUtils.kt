@@ -2,6 +2,7 @@ package me.mrkirby153.KirBot.utils
 
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.Shard
+import me.mrkirby153.KirBot.database.api.PanelAPI
 import me.mrkirby153.KirBot.user.Clearance
 import net.dv8tion.jda.core.EmbedBuilder
 import net.dv8tion.jda.core.Permission
@@ -125,4 +126,12 @@ fun TextChannel.hide(){
 fun TextChannel.unhide(){
     val public = this.getPermissionOverride(guild.publicRole) ?: return
     public.manager.clear(Permission.MESSAGE_READ).queue()
+}
+
+fun Guild.sync(){
+    PanelAPI.guildSettings(this).queue{ settings ->
+        if(settings.name != this.name)
+            PanelAPI.setServerName(this).queue()
+        PanelAPI.updateChannels(this)
+    }
 }

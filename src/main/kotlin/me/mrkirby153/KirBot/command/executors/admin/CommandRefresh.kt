@@ -2,7 +2,7 @@ package me.mrkirby153.KirBot.command.executors.admin
 
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.command.executors.CmdExecutor
-import me.mrkirby153.KirBot.database.Database
+import me.mrkirby153.KirBot.database.api.PanelAPI
 import me.mrkirby153.KirBot.utils.Context
 
 class CommandRefresh : CmdExecutor() {
@@ -12,7 +12,7 @@ class CommandRefresh : CmdExecutor() {
 
         when (arg) {
             "channels" -> {
-                Database.updateChannels(context.guild)
+                PanelAPI.updateChannels(context.guild)
                 context.send().success("Updated server channels!").queue()
             }
             else -> {

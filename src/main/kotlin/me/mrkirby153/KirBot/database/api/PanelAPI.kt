@@ -81,7 +81,7 @@ object PanelAPI {
     }
 
     fun setServerName(guild: Guild): ApiRequest<VoidApiResponse> {
-        return object : ApiRequest<VoidApiResponse>("/server/{$guild.id}/name", Methods.PATCH, mapOf(Pair("name", guild.name))) {
+        return object : ApiRequest<VoidApiResponse>("/server/${guild.id}/name", Methods.POST, mapOf(Pair("name", guild.name))) {
             override fun parse(json: JSONObject): VoidApiResponse {
                 return VoidApiResponse()
             }
@@ -97,8 +97,8 @@ object PanelAPI {
         }
     }
 
-    fun unregisterChannel(channel: Channel): ApiRequest<VoidApiResponse> {
-        return object : ApiRequest<VoidApiResponse>("/channel/${channel.id}", Methods.DELETE) {
+    fun unregisterChannel(channel: String): ApiRequest<VoidApiResponse> {
+        return object : ApiRequest<VoidApiResponse>("/channel/$channel", Methods.DELETE) {
             override fun parse(json: JSONObject): VoidApiResponse {
                 return VoidApiResponse()
             }
@@ -132,6 +132,35 @@ object PanelAPI {
                 }
                 return GuildChannels(textChannels, voiceChannels)
             }
+        }
+    }
+
+    fun updateChannels(guild: Guild, callback: (() -> Unit)? = null) {
+        getChannels(guild).queue { (text, voice) ->
+            val channels = mutableListOf<String>()
+            val toRegister = mutableListOf<String>()
+            val toUnregister = mutableListOf<String>()
+
+            voice.map { it.id }.toCollection(channels)
+            text.map { it.id }.toCollection(channels)
+
+            toUnregister.addAll(channels)
+            toUnregister.removeAll(guild.textChannels.map { it.id })
+            toUnregister.removeAll(guild.voiceChannels.map { it.id })
+
+            toRegister.addAll(guild.textChannels.filter { it.id !in channels }.map { it.id })
+            toRegister.addAll(guild.voiceChannels.filter { it.id !in channels }.map { it.id })
+
+            toRegister.forEach {
+                val c = guild.getTextChannelById(it) as? Channel ?: guild.getVoiceChannelById(it) as? Channel ?: return@forEach
+                registerChannel(c).queue()
+            }
+
+            toUnregister.forEach {
+                unregisterChannel(it).queue()
+            }
+
+            callback?.invoke()
         }
     }
 }

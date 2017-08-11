@@ -9,11 +9,11 @@ import com.sedmelluq.discord.lavaplayer.source.twitch.TwitchStreamAudioSourceMan
 import com.sedmelluq.discord.lavaplayer.source.vimeo.VimeoAudioSourceManager
 import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager
 import me.mrkirby153.KirBot.data.ServerData
-import me.mrkirby153.KirBot.database.Database
 import me.mrkirby153.KirBot.realname.RealnameUpdater
 import me.mrkirby153.KirBot.utils.HttpUtils
 import me.mrkirby153.KirBot.utils.localizeTime
 import me.mrkirby153.KirBot.utils.readProperties
+import me.mrkirby153.KirBot.utils.sync
 import me.mrkirby153.KirBot.web.WebApp
 import net.dv8tion.jda.core.AccountType
 import net.dv8tion.jda.core.JDA
@@ -75,18 +75,13 @@ object Bot {
         LOG.info("\n\n\nSHARDS INITIALIZED! (${localizeTime(((endTime - startTime) / 1000).toInt())})")
         LOG.info("Starting real name updater thread")
         scheduler.scheduleAtFixedRate(RealnameUpdater(), 60, 60, TimeUnit.SECONDS)
-        scheduler.scheduleAtFixedRate({
-            shards
-                    .flatMap { it.guilds }
-                    .forEach { Database.updateChannels(it) }
-        }, 120, 120, TimeUnit.SECONDS)
 
         LOG.info("Bot is connecting to discord")
 
-        LOG.info("Updating names")
+        LOG.info("Updating channels")
         shards
                 .flatMap { it.guilds }
-                .forEach { Database.onJoin(it) }
+                .forEach { it.sync() }
 
         webServer = Pippo(WebApp())
         webServer.server.port = properties.getProperty("webserver-port", "5656").toInt()

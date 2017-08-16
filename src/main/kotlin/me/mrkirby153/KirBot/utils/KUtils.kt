@@ -111,11 +111,11 @@ inline fun <T : AutoCloseable, R> T.use(block: (T) -> R): R {
     }
 }
 
-fun TextChannel.hide(){
-    this.permissionOverrides.filter { it.allowed.contains(Permission.MESSAGE_READ)}.forEach {
+fun TextChannel.hide() {
+    this.permissionOverrides.filter { it.allowed.contains(Permission.MESSAGE_READ) }.forEach {
         val override = it
         it.manager.clear(Permission.MESSAGE_READ).queue {
-            if(override.denied.isEmpty() && override.allowed.isEmpty())
+            if (override.denied.isEmpty() && override.allowed.isEmpty())
                 override.delete().queue()
         }
     }
@@ -123,18 +123,42 @@ fun TextChannel.hide(){
     public.manager.deny(Permission.MESSAGE_READ).queue()
 }
 
-fun TextChannel.unhide(){
+fun TextChannel.unhide() {
     val public = this.getPermissionOverride(guild.publicRole) ?: return
     public.manager.clear(Permission.MESSAGE_READ).queue()
 }
 
-fun Guild.sync(){
+fun Guild.sync() {
     Bot.LOG.debug("Syncing guild ${this.id}")
-    PanelAPI.guildSettings(this).queue{ settings ->
-        if(settings.name != this.name) {
+    PanelAPI.guildSettings(this).queue { settings ->
+        if (settings.name != this.name) {
             Bot.LOG.debug("Name has changed on ${this.name} syncing")
             PanelAPI.setServerName(this).queue()
         }
         PanelAPI.updateChannels(this)
+
+        PanelAPI.getRoles(this).queue { r ->
+
+            val storedRoleIds = r.roles.map { it.id }
+
+            val toAdd = mutableListOf<String>()
+            val toRemove = mutableListOf<String>()
+
+            toRemove.addAll(storedRoleIds)
+
+            toRemove.removeAll(this.roles.map { it.id })
+            toAdd.addAll(this.roles.filter { it.id !in storedRoleIds }.map { it.id })
+
+            Bot.LOG.debug("Adding roles $toAdd")
+            Bot.LOG.debug("Removing roles $toRemove")
+
+            toAdd.map { this.getRoleById(it) }.filter { it != null }.forEach { role ->
+                PanelAPI.createRole(role).queue()
+            }
+
+            toRemove.forEach { role ->
+                PanelAPI.deleteRole(role).queue()
+            }
+        }
     }
 }

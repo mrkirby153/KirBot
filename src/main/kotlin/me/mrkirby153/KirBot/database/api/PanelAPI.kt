@@ -194,7 +194,7 @@ object PanelAPI {
     fun logMessage(message: Message): ApiRequest<ServerMessage> {
         return object : ApiRequest<ServerMessage>("/message", Methods.PUT,
                 mapOf(Pair("server", message.guild.id), Pair("id", message.id), Pair("channel", message.channel.id),
-                        Pair("author", message.author.id), Pair("message", if(message.content.isNotEmpty()) message.content else " "))) {
+                        Pair("author", message.author.id), Pair("message", if (message.content.isNotEmpty()) message.content else " "))) {
             override fun parse(json: JSONObject): ServerMessage {
                 return ServerMessage(json.getString("id"), json.getString("channel"),
                         json.getString("server_id"), json.getString("author"), json.getString("message"))
@@ -236,12 +236,58 @@ object PanelAPI {
         }
     }
 
-    fun bulkDelete(messages: Collection<String>): ApiRequest<VoidApiResponse>{
-        return object: ApiRequest<VoidApiResponse>("/message/bulkDelete", Methods.DELETE, mapOf(Pair("messages", messages.joinToString(",")))){
+    fun bulkDelete(messages: Collection<String>): ApiRequest<VoidApiResponse> {
+        return object : ApiRequest<VoidApiResponse>("/message/bulkDelete", Methods.DELETE, mapOf(Pair("messages", messages.joinToString(",")))) {
             override fun parse(json: JSONObject): VoidApiResponse {
                 return VoidApiResponse()
             }
 
+        }
+    }
+
+    fun createRole(role: net.dv8tion.jda.core.entities.Role): ApiRequest<GuildRole> {
+        return object : ApiRequest<GuildRole>("/role", Methods.POST, mapOf(Pair("id", role.id), Pair("server_id", role.guild!!.id), Pair("name", role.name))) {
+            override fun parse(json: JSONObject): GuildRole {
+                return GuildRole(json.getString("id"), json.getString("name"), json.getString("server_id"))
+            }
+        }
+    }
+
+    fun deleteRole(id: String): ApiRequest<VoidApiResponse> {
+        return object : ApiRequest<VoidApiResponse>("/role/$id", Methods.DELETE) {
+            override fun parse(json: JSONObject): VoidApiResponse {
+                return VoidApiResponse()
+            }
+
+        }
+    }
+
+    fun updateRole(role: net.dv8tion.jda.core.entities.Role): ApiRequest<GuildRole> {
+        return object : ApiRequest<GuildRole>("/role/${role.id}", Methods.PATCH, mapOf(Pair("name", role.name))) {
+            override fun parse(json: JSONObject): GuildRole {
+                return GuildRole(json.getString("id"), json.getString("name"), json.getString("server_id"))
+            }
+        }
+    }
+
+    fun getRole(role: net.dv8tion.jda.core.entities.Role): ApiRequest<GuildRole> {
+        return object : ApiRequest<GuildRole>("/role/${role.id}", Methods.GET) {
+            override fun parse(json: JSONObject): GuildRole {
+                return GuildRole(json.getString("id"), json.getString("name"), json.getString("server_id"))
+            }
+        }
+    }
+
+    fun getRoles(guild: Guild): ApiRequest<GuildRoles> {
+        return object : ApiRequest<GuildRoles>("/server/${guild.id}/roles") {
+            override fun parse(json: JSONObject): GuildRoles {
+                val roles = mutableListOf<GuildRole>()
+                json.getJSONArray("roles").forEach { r ->
+                    val j = r as JSONObject
+                    roles.add(GuildRole(j.getString("id"), j.getString("name"), j.getString("server_id")))
+                }
+                return GuildRoles(roles)
+            }
         }
     }
 }

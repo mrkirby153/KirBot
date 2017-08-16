@@ -52,4 +52,11 @@ class ServerMessage(val id: String?, val channelId: String, val serverId: String
     val author = Bot.getUser(this.authorId)
 }
 
+class GuildRole(val id: String, val name: String, val serverId: String): ApiResponse{
+    val guild = Bot.getGuild(serverId)
+    val role = guild?.getRoleById(id)
+}
+
+class GuildRoles(val roles: List<GuildRole>): ApiResponse
+
 class VoidApiResponse : ApiResponse

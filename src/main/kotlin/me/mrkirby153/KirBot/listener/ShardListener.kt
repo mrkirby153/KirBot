@@ -59,11 +59,11 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
     }
 
     override fun onTextChannelUpdateName(event: TextChannelUpdateNameEvent) {
-        PanelAPI.updateChannelName(event.channel).queue()
+        PanelAPI.updateChannel(event.channel).queue()
     }
 
     override fun onVoiceChannelUpdateName(event: VoiceChannelUpdateNameEvent) {
-        PanelAPI.updateChannelName(event.channel).queue()
+        PanelAPI.updateChannel(event.channel).queue()
     }
 
     override fun onRoleCreate(event: RoleCreateEvent) {

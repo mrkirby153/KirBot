@@ -3,6 +3,7 @@ package me.mrkirby153.KirBot.database.api
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.realname.RealnameSetting
 import me.mrkirby153.KirBot.user.Clearance
+import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.*
 import org.json.JSONObject
 import java.util.concurrent.Executors
@@ -97,14 +98,6 @@ object PanelAPI {
         }
     }
 
-    fun updateChannelName(channel: Channel): ApiRequest<VoidApiResponse> {
-        return object : ApiRequest<VoidApiResponse>("/channel/${channel.id}", Methods.PATCH, mapOf(Pair("name", channel.name))) {
-            override fun parse(json: JSONObject): VoidApiResponse {
-                return VoidApiResponse()
-            }
-        }
-    }
-
     fun unregisterChannel(channel: String): ApiRequest<VoidApiResponse> {
         return object : ApiRequest<VoidApiResponse>("/channel/$channel", Methods.DELETE) {
             override fun parse(json: JSONObject): VoidApiResponse {
@@ -114,7 +107,8 @@ object PanelAPI {
     }
 
     fun updateChannel(channel: Channel): ApiRequest<VoidApiResponse> {
-        return object : ApiRequest<VoidApiResponse>("/channel/${channel.id}", Methods.PATCH, mapOf(Pair("name", channel.name))) {
+        val isHidden = channel.getPermissionOverride(channel.guild.publicRole)?.denied?.contains(Permission.MESSAGE_READ) ?: false
+        return object : ApiRequest<VoidApiResponse>("/channel/${channel.id}", Methods.PATCH, mapOf(Pair("name", channel.name), Pair("hidden", isHidden.toString()))) {
             override fun parse(json: JSONObject): VoidApiResponse {
                 return VoidApiResponse()
             }

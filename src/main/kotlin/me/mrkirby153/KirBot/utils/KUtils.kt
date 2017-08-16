@@ -122,11 +122,13 @@ fun TextChannel.hide() {
     }
     val public = this.getPermissionOverride(guild.publicRole) ?: this.createPermissionOverride(guild.publicRole).complete()
     public.manager.deny(Permission.MESSAGE_READ).queue()
+    PanelAPI.updateChannel(this).queue()
 }
 
 fun TextChannel.unhide() {
     val public = this.getPermissionOverride(guild.publicRole) ?: return
     public.manager.clear(Permission.MESSAGE_READ).queue()
+    PanelAPI.updateChannel(this).queue()
 }
 
 fun Guild.sync() {

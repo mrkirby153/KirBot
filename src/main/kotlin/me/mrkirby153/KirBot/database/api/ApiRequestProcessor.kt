@@ -8,7 +8,7 @@ import okhttp3.RequestBody
 import org.json.JSONObject
 import org.json.JSONTokener
 
-class ApiRequestProcessor(val apiRequest: ApiRequest<ApiResponse>) : Runnable {
+class ApiRequestProcessor(val apiRequest: ApiRequest<*>) : Runnable {
 
     override fun run() {
         apiRequest.execute(process(apiRequest))
@@ -22,12 +22,12 @@ class ApiRequestProcessor(val apiRequest: ApiRequest<ApiResponse>) : Runnable {
             debugLogger.level = SimpleLog.Level.DEBUG
         }
 
-        fun process(apiRequest: ApiRequest<ApiResponse>): ApiResponse {
+        fun process(apiRequest: ApiRequest<*>): Any? {
             val json = Companion.run(apiRequest) ?: JSONObject()
             return apiRequest.parse(json)
         }
 
-        fun run(apiRequest: ApiRequest<ApiResponse>): JSONObject? {
+        fun run(apiRequest: ApiRequest<*>): JSONObject? {
             val req = Request.Builder().run {
                 url(PanelAPI.API_ENDPOINT + apiRequest.url)
                 header("api-token", PanelAPI.API_KEY)

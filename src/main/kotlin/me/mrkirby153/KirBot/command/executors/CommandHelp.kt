@@ -31,7 +31,7 @@ class CommandHelp : CmdExecutor() {
                 })
             }.rest().queue()
         } else {
-            val spec = CommandManager.findCommand(command) ?: throw CommandException("Unknown command!")
+            val spec = CommandManager.findCustomCommand(command) ?: throw CommandException("Unknown command!")
             context.send().embed("Help: ${spec.command.capitalize()}") {
                 setColor(Color.BLUE)
                 field("Name", false, prefix + spec.command)

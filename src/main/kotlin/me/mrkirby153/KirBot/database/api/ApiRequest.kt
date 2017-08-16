@@ -2,11 +2,11 @@ package me.mrkirby153.KirBot.database.api
 
 import org.json.JSONObject
 
-abstract class ApiRequest<out T : ApiResponse>(val url: String, val method: Methods = Methods.GET, val data: Map<String, String>? = null) {
+abstract class ApiRequest<out T>(val url: String, val method: Methods = Methods.GET, val data: Map<String, String>? = null) {
 
     private var callback: ((T) -> Unit)? = null
 
-    internal fun execute(response: ApiResponse) {
+    internal fun execute(response: Any?) {
         this.callback?.invoke(response as T)
     }
 
@@ -21,8 +21,6 @@ abstract class ApiRequest<out T : ApiResponse>(val url: String, val method: Meth
         return ApiRequestProcessor.process(this) as T
     }
 }
-
-interface ApiResponse
 
 enum class Methods(val value: String) {
     GET("GET"),

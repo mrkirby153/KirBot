@@ -38,7 +38,7 @@ class RealnameHandler(var server: Guild, var serverData: ServerData) {
             // Remove the old key
             serverData.repository.remove("has-reset-names")
 
-            PanelAPI.getRealnames(server.members.map { it.user }).queue { (map) ->
+            PanelAPI.getRealnames(server.members.map { it.user }).queue { map ->
                 map.forEach { user, realname ->
                     if (user.isBot) {
                         if (settings.requireRealname)

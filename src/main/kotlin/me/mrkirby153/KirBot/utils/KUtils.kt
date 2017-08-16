@@ -140,7 +140,7 @@ fun Guild.sync() {
 
         PanelAPI.getRoles(this).queue { r ->
 
-            val storedRoleIds = r.roles.map { it.id }
+            val storedRoleIds = r.map { it.id }
 
             val toAdd = mutableListOf<String>()
             val toRemove = mutableListOf<String>()

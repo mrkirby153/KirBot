@@ -339,7 +339,7 @@ object CommandManager {
         }
         // Call custom customCommands
         Bot.LOG.debug("Checking for custom command \"$command\"")
-        val customCommand = shard.customCommands[guild.id].findCommand(command) ?: return
+        val customCommand = findCustomCommand(command, shard.customCommands[guild.id]) ?: return
         if (customCommand.clearance.value > context.author.getClearance(guild).value) {
             context.send().error("You do not have permission to perform that command").queue {
                 it.delete().queueAfter(10, TimeUnit.SECONDS)
@@ -366,6 +366,14 @@ object CommandManager {
             toReturn[it.key] = it.value.toTypedArray()
         }
         return toReturn
+    }
+
+    private fun findCustomCommand(name: String, cmds: List<GuildCommand>): GuildCommand?{
+        cmds.forEach {
+            if(it.name.equals(name, true))
+                return it;
+        }
+        return null
     }
 
     private fun process(context: Context, guildData: ServerData, shard: Shard) {
@@ -419,7 +427,7 @@ object CommandManager {
         channel.sendMessage(response).queue()
     }
 
-    fun findCommand(command: String): CommandSpec? {
+    fun findCustomCommand(command: String): CommandSpec? {
         var foundCommand: CommandSpec? = null
         cmds.forEach {
             if (it.command.equals(command, true) || it.aliases.map(String::toLowerCase).contains(command.toLowerCase()))

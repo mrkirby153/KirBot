@@ -3,7 +3,7 @@ package me.mrkirby153.KirBot
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import me.mrkirby153.KirBot.data.ServerData
-import me.mrkirby153.KirBot.database.api.GuildCommands
+import me.mrkirby153.KirBot.database.api.GuildCommand
 import me.mrkirby153.KirBot.database.api.GuildSettings
 import me.mrkirby153.KirBot.database.api.PanelAPI
 import me.mrkirby153.KirBot.listener.AntiSpamListener
@@ -32,8 +32,8 @@ class Shard(val id: Int, private val jda: JDA, val bot: Bot) : JDA by jda {
     )
 
     val customCommands = CacheBuilder.newBuilder().expireAfterWrite(60, TimeUnit.SECONDS).build(
-            object : CacheLoader<String, GuildCommands>() {
-                override fun load(key: String): GuildCommands {
+            object : CacheLoader<String, List<GuildCommand>>() {
+                override fun load(key: String): List<GuildCommand> {
                     return PanelAPI.getCommands(jda.getGuildById(key)).execute()
                 }
             }

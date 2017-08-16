@@ -20,10 +20,10 @@ object PanelAPI {
         }
     }
 
-    fun getRealnames(users: List<User>): ApiRequest<Realnames> {
-        return object : ApiRequest<Realnames>("/user/names", Methods.POST, mutableMapOf(Pair("names",
+    fun getRealnames(users: List<User>): ApiRequest<Map<User, Realname?>> {
+        return object : ApiRequest<Map<User, Realname?>>("/user/names", Methods.POST, mutableMapOf(Pair("names",
                 users.map { it.id }.joinToString(",")))) {
-            override fun parse(json: JSONObject): Realnames {
+            override fun parse(json: JSONObject): Map<User, Realname?> {
                 val map = mutableMapOf<User, Realname?>()
 
                 users.forEach {
@@ -33,14 +33,14 @@ object PanelAPI {
                     else
                         map[it] = Realname(obj.getString("first_name"), obj.getString("last_name"))
                 }
-                return Realnames(map)
+                return map
             }
         }
     }
 
-    fun getCommands(guild: Guild): ApiRequest<GuildCommands> {
-        return object : ApiRequest<GuildCommands>("/server/${guild.id}/commands") {
-            override fun parse(json: JSONObject): GuildCommands {
+    fun getCommands(guild: Guild): ApiRequest<List<GuildCommand>> {
+        return object : ApiRequest<List<GuildCommand>>("/server/${guild.id}/commands") {
+            override fun parse(json: JSONObject): List<GuildCommand> {
                 val cmds = mutableListOf<GuildCommand>()
 
                 val array = json.getJSONArray("cmds")
@@ -49,7 +49,7 @@ object PanelAPI {
                     cmds.add(GuildCommand(jsonObj.getString("name"),
                             jsonObj.getString("data"), Clearance.valueOf(jsonObj.getString("clearance")), jsonObj.getInt("respect_whitelist") == 1))
                 }
-                return GuildCommands(cmds)
+                return cmds
             }
         }
     }
@@ -278,15 +278,15 @@ object PanelAPI {
         }
     }
 
-    fun getRoles(guild: Guild): ApiRequest<GuildRoles> {
-        return object : ApiRequest<GuildRoles>("/server/${guild.id}/roles") {
-            override fun parse(json: JSONObject): GuildRoles {
+    fun getRoles(guild: Guild): ApiRequest<List<GuildRole>> {
+        return object : ApiRequest<List<GuildRole>>("/server/${guild.id}/roles") {
+            override fun parse(json: JSONObject): List<GuildRole> {
                 val roles = mutableListOf<GuildRole>()
                 json.getJSONArray("roles").forEach { r ->
                     val j = r as JSONObject
                     roles.add(GuildRole(j.getString("id"), j.getString("name"), j.getString("server_id")))
                 }
-                return GuildRoles(roles)
+                return roles
             }
         }
     }

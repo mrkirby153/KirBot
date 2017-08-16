@@ -8,6 +8,7 @@ import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.command.args.elements.RestToString
 import me.mrkirby153.KirBot.command.executors.CommandHelp
 import me.mrkirby153.KirBot.command.executors.UpdateNicknames
+import me.mrkirby153.KirBot.command.executors.`fun`.CommandColor
 import me.mrkirby153.KirBot.command.executors.admin.*
 import me.mrkirby153.KirBot.command.executors.game.CommandOverwatch
 import me.mrkirby153.KirBot.command.executors.moderation.*
@@ -217,6 +218,13 @@ object CommandManager {
             category = CommandCategory.MODERATION
             ignoreWhitelist = true
             clearance = Clearance.BOT_MANAGER
+        })
+
+        register(CommandSpec("color"){
+            executor = CommandColor()
+            category = CommandCategory.FUN
+            arguments(Arguments.string("color", true))
+            ignoreWhitelist = false
         })
 
 

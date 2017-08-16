@@ -84,8 +84,6 @@ object Bot {
         }
         val endTime = System.currentTimeMillis()
         LOG.info("\n\n\nSHARDS INITIALIZED! (${localizeTime(((endTime - startTime) / 1000).toInt())})")
-        LOG.debug("Starting real name updater thread")
-        scheduler.scheduleAtFixedRate(RealnameUpdater(), 60, 60, TimeUnit.SECONDS)
 
         LOG.info("Bot is connecting to discord")
 

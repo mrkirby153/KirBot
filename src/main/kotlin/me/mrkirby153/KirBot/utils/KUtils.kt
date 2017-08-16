@@ -3,6 +3,7 @@ package me.mrkirby153.KirBot.utils
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.Shard
 import me.mrkirby153.KirBot.database.api.PanelAPI
+import me.mrkirby153.KirBot.realname.RealnameHandler
 import me.mrkirby153.KirBot.user.Clearance
 import net.dv8tion.jda.core.EmbedBuilder
 import net.dv8tion.jda.core.Permission
@@ -161,4 +162,5 @@ fun Guild.sync() {
             }
         }
     }
+    RealnameHandler(this, shard()!!.getServerData(this)).updateNames()
 }

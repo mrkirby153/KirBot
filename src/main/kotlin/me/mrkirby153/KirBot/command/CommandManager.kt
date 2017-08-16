@@ -220,11 +220,18 @@ object CommandManager {
             clearance = Clearance.BOT_MANAGER
         })
 
-        register(CommandSpec("color"){
+        register(CommandSpec("color") {
             executor = CommandColor()
             category = CommandCategory.FUN
             arguments(Arguments.string("color", true))
             ignoreWhitelist = false
+        })
+
+        register(CommandSpec("permissions") {
+            executor = CommandDumpPermissions()
+            category = CommandCategory.ADMIN
+            arguments(Arguments.string("permission", false))
+            ignoreWhitelist = true
         })
 
 
@@ -376,9 +383,9 @@ object CommandManager {
         return toReturn
     }
 
-    private fun findCustomCommand(name: String, cmds: List<GuildCommand>): GuildCommand?{
+    private fun findCustomCommand(name: String, cmds: List<GuildCommand>): GuildCommand? {
         cmds.forEach {
-            if(it.name.equals(name, true))
+            if (it.name.equals(name, true))
                 return it;
         }
         return null

@@ -20,6 +20,7 @@ abstract class MusicCommand : CmdExecutor() {
         }
         context.channel.sendTyping().queue()
         val settings = MusicManager.musicSettings[context.guild.id] ?: return
-        exec(context, cmdContext, settings)
+        if (settings.enabled)
+            exec(context, cmdContext, settings)
     }
 }

@@ -38,7 +38,7 @@ class ServerMessage(val id: String?, val channelId: String, val serverId: String
     val author = Bot.getUser(this.authorId)
 }
 
-class GuildRole(val id: String, val name: String, val serverId: String) {
+class GuildRole(val id: String, val name: String, val serverId: String, val permissions: Long) {
     val guild = Bot.getGuild(serverId)
     val role = guild?.getRoleById(id)
 }

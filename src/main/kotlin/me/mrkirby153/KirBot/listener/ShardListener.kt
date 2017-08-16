@@ -18,7 +18,7 @@ import net.dv8tion.jda.core.events.guild.voice.GuildVoiceLeaveEvent
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent
 import net.dv8tion.jda.core.events.role.RoleCreateEvent
 import net.dv8tion.jda.core.events.role.RoleDeleteEvent
-import net.dv8tion.jda.core.events.role.update.RoleUpdateNameEvent
+import net.dv8tion.jda.core.events.role.update.GenericRoleUpdateEvent
 import net.dv8tion.jda.core.hooks.ListenerAdapter
 
 class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
@@ -70,7 +70,7 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
         PanelAPI.createRole(event.role).queue()
     }
 
-    override fun onRoleUpdateName(event: RoleUpdateNameEvent) {
+    override fun onGenericRoleUpdate(event: GenericRoleUpdateEvent) {
         PanelAPI.updateRole(event.role).queue()
     }
 

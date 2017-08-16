@@ -246,9 +246,10 @@ object PanelAPI {
     }
 
     fun createRole(role: net.dv8tion.jda.core.entities.Role): ApiRequest<GuildRole> {
-        return object : ApiRequest<GuildRole>("/role", Methods.POST, mapOf(Pair("id", role.id), Pair("server_id", role.guild!!.id), Pair("name", role.name))) {
+        return object : ApiRequest<GuildRole>("/role", Methods.POST, mapOf(Pair("id", role.id),
+                Pair("server_id", role.guild!!.id), Pair("name", role.name), Pair("permissions", role.permissionsRaw.toString()))) {
             override fun parse(json: JSONObject): GuildRole {
-                return GuildRole(json.getString("id"), json.getString("name"), json.getString("server_id"))
+                return GuildRole(json.getString("id"), json.getString("name"), json.getString("server_id"), json.getLong("permissions"))
             }
         }
     }
@@ -263,9 +264,9 @@ object PanelAPI {
     }
 
     fun updateRole(role: net.dv8tion.jda.core.entities.Role): ApiRequest<GuildRole> {
-        return object : ApiRequest<GuildRole>("/role/${role.id}", Methods.PATCH, mapOf(Pair("name", role.name))) {
+        return object : ApiRequest<GuildRole>("/role/${role.id}", Methods.PATCH, mapOf(Pair("name", role.name), Pair("permissions", role.permissionsRaw.toString()))) {
             override fun parse(json: JSONObject): GuildRole {
-                return GuildRole(json.getString("id"), json.getString("name"), json.getString("server_id"))
+                return GuildRole(json.getString("id"), json.getString("name"), json.getString("server_id"), json.getLong("permissions"))
             }
         }
     }
@@ -273,7 +274,8 @@ object PanelAPI {
     fun getRole(role: net.dv8tion.jda.core.entities.Role): ApiRequest<GuildRole> {
         return object : ApiRequest<GuildRole>("/role/${role.id}", Methods.GET) {
             override fun parse(json: JSONObject): GuildRole {
-                return GuildRole(json.getString("id"), json.getString("name"), json.getString("server_id"))
+                return GuildRole(json.getString("id"), json.getString("name"), json.getString("server_id"),
+                        json.getLong("permissions"))
             }
         }
     }
@@ -284,7 +286,7 @@ object PanelAPI {
                 val roles = mutableListOf<GuildRole>()
                 json.getJSONArray("roles").forEach { r ->
                     val j = r as JSONObject
-                    roles.add(GuildRole(j.getString("id"), j.getString("name"), j.getString("server_id")))
+                    roles.add(GuildRole(j.getString("id"), j.getString("name"), j.getString("server_id"), j.getLong("permissions")))
                 }
                 return roles
             }

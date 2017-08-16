@@ -142,6 +142,17 @@ fun Guild.sync() {
 
             val storedRoleIds = r.map { it.id }
 
+            r.forEach {
+                if(it.role != null){
+                    val guildPermissions = it.role.permissionsRaw
+                    val storedPermissions = it.permissions
+                    if(guildPermissions != storedPermissions){
+                        Bot.LOG.debug("Permissions for role ${it.role.name} have changed. Updating")
+                        PanelAPI.updateRole(it.role).queue()
+                    }
+                }
+            }
+
             val toAdd = mutableListOf<String>()
             val toRemove = mutableListOf<String>()
 
@@ -160,6 +171,8 @@ fun Guild.sync() {
             toRemove.forEach { role ->
                 PanelAPI.deleteRole(role).queue()
             }
+
+
         }
     }
     RealnameHandler(this, shard()!!.getServerData(this)).updateNames()

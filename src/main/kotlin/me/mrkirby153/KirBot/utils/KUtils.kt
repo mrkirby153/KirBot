@@ -39,7 +39,15 @@ fun User.getClearance(server: Guild): Clearance {
         return Clearance.SERVER_OWNER
     if (server.getMember(this).permissions.contains(Permission.ADMINISTRATOR))
         return Clearance.SERVER_ADMINISTRATOR
-    // TODO 1/21/2017 Add support for "Bot Manager" role
+    val shard = Bot.getShardForGuild(server.id)
+    if (shard != null) {
+        val managerRoles = shard.serverSettings[server.id].managerRoles
+        server.getMember(this).roles.map { it.id }.forEach { role ->
+            if (role in managerRoles) {
+                return Clearance.BOT_MANAGER
+            }
+        }
+    }
     return Clearance.USER
 }
 
@@ -145,10 +153,10 @@ fun Guild.sync() {
             val storedRoleIds = r.map { it.id }
 
             r.forEach {
-                if(it.role != null){
+                if (it.role != null) {
                     val guildPermissions = it.role.permissionsRaw
                     val storedPermissions = it.permissions
-                    if(guildPermissions != storedPermissions){
+                    if (guildPermissions != storedPermissions) {
                         Bot.LOG.debug("Permissions for role ${it.role.name} have changed. Updating")
                         PanelAPI.updateRole(it.role).queue()
                     }

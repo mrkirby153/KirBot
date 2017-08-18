@@ -9,7 +9,7 @@ data class Realname(val firstName: String, val lastName: String)
 data class GuildCommand(val name: String, val data: String, val clearance: Clearance, val respectWhitelist: Boolean)
 
 data class GuildSettings(val name: String, val realnameSetting: RealnameSetting, val requireRealname: Boolean, val cmdDiscriminator: String,
-                         val logChannel: String?, val whitelistedChannels: List<String>)
+                         val logChannel: String?, val whitelistedChannels: List<String>, val managerRoles: List<String>)
 
 enum class ChannelType {
     VOICE,

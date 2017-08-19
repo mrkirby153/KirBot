@@ -21,3 +21,4 @@ target/
 classes/
 src/main/resources/rebel.xml
 /data/*
+sentry\.properties

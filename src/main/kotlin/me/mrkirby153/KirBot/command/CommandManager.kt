@@ -1,5 +1,7 @@
 package me.mrkirby153.KirBot.command
 
+import io.sentry.Sentry
+import io.sentry.event.UserBuilder
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.Shard
 import me.mrkirby153.KirBot.command.args.ArgumentParseException
@@ -18,7 +20,6 @@ import me.mrkirby153.KirBot.command.executors.polls.CommandPoll
 import me.mrkirby153.KirBot.command.processors.LaTeXProcessor
 import me.mrkirby153.KirBot.data.ServerData
 import me.mrkirby153.KirBot.database.api.GuildCommand
-import me.mrkirby153.KirBot.error.ErrorReporter
 import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.getClearance
@@ -235,7 +236,7 @@ object CommandManager {
             ignoreWhitelist = true
         })
 
-        register(CommandSpec("quote"){
+        register(CommandSpec("quote") {
             executor = CommandQuote()
             category = CommandCategory.FUN
             arguments(Arguments.number("id"))
@@ -355,7 +356,15 @@ object CommandManager {
                 } catch(e: Exception) {
                     e.printStackTrace()
                     context.send().error("An unknown error occurred!").queue()
-                    ErrorReporter.reportError(e)
+                    Sentry.getContext().apply {
+                        user = UserBuilder().apply {
+                            setId(context.author.id)
+                            setUsername("${context.author.name}#${context.author.discriminator}")
+                        }.build()
+                        addTag("command", command)
+                    }
+                    Sentry.capture(e)
+                    Sentry.getContext().clear()
                 }
                 Bot.LOG.debug("Command executed successfully")
                 return
@@ -397,7 +406,7 @@ object CommandManager {
     private fun findCustomCommand(name: String, cmds: List<GuildCommand>): GuildCommand? {
         cmds.forEach {
             if (it.name.equals(name, true))
-                return it;
+                return it
         }
         return null
     }

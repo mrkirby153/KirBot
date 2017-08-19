@@ -8,9 +8,10 @@ import com.sedmelluq.discord.lavaplayer.source.soundcloud.SoundCloudAudioSourceM
 import com.sedmelluq.discord.lavaplayer.source.twitch.TwitchStreamAudioSourceManager
 import com.sedmelluq.discord.lavaplayer.source.vimeo.VimeoAudioSourceManager
 import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager
+import io.sentry.Sentry
 import me.mrkirby153.KirBot.data.ServerData
 import me.mrkirby153.KirBot.database.api.ApiRequestProcessor
-import me.mrkirby153.KirBot.error.ErrorReporter
+import me.mrkirby153.KirBot.error.UncaughtErrorReporter
 import me.mrkirby153.KirBot.redis.RedisConnector
 import me.mrkirby153.KirBot.utils.HttpUtils
 import me.mrkirby153.KirBot.utils.localizeTime
@@ -57,9 +58,13 @@ object Bot {
 
 
     fun start(token: String) {
-        ErrorReporter.channel = properties.getProperty("error-channel", "")
-        ErrorReporter.guild = properties.getProperty("error-guild", "")
-        if(debug){
+        // Start up sentry
+        Sentry.init()
+        Bot.LOG.debug("Starting Sentry")
+
+        Thread.setDefaultUncaughtExceptionHandler(UncaughtErrorReporter())
+
+        if (debug) {
             ApiRequestProcessor.debug()
             LOG.level = SimpleLog.Level.DEBUG
         }
@@ -85,12 +90,6 @@ object Bot {
         shards
                 .flatMap { it.guilds }
                 .forEach { it.sync() }
-
-//        webServer = Pippo(WebApp())
-//        webServer.server.port = properties.getProperty("webserver-port", "5656").toInt()
-//        webServer.server.settings.host(properties.getProperty("webserver-host", "localhost"))
-//        webServer.start()
-//        LOG.info("Web server started on ${webServer.server.settings.host}:${webServer.server.port}")
 
         RedisConnector.listen()
 

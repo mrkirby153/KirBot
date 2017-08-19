@@ -43,4 +43,8 @@ class GuildRole(val id: String, val name: String, val serverId: String, val perm
     val role = guild?.getRoleById(id)
 }
 
+class Quote(val id: Int, val messageId: String, val user: String, val server: String, val content: String){
+    val guild = Bot.getGuild(server)
+}
+
 class VoidApiResponse

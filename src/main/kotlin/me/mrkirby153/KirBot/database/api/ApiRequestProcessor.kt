@@ -1,5 +1,6 @@
 package me.mrkirby153.KirBot.database.api
 
+import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.utils.HttpUtils
 import net.dv8tion.jda.core.utils.SimpleLog
 import okhttp3.FormBody
@@ -11,7 +12,11 @@ import org.json.JSONTokener
 class ApiRequestProcessor(val apiRequest: ApiRequest<*>) : Runnable {
 
     override fun run() {
-        apiRequest.execute(process(apiRequest))
+        try {
+            apiRequest.execute(process(apiRequest))
+        } catch (e: Exception){
+            Bot.LOG.fatal("Caught exception from request ${apiRequest.javaClass}: [$e]")
+        }
     }
 
     companion object {

@@ -5,6 +5,7 @@ import me.mrkirby153.KirBot.Shard
 import me.mrkirby153.KirBot.command.CommandManager
 import me.mrkirby153.KirBot.database.api.PanelAPI
 import me.mrkirby153.KirBot.utils.Context
+import me.mrkirby153.KirBot.utils.embed.embed
 import me.mrkirby153.KirBot.utils.sync
 import net.dv8tion.jda.core.events.channel.text.TextChannelCreateEvent
 import net.dv8tion.jda.core.events.channel.text.TextChannelDeleteEvent
@@ -16,10 +17,12 @@ import net.dv8tion.jda.core.events.guild.GuildJoinEvent
 import net.dv8tion.jda.core.events.guild.GuildLeaveEvent
 import net.dv8tion.jda.core.events.guild.voice.GuildVoiceLeaveEvent
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent
+import net.dv8tion.jda.core.events.message.react.MessageReactionAddEvent
 import net.dv8tion.jda.core.events.role.RoleCreateEvent
 import net.dv8tion.jda.core.events.role.RoleDeleteEvent
 import net.dv8tion.jda.core.events.role.update.GenericRoleUpdateEvent
 import net.dv8tion.jda.core.hooks.ListenerAdapter
+import java.awt.Color
 
 class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
 
@@ -37,7 +40,7 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
     }
 
     override fun onGuildJoin(event: GuildJoinEvent) {
-        PanelAPI.registerServer(event.guild).queue{
+        PanelAPI.registerServer(event.guild).queue {
             event.guild.sync()
         }
     }
@@ -76,6 +79,29 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
 
     override fun onRoleDelete(event: RoleDeleteEvent) {
         PanelAPI.deleteRole(event.role.id).queue()
+    }
+
+    override fun onMessageReactionAdd(event: MessageReactionAddEvent) {
+        if (event.reaction.emote.name == "\uD83D\uDDE8" /* Left speech bubble */) {
+            event.channel.getMessageById(event.messageId).queue { message ->
+                if (message != null) {
+                    PanelAPI.getQuotesForGuild(event.guild).queue({ quotes ->
+                        if (event.messageId !in quotes.map { it.messageId }) {
+                            if (!message.content.isNullOrBlank())
+                                PanelAPI.quote(message).queue {
+                                    message.pin().queue()
+                                    event.channel.sendMessage(embed("Quote") {
+                                        setColor(Color.BLUE)
+                                        setDescription("A new quote has been made by `${event.member.user.name}#${event.member.user.discriminator}`")
+                                        field("ID", true, it.id)
+                                        field("Message", false, it.content)
+                                    }.build()).queue()
+                                }
+                        }
+                    })
+                }
+            }
+        }
     }
 
     override fun onGuildVoiceLeave(event: GuildVoiceLeaveEvent?) {

@@ -9,6 +9,7 @@ import me.mrkirby153.KirBot.command.args.elements.RestToString
 import me.mrkirby153.KirBot.command.executors.CommandHelp
 import me.mrkirby153.KirBot.command.executors.UpdateNicknames
 import me.mrkirby153.KirBot.command.executors.`fun`.CommandColor
+import me.mrkirby153.KirBot.command.executors.`fun`.CommandQuote
 import me.mrkirby153.KirBot.command.executors.admin.*
 import me.mrkirby153.KirBot.command.executors.game.CommandOverwatch
 import me.mrkirby153.KirBot.command.executors.moderation.*
@@ -234,6 +235,13 @@ object CommandManager {
             ignoreWhitelist = true
         })
 
+        register(CommandSpec("quote"){
+            executor = CommandQuote()
+            category = CommandCategory.FUN
+            arguments(Arguments.number("id"))
+            ignoreWhitelist = true
+        })
+
 
         /// ------ REGISTER MESSAGE PROCESSORS ------
         registerProcessor(LaTeXProcessor::class)
@@ -289,6 +297,7 @@ object CommandManager {
             if (c.aliases.map { it.toLowerCase() }.contains(command) || c.command.equals(command, true)) {
                 // Check channel whitelist
                 if (whitelistedChannels.isNotEmpty() && context.channel.id !in whitelistedChannels && !c.ignoreWhitelist) {
+                    Bot.LOG.debug("Ignoring command because channel whitelist")
                     return
                 }
 
@@ -362,8 +371,10 @@ object CommandManager {
             return
         }
         // Check channel whitelisting
-        if (whitelistedChannels.isNotEmpty() && context.channel.id !in whitelistedChannels && customCommand.respectWhitelist)
+        if (whitelistedChannels.isNotEmpty() && context.channel.id !in whitelistedChannels && customCommand.respectWhitelist) {
+            Bot.LOG.debug("Ignoring command because channel whitelist")
             return
+        }
         Bot.LOG.debug("Found command $command, executing")
         callCustomCommand(context.channel, customCommand, args, context.author)
     }

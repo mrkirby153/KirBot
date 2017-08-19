@@ -289,4 +289,40 @@ object PanelAPI {
             }
         }
     }
+
+    fun quote(messageById: Message): ApiRequest<Quote> {
+        return object : ApiRequest<Quote>("/server/quote",
+                Methods.PUT, mapOf(Pair("server_id", messageById.guild.id), Pair("user", messageById.author.name), Pair("content", messageById.content), Pair("message_id", messageById.id))) {
+            override fun parse(json: JSONObject): Quote {
+                return Quote(json.getInt("id"), json.getString("message_id"), json.getString("user"), json.getString("server_id"), json.getString("content"))
+            }
+
+        }
+    }
+
+    fun getQuote(id: String): ApiRequest<Quote?> {
+        return object : ApiRequest<Quote?>("/server/quote/$id") {
+            override fun parse(json: JSONObject): Quote? {
+                if (!json.has("id")) {
+                    return null
+                }
+                return Quote(json.getInt("id"), json.getString("message_id"), json.getString("user"), json.getString("server_id"), json.getString("content"))
+            }
+        }
+    }
+
+    fun getQuotesForGuild(guild: Guild): ApiRequest<Array<Quote>> {
+        return object : ApiRequest<Array<Quote>>("/server/${guild.id}/quotes") {
+            override fun parse(json: JSONObject): Array<Quote> {
+                val quotes = mutableListOf<Quote>()
+                json.getJSONArray("quotes").forEach { q ->
+                    if(q is JSONObject){
+                        quotes.add(Quote(q.getInt("id"), q.getString("message_id"), q.getString("user"),
+                                q.getString("server_id"), q.getString("content")))
+                    }
+                }
+                return quotes.toTypedArray()
+            }
+        }
+    }
 }

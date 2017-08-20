@@ -198,6 +198,7 @@ object CommandManager {
             executor = CommandHelp()
             category = CommandCategory.MISCELLANEOUS
             addExample("help", "help help")
+            ignoreWhitelist = true
         })
 
         register(CommandSpec("history") {

@@ -1,99 +1,76 @@
 package me.mrkirby153.KirBot.listener
 
+import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.Shard
-import me.mrkirby153.KirBot.server.LogField
+import me.mrkirby153.KirBot.utils.Time
 import net.dv8tion.jda.core.Permission
-import net.dv8tion.jda.core.entities.Message
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent
 import net.dv8tion.jda.core.hooks.ListenerAdapter
-import java.awt.Color
-import java.time.OffsetDateTime
 import java.util.concurrent.TimeUnit
 
 class AntiSpamListener(val shard: Shard) : ListenerAdapter() {
 
-    val MUTE_TIME = arrayOf(1, 5, 10, 30)
+    // 5 seconds, 30 seconds, 1 minute, 5 minutes, 30 minutes
+    val MUTE_TIME_MILLIS = arrayOf(5000, 30000, 60000, 300000, 1800 * 1000)
 
-    val STRIKE_THRESHOLD = 5
-    val STRIKE_RESET_TIMEOUT = 30000L // 30 seconds
-    val STRIKE_TIMING = 1500L // 1.5 seconds
+    val MUTE_TIME_RESET = /*3600 * 1000*/ 45 * 1000 // 1 hour
 
-    val MUTE_TIME_RESET = 1000 * 3600 // 1 Hour
+    val LINES = 5
+    val SECONDS = 3
 
-    val lastMessageSent = mutableMapOf<String, Long>()
+    val lastMessage = mutableMapOf<String, Long>()
+
+    val messageCounter = mutableMapOf<String, Int>()
 
     val muteLevel = mutableMapOf<String, Int>()
-    val muteLevelExpires = mutableMapOf<String, Long>()
-    val strikeLevel = mutableMapOf<String, Int>()
+    val muteLevelReset = mutableMapOf<String, Long>()
 
     override fun onMessageReceived(event: MessageReceivedEvent) {
         val channel = event.textChannel as? TextChannel ?: return
-        if (event.author.isBot)
-            return
-
-        if (!shard.getServerData(event.guild).spamFilterEnabled(channel))
-            return
-
-        val lastMessage = lastMessageSent[event.author.id] ?: 0
-        if (lastMessage != 0L) {
-            if (lastMessage + STRIKE_RESET_TIMEOUT <= System.currentTimeMillis() && strikeLevel.containsKey(event.author.id)) {
-                strikeLevel.remove(event.author.id)
-            }
-
-            if (muteLevel.containsKey(event.author.id) && (muteLevelExpires[event.author.id] ?: 0) <= System.currentTimeMillis()) {
-                muteLevelExpires.remove(event.author.id)
+        val lastMessage = this.lastMessage.getOrDefault(event.author.id, -1)
+        if (muteLevelReset.containsKey(event.author.id)) {
+            if (muteLevelReset.getOrDefault(event.author.id, 0) < System.currentTimeMillis()) {
+                muteLevelReset.remove(event.author.id)
                 muteLevel.remove(event.author.id)
-            }
-
-            if (lastMessage + STRIKE_TIMING > System.currentTimeMillis()) {
-                strikeLevel[event.author.id] = (strikeLevel[event.author.id] ?: 0) + 1
-            }
-
-            val strikes = strikeLevel[event.author.id] ?: 0
-            if (strikes == Math.floor(STRIKE_THRESHOLD * 0.75).toInt()) {
-                event.channel.sendMessage(event.author.asMention + " Slow down your send rate or you will be temporarily muted!").queue()
-            }
-            if (strikes > STRIKE_THRESHOLD) {
-                val muteLevel = Math.min((this.muteLevel[event.author.id] ?: -1) + 1, MUTE_TIME.size)
-                shard.getServerData(event.guild).logger.log("Spam Filter", "${event.author.name} has hit the spam filter",
-                        Color.CYAN, LogField("Mute Time", "${MUTE_TIME[muteLevel]} minutes", false))
-                // Mute the user
-                val override = channel.getPermissionOverride(event.member) ?: channel.createPermissionOverride(event.member).complete()
-                override.manager.deny(Permission.MESSAGE_WRITE).queue {
-                    event.channel.sendMessage(event.author.asMention + " You have been muted for ${MUTE_TIME[muteLevel]} minutes because of spam").queue()
-
-                    // Purge messages in the last 2 minutes or the last 100 messages
-                    event.channel.history.retrievePast(100).queue { history ->
-                        val messagesToDelete = mutableListOf<Message>()
-                        history.forEach {
-                            if (it.creationTime.isAfter(OffsetDateTime.now().minusMinutes(2)) && it.author == event.author) {
-                                messagesToDelete.add(it)
-                            }
-                        }
-                        channel.deleteMessages(messagesToDelete).queue()
-                    }
-
-                    val ra =
-                            if (override.denied.size > 1) {
-                                if (override.denied.contains(Permission.MESSAGE_WRITE))
-                                    override.manager.clear(Permission.MESSAGE_WRITE)
-                                else
-                                    null
-                            } else {
-                                override.delete()
-                            }
-                    this.strikeLevel.remove(event.author.id)
-                    ra?.queueAfter(MUTE_TIME[muteLevel].toLong(), TimeUnit.MINUTES) {
-                        event.channel.sendMessage(event.author.asMention + " You have been unmuted!").queue()
-                    }
-                    this.muteLevelExpires[event.author.id] = System.currentTimeMillis() + MUTE_TIME_RESET
-                    this.muteLevel[event.author.id] = muteLevel
-                }
-                strikeLevel.remove(event.author.id)
+                Bot.LOG.debug("Resetting mute time for ${event.author.name}")
             }
         }
-        lastMessageSent[event.author.id] = System.currentTimeMillis()
+        this.lastMessage[event.author.id] = System.currentTimeMillis()
+        if (lastMessage == -1L) {
+            return
+        }
+        if (lastMessage + SECONDS * 1000 > System.currentTimeMillis()) {
+            val msgCounter = messageCounter.getOrDefault(event.author.id, 0) + 1
+            Bot.LOG.debug("Last message by ${event.author.name} in less than $SECONDS seconds. Incrementing to $msgCounter")
+            messageCounter[event.author.id] = msgCounter
+        } else {
+            messageCounter.remove(event.author.id)
+        }
+        if (messageCounter.getOrDefault(event.author.id, 0) >= LINES) {
+            Bot.LOG.debug("${event.author.name} has sent more than $LINES messages in $SECONDS seconds, muting...")
+            val override = channel.getPermissionOverride(event.member) ?: channel.createPermissionOverride(event.member).complete()
+            val muteLevel = Math.min((muteLevel[event.author.id] ?: -1) + 1, MUTE_TIME_MILLIS.size)
+            this.muteLevel[event.author.id] = muteLevel
+            this.muteLevelReset[event.author.id] = System.currentTimeMillis() + MUTE_TIME_RESET
+            val muteTime = MUTE_TIME_MILLIS[muteLevel]
+            override.manager.deny(Permission.MESSAGE_WRITE).queue {
+                channel.sendMessage("${event.author.asMention} You have been muted for " +
+                        "${Time.format(1, muteTime.toLong(), Time.TimeUnit.FIT)}. Limit is $LINES messages in $SECONDS seconds").queue {
+                    val ra = if (override.denied.size > 1) {
+                        if (override.denied.contains(Permission.MESSAGE_WRITE))
+                            override.manager.clear(Permission.MESSAGE_WRITE)
+                        else
+                            null
+                    } else {
+                        override.delete()
+                    }
+                    ra?.queueAfter(muteTime.toLong(), TimeUnit.MILLISECONDS) {
+                        event.channel.sendMessage("${event.author.asMention} You have been unmuted").queue()
+                    }
+                }
+            }
+        }
     }
 
 }

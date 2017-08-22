@@ -22,6 +22,7 @@ class MusicLoadResultHandler(val server: ServerData, val context: Context, val c
                 return
             }
         server.musicManager.trackScheduler.queue.add(p0)
+        server.musicManager.trackScheduler.updateQueue()
         callback.invoke(p0)
     }
 
@@ -44,6 +45,7 @@ class MusicLoadResultHandler(val server: ServerData, val context: Context, val c
             }
         }
         server.musicManager.trackScheduler.queue.addAll(p0!!.tracks)
+        server.musicManager.trackScheduler.updateQueue()
         context.send().embed("Music Queue") {
             setColor(Color.CYAN)
             setDescription("Queued all songs in **${p0.name}**!")

@@ -14,7 +14,7 @@ class ApiRequestProcessor(val apiRequest: ApiRequest<*>) : Runnable {
     override fun run() {
         try {
             apiRequest.execute(process(apiRequest))
-        } catch (e: Exception){
+        } catch (e: Throwable){
             Bot.LOG.fatal("Caught exception from request ${apiRequest.javaClass}: [$e]")
         }
     }

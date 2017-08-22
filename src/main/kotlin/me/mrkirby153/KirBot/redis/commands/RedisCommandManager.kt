@@ -8,6 +8,7 @@ object RedisCommandManager {
     init {
         register("update-name", UpdateNames())
         register("channel-visibility", ChannelVisibility())
+        register("update-names", UpdateAllServerNames())
     }
 
     fun getCommand(name: String): RedisCommandHandler? {

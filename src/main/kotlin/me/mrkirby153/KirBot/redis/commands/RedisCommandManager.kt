@@ -9,6 +9,7 @@ object RedisCommandManager {
         register("update-name", UpdateNames())
         register("channel-visibility", ChannelVisibility())
         register("update-names", UpdateAllServerNames())
+        register("botchat", BotChat())
     }
 
     fun getCommand(name: String): RedisCommandHandler? {

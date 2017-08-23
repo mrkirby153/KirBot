@@ -73,7 +73,7 @@ class RealnameHandler(var server: Guild, var serverData: ServerData) {
     }
 
     fun setNickname(member: Member, name: String?) {
-        if (PermissionUtil.checkPermission(server, server.selfMember, Permission.NICKNAME_MANAGE))
+        if (PermissionUtil.checkPermission(server.selfMember, Permission.NICKNAME_MANAGE))
             try {
                 server.controller.setNickname(member, name).queue()
             } catch (e: PermissionException) {

@@ -9,7 +9,7 @@ import java.awt.Color
 
 class CommandHelp : CmdExecutor() {
     override fun execute(context: Context, cmdContext: CommandContext) {
-        val prefix = context.shard.serverSettings[context.guild.id].cmdDiscriminator
+        val prefix = context.shard.serverSettings[context.guild.id]?.cmdDiscriminator ?: "!"
         val command = cmdContext.string("command")
         if (command == null) {
             context.send().embed("Help") {

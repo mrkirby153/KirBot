@@ -20,7 +20,7 @@ class LogListener(private val shard: Shard) : ListenerAdapter() {
         val logChannelCache = CacheBuilder.newBuilder().expireAfterWrite(60, TimeUnit.SECONDS).build(
                 object : CacheLoader<String, String?>() {
                     override fun load(key: String): String? {
-                        return PanelAPI.guildSettings(Bot.getGuild(key)!!).execute().logChannel
+                        return PanelAPI.guildSettings(Bot.getGuild(key)!!).execute()?.logChannel
                     }
                 }
         )

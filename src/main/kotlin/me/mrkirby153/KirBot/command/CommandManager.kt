@@ -269,7 +269,7 @@ object CommandManager {
         if (message.isEmpty())
             return
 
-        val guildSettings = shard.serverSettings[guild.id]
+        val guildSettings = shard.serverSettings[guild.id] ?: return
 
         val prefix = guildSettings.cmdDiscriminator
 
@@ -293,7 +293,7 @@ object CommandManager {
         val args = if (parts.isNotEmpty()) parts.drop(1).toTypedArray() else arrayOf<String>()
         // Command Whitelist
 
-        val whitelistedChannels = shard.serverSettings[guild.id].whitelistedChannels
+        val whitelistedChannels = guildSettings.whitelistedChannels
         for (i in 0..this.cmds.size - 1) {
             val c = this.cmds[i]
             if (c.aliases.map { it.toLowerCase() }.contains(command) || c.command.equals(command, true)) {

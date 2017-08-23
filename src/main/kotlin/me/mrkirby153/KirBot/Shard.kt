@@ -26,7 +26,7 @@ class Shard(val id: Int, private val jda: JDA, val bot: Bot) : JDA by jda {
     val serverSettings = CacheBuilder.newBuilder().expireAfterWrite(10, TimeUnit.SECONDS).build(
             object : CacheLoader<String, GuildSettings>() {
                 override fun load(key: String): GuildSettings {
-                    return PanelAPI.guildSettings(jda.getGuildById(key)).execute()
+                    return PanelAPI.guildSettings(jda.getGuildById(key)).execute()!!
                 }
             }
     )
@@ -34,7 +34,7 @@ class Shard(val id: Int, private val jda: JDA, val bot: Bot) : JDA by jda {
     val customCommands = CacheBuilder.newBuilder().expireAfterWrite(60, TimeUnit.SECONDS).build(
             object : CacheLoader<String, List<GuildCommand>>() {
                 override fun load(key: String): List<GuildCommand> {
-                    return PanelAPI.getCommands(jda.getGuildById(key)).execute()
+                    return PanelAPI.getCommands(jda.getGuildById(key)).execute()!!
                 }
             }
     )

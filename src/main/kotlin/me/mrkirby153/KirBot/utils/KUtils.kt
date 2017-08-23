@@ -41,12 +41,13 @@ fun User.getClearance(server: Guild): Clearance {
         return Clearance.SERVER_ADMINISTRATOR
     val shard = Bot.getShardForGuild(server.id)
     if (shard != null) {
-        val managerRoles = shard.serverSettings[server.id].managerRoles
-        server.getMember(this).roles.map { it.id }.forEach { role ->
-            if (role in managerRoles) {
-                return Clearance.BOT_MANAGER
+        val managerRoles = shard.serverSettings[server.id]?.managerRoles
+        if (managerRoles != null)
+            server.getMember(this).roles.map { it.id }.forEach { role ->
+                if (role in managerRoles) {
+                    return Clearance.BOT_MANAGER
+                }
             }
-        }
     }
     return Clearance.USER
 }

@@ -13,8 +13,8 @@ class ApiRequestProcessor(val apiRequest: ApiRequest<*>) : Runnable {
 
     override fun run() {
         try {
-            apiRequest.execute(process(apiRequest))
-        } catch (e: Throwable){
+            apiRequest.execute(Companion.run(apiRequest))
+        } catch (e: Throwable) {
             Bot.LOG.fatal("Caught exception from request ${apiRequest.javaClass}: [$e]")
         }
     }
@@ -23,20 +23,15 @@ class ApiRequestProcessor(val apiRequest: ApiRequest<*>) : Runnable {
 
         private val debugLogger = SimpleLog.getLog("ApiProcessor")
 
-        fun debug(){
+        fun debug() {
             debugLogger.level = SimpleLog.Level.DEBUG
         }
 
-        fun process(apiRequest: ApiRequest<*>): Any? {
-            val json = Companion.run(apiRequest) ?: JSONObject()
-            return apiRequest.parse(json)
-        }
-
-        fun run(apiRequest: ApiRequest<*>): JSONObject? {
+        fun run(apiRequest: ApiRequest<*>): Any? {
             val req = Request.Builder().run {
                 url(PanelAPI.API_ENDPOINT + apiRequest.url)
                 header("api-token", PanelAPI.API_KEY)
-
+                header("Accept", "application/json")
 
                 var body: RequestBody? = null
                 if (apiRequest.data != null) {
@@ -59,17 +54,19 @@ class ApiRequestProcessor(val apiRequest: ApiRequest<*>) : Runnable {
             debugLogger.debug("Received code ${resp.code()}")
 
             if (resp.body() != null) {
-
                 val inputStream = resp.body()!!.string()
                 if (resp.code() != 200) {
-                    System.err.println("An error occurred when accessing ${req.url()} (${resp.code()})")
-                    System.err.println(inputStream)
+                    apiRequest.onHttpError(resp.code(), inputStream);
+                    return null
                 }
                 if (inputStream.isNotBlank()) {
                     val json = JSONObject(JSONTokener(inputStream))
-
+                    try {
+                        return apiRequest.parse(json)
+                    } catch(e: Exception) {
+                        apiRequest.onException(e)
+                    }
                     resp.close()
-                    return json
                 }
             }
             return null

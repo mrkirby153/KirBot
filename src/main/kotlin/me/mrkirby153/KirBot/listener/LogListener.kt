@@ -53,7 +53,7 @@ class LogListener(private val shard: Shard) : ListenerAdapter() {
 
     override fun onGuildMessageUpdate(event: GuildMessageUpdateEvent) {
         PanelAPI.editMessage(event.message).queue { msg ->
-            if(msg.id == "-1")
+            if (msg.id == "-1")
                 return@queue
             val user = msg.author ?: return@queue
             if (user.isBot)
@@ -68,6 +68,7 @@ class LogListener(private val shard: Shard) : ListenerAdapter() {
     override fun onMessageReceived(event: MessageReceivedEvent) {
         if (event.channel.id == logChannelCache[event.guild.id])
             return
-        PanelAPI.logMessage(event.message).queue()
+        if (event.message.content.isNotEmpty())
+            PanelAPI.logMessage(event.message).queue()
     }
 }

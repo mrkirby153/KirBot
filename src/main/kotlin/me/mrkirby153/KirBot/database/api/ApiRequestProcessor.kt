@@ -15,6 +15,8 @@ class ApiRequestProcessor(val apiRequest: ApiRequest<*>) : Runnable {
         try {
             apiRequest.execute(Companion.run(apiRequest))
         } catch (e: Throwable) {
+            if (Bot.debug)
+                e.printStackTrace()
             Bot.LOG.fatal("Caught exception from request ${apiRequest.javaClass}: [$e]")
         }
     }
@@ -59,15 +61,14 @@ class ApiRequestProcessor(val apiRequest: ApiRequest<*>) : Runnable {
                     apiRequest.onHttpError(resp.code(), inputStream);
                     return null
                 }
-                if (inputStream.isNotBlank()) {
-                    val json = JSONObject(JSONTokener(inputStream))
-                    try {
-                        return apiRequest.parse(json)
-                    } catch(e: Exception) {
-                        apiRequest.onException(e)
-                    }
-                    resp.close()
+
+                val json = if (inputStream.isNotBlank()) JSONObject(JSONTokener(inputStream)) else JSONObject()
+                try {
+                    return apiRequest.parse(json)
+                } catch (e: Exception) {
+                    apiRequest.onException(e)
                 }
+                resp.close()
             }
             return null
         }

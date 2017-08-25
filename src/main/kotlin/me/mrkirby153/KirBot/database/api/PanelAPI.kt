@@ -325,4 +325,13 @@ object PanelAPI {
             }
         }
     }
+
+    fun serverExists(guild: Guild): ApiRequest<Boolean> {
+        return object : ApiRequest<Boolean>("/server/${guild.id}") {
+            override fun parse(json: JSONObject): Boolean {
+                return json.getBoolean("exists")
+            }
+
+        }
+    }
 }

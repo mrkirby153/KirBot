@@ -142,49 +142,56 @@ fun TextChannel.unhide() {
 
 fun Guild.sync() {
     Bot.LOG.debug("Syncing guild ${this.id}")
-    PanelAPI.guildSettings(this).queue { settings ->
-        if (settings.name != this.name) {
-            Bot.LOG.debug("Name has changed on ${this.name} syncing")
-            PanelAPI.setServerName(this).queue()
-        }
-        PanelAPI.updateChannels(this)
+    PanelAPI.serverExists(this).queue { exists ->
+        if(!exists)
+            PanelAPI.registerServer(this).queue {
+                this.sync()
+            }
+        else
+            PanelAPI.guildSettings(this).queue { settings ->
+                if (settings.name != this.name) {
+                    Bot.LOG.debug("Name has changed on ${this.name} syncing")
+                    PanelAPI.setServerName(this).queue()
+                }
+                PanelAPI.updateChannels(this)
 
-        PanelAPI.getRoles(this).queue { r ->
+                PanelAPI.getRoles(this).queue { r ->
 
-            val storedRoleIds = r.map { it.id }
+                    val storedRoleIds = r.map { it.id }
 
-            r.forEach {
-                if (it.role != null) {
-                    val guildPermissions = it.role.permissionsRaw
-                    val storedPermissions = it.permissions
-                    if (guildPermissions != storedPermissions) {
-                        Bot.LOG.debug("Permissions for role ${it.role.name} have changed. Updating")
-                        PanelAPI.updateRole(it.role).queue()
+                    r.forEach {
+                        if (it.role != null) {
+                            val guildPermissions = it.role.permissionsRaw
+                            val storedPermissions = it.permissions
+                            if (guildPermissions != storedPermissions) {
+                                Bot.LOG.debug("Permissions for role ${it.role.name} have changed. Updating")
+                                PanelAPI.updateRole(it.role).queue()
+                            }
+                        }
                     }
+
+                    val toAdd = mutableListOf<String>()
+                    val toRemove = mutableListOf<String>()
+
+                    toRemove.addAll(storedRoleIds)
+
+                    toRemove.removeAll(this.roles.map { it.id })
+                    toAdd.addAll(this.roles.filter { it.id !in storedRoleIds }.map { it.id })
+
+                    Bot.LOG.debug("Adding roles $toAdd")
+                    Bot.LOG.debug("Removing roles $toRemove")
+
+                    toAdd.map { this.getRoleById(it) }.filter { it != null }.forEach { role ->
+                        PanelAPI.createRole(role).queue()
+                    }
+
+                    toRemove.forEach { role ->
+                        PanelAPI.deleteRole(role).queue()
+                    }
+
+
                 }
             }
-
-            val toAdd = mutableListOf<String>()
-            val toRemove = mutableListOf<String>()
-
-            toRemove.addAll(storedRoleIds)
-
-            toRemove.removeAll(this.roles.map { it.id })
-            toAdd.addAll(this.roles.filter { it.id !in storedRoleIds }.map { it.id })
-
-            Bot.LOG.debug("Adding roles $toAdd")
-            Bot.LOG.debug("Removing roles $toRemove")
-
-            toAdd.map { this.getRoleById(it) }.filter { it != null }.forEach { role ->
-                PanelAPI.createRole(role).queue()
-            }
-
-            toRemove.forEach { role ->
-                PanelAPI.deleteRole(role).queue()
-            }
-
-
-        }
+        RealnameHandler(this, shard()!!.getServerData(this)).updateNames()
     }
-    RealnameHandler(this, shard()!!.getServerData(this)).updateNames()
 }

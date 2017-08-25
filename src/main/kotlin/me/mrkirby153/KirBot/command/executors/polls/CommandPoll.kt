@@ -35,7 +35,10 @@ class CommandPoll : CmdExecutor() {
             throw CommandException("Polls can only be less than one week!")
         }
 
-        val rawOptions = cmdContext.get<String>("options") ?: ""
+        val data = cmdContext.get<String>("options") ?: ""
+        val split = data.split(";")
+        val question: String? = if (split.size == 2) split[0] else null
+        val rawOptions = if (split.size == 2) split[1] else data
         if (rawOptions.isEmpty()) {
             throw CommandException("Please specify options for the poll")
         }
@@ -52,6 +55,9 @@ class CommandPoll : CmdExecutor() {
         context.send().embed("Poll") {
             setColor(Color.GREEN)
             setDescription("Vote by clicking the reactions on the choices below! Results will be final in ${localizeTime(duration)}")
+            if (question != null) {
+                field("Question", false, question)
+            }
             field("Options") {
                 buildString {
                     options.forEachIndexed { index, option ->
@@ -76,6 +82,9 @@ class CommandPoll : CmdExecutor() {
 
                     var topVotes = 0
                     val winners = mutableListOf<Int>()
+
+                    if (question != null)
+                        field("Question", false, question)
 
                     field("Results") {
                         buildString {

@@ -74,7 +74,7 @@ object CommandManager {
             executor = CommandPoll()
             category = CommandCategory.FUN
             ignoreWhitelist = true
-            addExample("poll 30m Option 1, Option 2, Option 3")
+            addExample("poll 30m Option 1, Option 2, Option 3", "poll 10m Question;Option1, Option 2, Option 3")
         })
 
         register(CommandSpec("kick") {
@@ -294,7 +294,7 @@ object CommandManager {
         // Command Whitelist
 
         val whitelistedChannels = guildSettings.whitelistedChannels
-        for (i in 0..this.cmds.size - 1) {
+        for (i in 0 until this.cmds.size) {
             val c = this.cmds[i]
             if (c.aliases.map { it.toLowerCase() }.contains(command) || c.command.equals(command, true)) {
                 // Check channel whitelist

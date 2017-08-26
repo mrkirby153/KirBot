@@ -143,7 +143,7 @@ fun TextChannel.unhide() {
 fun Guild.sync() {
     Bot.LOG.debug("Syncing guild ${this.id}")
     PanelAPI.serverExists(this).queue { exists ->
-        if(!exists)
+        if (!exists)
             PanelAPI.registerServer(this).queue {
                 this.sync()
             }
@@ -164,7 +164,7 @@ fun Guild.sync() {
                             val guildPermissions = it.role.permissionsRaw
                             val storedPermissions = it.permissions
                             if (guildPermissions != storedPermissions) {
-                                Bot.LOG.debug("Permissions for role ${it.role.name} have changed. Updating")
+                                Bot.LOG.debug("Permissions for roleId ${it.role.name} have changed. Updating")
                                 PanelAPI.updateRole(it.role).queue()
                             }
                         }
@@ -193,5 +193,19 @@ fun Guild.sync() {
                 }
             }
         RealnameHandler(this, shard()!!.getServerData(this)).updateNames()
+
+        // Sync groups
+        PanelAPI.getGroups(this).queue { group ->
+            group.forEach { g ->
+                if (g.role != null) {
+                    g.members.map { this.getMemberById(it) }.filter { g.role !in it.roles }.forEach { u ->
+                        this.controller.addRolesToMember(u, g.role).queue()
+                    }
+                }
+                this.members.filter { g.role in it.roles }.filter { it.user.id !in g.members }.forEach {
+                    this.controller.removeRolesFromMember(it, g.role).queue()
+                }
+            }
+        }
     }
 }

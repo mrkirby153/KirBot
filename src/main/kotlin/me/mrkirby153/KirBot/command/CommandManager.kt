@@ -14,6 +14,7 @@ import me.mrkirby153.KirBot.command.executors.`fun`.CommandColor
 import me.mrkirby153.KirBot.command.executors.`fun`.CommandQuote
 import me.mrkirby153.KirBot.command.executors.admin.*
 import me.mrkirby153.KirBot.command.executors.game.CommandOverwatch
+import me.mrkirby153.KirBot.command.executors.group.*
 import me.mrkirby153.KirBot.command.executors.moderation.*
 import me.mrkirby153.KirBot.command.executors.music.*
 import me.mrkirby153.KirBot.command.executors.polls.CommandPoll
@@ -242,6 +243,39 @@ object CommandManager {
             category = CommandCategory.FUN
             arguments(Arguments.number("id"))
             ignoreWhitelist = true
+        })
+
+        register(CommandSpec("createGroup"){
+            executor = CommandCreateGroup()
+            category = CommandCategory.GROUPS
+            arguments(Arguments.rest("name", "group"))
+            ignoreWhitelist = true
+            clearance = Clearance.BOT_MANAGER
+        })
+
+        register(CommandSpec("deleteGroup"){
+            executor = CommandDeleteGroup()
+            category = CommandCategory.GROUPS
+            arguments(Arguments.rest("name", "group"))
+            ignoreWhitelist = true
+            clearance = Clearance.BOT_MANAGER
+        })
+
+        register(CommandSpec("leaveGroup"){
+            executor = CommandLeaveGroup()
+            category = CommandCategory.GROUPS
+            arguments(Arguments.rest("name", "group"))
+        })
+
+        register(CommandSpec("joinGroup"){
+            executor = CommandJoinGroup()
+            category = CommandCategory.GROUPS
+            arguments(Arguments.rest("name", "group"))
+        })
+
+        register(CommandSpec("groups"){
+            executor = CommandListGroups()
+            category = CommandCategory.GROUPS
         })
 
 

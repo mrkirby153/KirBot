@@ -7,5 +7,6 @@ enum class CommandCategory(val friendlyName: String) {
     MODERATION("Moderation"),
     MUSIC("Music"),
     MISCELLANEOUS("Miscellaneous"),
-    UNCATEGORIZED("Uncategorized")
+    UNCATEGORIZED("Uncategorized"),
+    GROUPS("Groups")
 }

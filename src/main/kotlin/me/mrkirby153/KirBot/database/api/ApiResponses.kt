@@ -3,6 +3,10 @@ package me.mrkirby153.KirBot.database.api
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.realname.RealnameSetting
 import me.mrkirby153.KirBot.user.Clearance
+import me.mrkirby153.KirBot.utils.getMember
+import net.dv8tion.jda.core.entities.Role
+import net.dv8tion.jda.core.entities.User
+import org.json.JSONObject
 
 data class Realname(val firstName: String, val lastName: String)
 
@@ -43,8 +47,62 @@ class GuildRole(val id: String, val name: String, val serverId: String, val perm
     val role = guild?.getRoleById(id)
 }
 
-class Quote(val id: Int, val messageId: String, val user: String, val server: String, val content: String){
+class Quote(val id: Int, val messageId: String, val user: String, val server: String, val content: String) {
     val guild = Bot.getGuild(server)
+}
+
+class Group(val id: String, val guild: String, val name: String, val roleId: String, val members: MutableList<String>) {
+
+    val role: Role? = Bot.getGuild(guild)?.getRoleById(roleId)
+
+    fun addUser(user: User): ApiRequest<VoidApiResponse>? {
+        // Check if the user is in the group first
+        if (user.id in members)
+            return null
+
+        return object : ApiRequest<VoidApiResponse>("/group/$id/member", Methods.PUT, mapOf(Pair("id", user.id))) {
+            override fun parse(json: JSONObject): VoidApiResponse {
+                members.add(user.id)
+                val guild = Bot.getGuild(guild)
+                if (guild != null) {
+                    val role = guild.getRoleById(roleId)
+                    if (role != null) {
+                        guild.controller.addRolesToMember(user.getMember(guild), role).queue()
+                    }
+                }
+                return VoidApiResponse()
+            }
+        }
+    }
+
+    fun removeUser(user: User): ApiRequest<VoidApiResponse>? {
+        if (user.id !in members) {
+            return null
+        }
+
+        return object : ApiRequest<VoidApiResponse>("/group/$id/member/${user.id}", Methods.DELETE) {
+            override fun parse(json: JSONObject): VoidApiResponse {
+                members.remove(user.id)
+                val guild = Bot.getGuild(guild)
+                if (guild != null) {
+                    val role = guild.getRoleById(roleId)
+                    if (role != null) {
+                        guild.controller.removeRolesFromMember(user.getMember(guild), role).queue()
+                    }
+                }
+                return VoidApiResponse()
+            }
+        }
+    }
+
+    fun delete(): ApiRequest<VoidApiResponse> {
+        return object : ApiRequest<VoidApiResponse>("/group/$id", Methods.DELETE) {
+            override fun parse(json: JSONObject): VoidApiResponse {
+                return VoidApiResponse()
+            }
+
+        }
+    }
 }
 
 class VoidApiResponse

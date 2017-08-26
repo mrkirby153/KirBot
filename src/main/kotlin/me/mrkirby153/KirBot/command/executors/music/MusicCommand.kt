@@ -16,7 +16,7 @@ abstract class MusicCommand : CmdExecutor() {
     override fun execute(context: Context, cmdContext: CommandContext) {
         if (context.data.musicManager.adminOnly) {
             if (context.member.getClearance(context.guild).value < Clearance.SERVER_ADMINISTRATOR.value)
-                throw CommandException("The DJ is in Admin-Only mode :cry:\n Only those with the `ADMINISTRATOR` role can control the music")
+                throw CommandException("The DJ is in Admin-Only mode :cry:\n Only those with the `ADMINISTRATOR` roleId can control the music")
         }
         context.channel.sendTyping().queue()
         val settings = MusicManager.musicSettings[context.guild.id] ?: return

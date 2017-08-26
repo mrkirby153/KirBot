@@ -334,4 +334,34 @@ object PanelAPI {
 
         }
     }
+
+    fun getGroups(guild: Guild): ApiRequest<List<Group>>{
+        return object : ApiRequest<List<Group>>("/server/${guild.id}/groups") {
+            override fun parse(json: JSONObject): List<Group> {
+                val allGroups = mutableListOf<Group>()
+                json.getJSONArray("groups").map { it as JSONObject }.forEach { g ->
+                    val name = g.getString("group_name")
+                    val role = g.getString("role_id")
+                    val id = g.getString("id")
+                    val gu = g.getString("server_id")
+                    val members = mutableListOf<String>()
+
+                    g.getJSONArray("members").map { it as JSONObject }.forEach {  m ->
+                        members.add(m.getString("user_id"))
+                    }
+                    val group = Group(id, gu, name, role, members)
+                    allGroups.add(group)
+                }
+                return allGroups
+            }
+        }
+    }
+
+    fun createGroup(guild: Guild, name: String, role: Role): ApiRequest<Group> {
+        return object : ApiRequest<Group>("/server/${guild.id}/groups", Methods.PUT, mapOf(Pair("name", name), Pair("role", role.id))) {
+            override fun parse(json: JSONObject): Group {
+                return Group(json.getString("id"), json.getString("server_id"), json.getString("group_name"), json.getString("role_id"), mutableListOf())
+            }
+        }
+    }
 }

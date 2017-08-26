@@ -23,7 +23,7 @@ class CommandColor : CmdExecutor() {
         try {
             val color = Color.decode(colorString)
             setColorRole(context, context.author.getMember(context.guild), color)
-            context.send().success("Set your role color to `$colorString`").queue()
+            context.send().success("Set your roleId color to `$colorString`").queue()
         } catch (e: NumberFormatException) {
             context.send().error("That is not a valid hexadecimal color!").queue()
         }

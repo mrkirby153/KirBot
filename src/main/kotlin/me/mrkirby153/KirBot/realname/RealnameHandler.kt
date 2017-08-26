@@ -95,8 +95,8 @@ class RealnameHandler(var server: Guild, var serverData: ServerData) {
 
     private fun cleanupRealNameRoles() {
         val repository = serverData.repository
-        val unidentified = repository.get(String::class.java, "unidentified-role")
-        val id = repository.get(String::class.java, "identified-role")
+        val unidentified = repository.get(String::class.java, "unidentified-roleId")
+        val id = repository.get(String::class.java, "identified-roleId")
 
         if (unidentified != null)
             try {
@@ -112,18 +112,18 @@ class RealnameHandler(var server: Guild, var serverData: ServerData) {
                 // Ignore
             }
 
-        repository.remove("unidentified-role")
-        repository.remove("identified-role")
+        repository.remove("unidentified-roleId")
+        repository.remove("identified-roleId")
         return
     }
 
     fun getUnidentifiedRole(): Role {
-        val roleId = serverData.repository.get(String::class.java, "unidentified-role")
+        val roleId = serverData.repository.get(String::class.java, "unidentified-roleId")
         if (roleId == null) {
-            // Create, save, and return the role
+            // Create, save, and return the roleId
             val role = server.controller.createRole().complete(true)
             role.manager.setName("Unidentified").complete(true)
-            serverData.repository.put("unidentified-role", role.id)
+            serverData.repository.put("unidentified-roleId", role.id)
             return role
         } else {
             val role = server.roles.first { it.id == roleId }
@@ -132,12 +132,12 @@ class RealnameHandler(var server: Guild, var serverData: ServerData) {
     }
 
     fun getIdentifiedRole(): Role {
-        val roleId = serverData.repository.get(String::class.java, "identified-role")
+        val roleId = serverData.repository.get(String::class.java, "identified-roleId")
         if (roleId == null) {
-            // Create, save, and return the role
+            // Create, save, and return the roleId
             val role = server.controller.createRole().complete(true)
             role.manager.setName("Identified").complete(true)
-            serverData.repository.put("identified-role", role.id)
+            serverData.repository.put("identified-roleId", role.id)
             return role
         } else {
             val role = server.roles.first { it.id == roleId }

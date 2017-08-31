@@ -245,7 +245,7 @@ object CommandManager {
             ignoreWhitelist = true
         })
 
-        register(CommandSpec("createGroup"){
+        register(CommandSpec("createGroup") {
             executor = CommandCreateGroup()
             category = CommandCategory.GROUPS
             arguments(Arguments.rest("name", "group"))
@@ -253,7 +253,7 @@ object CommandManager {
             clearance = Clearance.BOT_MANAGER
         })
 
-        register(CommandSpec("deleteGroup"){
+        register(CommandSpec("deleteGroup") {
             executor = CommandDeleteGroup()
             category = CommandCategory.GROUPS
             arguments(Arguments.rest("name", "group"))
@@ -261,22 +261,29 @@ object CommandManager {
             clearance = Clearance.BOT_MANAGER
         })
 
-        register(CommandSpec("leaveGroup"){
+        register(CommandSpec("leaveGroup") {
             executor = CommandLeaveGroup()
             category = CommandCategory.GROUPS
             arguments(Arguments.rest("name", "group"))
         })
 
-        register(CommandSpec("joinGroup"){
+        register(CommandSpec("joinGroup") {
             executor = CommandJoinGroup()
             category = CommandCategory.GROUPS
             arguments(Arguments.rest("name", "group"))
         })
 
-        register(CommandSpec("groups"){
+        register(CommandSpec("groups") {
             executor = CommandListGroups()
             category = CommandCategory.GROUPS
         })
+
+        if (Bot.debug)
+            register(CommandSpec("su") {
+                executor = CommandSu()
+                clearance = Clearance.BOT_OWNER
+                arguments(Arguments.string("user"), Arguments.rest("command"))
+            })
 
 
         /// ------ REGISTER MESSAGE PROCESSORS ------
@@ -295,7 +302,7 @@ object CommandManager {
 
     fun execute(context: Context, shard: Shard, guild: Guild) {
         process(context, shard.getServerData(guild), shard)
-        if (context.event.isFromType(ChannelType.PRIVATE))
+        if (context.channel.type == ChannelType.PRIVATE)
             return
 
         var message = context.message.rawContent
@@ -386,9 +393,9 @@ object CommandManager {
                 Bot.LOG.debug("Executing command \"${c.command}\"")
                 try {
                     c.executor.execute(context, cmdContext)
-                } catch(e: CommandException) {
+                } catch (e: CommandException) {
                     context.send().error(e.message ?: "An unknown error occurred!").queue()
-                } catch(e: Exception) {
+                } catch (e: Exception) {
                     e.printStackTrace()
                     context.send().error("An unknown error occurred!").queue()
                     Sentry.getContext().apply {

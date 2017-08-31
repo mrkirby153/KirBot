@@ -24,6 +24,9 @@ import net.dv8tion.jda.core.OnlineStatus
 import net.dv8tion.jda.core.entities.Game
 import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.entities.User
+import net.dv8tion.jda.core.events.ReadyEvent
+import net.dv8tion.jda.core.hooks.ListenerAdapter
+import net.dv8tion.jda.core.requests.SessionReconnectQueue
 import net.dv8tion.jda.core.utils.SimpleLog
 import java.util.concurrent.Executors
 
@@ -45,6 +48,8 @@ object Bot {
     val admins: List<String> = files.admins.run { this.readLines() }
 
     lateinit var shards: Array<Shard>
+
+    private val loadingShards = mutableListOf<Int>()
 
     val playerManager: AudioPlayerManager = DefaultAudioPlayerManager().apply {
         registerSourceManager(YoutubeAudioSourceManager())
@@ -71,15 +76,20 @@ object Bot {
         if (initialized)
             throw IllegalStateException("Bot has already been initialized!")
         initialized = true
-        LOG.info("Initializing Bot")
+        LOG.info("Initializing Bot ($numShards shards)")
         val startTime = System.currentTimeMillis()
         shards = Array(numShards) { id ->
-            LOG.info("Starting shard $id")
+            loadingShards.add(id)
+            LOG.info("Starting shard $id (${id + 1}/$numShards)")
             val jda = buildJDA(id, token)
-
-            LOG.info("Shard $id is ready...")
-
+            if(numShards > 1){
+                Thread.sleep(5000)
+            }
             Shard(id, jda, this)
+        }
+        LOG.info("Waiting for shards to connect.....")
+        while(loadingShards.size > 0) {
+            Thread.sleep(150)
         }
         val endTime = System.currentTimeMillis()
         LOG.info("\n\n\nSHARDS INITIALIZED! (${localizeTime(((endTime - startTime) / 1000).toInt())})")
@@ -119,7 +129,14 @@ object Bot {
                 setGame(Game.of("| ~help"))
             }
             setAudioSendFactory(NativeAudioSendFactory())
-            buildBlocking()
+            addEventListener(object: ListenerAdapter(){
+                override fun onReady(event: ReadyEvent) {
+                    LOG.info("Shard $id is ready!")
+                    loadingShards.remove(id)
+                }
+            })
+            setReconnectQueue(SessionReconnectQueue())
+            buildAsync()
         }
     }
 

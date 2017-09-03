@@ -364,4 +364,24 @@ object PanelAPI {
             }
         }
     }
+
+    fun createOverride(guild: Guild, command: String, clearance: Clearance): ApiRequest<ClearanceOverride> {
+        return object: ApiRequest<ClearanceOverride>("/server/${guild.id}/overrides", Methods.PUT, mapOf(Pair("command", command), Pair("clearance", clearance.toString()))){
+            override fun parse(json: JSONObject): ClearanceOverride {
+                return ClearanceOverride(json.getInt("id"), json.getString("command"), json.getString("clearance"))
+            }
+        }
+    }
+
+    fun getOverrides(guild: Guild): ApiRequest<MutableList<ClearanceOverride>> {
+        return object: ApiRequest<MutableList<ClearanceOverride>>("/server/${guild.id}/overrides"){
+            override fun parse(json: JSONObject): MutableList<ClearanceOverride> {
+                val overrides = mutableListOf<ClearanceOverride>()
+                json.getJSONArray("overrides").map { it as JSONObject }.forEach { j ->
+                    overrides.add(ClearanceOverride(j.getInt("id"), j.getString("command"), j.getString("clearance")))
+                }
+                return overrides
+            }
+        }
+    }
 }

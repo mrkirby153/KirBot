@@ -105,4 +105,24 @@ class Group(val id: String, val guild: String, val name: String, val roleId: Str
     }
 }
 
+class ClearanceOverride(val id: Int, val command: String, cl: String) {
+    var clearance = Clearance.valueOf(cl)
+
+    fun update(): ApiRequest<ClearanceOverride> {
+        return object : ApiRequest<ClearanceOverride>("/overrides/$id", Methods.PATCH, mapOf(Pair("clearance", clearance.toString()))) {
+            override fun parse(json: JSONObject): ClearanceOverride {
+                return this@ClearanceOverride
+            }
+        }
+    }
+
+    fun delete(): ApiRequest<VoidApiResponse> {
+        return object : ApiRequest<VoidApiResponse>("/overrides/$id", Methods.DELETE) {
+            override fun parse(json: JSONObject): VoidApiResponse {
+                return VoidApiResponse()
+            }
+        }
+    }
+}
+
 class VoidApiResponse

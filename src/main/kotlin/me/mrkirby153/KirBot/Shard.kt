@@ -3,6 +3,7 @@ package me.mrkirby153.KirBot
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import me.mrkirby153.KirBot.data.ServerData
+import me.mrkirby153.KirBot.database.api.ClearanceOverride
 import me.mrkirby153.KirBot.database.api.GuildCommand
 import me.mrkirby153.KirBot.database.api.GuildSettings
 import me.mrkirby153.KirBot.database.api.PanelAPI
@@ -35,6 +36,14 @@ class Shard(val id: Int, private val jda: JDA, val bot: Bot) : JDA by jda {
             object : CacheLoader<String, List<GuildCommand>>() {
                 override fun load(key: String): List<GuildCommand> {
                     return PanelAPI.getCommands(jda.getGuildById(key)).execute()!!
+                }
+            }
+    )
+
+    val clearanceOverrides = CacheBuilder.newBuilder().expireAfterWrite(10, TimeUnit.MINUTES).build(
+            object: CacheLoader<String, MutableList<ClearanceOverride>>(){
+                override fun load(key: String?): MutableList<ClearanceOverride> {
+                    return PanelAPI.getOverrides(jda.getGuildById(key)).execute()!!
                 }
             }
     )

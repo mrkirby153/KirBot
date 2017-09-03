@@ -13,6 +13,7 @@ import me.mrkirby153.KirBot.command.executors.UpdateNicknames
 import me.mrkirby153.KirBot.command.executors.`fun`.CommandColor
 import me.mrkirby153.KirBot.command.executors.`fun`.CommandQuote
 import me.mrkirby153.KirBot.command.executors.admin.*
+import me.mrkirby153.KirBot.command.executors.clearance.CommandOverrideClearance
 import me.mrkirby153.KirBot.command.executors.game.CommandOverwatch
 import me.mrkirby153.KirBot.command.executors.group.*
 import me.mrkirby153.KirBot.command.executors.moderation.*
@@ -285,6 +286,12 @@ object CommandManager {
                 arguments(Arguments.string("user"), Arguments.rest("command"))
             })
 
+        register(CommandSpec("clearanceOverride"){
+            executor = CommandOverrideClearance()
+            clearance = Clearance.BOT_MANAGER
+            arguments(Arguments.string("command"), Arguments.string("clearance"))
+        })
+
 
         /// ------ REGISTER MESSAGE PROCESSORS ------
         registerProcessor(LaTeXProcessor::class)
@@ -357,7 +364,8 @@ object CommandManager {
                     return
                 }
 
-                if (c.clearance.value > context.author.getClearance(context.guild).value) {
+                val clearance = getEffectivePermission(c.command, guild, c.clearance)
+                if (clearance.value > context.author.getClearance(context.guild).value) {
                     context.send().error("You do not have permission to perform this command!").queue {
                         it.delete().queueAfter(10, TimeUnit.SECONDS)
                     }
@@ -415,7 +423,8 @@ object CommandManager {
         // Call custom customCommands
         Bot.LOG.debug("Checking for custom command \"$command\"")
         val customCommand = findCustomCommand(command, shard.customCommands[guild.id]) ?: return
-        if (customCommand.clearance.value > context.author.getClearance(guild).value) {
+        val clearance = getEffectivePermission(customCommand.name, guild, customCommand.clearance)
+        if (clearance.value > context.author.getClearance(guild).value) {
             context.send().error("You do not have permission to perform that command").queue {
                 it.delete().queueAfter(10, TimeUnit.SECONDS)
             }
@@ -512,6 +521,14 @@ object CommandManager {
             return@forEach
         }
         return foundCommand
+    }
+
+    fun getEffectivePermission(command: String, guild: Guild, default: Clearance): Clearance{
+        val overrides = Bot.getShardForGuild(guild.id)!!.clearanceOverrides[guild.id]
+        return overrides
+                .firstOrNull { it.command.equals(command, true) }
+                ?.clearance
+                ?: default
     }
 }
 

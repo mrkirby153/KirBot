@@ -36,7 +36,11 @@ class CommandHelp : CmdExecutor() {
                 setColor(Color.BLUE)
                 field("Name", false, prefix + spec.command)
                 field("Description", false, spec.description)
-                field("Clearance", false, spec.clearance.toString().toLowerCase().replace("_", " ").capitalize())
+                val c = CommandManager.getEffectivePermission(spec.command, context.guild, spec.clearance)
+                val overridden = c != spec.clearance
+                field("Clearance", false, c.toString().toLowerCase().replace("_", " ").capitalize() + (if(overridden) "*" else ""))
+                if(overridden)
+                    field("Original Clearance", false, spec.clearance.toString().toLowerCase().replace("_", " ").capitalize())
                 if (spec.aliases.isNotEmpty())
                     field("Aliases", false, spec.aliases.joinToString(", "))
                 if (spec.permissions.isNotEmpty())

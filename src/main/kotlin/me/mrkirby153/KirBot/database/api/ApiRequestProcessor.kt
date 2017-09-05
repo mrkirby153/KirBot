@@ -57,7 +57,7 @@ class ApiRequestProcessor(val apiRequest: ApiRequest<*>) : Runnable {
 
             if (resp.body() != null) {
                 val inputStream = resp.body()!!.string()
-                if (resp.code() != 200) {
+                if (resp.code() < 200 || resp.code() > 299) {
                     apiRequest.onHttpError(resp.code(), inputStream);
                     return null
                 }

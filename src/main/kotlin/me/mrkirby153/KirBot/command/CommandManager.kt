@@ -12,6 +12,7 @@ import me.mrkirby153.KirBot.command.executors.CommandHelp
 import me.mrkirby153.KirBot.command.executors.UpdateNicknames
 import me.mrkirby153.KirBot.command.executors.`fun`.CommandColor
 import me.mrkirby153.KirBot.command.executors.`fun`.CommandQuote
+import me.mrkirby153.KirBot.command.executors.`fun`.CommandSeen
 import me.mrkirby153.KirBot.command.executors.admin.*
 import me.mrkirby153.KirBot.command.executors.clearance.CommandOverrideClearance
 import me.mrkirby153.KirBot.command.executors.game.CommandOverwatch
@@ -290,6 +291,11 @@ object CommandManager {
             executor = CommandOverrideClearance()
             clearance = Clearance.BOT_MANAGER
             arguments(Arguments.string("command"), Arguments.string("clearance"))
+        })
+
+        register(CommandSpec("seen"){
+            executor = CommandSeen()
+            arguments(Arguments.user("user"))
         })
 
 

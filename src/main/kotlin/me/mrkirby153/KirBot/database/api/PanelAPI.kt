@@ -58,12 +58,11 @@ object PanelAPI {
     fun guildSettings(guild: Guild): ApiRequest<GuildSettings> {
         return object : ApiRequest<GuildSettings>("/server/${guild.id}/settings") {
             override fun parse(json: JSONObject): GuildSettings {
-                val whitelist = json.getString("cmd_whitelist")
                 val managementRoles = json.getJSONArray("bot_manager")
                 val roles = mutableListOf<String>()
                 managementRoles.forEach { roles.add(it.toString()) }
                 return GuildSettings(json.getString("name"), RealnameSetting.valueOf(json.getString("realname")), json.getInt("require_realname") == 1,
-                        json.getString("command_discriminator"), json.optString("log_channel"), if (whitelist.isNotEmpty()) whitelist.split(",") else listOf(), roles)
+                        json.getString("command_discriminator"), json.optString("log_channel"), json.getJSONArray("cmd_whitelist").map { it.toString() }, roles)
             }
         }
     }

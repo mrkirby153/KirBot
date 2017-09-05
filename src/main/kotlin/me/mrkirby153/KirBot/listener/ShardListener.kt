@@ -21,12 +21,17 @@ import net.dv8tion.jda.core.events.message.react.MessageReactionAddEvent
 import net.dv8tion.jda.core.events.role.RoleCreateEvent
 import net.dv8tion.jda.core.events.role.RoleDeleteEvent
 import net.dv8tion.jda.core.events.role.update.GenericRoleUpdateEvent
+import net.dv8tion.jda.core.events.user.UserOnlineStatusUpdateEvent
 import net.dv8tion.jda.core.hooks.ListenerAdapter
 import java.awt.Color
 
 class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
 
     override fun onMessageReceived(event: MessageReceivedEvent?) {
+        if(event != null){
+            Bot.seenStore.update(event.author, event.guild)
+        }
+
         if (event!!.author == shard.selfUser)
             return
 
@@ -43,6 +48,10 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
         PanelAPI.registerServer(event.guild).queue {
             event.guild.sync()
         }
+    }
+
+    override fun onUserOnlineStatusUpdate(event: UserOnlineStatusUpdateEvent) {
+        Bot.seenStore.updateOnlineStatus(event.user.mutualGuilds[0].getMember(event.user))
     }
 
     override fun onTextChannelDelete(event: TextChannelDeleteEvent) {

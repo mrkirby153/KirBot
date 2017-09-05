@@ -13,6 +13,7 @@ import me.mrkirby153.KirBot.data.ServerData
 import me.mrkirby153.KirBot.database.api.ApiRequestProcessor
 import me.mrkirby153.KirBot.error.UncaughtErrorReporter
 import me.mrkirby153.KirBot.redis.RedisConnector
+import me.mrkirby153.KirBot.seen.SeenStore
 import me.mrkirby153.KirBot.utils.HttpUtils
 import me.mrkirby153.KirBot.utils.localizeTime
 import me.mrkirby153.KirBot.utils.readProperties
@@ -46,6 +47,8 @@ object Bot {
     val numShards: Int = if (properties.getProperty("shards") == null) 1 else properties.getProperty("shards").toInt()
 
     val admins: List<String> = files.admins.run { this.readLines() }
+
+    val seenStore = SeenStore()
 
     lateinit var shards: Array<Shard>
 

@@ -13,6 +13,7 @@ import me.mrkirby153.KirBot.data.ServerData
 import me.mrkirby153.KirBot.database.api.ApiRequestProcessor
 import me.mrkirby153.KirBot.error.UncaughtErrorReporter
 import me.mrkirby153.KirBot.redis.RedisConnector
+import me.mrkirby153.KirBot.redis.messaging.MessageDataStore
 import me.mrkirby153.KirBot.seen.SeenStore
 import me.mrkirby153.KirBot.utils.HttpUtils
 import me.mrkirby153.KirBot.utils.localizeTime
@@ -49,6 +50,8 @@ object Bot {
     val admins: List<String> = files.admins.run { this.readLines() }
 
     val seenStore = SeenStore()
+
+    val messageDataStore = MessageDataStore()
 
     lateinit var shards: Array<Shard>
 

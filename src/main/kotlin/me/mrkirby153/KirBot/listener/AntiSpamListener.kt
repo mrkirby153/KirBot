@@ -27,6 +27,9 @@ class AntiSpamListener(val shard: Shard) : ListenerAdapter() {
     val muteLevelReset = mutableMapOf<String, Long>()
 
     override fun onMessageReceived(event: MessageReceivedEvent) {
+        // TODO 9/8/17: Fix duplicate infractions
+        if(event.author.isBot)
+            return
         val channel = event.textChannel as? TextChannel ?: return
         val lastMessage = this.lastMessage.getOrDefault(event.author.id, -1)
         if (muteLevelReset.containsKey(event.author.id)) {

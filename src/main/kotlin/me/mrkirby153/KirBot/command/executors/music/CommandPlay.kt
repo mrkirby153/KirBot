@@ -60,7 +60,7 @@ class CommandPlay : MusicCommand() {
                 return
             }
 
-            context.send().error("Please specify something to play!").queue()
+            throw CommandException("Please specify something to play!")
         }
 
         // Remove playlist from URL to prevent accidental queueing of playlists

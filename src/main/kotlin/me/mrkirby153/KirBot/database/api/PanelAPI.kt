@@ -175,12 +175,9 @@ object PanelAPI {
     fun getMusicSettings(guid: Guild): ApiRequest<MusicSettings> {
         return object : ApiRequest<MusicSettings>("/server/${guid.id}/music") {
             override fun parse(json: JSONObject): MusicSettings {
-                val whitelist = if (json.getString("mode").equals("off", true)) "" else json.getString("channels")
-                val blacklistedSongs = if (json.getString("blacklist_songs").isEmpty()) arrayListOf<String>() else json.getString("blacklisted_songs").split(",")
-
                 return MusicSettings(json.getInt("enabled") == 1, json.getString("mode"),
-                        if (whitelist.isEmpty()) arrayOf<String>() else whitelist.split(",").toTypedArray(),
-                        blacklistedSongs.toTypedArray(), json.getInt("max_queue_length"),
+                        json.getJSONArray("channels").map { it.toString() }.toTypedArray(),
+                        arrayOf(""), json.getInt("max_queue_length"),
                         json.getInt("playlists") == 1, json.getInt("max_song_length"),
                         json.getInt("skip_cooldown"), json.getInt("skip_timer"))
             }

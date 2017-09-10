@@ -34,7 +34,8 @@ import java.util.concurrent.Executors
 
 object Bot {
 
-    @JvmStatic val LOG = SimpleLog.getLog("KirBot")
+    @JvmStatic
+    val LOG = SimpleLog.getLog("KirBot")
 
     var initialized = false
 
@@ -88,13 +89,13 @@ object Bot {
             loadingShards.add(id)
             LOG.info("Starting shard $id (${id + 1}/$numShards)")
             val jda = buildJDA(id, token)
-            if(numShards > 1){
+            if (numShards > 1) {
                 Thread.sleep(5000)
             }
             Shard(id, jda, this)
         }
         LOG.info("Waiting for shards to connect.....")
-        while(loadingShards.size > 0) {
+        while (loadingShards.size > 0) {
             Thread.sleep(150)
         }
         val endTime = System.currentTimeMillis()
@@ -134,8 +135,11 @@ object Bot {
             } else {
                 setGame(Game.of("| ~help"))
             }
-            setAudioSendFactory(NativeAudioSendFactory())
-            addEventListener(object: ListenerAdapter(){
+            // JDA-NAS for sending audio packets via queue doesn't support the MacOS Kernel due to the inclusion of a
+            // native library.
+            if (!System.getProperty("os.name").contains("Mac"))
+                setAudioSendFactory(NativeAudioSendFactory())
+            addEventListener(object : ListenerAdapter() {
                 override fun onReady(event: ReadyEvent) {
                     LOG.info("Shard $id is ready!")
                     loadingShards.remove(id)

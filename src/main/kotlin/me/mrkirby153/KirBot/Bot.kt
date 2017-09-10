@@ -118,6 +118,7 @@ object Bot {
     }
 
     fun stop() {
+        RedisConnector.running = false;
         shards.forEach { it.shutdown() }
         LOG.info("Bot is disconnecting from Discord")
         System.exit(0)

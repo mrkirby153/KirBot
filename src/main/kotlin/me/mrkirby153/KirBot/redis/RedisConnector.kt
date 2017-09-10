@@ -11,6 +11,8 @@ object RedisConnector {
 
     val jedisPool: JedisPool
 
+    var running = true
+
     init {
         val prevClassloader = Thread.currentThread().contextClassLoader
         Thread.currentThread().contextClassLoader = RedisConnector::class.java.classLoader
@@ -48,8 +50,14 @@ object RedisConnector {
 
     fun listen() {
         val thread = Thread {
-            get().use {
-                it.psubscribe(RedisHandler(), "kirbot:*")
+            while(running) {
+                try {
+                    get().use {
+                        it.psubscribe(RedisHandler(), "kirbot:*")
+                    }
+                } catch (e: Exception) {
+                    Bot.LOG.fatal("Redis listener encountered an exception, restarting")
+                }
             }
         }
         thread.name = "Redis PubSub Listener"

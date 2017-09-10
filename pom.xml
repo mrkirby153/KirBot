@@ -10,9 +10,9 @@
 
     <properties>
         <maven.build.timestamp.format>yyy-MM-dd_HHmmss</maven.build.timestamp.format>
-        <kotlin.version>1.1.4-2</kotlin.version>
+        <kotlin.version>1.1.4-3</kotlin.version>
         <pippo.version>1.4.0</pippo.version>
-        <jda.version>3.2.0_254</jda.version>
+        <jda.version>3.3.0_264</jda.version>
         <buildNumber>${maven.build.timestamp}</buildNumber>
     </properties>
 

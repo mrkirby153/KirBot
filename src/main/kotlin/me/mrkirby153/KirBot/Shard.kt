@@ -55,6 +55,6 @@ class Shard(val id: Int, private val jda: JDA, val bot: Bot) : JDA by jda {
     fun getServerData(guild: Guild) = getServerData(guild.idLong)
 
     override fun shutdown() {
-        jda.shutdown(false)
+        jda.shutdown()
     }
 }

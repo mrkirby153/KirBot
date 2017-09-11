@@ -84,7 +84,7 @@ class CommandPlay : MusicCommand() {
                 return
             }
 
-        Bot.playerManager.loadItem(url, MusicLoadResultHandler(context.data, context, { track ->
+        Bot.playerManager.loadItem(url, MusicLoadResultHandler(context.data, context, -1, { track, handler ->
             if (track != null) {
                 context.send().embed("Music Queue") {
                     setColor(Color.CYAN)

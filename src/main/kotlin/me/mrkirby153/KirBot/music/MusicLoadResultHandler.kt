@@ -4,13 +4,14 @@ import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
+import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.data.ServerData
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.localizeTime
 import java.awt.Color
 
 
-class MusicLoadResultHandler(val server: ServerData, val context: Context, val callback: (AudioTrack?) -> Unit) : AudioLoadResultHandler {
+class MusicLoadResultHandler(val server: ServerData, val context: Context, val queuePosition: Int = -1, val callback: (AudioTrack?, MusicLoadResultHandler?) -> Unit) : AudioLoadResultHandler {
 
     override fun trackLoaded(p0: AudioTrack?) {
         if (p0 == null)
@@ -21,9 +22,16 @@ class MusicLoadResultHandler(val server: ServerData, val context: Context, val c
                 context.send().error("That song is too long! The maximum length song is ${localizeTime(musicData.maxSongLength * 60)}").queue()
                 return
             }
-        server.musicManager.trackScheduler.queue.add(p0)
+        if(queuePosition != -1) {
+            val index = queuePosition - 1
+            Bot.LOG.debug("Queued song in position $index")
+            server.musicManager.trackScheduler.queue.add(index, p0)
+        } else {
+            server.musicManager.trackScheduler.queue.addLast(p0)
+            Bot.LOG.debug("Queued song at end of queue")
+        }
         server.musicManager.trackScheduler.updateQueue()
-        callback.invoke(p0)
+        callback.invoke(p0, this)
     }
 
     override fun noMatches() {
@@ -50,7 +58,7 @@ class MusicLoadResultHandler(val server: ServerData, val context: Context, val c
             setColor(Color.CYAN)
             setDescription("Queued all songs in **${p0.name}**!")
         }.rest().queue()
-        callback.invoke(null)
+        callback.invoke(null, null)
     }
 
     override fun loadFailed(p0: FriendlyException?) {

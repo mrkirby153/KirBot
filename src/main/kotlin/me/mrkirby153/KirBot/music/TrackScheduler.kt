@@ -8,10 +8,11 @@ import me.mrkirby153.KirBot.redis.RedisConnector
 import net.dv8tion.jda.core.entities.Guild
 import org.json.JSONArray
 import org.json.JSONObject
+import java.util.*
 
 class TrackScheduler(val audioPlayer: AudioPlayer, val server: Guild) : AudioEventAdapter() {
 
-    val queue = mutableListOf<AudioTrack>()
+    val queue = LinkedList<AudioTrack>()
 
     var nowPlaying: AudioTrack? = null
 
@@ -23,8 +24,8 @@ class TrackScheduler(val audioPlayer: AudioPlayer, val server: Guild) : AudioEve
     }
 
     fun playNext() {
-        if (!queue.isEmpty()) {
-            val track = queue.removeAt(0)
+        if (queue.peekFirst() != null) {
+            val track = queue.removeFirst()
             audioPlayer.playTrack(track)
             nowPlaying = track
             playing = true

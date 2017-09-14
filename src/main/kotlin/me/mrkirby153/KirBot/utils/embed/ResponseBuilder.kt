@@ -43,7 +43,7 @@ class ResponseBuilder(val context: Context) {
      * @param msg The text to send
      * @return The message created by this function
      */
-    fun success(msg: String): RestAction<Message>{
+    fun success(msg: String): RestAction<Message> {
         return embed {
             setTitle("Success")
             setDescription(msg)
@@ -103,11 +103,7 @@ class ResponseBuilder(val context: Context) {
     @Suppress("NOTHING_TO_INLINE")
     inner class ResponseEmbedBuilder : EmbedProxy<ResponseEmbedBuilder>() {
         fun rest(): RestAction<Message> {
-//            return if (context.guild.selfMember.hasPermission(context.context, Permission.MESSAGE_WRITE, Permission.MESSAGE_EMBED_LINKS)) {
             return context.channel.sendMessage(build())
-//            } else {
-//                context.user.openPrivateChannel().complete().sendMessage(build())
-//            }
         }
     }
 }

@@ -180,7 +180,7 @@ object CommandManager {
 
         register(CommandSpec("play") {
             executor = CommandPlay()
-            arguments(Arguments.string("query/url", false))
+            arguments(Arguments.rest("query/url"))
         })
 
         register(CommandSpec("disconnect") {

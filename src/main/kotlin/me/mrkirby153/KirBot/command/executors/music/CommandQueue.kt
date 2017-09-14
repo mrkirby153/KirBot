@@ -10,29 +10,31 @@ class CommandQueue : CmdExecutor() {
 
     override fun execute(context: Context, cmdContext: CommandContext) {
         val musicManager = context.data.musicManager
+        if(musicManager.nowPlaying == null && musicManager.queue.isEmpty()){
+            context.channel.sendMessage(":x: Nothing is playing right now!").queue()
+            return
+        }
         context.send().embed {
             setDescription(buildString {
-                if (musicManager.nowPlaying != null)
-                    append("**Music Queue**" link musicManager.nowPlaying!!.info.uri)
-                else {
-                    append("**Music Queue**\n\n")
-                    append("Nothing is playing right now")
-                    return@buildString
-                }
+                append("**Music Queue :musical_note: **" link musicManager.nowPlaying!!.info.uri)
                 append("\n\n__Now Playing__")
                 append("\n\n")
                 val nowPlaying = musicManager.nowPlaying ?: return@buildString
+                if (nowPlaying.info.uri.contains("youtu")) {
+                    setThumbnail("https://i.ytimg.com/vi/${nowPlaying.info.identifier}/default.jpg")
+                }
+                append(if (musicManager.playing) ":loud_sound:" else ":speaker:")
                 val d = "${MusicManager.parseMS(nowPlaying.position)}/${MusicManager.parseMS(nowPlaying.info.length)}"
                 append((nowPlaying.info.title link nowPlaying.info.uri) + " ($d)")
-                append("\n\n__Up Next__")
+                append("\n\n:arrow_down_small: __Up Next__ :arrow_down_small:")
                 append("\n\n")
                 if (musicManager.queue.size == 0)
                     append("Nothing")
                 else
-                    musicManager.queue.forEach {
-                        append(" " + (it.track.info.title link it.track.info.uri) + " (${MusicManager.parseMS(it.track.duration)})")
+                    musicManager.queue.forEachIndexed { index, it ->
+                        appendln(" " + (index + 1) + ". " + (it.track.info.title link it.track.info.uri) + " (${MusicManager.parseMS(it.track.duration)})")
                         if (length > 1500)
-                            return@forEach
+                            return@forEachIndexed
                     }
                 append("\n\n")
                 append("**View The Full Queue**" link "https://kirbot.mrkirby153.com/${context.guild.id}/queue")

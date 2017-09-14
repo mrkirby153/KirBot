@@ -27,7 +27,24 @@ class AudioTrackLoader(val manager: MusicManager, val requestedBy: User, val con
                         (settings.maxSongLength * 60 * 1000).toLong(), Time.TimeUnit.FIT)}").queue()
                 return
             }
+        // If the bot isn't playing, start
+        if (!context.guild.selfMember.voiceState.inVoiceChannel()) {
+            manager.audioPlayer.volume = 100
+            context.guild.audioManager.openAudioConnection(requestedBy.getMember(context.guild).voiceState.channel)
+            manager.trackScheduler.playNextTrack()
+        }
+        manager.audioPlayer.isPaused = false
+        if (manager.nowPlaying == null) {
+            manager.trackScheduler.playNextTrack()
+        }
+        callback?.invoke(p0)
+        if(manager.queue.size == 1 && manager.nowPlaying == null){
+            return
+        }
         context.send().embed("Added to Queue") {
+            if(p0.info.uri.contains("youtu")){
+                setThumbnail("https://i.ytimg.com/vi/${p0.info.identifier}/default.jpg")
+            }
             setDescription("**${p0.info.title}**" link p0.info.uri)
             field("Song Duration", true, MusicManager.parseMS(p0.duration))
 
@@ -43,19 +60,7 @@ class AudioTrackLoader(val manager: MusicManager, val requestedBy: User, val con
             val playing = if (queueLengthMs < 1000) "NOW!" else MusicManager.parseMS(queueLengthMs)
             field("Time until playing", true, playing)
             field("Position in queue", true, position + 1)
-        }.rest().queue {
-            // If the bot isn't playing, start
-            if (!context.guild.selfMember.voiceState.inVoiceChannel()) {
-                manager.audioPlayer.volume = 100
-                context.guild.audioManager.openAudioConnection(requestedBy.getMember(context.guild).voiceState.channel)
-                manager.trackScheduler.playNextTrack()
-            }
-            manager.audioPlayer.isPaused = false
-            if (manager.nowPlaying == null) {
-                manager.trackScheduler.playNextTrack()
-            }
-            callback?.invoke(p0)
-        }
+        }.rest().queue()
     }
 
     override fun noMatches() {

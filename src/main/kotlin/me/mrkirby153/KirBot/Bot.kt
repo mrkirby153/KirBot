@@ -54,6 +54,9 @@ object Bot {
 
     val messageDataStore = MessageDataStore()
 
+    val jda: JDA
+        get() = shards[0]
+
     lateinit var shards: Array<Shard>
 
     private val loadingShards = mutableListOf<Int>()

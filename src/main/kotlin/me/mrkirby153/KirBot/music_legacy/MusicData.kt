@@ -1,4 +1,4 @@
-package me.mrkirby153.KirBot.music
+package me.mrkirby153.KirBot.music_legacy
 
 
 class MusicData(val server: Long, val enabled: Boolean = true, val whitelistMode: WhitelistMode = MusicData.WhitelistMode.OFF,

@@ -1,4 +1,4 @@
-package me.mrkirby153.KirBot.command.executors.music
+package me.mrkirby153.KirBot.command.executors.music_legacy
 
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
@@ -33,10 +33,10 @@ class CommandQueue : MusicCommand() {
 
         val serverData = context.data
 
-        val queue = serverData.musicManager.trackScheduler.queue
-        val duration = serverData.musicManager.trackScheduler.queueLength()
+        val queue = serverData.musicManager_old.trackScheduler.queue
+        val duration = serverData.musicManager_old.trackScheduler.queueLength()
 
-        val np = serverData.musicManager.trackScheduler.nowPlaying
+        val np = serverData.musicManager_old.trackScheduler.nowPlaying
 
         var displayedTracks = 0
 

@@ -1,14 +1,14 @@
-package me.mrkirby153.KirBot.command.executors.music
+package me.mrkirby153.KirBot.command.executors.music_legacy
 
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.command.executors.CmdExecutor
-import me.mrkirby153.KirBot.music.MusicManager
+import me.mrkirby153.KirBot.music_legacy.MusicManager
 import me.mrkirby153.KirBot.utils.Context
 import java.awt.Color.PINK
 
 class CommandToggleAdminMode : CmdExecutor() {
     override fun execute(context: Context, cmdContext: CommandContext) {
-        val musicManager = context.data.musicManager
+        val musicManager = context.data.musicManager_old
         var shouldHalt = false
         cmdContext.has<String>("action") { action ->
             if (action.equals("status", true)) {

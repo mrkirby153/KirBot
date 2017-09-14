@@ -135,7 +135,7 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
         val usersInChannel = guild.audioManager.connectedChannel.members.filter { it.user.id != guild.selfMember.user.id }.size
 
         if (usersInChannel < 1) {
-            shard.getServerData(guild).musicManager.trackScheduler.reset()
+            shard.getServerData(guild).musicManager_old.trackScheduler.reset()
         }
 
     }

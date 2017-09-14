@@ -1,11 +1,11 @@
-package me.mrkirby153.KirBot.command.executors.music
+package me.mrkirby153.KirBot.command.executors.music_legacy
 
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.api.MusicSettings
 import me.mrkirby153.KirBot.google.YoutubeSearch
-import me.mrkirby153.KirBot.music.MusicLoadResultHandler
+import me.mrkirby153.KirBot.music_legacy.MusicLoadResultHandler
 import me.mrkirby153.KirBot.utils.Context
 import net.dv8tion.jda.core.entities.VoiceChannel
 import java.awt.Color
@@ -51,8 +51,8 @@ class CommandPlay : MusicCommand() {
         val data = cmdContext.string("data") ?: ""
 
         if (data.isEmpty()) {
-            if (!context.data.musicManager.trackScheduler.playing) {
-                context.data.musicManager.trackScheduler.resume()
+            if (!context.data.musicManager_old.trackScheduler.playing) {
+                context.data.musicManager_old.trackScheduler.resume()
                 context.send().embed("Music") {
                     setColor(Color.CYAN)
                     setDescription("Resumed!")
@@ -71,15 +71,15 @@ class CommandPlay : MusicCommand() {
         }
 
         // Check track blacklist
-        if (!context.data.musicManager.adminOnly)
+        if (!context.data.musicManager_old.adminOnly)
             if (musicData.blacklistedSongs.isNotEmpty())
                 musicData.blacklistedSongs.filter { it.isNotEmpty() }
                         .filter { it in url }
                         .forEach { throw CommandException("You cannot play this track at this time!") }
 
         // Check queue length
-        if (!context.data.musicManager.adminOnly)
-            if (musicData.maxQueueLength != -1 && context.data.musicManager.trackScheduler.queueLength() / 60 >= musicData.maxQueueLength) {
+        if (!context.data.musicManager_old.adminOnly)
+            if (musicData.maxQueueLength != -1 && context.data.musicManager_old.trackScheduler.queueLength() / 60 >= musicData.maxQueueLength) {
                 context.send().error("The queue is too long right now, please try again when it is shorter.").queue()
                 return
             }
@@ -93,7 +93,7 @@ class CommandPlay : MusicCommand() {
                 connectToVoice(member.voiceState.channel, context)
             } else {
                 // Playlist queued
-                if (context.data.musicManager.trackScheduler.queueLength() > 0) {
+                if (context.data.musicManager_old.trackScheduler.queueLength() > 0) {
                     connectToVoice(member.voiceState.channel, context)
                 }
             }
@@ -104,15 +104,15 @@ class CommandPlay : MusicCommand() {
         val guild = context.guild
         if (!guild.selfMember.voiceState.inVoiceChannel()) {
             val data = context.data
-            data.musicManager.audioPlayer.volume = 100
-            guild.audioManager.sendingHandler = data.musicManager.audioSender
+            data.musicManager_old.audioPlayer.volume = 100
+            guild.audioManager.sendingHandler = data.musicManager_old.audioSender
             guild.audioManager.openAudioConnection(channel)
             context.send().embed("Music") {
                 setColor(Color.CYAN)
                 setDescription("Joined voice context **${channel.name}**")
             }.rest().queue()
             // Start the music
-            data.musicManager.trackScheduler.playNext()
+            data.musicManager_old.trackScheduler.playNext()
         }
     }
 }

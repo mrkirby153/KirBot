@@ -1,4 +1,4 @@
-package me.mrkirby153.KirBot.music
+package me.mrkirby153.KirBot.music_legacy
 
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader

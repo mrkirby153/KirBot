@@ -1,4 +1,4 @@
-package me.mrkirby153.KirBot.command.executors.music
+package me.mrkirby153.KirBot.command.executors.music_legacy
 
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.api.MusicSettings
@@ -16,11 +16,11 @@ class CommandSkip : MusicCommand() {
     val skipCooldown = mutableMapOf<Long, Long>()
 
     override fun exec(context: Context, cmdContext: CommandContext, musicData: MusicSettings) {
-        if (!context.data.musicManager.trackScheduler.playing) {
+        if (!context.data.musicManager_old.trackScheduler.playing) {
             context.send().error("I'm not playing anything right now").queue()
             return
         }
-        if (context.data.musicManager.adminOnly) {
+        if (context.data.musicManager_old.adminOnly) {
             forceSkip(context)
             return
         }
@@ -43,7 +43,7 @@ class CommandSkip : MusicCommand() {
             return
         }
         // Start a vote
-        val currentlyPlaying = context.data.musicManager.trackScheduler.nowPlaying
+        val currentlyPlaying = context.data.musicManager_old.trackScheduler.nowPlaying
 
         context.send().embed("Music") {
             setColor(Color.CYAN)
@@ -63,7 +63,7 @@ class CommandSkip : MusicCommand() {
                 setColor(Color.RED)
             }.build()).queueAfter(musicData.skipTimer.toLong(), TimeUnit.SECONDS) {
 
-                if (context.data.musicManager.trackScheduler.nowPlaying?.identifier != currentlyPlaying?.identifier) {
+                if (context.data.musicManager_old.trackScheduler.nowPlaying?.identifier != currentlyPlaying?.identifier) {
                     context.send().embed("Music") {
                         setColor(Color.CYAN)
                         setDescription("Song has changed, canceling vote")
@@ -88,7 +88,7 @@ class CommandSkip : MusicCommand() {
                             skipCooldown.remove(context.author.idLong)
                         if (skip > stay) {
                             appendln("The vote has passed! Playing next song.")
-                            context.data.musicManager.trackScheduler.playNext()
+                            context.data.musicManager_old.trackScheduler.playNext()
                         } else {
                             appendln("The vote has failed! The song will stay.")
                         }
@@ -103,6 +103,6 @@ class CommandSkip : MusicCommand() {
             setColor(Color.CYAN)
             setDescription("Playing next song...")
         }.rest().queue()
-        context.data.musicManager.trackScheduler.playNext()
+        context.data.musicManager_old.trackScheduler.playNext()
     }
 }

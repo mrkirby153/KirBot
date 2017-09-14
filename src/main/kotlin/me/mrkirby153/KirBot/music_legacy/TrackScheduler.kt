@@ -1,4 +1,4 @@
-package me.mrkirby153.KirBot.music
+package me.mrkirby153.KirBot.music_legacy
 
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer
 import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter

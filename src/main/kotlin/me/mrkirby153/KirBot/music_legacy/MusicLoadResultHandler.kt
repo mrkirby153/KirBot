@@ -1,4 +1,4 @@
-package me.mrkirby153.KirBot.music
+package me.mrkirby153.KirBot.music_legacy
 
 import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException
@@ -17,7 +17,7 @@ class MusicLoadResultHandler(val server: ServerData, val context: Context, val q
         if (p0 == null)
             return
         val musicData = MusicManager.musicSettings[server.id.toString()] ?: return
-        if (!server.musicManager.adminOnly)
+        if (!server.musicManager_old.adminOnly)
             if (musicData.maxSongLength != -1 && (p0.duration / 1000) / 60 > musicData.maxSongLength) {
                 context.send().error("That song is too long! The maximum length song is ${localizeTime(musicData.maxSongLength * 60)}").queue()
                 return
@@ -25,12 +25,12 @@ class MusicLoadResultHandler(val server: ServerData, val context: Context, val q
         if(queuePosition != -1) {
             val index = queuePosition - 1
             Bot.LOG.debug("Queued song in position $index")
-            server.musicManager.trackScheduler.queue.add(index, p0)
+            server.musicManager_old.trackScheduler.queue.add(index, p0)
         } else {
-            server.musicManager.trackScheduler.queue.addLast(p0)
+            server.musicManager_old.trackScheduler.queue.addLast(p0)
             Bot.LOG.debug("Queued song at end of queue")
         }
-        server.musicManager.trackScheduler.updateQueue()
+        server.musicManager_old.trackScheduler.updateQueue()
         callback.invoke(p0, this)
     }
 
@@ -40,7 +40,7 @@ class MusicLoadResultHandler(val server: ServerData, val context: Context, val q
 
     override fun playlistLoaded(p0: AudioPlaylist?) {
         val musicData = MusicManager.musicSettings[server.id.toString()] ?: return
-        if (!server.musicManager.adminOnly) {
+        if (!server.musicManager_old.adminOnly) {
             if (!musicData.playlists) {
                 context.send().error("Playlist queueing is disabled!").queue()
                 return
@@ -52,8 +52,8 @@ class MusicLoadResultHandler(val server: ServerData, val context: Context, val q
                 context.send().error("That playlist is too long! The maximum length is ${localizeTime(musicData.maxSongLength * 60)}")
             }
         }
-        server.musicManager.trackScheduler.queue.addAll(p0!!.tracks)
-        server.musicManager.trackScheduler.updateQueue()
+        server.musicManager_old.trackScheduler.queue.addAll(p0!!.tracks)
+        server.musicManager_old.trackScheduler.updateQueue()
         context.send().embed("Music Queue") {
             setColor(Color.CYAN)
             setDescription("Queued all songs in **${p0.name}**!")

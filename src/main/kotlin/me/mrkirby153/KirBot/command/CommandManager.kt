@@ -18,7 +18,7 @@ import me.mrkirby153.KirBot.command.executors.clearance.CommandOverrideClearance
 import me.mrkirby153.KirBot.command.executors.game.CommandOverwatch
 import me.mrkirby153.KirBot.command.executors.group.*
 import me.mrkirby153.KirBot.command.executors.moderation.*
-import me.mrkirby153.KirBot.command.executors.music.*
+import me.mrkirby153.KirBot.command.executors.music_legacy.*
 import me.mrkirby153.KirBot.command.executors.polls.CommandPoll
 import me.mrkirby153.KirBot.command.processors.LaTeXProcessor
 import me.mrkirby153.KirBot.data.ServerData
@@ -122,7 +122,7 @@ object CommandManager {
             ignoreWhitelist = true
         })
 
-        register(CommandSpec("play") {
+        /*register(CommandSpec("play") {
             description = "Plays the following URL or searches youtube for the text"
             arguments(Arguments.rest("data", "URL or Search"))
             executor = CommandPlay()
@@ -173,6 +173,7 @@ object CommandManager {
             arguments(Arguments.string("action", false))
             executor = CommandToggleAdminMode()
             category = CommandCategory.MUSIC
+        })*/
         })
 
 

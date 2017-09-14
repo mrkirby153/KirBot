@@ -1,4 +1,4 @@
-package me.mrkirby153.KirBot.command.executors.music
+package me.mrkirby153.KirBot.command.executors.music_legacy
 
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.api.MusicSettings
@@ -7,7 +7,7 @@ import me.mrkirby153.KirBot.utils.Context
 class CommandVolume : MusicCommand() {
 
     override fun exec(context: Context, cmdContext: CommandContext, musicData: MusicSettings) {
-        val audioPlayer = context.data.musicManager.audioPlayer
+        val audioPlayer = context.data.musicManager_old.audioPlayer
 
         if (!cmdContext.has("volume")) {
             context.send().info("Current Volume: **${audioPlayer.volume}**").queue()

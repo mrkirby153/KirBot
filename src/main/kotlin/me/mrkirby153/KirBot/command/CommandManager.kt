@@ -18,10 +18,7 @@ import me.mrkirby153.KirBot.command.executors.clearance.CommandOverrideClearance
 import me.mrkirby153.KirBot.command.executors.game.CommandOverwatch
 import me.mrkirby153.KirBot.command.executors.group.*
 import me.mrkirby153.KirBot.command.executors.moderation.*
-import me.mrkirby153.KirBot.command.executors.music.CommandDisconnect
-import me.mrkirby153.KirBot.command.executors.music.CommandPlay
-import me.mrkirby153.KirBot.command.executors.music.CommandQueue
-import me.mrkirby153.KirBot.command.executors.music.CommandStop
+import me.mrkirby153.KirBot.command.executors.music.*
 import me.mrkirby153.KirBot.command.executors.polls.CommandPoll
 import me.mrkirby153.KirBot.command.processors.LaTeXProcessor
 import me.mrkirby153.KirBot.data.ServerData
@@ -201,6 +198,17 @@ object CommandManager {
             executor = CommandQueue()
         })
 
+        register(CommandSpec("skip"){
+            arguments(Arguments.string("action", false))
+            executor = CommandSkip()
+            category = CommandCategory.MUSIC
+        })
+
+        register(CommandSpec("dequeue"){
+            executor = CommandDeQueue()
+            clearance = Clearance.BOT_MANAGER
+            arguments(Arguments.number("position"))
+        })
 
 
 

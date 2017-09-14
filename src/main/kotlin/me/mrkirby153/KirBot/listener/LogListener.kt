@@ -57,6 +57,8 @@ class LogListener(private val shard: Shard) : ListenerAdapter() {
     }
 
     override fun onGuildMessageUpdate(event: GuildMessageUpdateEvent) {
+        if(event.message.content.isEmpty())
+            return
         Bot.messageDataStore.getMessageContent(event.message.id, { old ->
             if(old != null){
                 if(old.id == "-1")

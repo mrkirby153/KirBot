@@ -183,12 +183,18 @@ object CommandManager {
             arguments(Arguments.rest("query/url"))
         })
 
+        register(CommandSpec("playat"){
+            executor = CommandPlay()
+            arguments(Arguments.number("position", true, 0.0), Arguments.rest("query/url"))
+        })
+
         register(CommandSpec("disconnect") {
             executor = CommandDisconnect()
         })
 
         register(CommandSpec("stop") {
             executor = CommandStop()
+            clearance = Clearance.BOT_MANAGER
         })
 
         register(CommandSpec("queue") {

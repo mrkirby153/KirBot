@@ -31,10 +31,10 @@ class CommandQueue : CmdExecutor() {
                 if (musicManager.queue.size == 0)
                     append("Nothing")
                 else
-                    musicManager.queue.forEachIndexed { index, it ->
-                        appendln(" " + (index + 1) + ". " + (it.track.info.title link it.track.info.uri) + " (${MusicManager.parseMS(it.track.duration)})")
-                        if (length > 1500)
-                            return@forEachIndexed
+                    musicManager.queue.forEachIndexed { index, (track) ->
+                        if (length < 1500)
+                            appendln(" " + (index + 1) + ". " + (track.info.title link track.info.uri) + " (${MusicManager.parseMS(track.duration)})")
+
                     }
                 append("\n\n")
                 append("**View The Full Queue**" link "https://kirbot.mrkirby153.com/${context.guild.id}/queue")

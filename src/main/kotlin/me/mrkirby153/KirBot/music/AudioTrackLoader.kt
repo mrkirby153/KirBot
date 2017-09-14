@@ -10,14 +10,19 @@ import me.mrkirby153.KirBot.utils.embed.link
 import me.mrkirby153.KirBot.utils.getMember
 import net.dv8tion.jda.core.entities.User
 
-class AudioTrackLoader(val manager: MusicManager, val requestedBy: User, val context: Context, val callback: ((AudioTrack) -> Unit)? = null) : AudioLoadResultHandler {
+class AudioTrackLoader(val manager: MusicManager, val requestedBy: User, val context: Context,
+                       val queuePosition: Int = -1, val callback: ((AudioTrack) -> Unit)? = null) : AudioLoadResultHandler {
     override fun loadFailed(p0: FriendlyException?) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
     override fun trackLoaded(p0: AudioTrack) {
         val queuedSong = MusicManager.QueuedSong(p0, requestedBy, context.channel.id)
-        manager.queue.addLast(queuedSong)
+        if (queuePosition != -1) {
+            manager.queue.add(if (queuePosition < 1) 0 else queuePosition - 1, queuedSong)
+        } else {
+            manager.queue.addLast(queuedSong)
+        }
         val position = manager.queue.indexOf(queuedSong)
         // Check track duration
         val settings = MusicManager.musicSettings[context.guild.id] ?: return
@@ -38,18 +43,18 @@ class AudioTrackLoader(val manager: MusicManager, val requestedBy: User, val con
             manager.trackScheduler.playNextTrack()
         }
         callback?.invoke(p0)
-        if(manager.queue.size == 1 && manager.nowPlaying == null){
+        if (manager.queue.size == 1 && manager.nowPlaying == null) {
             return
         }
         context.send().embed("Added to Queue") {
-            if(p0.info.uri.contains("youtu")){
+            if (p0.info.uri.contains("youtu")) {
                 setThumbnail("https://i.ytimg.com/vi/${p0.info.identifier}/default.jpg")
             }
             setDescription("**${p0.info.title}**" link p0.info.uri)
             field("Song Duration", true, MusicManager.parseMS(p0.duration))
 
             var queueLengthMs: Long = 0
-            manager.queue.forEach {
+            manager.queue.subList(0, Math.min(manager.queue.size - 1, queuePosition)).forEach {
                 queueLengthMs += it.track.duration
             }
             if (manager.nowPlaying != null)

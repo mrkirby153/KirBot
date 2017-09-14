@@ -14,6 +14,8 @@ class CommandPlay : CmdExecutor() {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val data = cmdContext.string("query/url") ?: ""
 
+        val queuePosition = cmdContext.number("position")?.toInt() ?: -1
+
         if (data.isBlank()) {
             if (context.data.musicManager.playing)
                 throw CommandException("Already playing.")
@@ -57,6 +59,6 @@ class CommandPlay : CmdExecutor() {
         if (musicSettings.maxQueueLength != -1 && context.data.musicManager.queueLength() / (60 * 1000) >= musicSettings.maxQueueLength) {
             throw CommandException("The queue is too long right now, please try again when it is shorter")
         }
-        Bot.playerManager.loadItem(url, AudioTrackLoader(context.data.musicManager, context.author, context))
+        Bot.playerManager.loadItem(url, AudioTrackLoader(context.data.musicManager, context.author, context, queuePosition))
     }
 }

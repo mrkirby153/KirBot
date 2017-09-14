@@ -73,10 +73,58 @@ class AudioTrackLoader(val manager: MusicManager, val requestedBy: User, val con
     }
 
     override fun playlistLoaded(p0: AudioPlaylist) {
-        if (!MusicManager.musicSettings[context.guild.id]!!.playlists) {
+        val settings = MusicManager.musicSettings[context.guild.id] ?: return
+        if (!settings.playlists) {
             context.send().error("Playlists cannot currently be played").queue()
             return
         }
-        // TODO 9/13/17: Playlist loading
+        var duration = 0L
+        p0.tracks.forEach {
+            duration += it.duration
+        }
+        if (settings.maxQueueLength != -1 && (manager.queueLength() + duration) / (60 * 1000) > settings.maxQueueLength) {
+            context.send().error("Queueing this playlist will make the queue too long, try again when the queue is shorter").queue()
+            return
+        }
+        val failedTracks = mutableListOf<AudioTrack>()
+        p0.tracks.forEach {
+            if (settings.maxSongLength != -1) {
+                if (it.duration / (60 * 1000) > settings.maxSongLength) {
+                    failedTracks.add(it)
+                    return
+                }
+            }
+            manager.queue.addLast(MusicManager.QueuedSong(it, requestedBy, context.channel.id))
+        }
+        p0.tracks.filter { it !in failedTracks }.forEach {
+            duration += it.duration
+        }
+        context.send().embed("Added to Queue") {
+            setDescription(buildString {
+                append("**${p0.name}**")
+
+                append("\n\n Queued `${p0.tracks.size - failedTracks.size}` songs totaling `${MusicManager.parseMS(duration)}`")
+
+                if (failedTracks.isNotEmpty()) {
+                    append("\n\nFailed to queue `${failedTracks.size}` songs because they were too long.\n\n")
+                    failedTracks.forEach {
+                        append("\t${it.info.title}" link it.info.uri)
+                        append("\n")
+                        if (length > 1500)
+                            return@forEach
+                    }
+                }
+            })
+        }.rest().queue()
+        // If the bot isn't playing, start
+        if (!context.guild.selfMember.voiceState.inVoiceChannel()) {
+            manager.audioPlayer.volume = 100
+            context.guild.audioManager.openAudioConnection(requestedBy.getMember(context.guild).voiceState.channel)
+            manager.trackScheduler.playNextTrack()
+        }
+        manager.audioPlayer.isPaused = false
+        if (manager.nowPlaying == null) {
+            manager.trackScheduler.playNextTrack()
+        }
     }
 }

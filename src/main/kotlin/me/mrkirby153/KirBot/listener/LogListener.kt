@@ -4,7 +4,7 @@ import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.Shard
-import me.mrkirby153.KirBot.database.api.PanelAPI
+import me.mrkirby153.KirBot.database.api.GuildSettings
 import me.mrkirby153.KirBot.server.LogField
 import net.dv8tion.jda.core.events.message.MessageBulkDeleteEvent
 import net.dv8tion.jda.core.events.message.MessageDeleteEvent
@@ -20,7 +20,7 @@ class LogListener(private val shard: Shard) : ListenerAdapter() {
         val logChannelCache = CacheBuilder.newBuilder().expireAfterWrite(60, TimeUnit.SECONDS).build(
                 object : CacheLoader<String, String?>() {
                     override fun load(key: String): String? {
-                        return PanelAPI.guildSettings(Bot.getGuild(key)!!).execute()?.logChannel
+                        return GuildSettings.get(Bot.getGuild(key)!!).execute()?.logChannel
                     }
                 }
         )

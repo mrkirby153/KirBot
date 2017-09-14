@@ -3,6 +3,7 @@ package me.mrkirby153.KirBot.command.executors.group
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.command.executors.CmdExecutor
+import me.mrkirby153.KirBot.database.api.Group
 import me.mrkirby153.KirBot.database.api.PanelAPI
 import me.mrkirby153.KirBot.utils.Context
 
@@ -16,7 +17,7 @@ class CommandCreateGroup : CmdExecutor() {
                 return@queue
             }
             context.guild.controller.createRole().setName(name).setMentionable(true).queue {
-                PanelAPI.createGroup(context.guild, name, it).queue {
+                Group.create(context.guild, name, it).queue {
                     context.send().info("Created the group `$name`").queue()
                 }
             }

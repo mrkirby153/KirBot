@@ -3,7 +3,10 @@ package me.mrkirby153.KirBot.listener
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.Shard
 import me.mrkirby153.KirBot.command.CommandManager
+import me.mrkirby153.KirBot.database.api.GuildChannel
+import me.mrkirby153.KirBot.database.api.GuildRole
 import me.mrkirby153.KirBot.database.api.PanelAPI
+import me.mrkirby153.KirBot.database.api.Quote
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.embed.embed
 import me.mrkirby153.KirBot.utils.sync
@@ -55,49 +58,58 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
     }
 
     override fun onTextChannelDelete(event: TextChannelDeleteEvent) {
-        PanelAPI.unregisterChannel(event.channel.id).queue()
+        GuildChannel.unregister(event.channel.id).queue()
     }
 
     override fun onVoiceChannelDelete(event: VoiceChannelDeleteEvent) {
-        PanelAPI.unregisterChannel(event.channel.id).queue()
+        GuildChannel.unregister(event.channel.id).queue()
     }
 
     override fun onTextChannelCreate(event: TextChannelCreateEvent) {
-        PanelAPI.registerChannel(event.channel).queue()
+        GuildChannel.register(event.channel).queue()
     }
 
     override fun onVoiceChannelCreate(event: VoiceChannelCreateEvent) {
-        PanelAPI.registerChannel(event.channel).queue()
+        GuildChannel.register(event.channel).queue()
     }
 
-    override fun onTextChannelUpdateName(event: TextChannelUpdateNameEvent) {
-        PanelAPI.updateChannel(event.channel).queue()
+    override fun onTextChannelUpdateName(event: TextChannelUpdateNameEvent){
+        PanelAPI.getChannels(event.guild).queue {
+            it.text.filter { it.channel.id == event.channel.id }.forEach { it.update().queue() }
+        }
     }
 
     override fun onVoiceChannelUpdateName(event: VoiceChannelUpdateNameEvent) {
-        PanelAPI.updateChannel(event.channel).queue()
+        PanelAPI.getChannels(event.guild).queue {
+            it.voice.filter { it.channel.id == event.channel.id }.forEach { it.update().queue() }
+        }
     }
 
     override fun onRoleCreate(event: RoleCreateEvent) {
-        PanelAPI.createRole(event.role).queue()
+        GuildRole.create(event.role).queue()
     }
 
     override fun onGenericRoleUpdate(event: GenericRoleUpdateEvent) {
-        PanelAPI.updateRole(event.role).queue()
+        GuildRole.get(event.role).queue {
+            it.update().queue()
+        }
     }
 
     override fun onRoleDelete(event: RoleDeleteEvent) {
-        PanelAPI.deleteRole(event.role.id).queue()
+        GuildRole.get(event.role).queue {
+            it.delete().queue()
+        }
     }
 
     override fun onMessageReactionAdd(event: MessageReactionAddEvent) {
+        // TODO 2017-09-07: Quoting should be a privilege, not a right
         if (event.reaction.emote.name == "\uD83D\uDDE8" /* Left speech bubble */) {
             event.channel.getMessageById(event.messageId).queue { message ->
                 if (message != null) {
-                    PanelAPI.getQuotesForGuild(event.guild).queue({ quotes ->
+                    Quote.get(event.guild).queue({ quotes ->
                         if (event.messageId !in quotes.map { it.messageId }) {
                             if (!message.content.isNullOrBlank())
-                                PanelAPI.quote(message).queue {
+                                Quote.create(message).queue {
                                     message.pin().queue()
                                     event.channel.sendMessage(embed("Quote") {
                                         setColor(Color.BLUE)

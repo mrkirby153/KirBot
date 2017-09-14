@@ -5,7 +5,6 @@ import com.google.common.cache.CacheLoader
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.api.MusicSettings
-import me.mrkirby153.KirBot.database.api.PanelAPI
 import net.dv8tion.jda.core.entities.Guild
 import java.util.concurrent.TimeUnit
 
@@ -28,7 +27,7 @@ class MusicManager(val server: Guild) {
                 object : CacheLoader<String, MusicSettings?>() {
                     override fun load(p0: String): MusicSettings? {
                         val guid = Bot.getGuild(p0) ?: return null
-                        return PanelAPI.getMusicSettings(guid).execute()
+                        return MusicSettings.get(guid).execute()
                     }
                 }
         )

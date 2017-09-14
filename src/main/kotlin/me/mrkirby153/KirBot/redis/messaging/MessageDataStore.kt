@@ -1,6 +1,6 @@
 package me.mrkirby153.KirBot.redis.messaging
 
-import me.mrkirby153.KirBot.database.api.PanelAPI
+import me.mrkirby153.KirBot.database.api.ServerMessage
 import me.mrkirby153.KirBot.redis.RedisConnector
 import org.json.JSONObject
 import org.json.JSONTokener
@@ -18,7 +18,7 @@ class MessageDataStore {
             val messages = list.filter { it.id == id }
 
             if (messages.isEmpty()) {
-                PanelAPI.getMessage(id).queue {
+                ServerMessage.get(id).queue {
                     callback.invoke(Message(it.id ?: "-1", it.serverId, it.authorId, it.channelId, it.content))
                 }
                 return
@@ -48,7 +48,7 @@ class MessageDataStore {
                 }
             }
         }
-        PanelAPI.deleteMessage(messageId).queue {
+        ServerMessage.delete(messageId).queue {
             callback?.invoke(it.content)
         }
     }
@@ -68,7 +68,7 @@ class MessageDataStore {
         toDelete.removeAll(deleted)
         println(toDelete)
         if (toDelete.isNotEmpty())
-            PanelAPI.bulkDelete(toDelete).queue {
+            ServerMessage.bulkDelete(toDelete).queue {
                 callback?.invoke()
             }
         else

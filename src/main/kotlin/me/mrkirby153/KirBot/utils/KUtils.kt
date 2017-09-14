@@ -2,6 +2,8 @@ package me.mrkirby153.KirBot.utils
 
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.Shard
+import me.mrkirby153.KirBot.database.api.GuildRole
+import me.mrkirby153.KirBot.database.api.GuildSettings
 import me.mrkirby153.KirBot.database.api.PanelAPI
 import me.mrkirby153.KirBot.realname.RealnameHandler
 import me.mrkirby153.KirBot.user.Clearance
@@ -131,13 +133,17 @@ fun TextChannel.hide() {
     }
     val public = this.getPermissionOverride(guild.publicRole) ?: this.createPermissionOverride(guild.publicRole).complete()
     public.manager.deny(Permission.MESSAGE_READ).queue()
-    PanelAPI.updateChannel(this).queue()
+   PanelAPI.getChannels(this.guild).queue {
+       it.text.filter { it.id == this.id }.forEach { it.update().queue() }
+   }
 }
 
 fun TextChannel.unhide() {
     val public = this.getPermissionOverride(guild.publicRole) ?: return
     public.manager.clear(Permission.MESSAGE_READ).queue()
-    PanelAPI.updateChannel(this).queue()
+    PanelAPI.getChannels(this.guild).queue {
+        it.text.filter { it.id == this.id }.forEach { it.update().queue() }
+    }
 }
 
 fun Guild.sync() {
@@ -148,7 +154,7 @@ fun Guild.sync() {
                 this.sync()
             }
         else
-            PanelAPI.guildSettings(this).queue { settings ->
+            GuildSettings.get(this).queue { settings ->
                 if (settings.name != this.name) {
                     Bot.LOG.debug("Name has changed on ${this.name} syncing")
                     PanelAPI.setServerName(this).queue()
@@ -165,7 +171,9 @@ fun Guild.sync() {
                             val storedPermissions = it.permissions
                             if (guildPermissions != storedPermissions) {
                                 Bot.LOG.debug("Permissions for roleId ${it.role.name} have changed. Updating")
-                                PanelAPI.updateRole(it.role).queue()
+                                GuildRole.get(it.role).queue {
+                                    it.update().queue()
+                                }
                             }
                         }
                     }
@@ -182,11 +190,11 @@ fun Guild.sync() {
                     Bot.LOG.debug("Removing roles $toRemove")
 
                     toAdd.map { this.getRoleById(it) }.filter { it != null }.forEach { role ->
-                        PanelAPI.createRole(role).queue()
+                        GuildRole.create(role).queue()
                     }
 
                     toRemove.forEach { role ->
-                        PanelAPI.deleteRole(role).queue()
+                        GuildRole.delete(role).queue()
                     }
 
 

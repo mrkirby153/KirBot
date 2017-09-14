@@ -1,10 +1,8 @@
 package me.mrkirby153.KirBot.database.api
 
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.realname.RealnameSetting
-import me.mrkirby153.KirBot.user.Clearance
-import net.dv8tion.jda.core.Permission
-import net.dv8tion.jda.core.entities.*
+import net.dv8tion.jda.core.entities.Channel
+import net.dv8tion.jda.core.entities.Guild
 import org.json.JSONObject
 import java.util.concurrent.Executors
 
@@ -14,58 +12,6 @@ object PanelAPI {
     internal val API_KEY = Bot.properties.getProperty("api-key")
 
     internal val executor = Executors.newFixedThreadPool(3)
-
-    fun getRealname(user: User): ApiRequest<Realname> = object : ApiRequest<Realname>("/user/${user.id}/name") {
-        override fun parse(json: JSONObject): Realname {
-            return Realname(json.getString("first_name"), json.getString("last_name"))
-        }
-    }
-
-    fun getRealnames(users: List<User>): ApiRequest<Map<User, Realname?>> {
-        return object : ApiRequest<Map<User, Realname?>>("/user/names", Methods.POST, mutableMapOf(Pair("names",
-                users.map { it.id }.joinToString(",")))) {
-            override fun parse(json: JSONObject): Map<User, Realname?> {
-                val map = mutableMapOf<User, Realname?>()
-
-                users.forEach {
-                    val obj = json.optJSONObject(it.id)
-                    if (obj == null)
-                        map[it] = null
-                    else
-                        map[it] = Realname(obj.getString("first_name"), obj.getString("last_name"))
-                }
-                return map
-            }
-        }
-    }
-
-    fun getCommands(guild: Guild): ApiRequest<List<GuildCommand>> {
-        return object : ApiRequest<List<GuildCommand>>("/server/${guild.id}/commands") {
-            override fun parse(json: JSONObject): List<GuildCommand> {
-                val cmds = mutableListOf<GuildCommand>()
-
-                val array = json.getJSONArray("cmds")
-                array.forEach { obj ->
-                    val jsonObj = obj as JSONObject
-                    cmds.add(GuildCommand(jsonObj.getString("name"),
-                            jsonObj.getString("data"), Clearance.valueOf(jsonObj.getString("clearance")), jsonObj.getInt("respect_whitelist") == 1))
-                }
-                return cmds
-            }
-        }
-    }
-
-    fun guildSettings(guild: Guild): ApiRequest<GuildSettings> {
-        return object : ApiRequest<GuildSettings>("/server/${guild.id}/settings") {
-            override fun parse(json: JSONObject): GuildSettings {
-                val managementRoles = json.getJSONArray("bot_manager")
-                val roles = mutableListOf<String>()
-                managementRoles.forEach { roles.add(it.toString()) }
-                return GuildSettings(json.getString("name"), RealnameSetting.valueOf(json.getString("realname")), json.getInt("require_realname") == 1,
-                        json.getString("command_discriminator"), json.optString("log_channel"), json.getJSONArray("cmd_whitelist").map { it.toString() }, roles)
-            }
-        }
-    }
 
     fun registerServer(guild: Guild): ApiRequest<VoidApiResponse> {
         return object : ApiRequest<VoidApiResponse>("/server/register", Methods.PUT, mapOf(Pair("name", guild.name), Pair("id", guild.id))) {
@@ -91,51 +37,23 @@ object PanelAPI {
         }
     }
 
-    fun registerChannel(channel: Channel): ApiRequest<VoidApiResponse> {
-        return object : ApiRequest<VoidApiResponse>("/server/${channel.guild.id}/channel",
-                Methods.PUT, mapOf(Pair("id", channel.id), Pair("name", channel.name), Pair("type", if (channel is TextChannel) "TEXT" else "Voice"))) {
-            override fun parse(json: JSONObject): VoidApiResponse {
-                return VoidApiResponse()
+    fun getChannels(guild: Guild) = object : ApiRequest<GuildChannels>("/server/${guild.id}/channels") {
+        override fun parse(json: JSONObject): GuildChannels {
+            val textChannels = mutableListOf<GuildChannel>()
+            val voiceChannels = mutableListOf<GuildChannel>()
+
+            json.getJSONArray("voice").forEach { obj ->
+                val jsonObj = obj as JSONObject
+                voiceChannels.add(GuildChannel(jsonObj.getString("id"), jsonObj.getString("server"),
+                        jsonObj.getString("channel_name"), ChannelType.VOICE))
             }
-        }
-    }
 
-    fun unregisterChannel(channel: String): ApiRequest<VoidApiResponse> {
-        return object : ApiRequest<VoidApiResponse>("/channel/$channel", Methods.DELETE) {
-            override fun parse(json: JSONObject): VoidApiResponse {
-                return VoidApiResponse()
+            json.getJSONArray("text").forEach { obj ->
+                val jsonObj = obj as JSONObject
+                textChannels.add(GuildChannel(jsonObj.getString("id"), jsonObj.getString("server"),
+                        jsonObj.getString("channel_name"), ChannelType.TEXT))
             }
-        }
-    }
-
-    fun updateChannel(channel: Channel): ApiRequest<VoidApiResponse> {
-        val isHidden = channel.getPermissionOverride(channel.guild.publicRole)?.denied?.contains(Permission.MESSAGE_READ) ?: false
-        return object : ApiRequest<VoidApiResponse>("/channel/${channel.id}", Methods.PATCH, mapOf(Pair("name", channel.name), Pair("hidden", isHidden.toString()))) {
-            override fun parse(json: JSONObject): VoidApiResponse {
-                return VoidApiResponse()
-            }
-        }
-    }
-
-    fun getChannels(guild: Guild): ApiRequest<GuildChannels> {
-        return object : ApiRequest<GuildChannels>("/server/${guild.id}/channels") {
-            override fun parse(json: JSONObject): GuildChannels {
-                val textChannels = mutableListOf<GuildChannel>()
-                val voiceChannels = mutableListOf<GuildChannel>()
-
-                json.getJSONArray("voice").forEach { obj ->
-                    val jsonObj = obj as JSONObject
-                    voiceChannels.add(GuildChannel(jsonObj.getString("id"), jsonObj.getString("server"),
-                            jsonObj.getString("channel_name"), ChannelType.VOICE))
-                }
-
-                json.getJSONArray("text").forEach { obj ->
-                    val jsonObj = obj as JSONObject
-                    textChannels.add(GuildChannel(jsonObj.getString("id"), jsonObj.getString("server"),
-                            jsonObj.getString("channel_name"), ChannelType.TEXT))
-                }
-                return GuildChannels(textChannels, voiceChannels)
-            }
+            return GuildChannels(textChannels, voiceChannels)
         }
     }
 
@@ -161,115 +79,14 @@ object PanelAPI {
 
             toRegister.forEach {
                 val c = guild.getTextChannelById(it) as? Channel ?: guild.getVoiceChannelById(it) as? Channel ?: return@forEach
-                registerChannel(c).queue()
+                GuildChannel.register(c).queue()
             }
 
             toUnregister.forEach {
-                unregisterChannel(it).queue()
+                GuildChannel.unregister(it).queue()
             }
 
             callback?.invoke()
-        }
-    }
-
-    fun getMusicSettings(guid: Guild): ApiRequest<MusicSettings> {
-        return object : ApiRequest<MusicSettings>("/server/${guid.id}/music") {
-            override fun parse(json: JSONObject): MusicSettings {
-                return MusicSettings(json.getInt("enabled") == 1, json.getString("mode"),
-                        json.getJSONArray("channels").map { it.toString() }.toTypedArray(),
-                        arrayOf(""), json.getInt("max_queue_length"),
-                        json.getInt("playlists") == 1, json.getInt("max_song_length"),
-                        json.getInt("skip_cooldown"), json.getInt("skip_timer"))
-            }
-        }
-    }
-
-    fun logMessage(message: Message): ApiRequest<ServerMessage> {
-        return object : ApiRequest<ServerMessage>("/message", Methods.PUT,
-                mapOf(Pair("server", message.guild.id), Pair("id", message.id), Pair("channel", message.channel.id),
-                        Pair("author", message.author.id), Pair("message", if (message.content.isNotEmpty()) message.content else " "))) {
-            override fun parse(json: JSONObject): ServerMessage {
-                return ServerMessage(json.getString("id"), json.getString("channel"),
-                        json.getString("server_id"), json.getString("author"), json.getString("message"))
-            }
-        }
-    }
-
-    fun getMessage(id: String): ApiRequest<ServerMessage> {
-        return object : ApiRequest<ServerMessage>("/message/$id") {
-            override fun parse(json: JSONObject): ServerMessage {
-                return ServerMessage(json.getString("id"), json.getString("channel"),
-                        json.getString("server_id"), json.getString("author"), json.getString("message"))
-            }
-        }
-    }
-
-    fun deleteMessage(id: String): ApiRequest<ServerMessage> {
-        return object : ApiRequest<ServerMessage>("/message/$id", Methods.DELETE) {
-            override fun parse(json: JSONObject): ServerMessage {
-                if (json.keySet().size < 1)
-                    return ServerMessage("-1", "-1", "-1", "-1", "-1")
-                else
-                    return ServerMessage(json.getString("id"), json.getString("channel"),
-                            json.getString("server_id"), json.getString("author"), json.getString("message"))
-            }
-        }
-    }
-
-    fun editMessage(message: Message): ApiRequest<ServerMessage> {
-        return object : ApiRequest<ServerMessage>("/message/${message.id}", Methods.PATCH, mapOf(Pair("message", message.content))) {
-            override fun parse(json: JSONObject): ServerMessage {
-                if (json.keySet().size < 1)
-                    return ServerMessage("-1", "-1", "-1", "-1", "-1")
-                else
-                    return ServerMessage(json.getString("id"), json.getString("channel"),
-                            json.getString("server_id"), json.getString("author"), json.getString("message"))
-            }
-
-        }
-    }
-
-    fun bulkDelete(messages: Collection<String>): ApiRequest<VoidApiResponse> {
-        return object : ApiRequest<VoidApiResponse>("/message/bulkDelete", Methods.DELETE, mapOf(Pair("messages", messages.joinToString(",")))) {
-            override fun parse(json: JSONObject): VoidApiResponse {
-                return VoidApiResponse()
-            }
-
-        }
-    }
-
-    fun createRole(role: net.dv8tion.jda.core.entities.Role): ApiRequest<GuildRole> {
-        return object : ApiRequest<GuildRole>("/role", Methods.POST, mapOf(Pair("id", role.id),
-                Pair("server_id", role.guild!!.id), Pair("name", role.name), Pair("permissions", role.permissionsRaw.toString()))) {
-            override fun parse(json: JSONObject): GuildRole {
-                return GuildRole(json.getString("id"), json.getString("name"), json.getString("server_id"), json.getLong("permissions"))
-            }
-        }
-    }
-
-    fun deleteRole(id: String): ApiRequest<VoidApiResponse> {
-        return object : ApiRequest<VoidApiResponse>("/role/$id", Methods.DELETE) {
-            override fun parse(json: JSONObject): VoidApiResponse {
-                return VoidApiResponse()
-            }
-
-        }
-    }
-
-    fun updateRole(role: net.dv8tion.jda.core.entities.Role): ApiRequest<GuildRole> {
-        return object : ApiRequest<GuildRole>("/role/${role.id}", Methods.PATCH, mapOf(Pair("name", role.name), Pair("permissions", role.permissionsRaw.toString()))) {
-            override fun parse(json: JSONObject): GuildRole {
-                return GuildRole(json.getString("id"), json.getString("name"), json.getString("server_id"), json.getLong("permissions"))
-            }
-        }
-    }
-
-    fun getRole(role: net.dv8tion.jda.core.entities.Role): ApiRequest<GuildRole> {
-        return object : ApiRequest<GuildRole>("/role/${role.id}", Methods.GET) {
-            override fun parse(json: JSONObject): GuildRole {
-                return GuildRole(json.getString("id"), json.getString("name"), json.getString("server_id"),
-                        json.getLong("permissions"))
-            }
         }
     }
 
@@ -286,42 +103,6 @@ object PanelAPI {
         }
     }
 
-    fun quote(messageById: Message): ApiRequest<Quote> {
-        return object : ApiRequest<Quote>("/server/quote",
-                Methods.PUT, mapOf(Pair("server_id", messageById.guild.id), Pair("user", messageById.author.name), Pair("content", messageById.content), Pair("message_id", messageById.id))) {
-            override fun parse(json: JSONObject): Quote {
-                return Quote(json.getInt("id"), json.getString("message_id"), json.getString("user"), json.getString("server_id"), json.getString("content"))
-            }
-
-        }
-    }
-
-    fun getQuote(id: String): ApiRequest<Quote?> {
-        return object : ApiRequest<Quote?>("/server/quote/$id") {
-            override fun parse(json: JSONObject): Quote? {
-                if (!json.has("id")) {
-                    return null
-                }
-                return Quote(json.getInt("id"), json.getString("message_id"), json.getString("user"), json.getString("server_id"), json.getString("content"))
-            }
-        }
-    }
-
-    fun getQuotesForGuild(guild: Guild): ApiRequest<Array<Quote>> {
-        return object : ApiRequest<Array<Quote>>("/server/${guild.id}/quotes") {
-            override fun parse(json: JSONObject): Array<Quote> {
-                val quotes = mutableListOf<Quote>()
-                json.getJSONArray("quotes").forEach { q ->
-                    if(q is JSONObject){
-                        quotes.add(Quote(q.getInt("id"), q.getString("message_id"), q.getString("user"),
-                                q.getString("server_id"), q.getString("content")))
-                    }
-                }
-                return quotes.toTypedArray()
-            }
-        }
-    }
-
     fun serverExists(guild: Guild): ApiRequest<Boolean> {
         return object : ApiRequest<Boolean>("/server/${guild.id}") {
             override fun parse(json: JSONObject): Boolean {
@@ -331,7 +112,7 @@ object PanelAPI {
         }
     }
 
-    fun getGroups(guild: Guild): ApiRequest<List<Group>>{
+    fun getGroups(guild: Guild): ApiRequest<List<Group>> {
         return object : ApiRequest<List<Group>>("/server/${guild.id}/groups") {
             override fun parse(json: JSONObject): List<Group> {
                 val allGroups = mutableListOf<Group>()
@@ -342,7 +123,7 @@ object PanelAPI {
                     val gu = g.getString("server_id")
                     val members = mutableListOf<String>()
 
-                    g.getJSONArray("members").map { it as JSONObject }.forEach {  m ->
+                    g.getJSONArray("members").map { it as JSONObject }.forEach { m ->
                         members.add(m.getString("user_id"))
                     }
                     val group = Group(id, gu, name, role, members)
@@ -353,31 +134,4 @@ object PanelAPI {
         }
     }
 
-    fun createGroup(guild: Guild, name: String, role: Role): ApiRequest<Group> {
-        return object : ApiRequest<Group>("/server/${guild.id}/groups", Methods.PUT, mapOf(Pair("name", name), Pair("role", role.id))) {
-            override fun parse(json: JSONObject): Group {
-                return Group(json.getString("id"), json.getString("server_id"), json.getString("group_name"), json.getString("role_id"), mutableListOf())
-            }
-        }
-    }
-
-    fun createOverride(guild: Guild, command: String, clearance: Clearance): ApiRequest<ClearanceOverride> {
-        return object: ApiRequest<ClearanceOverride>("/server/${guild.id}/overrides", Methods.PUT, mapOf(Pair("command", command), Pair("clearance", clearance.toString()))){
-            override fun parse(json: JSONObject): ClearanceOverride {
-                return ClearanceOverride(json.getInt("id"), json.getString("command"), json.getString("clearance"))
-            }
-        }
-    }
-
-    fun getOverrides(guild: Guild): ApiRequest<MutableList<ClearanceOverride>> {
-        return object: ApiRequest<MutableList<ClearanceOverride>>("/server/${guild.id}/overrides"){
-            override fun parse(json: JSONObject): MutableList<ClearanceOverride> {
-                val overrides = mutableListOf<ClearanceOverride>()
-                json.getJSONArray("overrides").map { it as JSONObject }.forEach { j ->
-                    overrides.add(ClearanceOverride(j.getInt("id"), j.getString("command"), j.getString("clearance")))
-                }
-                return overrides
-            }
-        }
-    }
 }

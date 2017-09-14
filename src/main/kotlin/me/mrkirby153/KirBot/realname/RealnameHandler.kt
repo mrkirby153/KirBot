@@ -1,8 +1,8 @@
 package me.mrkirby153.KirBot.realname
 
-import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.data.ServerData
-import me.mrkirby153.KirBot.database.api.PanelAPI
+import me.mrkirby153.KirBot.database.api.GuildSettings
+import me.mrkirby153.KirBot.database.api.Realname
 import me.mrkirby153.KirBot.utils.getMember
 import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.Guild
@@ -16,7 +16,7 @@ class RealnameHandler(var server: Guild, var serverData: ServerData) {
 
     @JvmOverloads
     fun updateNames(silent: Boolean = false) {
-        PanelAPI.guildSettings(server).queue { settings ->
+        GuildSettings.get(server).queue { settings ->
 
             // Clean up roles if the server doesn't require real names
             if (!settings.requireRealname) {
@@ -38,7 +38,7 @@ class RealnameHandler(var server: Guild, var serverData: ServerData) {
             // Remove the old key
             serverData.repository.remove("has-reset-names")
 
-            PanelAPI.getRealnames(server.members.map { it.user }).queue { map ->
+            Realname.get(server.members.map { it.user }).queue { map ->
                 map.forEach { user, realname ->
                     if (user.isBot) {
                         if (settings.requireRealname)

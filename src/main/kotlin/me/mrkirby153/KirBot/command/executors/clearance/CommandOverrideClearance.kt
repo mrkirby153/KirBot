@@ -3,7 +3,7 @@ package me.mrkirby153.KirBot.command.executors.clearance
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.command.executors.CmdExecutor
-import me.mrkirby153.KirBot.database.api.PanelAPI
+import me.mrkirby153.KirBot.database.api.ClearanceOverride
 import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
 
@@ -40,7 +40,7 @@ class CommandOverrideClearance : CmdExecutor() {
         } else {
             try {
                 val c = Clearance.valueOf(clearance.toUpperCase())
-                PanelAPI.createOverride(context.guild, cmd.toLowerCase(), c).queue {
+                ClearanceOverride.create(context.guild, cmd.toLowerCase(), c).queue {
                     context.shard.clearanceOverrides[context.guild.id].add(it)
                     context.send().success("Set clearance to `$clearance`").queue()
                 }

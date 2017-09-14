@@ -38,6 +38,8 @@ class ServerData(val id: Long, val shard: Shard) {
     val musicManager_old = MusicManager(guild)
     val logger = ServerLogger(guild)
 
+    val musicManager = me.mrkirby153.KirBot.music.MusicManager(guild)
+
     fun disableSpamFilter(channel: TextChannel){
         spamFilterDisabled[channel.id] = System.currentTimeMillis() + 1000 *3600L // Re-enable the spam filter an hour from now
     }

@@ -18,7 +18,10 @@ import me.mrkirby153.KirBot.command.executors.clearance.CommandOverrideClearance
 import me.mrkirby153.KirBot.command.executors.game.CommandOverwatch
 import me.mrkirby153.KirBot.command.executors.group.*
 import me.mrkirby153.KirBot.command.executors.moderation.*
-import me.mrkirby153.KirBot.command.executors.music_legacy.*
+import me.mrkirby153.KirBot.command.executors.music.CommandDisconnect
+import me.mrkirby153.KirBot.command.executors.music.CommandPlay
+import me.mrkirby153.KirBot.command.executors.music.CommandQueue
+import me.mrkirby153.KirBot.command.executors.music.CommandStop
 import me.mrkirby153.KirBot.command.executors.polls.CommandPoll
 import me.mrkirby153.KirBot.command.processors.LaTeXProcessor
 import me.mrkirby153.KirBot.data.ServerData
@@ -174,7 +177,25 @@ object CommandManager {
             executor = CommandToggleAdminMode()
             category = CommandCategory.MUSIC
         })*/
+
+        register(CommandSpec("play") {
+            executor = CommandPlay()
+            arguments(Arguments.string("query/url", false))
         })
+
+        register(CommandSpec("disconnect") {
+            executor = CommandDisconnect()
+        })
+
+        register(CommandSpec("stop") {
+            executor = CommandStop()
+        })
+
+        register(CommandSpec("queue") {
+            executor = CommandQueue()
+        })
+
+
 
 
         register(CommandSpec("stats") {
@@ -288,13 +309,13 @@ object CommandManager {
                 arguments(Arguments.string("user"), Arguments.rest("command"))
             })
 
-        register(CommandSpec("clearanceOverride"){
+        register(CommandSpec("clearanceOverride") {
             executor = CommandOverrideClearance()
             clearance = Clearance.BOT_MANAGER
             arguments(Arguments.string("command"), Arguments.string("clearance"))
         })
 
-        register(CommandSpec("seen"){
+        register(CommandSpec("seen") {
             executor = CommandSeen()
             arguments(Arguments.user("user"))
         })
@@ -530,7 +551,7 @@ object CommandManager {
         return foundCommand
     }
 
-    fun getEffectivePermission(command: String, guild: Guild, default: Clearance): Clearance{
+    fun getEffectivePermission(command: String, guild: Guild, default: Clearance): Clearance {
         val overrides = Bot.getShardForGuild(guild.id)!!.clearanceOverrides[guild.id]
         return overrides
                 .firstOrNull { it.command.equals(command, true) }

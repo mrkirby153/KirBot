@@ -18,7 +18,6 @@ import net.dv8tion.jda.core.events.channel.voice.VoiceChannelDeleteEvent
 import net.dv8tion.jda.core.events.channel.voice.update.VoiceChannelUpdateNameEvent
 import net.dv8tion.jda.core.events.guild.GuildJoinEvent
 import net.dv8tion.jda.core.events.guild.GuildLeaveEvent
-import net.dv8tion.jda.core.events.guild.voice.GuildVoiceLeaveEvent
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent
 import net.dv8tion.jda.core.events.message.react.MessageReactionAddEvent
 import net.dv8tion.jda.core.events.role.RoleCreateEvent
@@ -123,20 +122,5 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
                 }
             }
         }
-    }
-
-    override fun onGuildVoiceLeave(event: GuildVoiceLeaveEvent?) {
-        val guild = event!!.guild
-        // Ignore if KirBot isn't in that context
-        if (guild.audioManager.connectedChannel != event.channelLeft) {
-            return
-        }
-
-        val usersInChannel = guild.audioManager.connectedChannel.members.filter { it.user.id != guild.selfMember.user.id }.size
-
-        if (usersInChannel < 1) {
-            shard.getServerData(guild).musicManager_old.trackScheduler.reset()
-        }
-
     }
 }

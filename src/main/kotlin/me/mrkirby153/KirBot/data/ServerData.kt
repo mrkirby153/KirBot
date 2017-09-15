@@ -3,7 +3,6 @@ package me.mrkirby153.KirBot.data
 import com.google.gson.GsonBuilder
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.Shard
-import me.mrkirby153.KirBot.music_legacy.MusicManager
 import me.mrkirby153.KirBot.server.ServerLogger
 import me.mrkirby153.KirBot.server.data.DataRepository
 import me.mrkirby153.KirBot.utils.child
@@ -35,7 +34,6 @@ class ServerData(val id: Long, val shard: Shard) {
         }
     }
 
-    val musicManager_old = MusicManager(guild)
     val logger = ServerLogger(guild)
 
     val musicManager = me.mrkirby153.KirBot.music.MusicManager(guild)

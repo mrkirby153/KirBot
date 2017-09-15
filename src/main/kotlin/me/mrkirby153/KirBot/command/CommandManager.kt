@@ -251,6 +251,13 @@ object CommandManager {
             category = CommandCategory.MUSIC
         })
 
+        register(CommandSpec("connect"){
+            aliases = mutableListOf("summon")
+            executor = CommandConnect()
+            clearance = Clearance.BOT_MANAGER
+            description = "Summons KirBot to your current channel"
+        })
+
 
 
         register(CommandSpec("stats") {

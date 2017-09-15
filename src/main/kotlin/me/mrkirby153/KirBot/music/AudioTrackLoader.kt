@@ -11,7 +11,7 @@ import me.mrkirby153.KirBot.utils.getMember
 import net.dv8tion.jda.core.entities.User
 
 class AudioTrackLoader(val manager: MusicManager, val requestedBy: User, val context: Context,
-                       val queuePosition: Int = -1, val callback: ((AudioTrack) -> Unit)? = null) : AudioLoadResultHandler {
+                       val queuePosition: Int = 0, val callback: ((AudioTrack) -> Unit)? = null) : AudioLoadResultHandler {
     override fun loadFailed(p0: FriendlyException?) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
@@ -54,7 +54,7 @@ class AudioTrackLoader(val manager: MusicManager, val requestedBy: User, val con
             field("Song Duration", true, MusicManager.parseMS(p0.duration))
 
             var queueLengthMs: Long = 0
-            manager.queue.subList(0, Math.min(manager.queue.size - 1, queuePosition)).forEach {
+            manager.queue.subList(0, Math.min(Math.max(manager.queue.size - 1, 0), queuePosition)).forEach {
                 queueLengthMs += it.track.duration
             }
             if (manager.nowPlaying != null)

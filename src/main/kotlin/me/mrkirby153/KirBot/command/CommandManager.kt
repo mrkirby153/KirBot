@@ -176,38 +176,79 @@ object CommandManager {
         })*/
 
         register(CommandSpec("play") {
+            description = "Plays a URL or searches youtube"
             executor = CommandPlay()
             arguments(Arguments.rest("query/url"))
+            category = CommandCategory.MUSIC
         })
 
         register(CommandSpec("playat"){
+            description = "Adds a song to a position in the queue"
             executor = CommandPlay()
             arguments(Arguments.number("position", true, 0.0), Arguments.rest("query/url"))
+            clearance = Clearance.BOT_MANAGER
+            category = CommandCategory.MUSIC
         })
 
         register(CommandSpec("disconnect") {
+            description = "Disconnects the robot from the current voice channel, clearing the queue"
             executor = CommandDisconnect()
+            category = CommandCategory.MUSIC
         })
 
         register(CommandSpec("stop") {
+            description = "Pauses the music"
             executor = CommandStop()
             clearance = Clearance.BOT_MANAGER
+            category = CommandCategory.MUSIC
         })
 
         register(CommandSpec("queue") {
+            description = "Displays the current music queue"
             executor = CommandQueue()
+            arguments(Arguments.string("option", false))
+            category = CommandCategory.MUSIC
         })
 
         register(CommandSpec("skip"){
+            description = "Starts a vote to skip the currently playing song"
             arguments(Arguments.string("action", false))
             executor = CommandSkip()
             category = CommandCategory.MUSIC
         })
 
         register(CommandSpec("dequeue"){
+            description = "Removes a song from the queue"
             executor = CommandDeQueue()
             clearance = Clearance.BOT_MANAGER
             arguments(Arguments.number("position"))
+            category = CommandCategory.MUSIC
+        })
+
+        register(CommandSpec("volume") {
+            description = "Changes the robot's volume"
+            clearance = Clearance.BOT_MANAGER
+            arguments(Arguments.string("volume", false))
+            executor = CommandVolume()
+            category = CommandCategory.MUSIC
+            addExample("volume 10", "volume +10")
+            category = CommandCategory.MUSIC
+        })
+
+        register(CommandSpec("move"){
+            description = "Moves the given song in the queue"
+            clearance = Clearance.BOT_MANAGER
+            arguments(Arguments.number("song"), Arguments.number("position", false))
+            executor = CommandMove()
+            category = CommandCategory.MUSIC
+        })
+
+        register(CommandSpec("pause"){
+            description = "Pauses the music"
+            executor = CommandStop()
+            clearance = Clearance.BOT_MANAGER
+            description = "Pauses the music"
+            category = CommandCategory.MUSIC
         })
 
 

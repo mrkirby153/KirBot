@@ -14,7 +14,7 @@ class CommandPlay : CmdExecutor() {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val data = cmdContext.string("query/url") ?: ""
 
-        val queuePosition = cmdContext.number("position")?.toInt() ?: -1
+        val queuePosition = cmdContext.number("position")?.toInt() ?: 0
 
         if (data.isBlank()) {
             if (context.data.musicManager.playing)

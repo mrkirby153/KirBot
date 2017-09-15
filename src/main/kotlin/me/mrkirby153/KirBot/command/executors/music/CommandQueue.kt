@@ -5,10 +5,31 @@ import me.mrkirby153.KirBot.command.executors.CmdExecutor
 import me.mrkirby153.KirBot.music.MusicManager
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.embed.link
+import java.util.*
 
 class CommandQueue : CmdExecutor() {
 
     override fun execute(context: Context, cmdContext: CommandContext) {
+        if(cmdContext.get<String>("option") != null){
+            when(cmdContext.get<String>("option")!!.toLowerCase()){
+                "clear" -> {
+                    context.data.musicManager.queue.clear()
+                    context.send().success("Queue cleared!").queue()
+                }
+                "shuffle" -> {
+                    val queue = context.data.musicManager.queue.toTypedArray().toMutableList()
+                    val random = Random()
+                    context.data.musicManager.queue.clear()
+                    while(queue.isNotEmpty()){
+                        val element: MusicManager.QueuedSong = queue[random.nextInt(queue.size)]
+                        context.data.musicManager.queue.add(element)
+                        queue.remove(element)
+                    }
+                    context.send().success("Queue shuffled!").queue()
+                }
+            }
+            return
+        }
         val musicManager = context.data.musicManager
         if(musicManager.nowPlaying == null && musicManager.queue.isEmpty()){
             context.channel.sendMessage(":x: Nothing is playing right now!").queue()

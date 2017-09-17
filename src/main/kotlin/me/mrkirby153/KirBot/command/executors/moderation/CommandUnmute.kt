@@ -16,20 +16,20 @@ class CommandUnmute : CmdExecutor() {
         val user = cmdContext.get<User>("user") ?: throw CommandException("Please specify a user to unmute!")
         val member = user.getMember(context.guild) ?: throw CommandException("The user is not a member of this guild!")
 
-        if(context.channel !is TextChannel){
+        if (context.channel !is TextChannel) {
             throw CommandException("This command doesn't work in PMs")
         }
 
         val override = context.channel.getPermissionOverride(member)
-        if(override == null || !override.denied.contains(Permission.MESSAGE_WRITE)){
-            context.send().embed("Warning"){
-                setColor(Color.YELLOW)
-                setDescription("That user isn't muted!")
+        if (override == null || !override.denied.contains(Permission.MESSAGE_WRITE)) {
+            context.send().embed("Warning") {
+                color = Color.YELLOW
+                description { +"That user isn't muted!" }
             }.rest().queue()
             return
         }
-        if(override.denied.size > 1){
-            if(override.denied.contains(Permission.MESSAGE_WRITE))
+        if (override.denied.size > 1) {
+            if (override.denied.contains(Permission.MESSAGE_WRITE))
                 override.manager.clear(Permission.MESSAGE_WRITE).queue()
         } else {
             override.delete().queue()

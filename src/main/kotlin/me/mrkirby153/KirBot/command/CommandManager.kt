@@ -182,7 +182,7 @@ object CommandManager {
             category = CommandCategory.MUSIC
         })
 
-        register(CommandSpec("playat"){
+        register(CommandSpec("playat") {
             description = "Adds a song to a position in the queue"
             executor = CommandPlay()
             arguments(Arguments.number("position", true, 0.0), Arguments.rest("query/url"))
@@ -210,14 +210,14 @@ object CommandManager {
             category = CommandCategory.MUSIC
         })
 
-        register(CommandSpec("skip"){
+        register(CommandSpec("skip") {
             description = "Starts a vote to skip the currently playing song"
             arguments(Arguments.string("action", false))
             executor = CommandSkip()
             category = CommandCategory.MUSIC
         })
 
-        register(CommandSpec("dequeue"){
+        register(CommandSpec("dequeue") {
             description = "Removes a song from the queue"
             executor = CommandDeQueue()
             clearance = Clearance.BOT_MANAGER
@@ -235,7 +235,7 @@ object CommandManager {
             category = CommandCategory.MUSIC
         })
 
-        register(CommandSpec("move"){
+        register(CommandSpec("move") {
             description = "Moves the given song in the queue"
             clearance = Clearance.BOT_MANAGER
             arguments(Arguments.number("song"), Arguments.number("position", false))
@@ -243,7 +243,7 @@ object CommandManager {
             category = CommandCategory.MUSIC
         })
 
-        register(CommandSpec("pause"){
+        register(CommandSpec("pause") {
             description = "Pauses the music"
             executor = CommandStop()
             clearance = Clearance.BOT_MANAGER
@@ -251,7 +251,7 @@ object CommandManager {
             category = CommandCategory.MUSIC
         })
 
-        register(CommandSpec("connect"){
+        register(CommandSpec("connect") {
             aliases = mutableListOf("summon")
             executor = CommandConnect()
             clearance = Clearance.BOT_MANAGER
@@ -445,11 +445,11 @@ object CommandManager {
                 val missingPerms = c.permissions.filter { !context.guild.selfMember.hasPermission(context.channel as TextChannel, it) }
                 if (missingPerms.isNotEmpty()) {
                     context.send().embed("Missing Permissions") {
-                        setColor(Color.RED)
-                        setDescription(buildString {
-                            append("I cannot perform this action because I'm missing the following permissions:\n")
-                            append("`" + missingPerms.joinToString(",") + "`")
-                        })
+                        color = Color.RED
+                        description {
+                            +"I cannot perform this action because I'm missing the following permissions:\n"
+                            +"`${missingPerms.joinToString(",")}`"
+                        }
                     }.rest().queue()
                     return
                 }

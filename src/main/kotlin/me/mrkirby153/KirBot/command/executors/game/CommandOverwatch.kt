@@ -55,10 +55,8 @@ class CommandOverwatch : CmdExecutor() {
 
                 context.send().embed("Overwatch Stats for ${battleTag.replace("-", "#")}"){
                     description {
-                        buildString {
-                            appendln("Battle Tag: **" + (battleTag.replace("-", "#") link "https://playoverwatch.com/en-gb/career/pc/$region/$battleTag")+"**")
-                            appendln("Region: **[${region?.toUpperCase()}]()**")
-                        }
+                            +("Battle Tag: **" + (battleTag.replace("-", "#") link "https://playoverwatch.com/en-gb/career/pc/$region/$battleTag")+"**")
+                            +"\nRegion: **[${region?.toUpperCase()}]()**"
                     }
 
                     val overall = jso?.optJSONObject("stats")
@@ -67,57 +65,65 @@ class CommandOverwatch : CmdExecutor() {
                         return
                     }
                     overall.getJSONObject("quickplay")?.optJSONObject("overall_stats")?.let {
-                        setThumbnail(it.optString("avatar"))
+                        thumbnail = it.optString("avatar")
                     }
                     val lvl = overall.optJSONObject("quickplay")?.getJSONObject("overall_stats")?.getInt("level") ?: 0
                     val prestige = overall.optJSONObject("quickplay")?.getJSONObject("overall_stats")?.getInt("prestige") ?: 0
-                    field("General", false, "Level: [${prestige * 100 + lvl}]()")
 
-                    overall.getJSONObject("quickplay")?.optJSONObject("game_stats")?.let {
-                        field("Quick Play", true){
-                            buildString {
-                                appendln("K/D Ratio: **[${it.optDouble("kpd")}]()**")
-                                appendln("Time Played: **[${it.optDouble("time_played")} hours]()**")
-                            }
+                    fields {
+                        field {
+                            title = "General"
+                            description = "Level: [${prestige * 100 + lvl}]()"
                         }
-                    }
-
-                    overall.optJSONObject("competitive")?.let {
-                        field("Competitive", true){
-                            buildString {
-                                it.optJSONObject("average_stats")?.let {
-                                    appendln("Avg. Elims: **[${it.optDouble("eliminations_avg")}]()**")
-                                    appendln("Avg. Deaths: **[${it.optDouble("deaths_avg")}]()**")
-                                }
-                                it.optJSONObject("game_stats")?.let {
+                        overall.getJSONObject("quickplay")?.optJSONObject("game_stats")?.let {
+                            field {
+                                title = "Quick Play"
+                                inline = true
+                                description {
                                     appendln("K/D Ratio: **[${it.optDouble("kpd")}]()**")
                                     appendln("Time Played: **[${it.optDouble("time_played")} hours]()**")
                                 }
-                                it.optJSONObject("overall_stats")?.let {
-                                    appendln("Wins/Ties/Losses: **[${it.optInt("wins")}]()** | **[${it.optInt("ties")}]()** | **[${it.optInt("losses")}]()**")
-                                    val rank = it.optInt("comprank")
-                                    var displayRank = ""
-                                    if(rank == 0)
-                                        displayRank = "Unranked"
-                                   else  if(rank < 1499)
-                                        displayRank = "Bronze"
-                                    else if(rank in 1500..1999)
-                                        displayRank = "Silver"
-                                    else if (rank in 2000..2499)
-                                        displayRank = "Gold"
-                                    else if(rank in 2500..2999)
-                                        displayRank = "Platinum"
-                                    else if(rank in 3000..3499)
-                                        displayRank = "Diamond"
-                                    else if (rank in 3500..3999)
-                                        displayRank = "Master"
-                                    else if (rank >= 4000)
-                                        displayRank = "Grandmaster"
-                                    appendln("Rank: **${it.optInt("comprank")}** ($displayRank)")
-                                }
                             }
                         }
+                        overall.optJSONObject("competitive")?.let {
+                            field{
+                                title = "Competitive"
+                                inline = true
+                                description {
+                                    it.optJSONObject("average_stats")?.let {
+                                        appendln("Avg. Elims: **[${it.optDouble("eliminations_avg")}]()**")
+                                        appendln("Avg. Deaths: **[${it.optDouble("deaths_avg")}]()**")
+                                    }
+                                    it.optJSONObject("game_stats")?.let {
+                                        appendln("K/D Ratio: **[${it.optDouble("kpd")}]()**")
+                                        appendln("Time Played: **[${it.optDouble("time_played")} hours]()**")
+                                    }
+                                    it.optJSONObject("overall_stats")?.let {
+                                        appendln("Wins/Ties/Losses: **[${it.optInt("wins")}]()** | **[${it.optInt("ties")}]()** | **[${it.optInt("losses")}]()**")
+                                        val rank = it.optInt("comprank")
+                                        var displayRank = ""
+                                        if(rank == 0)
+                                            displayRank = "Unranked"
+                                        else  if(rank < 1499)
+                                            displayRank = "Bronze"
+                                        else if(rank in 1500..1999)
+                                            displayRank = "Silver"
+                                        else if (rank in 2000..2499)
+                                            displayRank = "Gold"
+                                        else if(rank in 2500..2999)
+                                            displayRank = "Platinum"
+                                        else if(rank in 3000..3499)
+                                            displayRank = "Diamond"
+                                        else if (rank in 3500..3999)
+                                            displayRank = "Master"
+                                        else if (rank >= 4000)
+                                            displayRank = "Grandmaster"
+                                        appendln("Rank: **${it.optInt("comprank")}** ($displayRank)")
+                                    }
+                                }
+                            }
 
+                        }
                     }
                 }.rest().queue()
             }

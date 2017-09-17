@@ -18,14 +18,30 @@ class CommandStats : CmdExecutor() {
         }
 
         context.send().embed("Bot Statistics") {
-            setColor(Color.BLUE)
-
-            field("Servers", true, guilds)
-            if (Bot.numShards != 1)
-                field("Shard", true, "${context.shard.id} / ${Bot.numShards}")
-            field("Users", true, users)
-            val time = System.currentTimeMillis() - Bot.startTime
-            field("Uptime", true, localizeTime((time / 1000).toInt()))
+            color = Color.BLUE
+            fields {
+                field {
+                    title = "Servers"
+                    inline = true
+                    description = guilds.toString()
+                }
+                if(Bot.numShards != -1)
+                    field {
+                        title = "Shard"
+                        inline = true
+                        description  = "${context.shard.id} / ${Bot.numShards}"
+                    }
+                field {
+                    title = "Users"
+                    inline = true
+                    description = users.toString()
+                }
+                field {
+                    title = "Uptime"
+                    inline = true
+                    description = localizeTime(((System.currentTimeMillis() - Bot.startTime) / 1000).toInt())
+                }
+            }
         }.rest().queue()
     }
 }

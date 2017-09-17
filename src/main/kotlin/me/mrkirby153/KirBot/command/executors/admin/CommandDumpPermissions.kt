@@ -18,10 +18,16 @@ class CommandDumpPermissions : CmdExecutor() {
             permissions.put(p, PermissionUtil.checkPermission(context.channel as Channel, context.member, p))
         }
         context.send().embed("Permissions"){
-            setColor(Color.GREEN)
-            setDescription("I have the following permissions in this channel")
-            permissions.forEach{
-                addField(it.key.getName(), it.value.toString(), true)
+            color = Color.GREEN
+            description { +"I have the following permissions in this channel" }
+            fields {
+                permissions.forEach {
+                    field {
+                        title = it.key.getName()
+                        description = it.value.toString()
+                        inline = true
+                    }
+                }
             }
         }.rest().queue {
             it.delete().queueAfter(30, TimeUnit.SECONDS)

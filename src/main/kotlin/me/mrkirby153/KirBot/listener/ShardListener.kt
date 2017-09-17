@@ -30,7 +30,7 @@ import java.awt.Color
 class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
 
     override fun onMessageReceived(event: MessageReceivedEvent?) {
-        if(event != null){
+        if (event != null) {
             Bot.seenStore.update(event.author, event.guild)
         }
 
@@ -72,7 +72,7 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
         GuildChannel.register(event.channel).queue()
     }
 
-    override fun onTextChannelUpdateName(event: TextChannelUpdateNameEvent){
+    override fun onTextChannelUpdateName(event: TextChannelUpdateNameEvent) {
         PanelAPI.getChannels(event.guild).queue {
             it.text.filter { it.channel.id == event.channel.id }.forEach { it.update().queue() }
         }
@@ -111,10 +111,22 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
                                 Quote.create(message).queue {
                                     message.pin().queue()
                                     event.channel.sendMessage(embed("Quote") {
-                                        setColor(Color.BLUE)
-                                        setDescription("A new quote has been made by `${event.member.user.name}#${event.member.user.discriminator}`")
-                                        field("ID", true, it.id)
-                                        field("Message", false, it.content)
+                                        color = Color.BLUE
+                                        description {
+                                            +"A new quote has been made by `${event.member.user.name}#${event.member.user.discriminator}`"
+                                        }
+                                        fields {
+                                            field {
+                                                title = "ID"
+                                                inline = true
+                                                description = it.id.toString()
+                                            }
+                                            field {
+                                                title = "Message"
+                                                inline = false
+                                                description = it.content
+                                            }
+                                        }
                                     }.build()).queue()
                                 }
                         }

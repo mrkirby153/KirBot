@@ -16,21 +16,32 @@ class CommandSeen: CmdExecutor() {
         val data = Bot.seenStore.get(user)
         if(data == null){
             context.send().embed("Seen") {
-                setDescription("No data recorded")
+                description { +"No data recorded" }
             }.rest().queue()
         } else {
             context.send().embed("Seen") {
-                field("Last Message", false, buildString {
-                    if(data.lastMessage != -1L) {
-                        append(SimpleDateFormat(Time.DATE_FORMAT_NOW).format(data.lastMessage))
-
-                        append(" (${Time.format(1, System.currentTimeMillis() - data.lastMessage, Time.TimeUnit.FIT)} ago)")
-                    } else {
-                        append("Unknown")
+                fields {
+                    field {
+                        title = "Last Message"
+                        inline = false
+                        description {
+                            if(data.lastMessage != -1L){
+                                +SimpleDateFormat(Time.DATE_FORMAT_NOW).format(data.lastMessage)
+                                +" (${Time.format(1, System.currentTimeMillis() - data.lastMessage, Time.TimeUnit.FIT)} ago)"
+                            }
+                        }
                     }
-                })
-                field("Server", false, data.server)
-                field("Online", false, data.status)
+                    field {
+                        title = "Server"
+                        inline = false
+                        description  = data.server
+                    }
+                    field {
+                        title = "Status"
+                        description = data.status.toString()
+                        inline = false
+                    }
+                }
             }.rest().queue()
         }
     }

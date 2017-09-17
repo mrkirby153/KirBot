@@ -46,28 +46,28 @@ class CommandSkip : CmdExecutor() {
         }
 
         val currentlyPlaying = musicManager.nowPlaying ?: throw CommandException("Nothing playing!")
-        val skipTimer = musicSettings?.skipTimer ?: 300
+        val skipTimer = musicSettings.skipTimer
         context.send().embed("Music") {
-            setColor(Color.GREEN)
-            setDescription(buildString {
-                append(b(context.author.name))
-                append(" has voted to skip the current track: \n")
-                append(currentlyPlaying.info.title link currentlyPlaying.info.uri)
-                append("\n React with :thumbsup: or :thumbsdown: to vote")
-                append("\n Whichever has the most votes in ${localizeTime(skipTimer)} wins!")
-            })
+            color = Color.GREEN
+            description {
+                +b(context.author.name)
+                +" has voted to skip the current track: \n"
+                +currentlyPlaying.info.title link currentlyPlaying.info.uri
+                +"\nReact with :thumbsup: or :thumbsdown: to vote"
+                +"\nWhichever has the most votes in ${localizeTime(skipTimer)} wins!"
+            }
         }.rest().queue { m ->
             skipCooldown[context.author.id] = -1
             m.addReaction("\uD83D\uDC4D").queue() // Thumbs up
             m.addReaction("\uD83D\uDC4E").queue() // Thumbs down
             m.editMessage(embed("Music") {
-                setDescription("Voting has ended. Check newer messages for results")
-                setColor(Color.RED)
+                description { +"Voting has ended. Check newer messages for results" }
+                color = Color.RED
             }.build()).queueAfter(skipTimer.toLong(), TimeUnit.SECONDS) {
                 if (musicManager.nowPlaying != currentlyPlaying) {
                     context.send().embed("Music") {
-                        setColor(Color.CYAN)
-                        setDescription("The song has changed, canceling vote")
+                        color = Color.CYAN
+                        description { +"The song has changed, canceling vote" }
                     }.rest().queue()
                     return@queueAfter
                 }
@@ -81,8 +81,8 @@ class CommandSkip : CmdExecutor() {
                     }
                 }
                 context.send().embed("Music") {
-                    setColor(Color.CYAN)
-                    setDescription(buildString {
+                    color = Color.CYAN
+                    description {
                         if (musicSettings.skipCooldown > 0)
                             skipCooldown[context.author.id] = System.currentTimeMillis() + (musicSettings.skipCooldown * 1000)
                         else
@@ -93,7 +93,7 @@ class CommandSkip : CmdExecutor() {
                         } else {
                             appendln("The vote has failed.")
                         }
-                    })
+                    }
                 }.rest().queue()
             }
         }

@@ -48,23 +48,42 @@ class AudioTrackLoader(val manager: MusicManager, val requestedBy: User, val con
         }
         context.send().embed("Added to Queue") {
             if (p0.info.uri.contains("youtu")) {
-                setThumbnail("https://i.ytimg.com/vi/${p0.info.identifier}/default.jpg")
+                thumbnail = "https://i.ytimg.com/vi/${p0.info.identifier}/default.jpg"
             }
-            setDescription("**${p0.info.title}**" link p0.info.uri)
-            field("Song Duration", true, MusicManager.parseMS(p0.duration))
+            description { +"**${p0.info.title}**" link p0.info.uri }
 
-            var queueLengthMs: Long = 0
-            manager.queue.subList(0, Math.min(Math.max(manager.queue.size - 1, 0), queuePosition)).forEach {
-                queueLengthMs += it.track.duration
+            fields {
+                field {
+                    title = "Song Duration"
+                    inline = true
+                    description = MusicManager.parseMS(p0.duration)
+                }
+                field {
+                    title = "Author"
+                    inline = true
+                    description = p0.info.author
+                }
+                var queueLengthMs: Long = 0
+                manager.queue.subList(0, Math.min(Math.max(manager.queue.size - 1, 0), queuePosition)).forEach {
+                    queueLengthMs += it.track.duration
+                }
+                if (manager.nowPlaying != null)
+                    queueLengthMs -= manager.nowPlaying!!.position
+                if (manager.nowPlaying == null)
+                    queueLengthMs = 0
+
+                val playing = if (queueLengthMs < 1000) "NOW!" else MusicManager.parseMS(queueLengthMs)
+                field {
+                    title = "Time until playing"
+                    inline = true
+                    description = playing
+                }
+                field {
+                    title = "Position in queue"
+                    inline = true
+                    description = (position + 1).toString()
+                }
             }
-            if (manager.nowPlaying != null)
-                queueLengthMs -= manager.nowPlaying!!.position
-            if (manager.nowPlaying == null)
-                queueLengthMs = 0
-            field("Author", true, p0.info.author)
-            val playing = if (queueLengthMs < 1000) "NOW!" else MusicManager.parseMS(queueLengthMs)
-            field("Time until playing", true, playing)
-            field("Position in queue", true, position + 1)
         }.rest().queue()
     }
 
@@ -100,7 +119,7 @@ class AudioTrackLoader(val manager: MusicManager, val requestedBy: User, val con
             duration += it.duration
         }
         context.send().embed("Added to Queue") {
-            setDescription(buildString {
+            description {
                 append("**${p0.name}**")
 
                 append("\n\n Queued `${p0.tracks.size - failedTracks.size}` songs totaling `${MusicManager.parseMS(duration)}`")
@@ -114,7 +133,7 @@ class AudioTrackLoader(val manager: MusicManager, val requestedBy: User, val con
                             return@forEach
                     }
                 }
-            })
+            }
         }.rest().queue()
         // If the bot isn't playing, start
         if (!context.guild.selfMember.voiceState.inVoiceChannel()) {

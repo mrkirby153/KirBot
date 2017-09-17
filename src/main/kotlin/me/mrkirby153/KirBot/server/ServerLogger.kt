@@ -14,10 +14,16 @@ class ServerLogger(val server: Guild) {
         val chanId: String = LogListener.logChannelCache[server.id] ?: return
         if (chanId.isNotEmpty())
             server.getTextChannelById(chanId)?.sendMessage(embed(subject) {
-                setDescription(message)
-                setColor(color)
-                fields.forEach {
-                    addField(it.name, it.value, it.inline)
+                description { +message }
+               this. color = color
+                fields {
+                    fields.forEach {
+                        field {
+                            title = it.name
+                            description  = it.value
+                            inline = it.inline
+                        }
+                    }
                 }
             }.build())?.queue()
     }

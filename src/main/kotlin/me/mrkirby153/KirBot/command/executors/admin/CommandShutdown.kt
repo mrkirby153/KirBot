@@ -10,8 +10,8 @@ class CommandShutdown : CmdExecutor() {
 
     override fun execute(context: Context, cmdContext: CommandContext) {
         context.send().embed("Shut Down") {
-            setColor(Color.RED)
-            setDescription("Good bye :wave:")
+            color = Color.RED
+            description { +"Good bye :wave:" }
         }.rest().queue{ Bot.stop() }
     }
 }

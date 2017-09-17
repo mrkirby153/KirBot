@@ -4,6 +4,7 @@ import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.command.executors.CmdExecutor
 import me.mrkirby153.KirBot.utils.Context
+import me.mrkirby153.KirBot.utils.embed.b
 import me.mrkirby153.KirBot.utils.embed.embed
 import me.mrkirby153.KirBot.utils.localizeTime
 import java.awt.Color
@@ -53,15 +54,20 @@ class CommandPoll : CmdExecutor() {
             throw CommandException("You can only have 9 options for the poll!")
         }
         context.send().embed("Poll") {
-            setColor(Color.GREEN)
-            setDescription("Vote by clicking the reactions on the choices below! Results will be final in ${localizeTime(duration)}")
-            if (question != null) {
-                field("Question", false, question)
-            }
-            field("Options") {
-                buildString {
-                    options.forEachIndexed { index, option ->
-                        appendln("${'\u0030' + (index)}\u20E3 **$option**")
+            color = Color.GREEN
+            description { +"Vote by clicking the reactions on the choices below! Results will be final in ${b(localizeTime(duration))}" }
+            fields {
+                if(question != null)
+                    field {
+                        title = "Question"
+                        description = question
+                    }
+                field {
+                    title = "Options"
+                    description {
+                        options.filter { it.isNotEmpty() }.forEachIndexed {index, option ->
+                            appendln("${'\u0030' + (index)}\u20E3 **$option**")
+                        }
                     }
                 }
             }
@@ -72,43 +78,51 @@ class CommandPoll : CmdExecutor() {
             }
 
             it.editMessage(embed("Poll") {
-                setDescription("Voting has ended, Check newer messages for results!")
-                setColor(Color.RED)
+                description {
+                    +"Voting has ended, Check newer messages for results"
+                }
+                color = Color.RED
             }.build()).queueAfter(duration.toLong(), TimeUnit.SECONDS) {
                 m.unpin().queue()
                 context.send().embed("Poll Results") {
-                    setColor(Color.CYAN)
-                    setDescription("Voting has ended! Here are the results!")
+                    color = Color.CYAN
+                    description {  +"Voting has ended! Here are the results" }
 
                     var topVotes = 0
                     val winners = mutableListOf<Int>()
+                    fields {
+                        if(question != null)
+                        field{
+                            title = "Question"
+                            description  = question
+                        }
 
-                    if (question != null)
-                        field("Question", false, question)
+                        field {
+                            title = "results"
+                            description {
+                                it.reactions.forEach { reaction ->
+                                    val value = reaction.emote.name[0] - '\u0030'
+                                    if (value !in 0 until options.size) return@forEach
 
-                    field("Results") {
-                        buildString {
-                            it.reactions.forEach { reaction ->
-                                val value = reaction.emote.name[0] - '\u0030'
-                                if (value !in 0..options.size - 1) return@forEach
+                                    options[value].let {
+                                        appendln("${reaction.emote.name} **$it** — __${reaction.count - 1} Votes__")
 
-                                options[value].let {
-                                    appendln("${reaction.emote.name} **$it** — __${reaction.count - 1} Votes__")
-
-                                    if (reaction.count - 1 > topVotes) {
-                                        winners.clear()
-                                        topVotes = reaction.count - 1
-                                        winners += value
-                                    } else if (reaction.count - 1 == topVotes) {
-                                        winners += value
+                                        if (reaction.count - 1 > topVotes) {
+                                            winners.clear()
+                                            topVotes = reaction.count - 1
+                                            winners += value
+                                        } else if (reaction.count - 1 == topVotes) {
+                                            winners += value
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
 
-                    field("Winner") {
-                        winners.joinToString(prefix = "**", postfix = "**") { options[it] }
+                        field {
+                            title = "Winner"
+                            description  = winners.joinToString(prefix = "**", postfix = "**") { options[it] }
+                        }
                     }
                 }.rest().queue()
             }

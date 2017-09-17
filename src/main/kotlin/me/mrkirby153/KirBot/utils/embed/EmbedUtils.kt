@@ -2,20 +2,6 @@ package me.mrkirby153.KirBot.utils.embed
 
 import net.dv8tion.jda.core.EmbedBuilder
 
-@JvmOverloads
-fun embed(title: String? = null): EmbedMaker = EmbedMaker().apply {
-    setTitle(title)
-}
-
-inline fun embed(title: String? = null, value: EmbedMaker.() -> Unit): EmbedMaker {
-    return embed(title).apply(value)
-}
-
-inline fun EmbedBuilder.description(value: () -> Any?): EmbedBuilder {
-    setDescription(value().toString())
-    return this
-}
-
 /** Bold strings.*/
 inline fun b(string: String) = "**$string**"
 

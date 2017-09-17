@@ -30,10 +30,9 @@ class ResponseBuilder(val context: Context) {
      * @return The Message created by this function.
      */
     fun info(msg: String): RestAction<Message> {
-        return embed {
-            setTitle("Info")
-            setDescription(msg)
-            setColor(info_color)
+        return embed("Info") {
+            description { +msg }
+            color = info_color
         }.rest()
     }
 
@@ -44,10 +43,9 @@ class ResponseBuilder(val context: Context) {
      * @return The message created by this function
      */
     fun success(msg: String): RestAction<Message> {
-        return embed {
-            setTitle("Success")
-            setDescription(msg)
-            setColor(Color.GREEN)
+        return embed("Success") {
+            description { +msg }
+            color = Color.GREEN
         }.rest()
     }
 
@@ -58,10 +56,9 @@ class ResponseBuilder(val context: Context) {
      * @return The Message created by this function.
      */
     fun error(msg: String): RestAction<Message> {
-        return embed {
-            setTitle("Error")
-            setDescription(msg)
-            setColor(error_color)
+        return embed("Error") {
+            description { +msg }
+            color = error_color
         }.rest()
     }
 
@@ -71,10 +68,10 @@ class ResponseBuilder(val context: Context) {
      * @return The Message created by this function.
      */
     fun exception(exception: Exception): RestAction<Message> {
-        return embed {
-            setTitle("Exception")
-            setDescription(exception.message)
-            setColor(error_color)
+        return embed("Exception") {
+            if (exception.message != null)
+                description { +exception.message!! }
+            color = error_color
         }.rest()
     }
 
@@ -86,8 +83,9 @@ class ResponseBuilder(val context: Context) {
      */
     @JvmOverloads
     fun embed(title: String? = null): ResponseEmbedBuilder = ResponseEmbedBuilder().apply {
-        setTitle(title)
-        setColor(info_color)
+        if (title != null)
+            title { +title }
+        color = info_color
     }
 
     /**
@@ -100,8 +98,7 @@ class ResponseBuilder(val context: Context) {
         return embed(title).apply(value)
     }
 
-    @Suppress("NOTHING_TO_INLINE")
-    inner class ResponseEmbedBuilder : EmbedProxy<ResponseEmbedBuilder>() {
+    inner class ResponseEmbedBuilder : EmbedBuilder() {
         fun rest(): RestAction<Message> {
             return context.channel.sendMessage(build())
         }

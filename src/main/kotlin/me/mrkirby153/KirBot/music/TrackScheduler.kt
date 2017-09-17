@@ -25,23 +25,23 @@ class TrackScheduler(val manager: MusicManager) : AudioEventAdapter() {
             // Announce
             val channel = manager.guild.getTextChannelById(track.queuedIn) ?: return
             channel.sendMessage(embed {
-                setColor(Color.BLUE)
+                color = Color.BLUE
                 if(track.track.info.uri.contains("youtu")){
-                    setThumbnail("https://i.ytimg.com/vi/${track.track.info.identifier}/default.jpg")
+                    thumbnail ="https://i.ytimg.com/vi/${track.track.info.identifier}/default.jpg"
                 }
-                setDescription(buildString {
-                    append("**Now Playing**" link track.track.info.uri)
-                    append("\n\n")
-                    append(track.track.info.title)
-                    append("\n\nLength: `${MusicManager.parseMS(track.track.duration)}`")
-                    append("\n\nRequested By: `${track.queuedBy.name}`")
+                description {
+                    +"**Now Playing**" link track.track.info.uri
+                    +"\n\n"
+                    +track.track.info.title
+                    +"\n\nLength: `${MusicManager.parseMS(track.track.duration)}`"
+                    +"\n\nRequested By: `${track.queuedBy.name}`"
                     val next = manager.queue.peekFirst()
-                    append("\n\nUp Next: ")
+                    +"\n\nUp Next: "
                     if (next == null)
-                        append("Noting")
+                        +"Noting"
                     else
-                        append("`${next.track.info.title}`")
-                })
+                        +"`${next.track.info.title}`"
+                }
             }.build()).queue()
         } else {
             // Reset

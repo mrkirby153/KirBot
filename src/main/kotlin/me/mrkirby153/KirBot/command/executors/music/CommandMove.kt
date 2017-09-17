@@ -18,13 +18,13 @@ class CommandMove : CmdExecutor() {
             val queuedSong = context.data.musicManager.queue.removeAt(max.toInt())
             context.data.musicManager.queue.add(Math.max(0, toPosition.toInt() - 1), queuedSong)
             context.send().embed {
-                setDescription(buildString {
-                    append("**${queuedSong.track.info.title}**" link queuedSong.track.info.uri)
-                    if (queuedSong.track.info.uri.contains("youtu")) {
-                        setThumbnail("https://i.ytimg.com/vi/${queuedSong.track.info.identifier}/default.jpg")
-                    }
-                    appendln("\nMoved `${queuedSong.track.info.title}` to position ${toPosition.toInt()} in the queue")
-                })
+                description {
+                    +"**${queuedSong.track.info.title}**" link queuedSong.track.info.uri
+                    +"\nMoved `${queuedSong.track.info.title}` to position ${toPosition.toInt()} in the queue"
+                }
+                if (queuedSong.track.info.uri.contains("youtu")) {
+                    thumbnail = "https://i.ytimg.com/vi/${queuedSong.track.info.identifier}/default.jpg"
+                }
             }.rest().queue()
         } catch (e: IndexOutOfBoundsException) {
             throw CommandException("There is nothing queued in that position")

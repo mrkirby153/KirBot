@@ -36,37 +36,43 @@ class CommandQueue : CmdExecutor() {
             return
         }
         context.send().embed {
-            setDescription(buildString {
-                append("**Music Queue :musical_note: **" link musicManager.nowPlaying!!.info.uri)
-                append("\n\n__Now Playing__")
-                append("\n\n")
-                val nowPlaying = musicManager.nowPlaying ?: return@buildString
-                if (nowPlaying.info.uri.contains("youtu")) {
-                    setThumbnail("https://i.ytimg.com/vi/${nowPlaying.info.identifier}/default.jpg")
-                }
-                append(if (musicManager.playing) ":loud_sound:" else ":speaker:")
-                val d = "${MusicManager.parseMS(nowPlaying.position)}/${MusicManager.parseMS(nowPlaying.info.length)}"
-                append((nowPlaying.info.title link nowPlaying.info.uri) + " ($d)")
-                append("\n\n:arrow_down_small: __Up Next__ :arrow_down_small:")
-                append("\n\n")
-                if (musicManager.queue.size == 0)
-                    append("Nothing")
+            val nowPlaying = musicManager.nowPlaying ?: return@embed
+            if (nowPlaying.info.uri.contains("youtu")) {
+                thumbnail ="https://i.ytimg.com/vi/${nowPlaying.info.identifier}/default.jpg"
+            }
+            description {
+                +"**Music Queue :muscal_note:**" link musicManager.nowPlaying!!.info.uri
+                +"\n\n__Now Playing__"
+                +"\n\n"
+                if(musicManager.playing)
+                    +":loud_sound:"
+                else
+                    +":speaker"
+                val position  = "${MusicManager.parseMS(nowPlaying.position)}/${MusicManager.parseMS(nowPlaying.info.length)}"
+                +nowPlaying.info.title link nowPlaying.info.uri
+                +"($position)"
+                +"\n\n:arrow_down_small: __Up Next__ :arrow_down_small:"
+                +"\n\n"
+                if(musicManager.queue.size == 0)
+                    +"Nothing"
                 else
                     musicManager.queue.forEachIndexed { index, (track) ->
-                        if (length < 1500)
+                        if(length < 1500)
                             appendln(" " + (index + 1) + ". " + (track.info.title link track.info.uri) + " (${MusicManager.parseMS(track.duration)})")
-
                     }
-                append("\n\n")
-                append("**View The Full Queue**" link "https://kirbot.mrkirby153.com/${context.guild.id}/queue")
-
-                var duration = 0L
-                musicManager.queue.forEach {
-                    duration += it.track.duration
+                +"\n\n"
+                +"**View The Full Queue**" link "https://kirbot.mrkirby153.com/${context.guild.id}/queue"
+            }
+            footer {
+                text {
+                    var duration = 0L
+                    musicManager.queue.forEach {
+                        duration += it.track.duration
+                    }
+                    duration += nowPlaying.duration
+                    append("\n\n**${MusicManager.parseMS(duration)} | ${musicManager.queue.size + 1} songs**")
                 }
-                duration += nowPlaying.duration
-                append("\n\n**${MusicManager.parseMS(duration)} | ${musicManager.queue.size + 1} songs**")
-            })
+            }
         }.rest().queue()
     }
 }

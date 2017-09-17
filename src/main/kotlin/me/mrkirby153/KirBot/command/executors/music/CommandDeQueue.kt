@@ -13,13 +13,12 @@ class CommandDeQueue : CmdExecutor() {
         try {
             val song = context.data.musicManager.queue.removeAt(index.toInt())
             context.send().embed {
-                setDescription(buildString {
-                    append("**${song.track.info.title}**" link song.track.info.uri)
-                    if (song.track.info.uri.contains("youtu")) {
-                        setThumbnail("https://i.ytimg.com/vi/${song.track.info.identifier}/default.jpg")
-                    }
-                    appendln("\nRemoved `${song.track.info.title}` from the queue")
-                })
+                description {
+                    +"**${song.track.info.title}**" link song.track.info.uri
+                    +"\nRemoved `${song.track.info.title}` from the queue"
+                }
+                if (song.track.info.uri.contains("youtu"))
+                    thumbnail = "https://i.ytimg.com/vi/${song.track.info.identifier}/default.jpg"
             }.rest().queue()
         } catch (e: IndexOutOfBoundsException) {
             throw CommandException("Position must be between 0 and ${context.data.musicManager.queue.size}")

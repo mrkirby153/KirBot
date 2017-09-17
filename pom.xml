@@ -144,11 +144,6 @@
             <version>2.6.2</version>
         </dependency>
         <dependency>
-            <groupId>com.github.JDA-Applications</groupId>
-            <artifactId>Kotlin-JDA</artifactId>
-            <version>v0.BETA.1</version>
-        </dependency>
-        <dependency>
             <groupId>net.dv8tion</groupId>
             <artifactId>JDA</artifactId>
             <version>${jda.version}</version>

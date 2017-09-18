@@ -52,7 +52,7 @@ class GuildCommand(val name: String, val data: String, val clearance: Clearance,
     }
 }
 
-class GuildSettings(val name: String, val realnameSetting: RealnameSetting, val requireRealname: Boolean,
+class GuildSettings(val name: String, val nick: String?, val realnameSetting: RealnameSetting, val requireRealname: Boolean,
                     val cmdDiscriminator: String, val logChannel: String?, val whitelistedChannels: List<String>,
                     val managerRoles: List<String>) {
     companion object {
@@ -61,7 +61,8 @@ class GuildSettings(val name: String, val realnameSetting: RealnameSetting, val 
                 val managementRoles = json.getJSONArray("bot_manager")
                 val roles = mutableListOf<String>()
                 managementRoles.forEach { roles.add(it.toString()) }
-                return GuildSettings(json.getString("name"), RealnameSetting.valueOf(json.getString("realname")),
+                return GuildSettings(json.getString("name"), json.optString("bot_nick"),
+                        RealnameSetting.valueOf(json.getString("realname")),
                         json.getInt("require_realname") == 1,
                         json.getString("command_discriminator"), json.optString("log_channel"),
                         json.getJSONArray("cmd_whitelist").map { it.toString() }, roles)

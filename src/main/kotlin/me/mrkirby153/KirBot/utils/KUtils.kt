@@ -133,9 +133,9 @@ fun TextChannel.hide() {
     }
     val public = this.getPermissionOverride(guild.publicRole) ?: this.createPermissionOverride(guild.publicRole).complete()
     public.manager.deny(Permission.MESSAGE_READ).queue()
-   PanelAPI.getChannels(this.guild).queue {
-       it.text.filter { it.id == this.id }.forEach { it.update().queue() }
-   }
+    PanelAPI.getChannels(this.guild).queue {
+        it.text.filter { it.id == this.id }.forEach { it.update().queue() }
+    }
 }
 
 fun TextChannel.unhide() {
@@ -155,6 +155,13 @@ fun Guild.sync() {
             }
         else
             GuildSettings.get(this).queue { settings ->
+                if (this.selfMember.nickname != settings.nick) {
+                    Bot.LOG.debug("Updating nickname to \"${settings.nick}\"")
+                    if (settings.nick?.isEmpty() == true)
+                        this.controller.setNickname(this.selfMember, null).queue()
+                    else
+                        this.controller.setNickname(this.selfMember, settings.nick).queue()
+                }
                 if (settings.name != this.name) {
                     Bot.LOG.debug("Name has changed on ${this.name} syncing")
                     PanelAPI.setServerName(this).queue()

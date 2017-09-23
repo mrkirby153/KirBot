@@ -27,8 +27,8 @@ abstract class ApiRequest<out T>(val url: String, val method: Methods = Methods.
     }
 
     open fun onHttpError(error: Int, body: String){
-        Bot.LOG.fatal("[HTTP ERROR] Encountered an error ($error) when accessing \"$url\"")
-        Bot.LOG.fatal("[HTTP ERROR] $body")
+        Bot.LOG.error("[HTTP ERROR] Encountered an error ($error) when accessing \"$url\"")
+        Bot.LOG.error("[HTTP ERROR] $body")
     }
 }
 

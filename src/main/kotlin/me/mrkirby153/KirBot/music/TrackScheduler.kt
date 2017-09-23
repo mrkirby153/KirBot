@@ -24,7 +24,7 @@ class TrackScheduler(val manager: MusicManager) : AudioEventAdapter() {
             manager.audioPlayer.playTrack(track.track)
             // Announce
             val channel = manager.guild.getTextChannelById(track.queuedIn) ?: return
-            channel.sendMessage(embed {
+            channel.sendMessage(embed(track.track.info.title) {
                 color = Color.BLUE
                 if(track.track.info.uri.contains("youtu")){
                     thumbnail ="https://i.ytimg.com/vi/${track.track.info.identifier}/default.jpg"

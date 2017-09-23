@@ -64,7 +64,8 @@ class AudioTrackLoader(val manager: MusicManager, val requestedBy: User, val con
                     description = p0.info.author
                 }
                 var queueLengthMs: Long = 0
-                manager.queue.subList(0, Math.min(Math.max(manager.queue.size - 1, 0), queuePosition)).forEach {
+                val toIndex = if(queuePosition != 0) Math.min(Math.max(manager.queue.size - 1, 0), queuePosition) else manager.queue.size
+                manager.queue.subList(0, toIndex).forEach {
                     queueLengthMs += it.track.duration
                 }
                 if (manager.nowPlaying != null)

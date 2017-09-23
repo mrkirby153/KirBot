@@ -56,7 +56,7 @@ object RedisConnector {
                         it.psubscribe(RedisHandler(), "kirbot:*")
                     }
                 } catch (e: Exception) {
-                    Bot.LOG.fatal("Redis listener encountered an exception, restarting")
+                    Bot.LOG.error("Redis listener encountered an exception, restarting")
                 }
             }
         }

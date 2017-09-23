@@ -33,6 +33,7 @@ class YoutubeSearch(val query: String) {
             throw CommandException(it.getString("message"))
         }
 
+        response.close()
         val jsonArray = jsonObject.optJSONArray("items")
         if(jsonArray == null || jsonArray.count() == 0)
             throw CommandException("No items returned!")

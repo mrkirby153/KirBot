@@ -1,5 +1,7 @@
 package me.mrkirby153.KirBot
 
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.Logger
 import com.sedmelluq.discord.lavaplayer.jdaudp.NativeAudioSendFactory
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
@@ -29,13 +31,13 @@ import net.dv8tion.jda.core.entities.User
 import net.dv8tion.jda.core.events.ReadyEvent
 import net.dv8tion.jda.core.hooks.ListenerAdapter
 import net.dv8tion.jda.core.requests.SessionReconnectQueue
-import net.dv8tion.jda.core.utils.SimpleLog
+import org.slf4j.LoggerFactory
 import java.util.concurrent.Executors
 
 object Bot {
 
     @JvmStatic
-    val LOG = SimpleLog.getLog("KirBot")
+    val LOG = LoggerFactory.getLogger("KirBot")
 
     var initialized = false
 
@@ -73,16 +75,19 @@ object Bot {
 
 
     fun start(token: String) {
+        if (debug) {
+            ApiRequestProcessor.debug()
+            (LOG as? Logger)?.let { logger ->
+                logger.level = Level.DEBUG
+            }
+        }
+        (LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME) as? Logger)?.level = Level.valueOf(System.getProperty("kirbot.global_log", "INFO"))
         // Start up sentry
         Sentry.init()
         Bot.LOG.debug("Starting Sentry")
 
         Thread.setDefaultUncaughtExceptionHandler(UncaughtErrorReporter())
 
-        if (debug) {
-            ApiRequestProcessor.debug()
-            LOG.level = SimpleLog.Level.DEBUG
-        }
         if (initialized)
             throw IllegalStateException("Bot has already been initialized!")
         initialized = true

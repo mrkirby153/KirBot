@@ -1,13 +1,15 @@
 package me.mrkirby153.KirBot.database.api
 
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.Logger
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.utils.HttpUtils
-import net.dv8tion.jda.core.utils.SimpleLog
 import okhttp3.FormBody
 import okhttp3.Request
 import okhttp3.RequestBody
 import org.json.JSONObject
 import org.json.JSONTokener
+import org.slf4j.LoggerFactory
 
 class ApiRequestProcessor(val apiRequest: ApiRequest<*>) : Runnable {
 
@@ -17,16 +19,17 @@ class ApiRequestProcessor(val apiRequest: ApiRequest<*>) : Runnable {
         } catch (e: Throwable) {
             if (Bot.debug)
                 e.printStackTrace()
-            Bot.LOG.fatal("Caught exception from request ${apiRequest.javaClass}: [$e]")
+            Bot.LOG.error("Caught exception from request ${apiRequest.javaClass}: [$e]")
         }
     }
 
     companion object {
 
-        private val debugLogger = SimpleLog.getLog("ApiProcessor")
+        private val debugLogger = LoggerFactory.getLogger(ApiRequestProcessor::class.java)
 
         fun debug() {
-            debugLogger.level = SimpleLog.Level.DEBUG
+//            debugLogger.level = SimpleLog.Level.DEBUG
+            (debugLogger as? Logger)?.level = Level.DEBUG
         }
 
         fun run(apiRequest: ApiRequest<*>): Any? {

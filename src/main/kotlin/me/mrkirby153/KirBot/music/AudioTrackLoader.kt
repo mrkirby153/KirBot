@@ -4,6 +4,7 @@ import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
+import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.Time
 import me.mrkirby153.KirBot.utils.embed.link
@@ -50,7 +51,7 @@ class AudioTrackLoader(val manager: MusicManager, val requestedBy: User, val con
             if (p0.info.uri.contains("youtu")) {
                 thumbnail = "https://i.ytimg.com/vi/${p0.info.identifier}/default.jpg"
             }
-            description { +"**${p0.info.title}**" link p0.info.uri }
+            description { +("**${p0.info.title}**" link p0.info.uri) }
 
             fields {
                 field {
@@ -64,12 +65,15 @@ class AudioTrackLoader(val manager: MusicManager, val requestedBy: User, val con
                     description = p0.info.author
                 }
                 var queueLengthMs: Long = 0
-                val toIndex = if(queuePosition != 0) Math.min(Math.max(manager.queue.size - 1, 0), queuePosition) else manager.queue.size
+                val toIndex = if(queuePosition != -1) Math.min(Math.max(manager.queue.size - 1, 0), queuePosition) else manager.queue.size
                 manager.queue.subList(0, toIndex).forEach {
+                    Bot.LOG.debug("Song: ${it.track.info.title} is ${it.track.duration} long")
                     queueLengthMs += it.track.duration
                 }
-                if (manager.nowPlaying != null)
+                if (manager.nowPlaying != null) {
+                    queueLengthMs += manager.nowPlaying!!.duration
                     queueLengthMs -= manager.nowPlaying!!.position
+                }
                 if (manager.nowPlaying == null)
                     queueLengthMs = 0
 
@@ -86,6 +90,7 @@ class AudioTrackLoader(val manager: MusicManager, val requestedBy: User, val con
                 }
             }
         }.rest().queue()
+        manager.updateQueue()
     }
 
     override fun noMatches() {

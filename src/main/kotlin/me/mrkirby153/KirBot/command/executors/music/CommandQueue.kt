@@ -41,13 +41,13 @@ class CommandQueue : CmdExecutor() {
                 thumbnail ="https://i.ytimg.com/vi/${nowPlaying.info.identifier}/default.jpg"
             }
             description {
-                +"**Music Queue :muscal_note:**" link musicManager.nowPlaying!!.info.uri
+                +("**Music Queue :musical_note:**" link musicManager.nowPlaying!!.info.uri)
                 +"\n\n__Now Playing__"
                 +"\n\n"
                 if(musicManager.playing)
                     +":loud_sound:"
                 else
-                    +":speaker"
+                    +":speaker:"
                 val position  = "${MusicManager.parseMS(nowPlaying.position)}/${MusicManager.parseMS(nowPlaying.info.length)}"
                 +nowPlaying.info.title link nowPlaying.info.uri
                 +"($position)"
@@ -61,7 +61,7 @@ class CommandQueue : CmdExecutor() {
                             appendln(" " + (index + 1) + ". " + (track.info.title link track.info.uri) + " (${MusicManager.parseMS(track.duration)})")
                     }
                 +"\n\n"
-                +"**View The Full Queue**" link "https://kirbot.mrkirby153.com/${context.guild.id}/queue"
+                +("**View The Full Queue**" link "https://kirbot.mrkirby153.com/${context.guild.id}/queue")
             }
             footer {
                 text {
@@ -70,7 +70,7 @@ class CommandQueue : CmdExecutor() {
                         duration += it.track.duration
                     }
                     duration += nowPlaying.duration
-                    append("\n\n**${MusicManager.parseMS(duration)} | ${musicManager.queue.size + 1} songs**")
+                    append("\n\n${MusicManager.parseMS(duration)} | ${musicManager.queue.size + 1} songs")
                 }
             }
         }.rest().queue()

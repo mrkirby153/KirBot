@@ -9,6 +9,7 @@ class CommandDisconnect: CmdExecutor() {
         context.data.musicManager.disconnect()
         context.data.musicManager.queue.clear()
         context.data.musicManager.audioPlayer.playTrack(null)
+        context.data.musicManager.resetQueue()
         context.send().success("Disconnected and cleared the queue :wave:").queue()
     }
 }

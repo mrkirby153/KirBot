@@ -127,7 +127,8 @@ open class EmbedBuilder {
 
     fun build(): MessageEmbed {
         val embed = net.dv8tion.jda.core.EmbedBuilder()
-        embed.setTitle(title.toString())
+        if (title.toString().isNotEmpty())
+            embed.setTitle(title.toString())
         embed.setDescription(description.toString())
         fields.fields.forEach { field ->
             if (field.blank) {

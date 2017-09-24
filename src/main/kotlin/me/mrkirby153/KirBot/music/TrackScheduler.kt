@@ -47,6 +47,7 @@ class TrackScheduler(val manager: MusicManager) : AudioEventAdapter() {
             // Reset
             Bot.LOG.debug("[MUSIC/${manager.guild.id}] Queue is empty, shutting down")
         }
+        manager.updateQueue()
     }
 
     override fun onTrackStuck(player: AudioPlayer?, track: AudioTrack?, thresholdMs: Long) {

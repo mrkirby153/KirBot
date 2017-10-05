@@ -4,6 +4,7 @@ import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.command.executors.CmdExecutor
 import me.mrkirby153.KirBot.music.MusicManager
 import me.mrkirby153.KirBot.utils.Context
+import me.mrkirby153.KirBot.utils.botUrl
 import me.mrkirby153.KirBot.utils.embed.link
 import java.util.*
 
@@ -61,7 +62,7 @@ class CommandQueue : CmdExecutor() {
                             appendln(" " + (index + 1) + ". " + (track.info.title link track.info.uri) + " (${MusicManager.parseMS(track.duration)})")
                     }
                 +"\n\n"
-                +("**View The Full Queue**" link "https://kirbot.mrkirby153.com/${context.guild.id}/queue")
+                +("**View The Full Queue**" link botUrl("${context.guild.id}/queue"))
             }
             footer {
                 text {

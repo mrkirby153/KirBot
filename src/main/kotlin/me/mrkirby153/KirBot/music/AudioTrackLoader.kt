@@ -71,7 +71,6 @@ class AudioTrackLoader(val manager: MusicManager, val requestedBy: User, val con
                     queueLengthMs += it.track.duration
                 }
                 if (manager.nowPlaying != null) {
-                    queueLengthMs += manager.nowPlaying!!.duration
                     queueLengthMs -= manager.nowPlaying!!.position
                 }
                 if (manager.nowPlaying == null)

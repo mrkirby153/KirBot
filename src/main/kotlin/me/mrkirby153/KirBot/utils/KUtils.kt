@@ -122,6 +122,9 @@ inline fun <T : AutoCloseable, R> T.use(block: (T) -> R): R {
         }
     }
 }
+infix fun Any.botUrl(url: String): String {
+    return Bot.constants.getProperty("bot-base-url") + "/" + url
+}
 
 fun TextChannel.hide() {
     this.permissionOverrides.filter { it.allowed.contains(Permission.MESSAGE_READ) }.forEach {

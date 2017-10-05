@@ -41,6 +41,16 @@ class CommandStats : CmdExecutor() {
                     inline = true
                     description = localizeTime(((System.currentTimeMillis() - Bot.startTime) / 1000).toInt())
                 }
+                field {
+                    title = "Version"
+                    inline = true
+                    description = Bot.constants.getProperty("bot-version")
+                }
+                field {
+                    title = "URL"
+                    inline = true
+                    description  = Bot.constants.getProperty("bot-base-url")
+                }
             }
         }.rest().queue()
     }

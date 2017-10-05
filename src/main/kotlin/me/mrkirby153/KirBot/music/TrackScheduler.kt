@@ -30,7 +30,7 @@ class TrackScheduler(val manager: MusicManager) : AudioEventAdapter() {
                     thumbnail ="https://i.ytimg.com/vi/${track.track.info.identifier}/default.jpg"
                 }
                 description {
-                    +"**Now Playing**" link track.track.info.uri
+                    +("**Now Playing**" link track.track.info.uri)
                     +"\n\n"
                     +track.track.info.title
                     +"\n\nLength: `${MusicManager.parseMS(track.track.duration)}`"

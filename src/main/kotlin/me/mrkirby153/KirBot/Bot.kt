@@ -32,6 +32,7 @@ import net.dv8tion.jda.core.events.ReadyEvent
 import net.dv8tion.jda.core.hooks.ListenerAdapter
 import net.dv8tion.jda.core.requests.SessionReconnectQueue
 import org.slf4j.LoggerFactory
+import java.io.File
 import java.util.concurrent.Executors
 
 object Bot {
@@ -63,6 +64,8 @@ object Bot {
 
     private val loadingShards = mutableListOf<Int>()
 
+    val constants = File(Bot.javaClass.getResource("/constants.properties").toURI()).readProperties()
+
     val playerManager: AudioPlayerManager = DefaultAudioPlayerManager().apply {
         registerSourceManager(YoutubeAudioSourceManager())
         registerSourceManager(SoundCloudAudioSourceManager())
@@ -82,6 +85,8 @@ object Bot {
             }
         }
         (LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME) as? Logger)?.level = Level.valueOf(System.getProperty("kirbot.global_log", "INFO"))
+        Bot.LOG.info("Starting KirBot ${constants.getProperty("bot-version")}")
+        Bot.LOG.debug("\t + Base URL: ${constants.getProperty("bot-base-url")}")
         // Start up sentry
         Sentry.init()
         Bot.LOG.debug("Starting Sentry")

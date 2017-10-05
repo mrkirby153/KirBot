@@ -20,6 +20,7 @@ import me.mrkirby153.KirBot.command.executors.group.*
 import me.mrkirby153.KirBot.command.executors.moderation.*
 import me.mrkirby153.KirBot.command.executors.music.*
 import me.mrkirby153.KirBot.command.executors.polls.CommandPoll
+import me.mrkirby153.KirBot.command.help.HelpManager
 import me.mrkirby153.KirBot.command.processors.LaTeXProcessor
 import me.mrkirby153.KirBot.data.ServerData
 import me.mrkirby153.KirBot.database.api.GuildCommand
@@ -42,7 +43,10 @@ object CommandManager {
 
     val cmds = mutableListOf<CommandSpec>()
 
+    val helpManager = HelpManager()
+
     init {
+        helpManager.load()
         register(CommandSpec("shutdown") {
             clearance = Clearance.BOT_OWNER
             description = "Shuts down the robot"
@@ -249,6 +253,7 @@ object CommandManager {
             clearance = Clearance.BOT_MANAGER
             description = "Pauses the music"
             category = CommandCategory.MUSIC
+            aliases.add("stop")
         })
 
         register(CommandSpec("connect") {
@@ -285,12 +290,6 @@ object CommandManager {
             executor = CommandHelp()
             category = CommandCategory.MISCELLANEOUS
             addExample("help", "help help")
-            ignoreWhitelist = true
-        })
-
-        register(CommandSpec("history") {
-            executor = CommandHistory()
-            category = CommandCategory.MISCELLANEOUS
             ignoreWhitelist = true
         })
 
@@ -512,7 +511,7 @@ object CommandManager {
         }
         // Call custom customCommands
         Bot.LOG.debug("Checking for custom command \"$command\"")
-        val customCommand = findCustomCommand(command, shard.customCommands[guild.id]) ?: return
+        val customCommand = findCommand(command, shard.customCommands[guild.id]) ?: return
         val clearance = getEffectivePermission(customCommand.name, guild, customCommand.clearance)
         if (clearance.value > context.author.getClearance(guild).value) {
             context.send().error("You do not have permission to perform that command").queue {
@@ -544,7 +543,7 @@ object CommandManager {
         return toReturn
     }
 
-    private fun findCustomCommand(name: String, cmds: List<GuildCommand>): GuildCommand? {
+    private fun findCommand(name: String, cmds: List<GuildCommand>): GuildCommand? {
         cmds.forEach {
             if (it.name.equals(name, true))
                 return it
@@ -603,7 +602,7 @@ object CommandManager {
         channel.sendMessage(response).queue()
     }
 
-    fun findCustomCommand(command: String): CommandSpec? {
+    fun findCommand(command: String): CommandSpec? {
         var foundCommand: CommandSpec? = null
         cmds.forEach {
             if (it.command.equals(command, true) || it.aliases.map(String::toLowerCase).contains(command.toLowerCase()))

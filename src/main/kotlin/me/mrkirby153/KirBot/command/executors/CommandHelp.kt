@@ -4,6 +4,7 @@ import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.CommandManager
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.utils.Context
+import me.mrkirby153.KirBot.utils.botUrl
 import me.mrkirby153.KirBot.utils.embed.link
 import java.awt.Color
 
@@ -17,7 +18,7 @@ class CommandHelp : CmdExecutor() {
                 description {
                     +"Below is a list of all the customCommands available. \n Type `${prefix}help <command>` for more info"
                     +"\n\nFor custom commands available on this server, "
-                    +"Click here" link "https://kirbot.mrkirby153.com/${context.guild.id}/customCommands"
+                    +("Click here" link botUrl("${context.guild.id}/customCommands"))
                 }
                 fields {
                     field {
@@ -36,6 +37,16 @@ class CommandHelp : CmdExecutor() {
                             }
                         }
                     }
+                    if (context.shard.customCommands[context.guild.id].isNotEmpty())
+                        field {
+                            title = "Other Commands"
+                            inline = true
+                            description {
+                                context.shard.customCommands[context.guild.id].forEach {
+                                    +"[$prefix${it.name}]()\n"
+                                }
+                            }
+                        }
                 }
             }.rest().queue()
         } else {

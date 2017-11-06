@@ -32,7 +32,6 @@ import net.dv8tion.jda.core.events.ReadyEvent
 import net.dv8tion.jda.core.hooks.ListenerAdapter
 import net.dv8tion.jda.core.requests.SessionReconnectQueue
 import org.slf4j.LoggerFactory
-import java.io.File
 import java.util.concurrent.Executors
 
 object Bot {
@@ -64,7 +63,7 @@ object Bot {
 
     private val loadingShards = mutableListOf<Int>()
 
-    val constants = File(Bot.javaClass.getResource("/constants.properties").toURI()).readProperties()
+    val constants = Bot.javaClass.getResourceAsStream("/constants.properties").readProperties()
 
     val playerManager: AudioPlayerManager = DefaultAudioPlayerManager().apply {
         registerSourceManager(YoutubeAudioSourceManager())

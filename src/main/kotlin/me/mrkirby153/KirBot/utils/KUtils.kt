@@ -12,6 +12,7 @@ import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.*
 import java.awt.Color
 import java.io.File
+import java.io.InputStream
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.util.*
@@ -20,6 +21,10 @@ fun File.child(path: String) = File(this, path)
 
 fun File.readProperties(): Properties {
     return Properties().apply { load(this@readProperties.inputStream()) }
+}
+
+fun InputStream.readProperties(): Properties {
+    return Properties().apply { load(this@readProperties) }
 }
 
 fun File.createFileIfNotExist(): File {

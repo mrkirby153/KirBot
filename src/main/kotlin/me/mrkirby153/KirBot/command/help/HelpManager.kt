@@ -4,21 +4,17 @@ import me.mrkirby153.KirBot.Bot
 import org.json.JSONArray
 import org.json.JSONObject
 import org.json.JSONTokener
-import java.io.File
 
 class HelpManager {
 
     val commands = mutableListOf<CommandHelp>()
 
-    val FILE_URI = this.javaClass.getResource("/commands.json").toURI()
+    private val INPUT_STREAM = this.javaClass.getResourceAsStream("/commands.json")!!
 
     fun load() {
-        Bot.LOG.info("Started loading help from \"$FILE_URI\"")
-        val file = File(FILE_URI)
+        Bot.LOG.info("Started loading help from \"$INPUT_STREAM\"")
 
-        val inputStream = file.inputStream()
-
-        val jsonArray = JSONArray(JSONTokener(inputStream))
+        val jsonArray = JSONArray(JSONTokener(INPUT_STREAM))
         Bot.LOG.debug("There are ${jsonArray.length()} command help entries registered")
 
         jsonArray.map { it as JSONObject }.forEach {

@@ -22,14 +22,13 @@ class CommandOverrideClearance : CmdExecutor() {
 
         val cmdSpec = CommandManager.findCommand(cmd) ?: throw CommandException("That command isn't registered")
 
-        if(context.user.getClearance(context.guild).value < cmdSpec.clearance.value){
+        if (context.user.getClearance(context.guild).value < cmdSpec.clearance.value) {
             throw CommandException("You do not have permission to modify this command")
         }
-
-        val targetClearance = Clearance.valueOf(clearance.toUpperCase())
-        if(!reset && targetClearance.value > context.user.getClearance(context.guild).value){
-            throw CommandException("You cannot change clearance to one higher than yours")
-        }
+        if (!reset)
+            if (Clearance.valueOf(clearance.toUpperCase()).value > context.user.getClearance(context.guild).value) {
+                throw CommandException("You cannot change clearance to one higher than yours")
+            }
         if (existingClearance != null) {
             if (reset) {
                 existingClearance.delete().queue {
@@ -41,7 +40,7 @@ class CommandOverrideClearance : CmdExecutor() {
                 return
             } else {
                 try {
-                    existingClearance.clearance = targetClearance
+                    existingClearance.clearance = Clearance.valueOf(clearance.toUpperCase())
                 } catch (e: Exception) {
                     context.send().error("Invalid clearance level").queue()
                 }
@@ -51,7 +50,7 @@ class CommandOverrideClearance : CmdExecutor() {
             }
         } else {
             try {
-                val c = targetClearance
+                val c = Clearance.valueOf(clearance.toUpperCase())
                 ClearanceOverride.create(context.guild, cmd.toLowerCase(), c).queue {
                     context.shard.clearanceOverrides[context.guild.id].add(it)
                     context.send().success("Set clearance to `$clearance`").queue()

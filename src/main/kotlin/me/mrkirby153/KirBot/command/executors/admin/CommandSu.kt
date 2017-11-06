@@ -15,7 +15,7 @@ class CommandSu : CmdExecutor() {
         val command = cmdContext.string("command")
 
         val cntx = Context(user, user, context.channel, context.guild, context.shard, user.getMember(context.guild), MessageBuilder().append(command).build())
-
+        Bot.LOG.warn("Executing command \"$command\" as ${cntx.author} - Requested by ${context.author}")
         CommandManager.execute(cntx, context.shard, context.guild)
     }
 }

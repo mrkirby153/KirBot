@@ -47,6 +47,16 @@ class CommandHelp : CmdExecutor() {
                         }
                     }
                     +"\n"
+                    appendln(u("Clearance"))
+                    val clearance = context.shard.clearanceOverrides[context.guild.id].firstOrNull {
+                        it.command.equals(spec.command, true)
+                    }
+                    appendln(buildString {
+                        append(clearance?.clearance?.apply {
+                            +"(Overridden) "
+                        } ?: spec.clearance)
+                    })
+                    +"\n"
                     appendln(u("Example Usage"))
                     cmdHelp.usage.forEach {
                         +"  `$prefix$it`\n"

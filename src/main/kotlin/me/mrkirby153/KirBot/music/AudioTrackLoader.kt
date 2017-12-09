@@ -4,7 +4,6 @@ import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
-import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.Time
 import me.mrkirby153.KirBot.utils.embed.link
@@ -13,18 +12,32 @@ import me.mrkirby153.KirBot.utils.mdEscape
 import net.dv8tion.jda.core.entities.User
 
 class AudioTrackLoader(val manager: MusicManager, val requestedBy: User, val context: Context,
-                       val queuePosition: Int = 0, val callback: ((AudioTrack) -> Unit)? = null) : AudioLoadResultHandler {
+                       val queuePosition: Int = 0, val callback: ((AudioTrack) -> Unit)? = null) :
+        AudioLoadResultHandler {
     override fun loadFailed(p0: FriendlyException?) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
     override fun trackLoaded(p0: AudioTrack) {
         val queuedSong = MusicManager.QueuedSong(p0, requestedBy, context.channel.id)
+        var startIndex: Int
         if (queuePosition != -1) {
-            manager.queue.add(if (queuePosition < 1) 0 else queuePosition - 1, queuedSong)
+            startIndex = if (queuePosition < 1) 0 else queuePosition - 1
+            manager.queue.add(startIndex, queuedSong)
         } else {
+            startIndex = manager.queue.size
             manager.queue.addLast(queuedSong)
         }
+        val modifiedQueue = mutableListOf<AudioTrack>()
+        if (manager.nowPlaying != null)
+            modifiedQueue.add(manager.nowPlaying!!)
+        modifiedQueue.addAll(manager.queue.map { it.track })
+        var toSubtract = 0L
+        val queueLength = modifiedQueue.subList(0, Math.min(modifiedQueue.size - 1, startIndex + 1)).sumBy {
+            println("Song ${it.info.title} :: ${it.position}")
+            toSubtract += it.position
+            it.duration.toInt()
+        } - toSubtract
         val position = manager.queue.indexOf(queuedSong)
         // Check track duration
         val settings = MusicManager.musicSettings[context.guild.id] ?: return
@@ -37,7 +50,8 @@ class AudioTrackLoader(val manager: MusicManager, val requestedBy: User, val con
         // If the bot isn't playing, start
         if (!context.guild.selfMember.voiceState.inVoiceChannel()) {
             manager.audioPlayer.volume = 100
-            context.guild.audioManager.openAudioConnection(requestedBy.getMember(context.guild).voiceState.channel)
+            context.guild.audioManager.openAudioConnection(
+                    requestedBy.getMember(context.guild).voiceState.channel)
             manager.trackScheduler.playNextTrack()
         }
         manager.audioPlayer.isPaused = false
@@ -65,23 +79,13 @@ class AudioTrackLoader(val manager: MusicManager, val requestedBy: User, val con
                     inline = true
                     description = p0.info.author
                 }
-                var queueLengthMs: Long = 0
-                val toIndex = if(queuePosition != -1) Math.min(Math.max(manager.queue.size - 1, 0), queuePosition) else manager.queue.size
-                manager.queue.subList(0, toIndex).forEach {
-                    Bot.LOG.debug("Song: ${it.track.info.title} is ${it.track.duration} long")
-                    queueLengthMs += it.track.duration
-                }
-                if (manager.nowPlaying != null) {
-                    queueLengthMs -= manager.nowPlaying!!.position
-                }
-                if (manager.nowPlaying == null)
-                    queueLengthMs = 0
 
-                val playing = if (queueLengthMs < 1000) "NOW!" else MusicManager.parseMS(queueLengthMs)
+                val playing = if (queueLength < 1000) "NOW!" else MusicManager.parseMS(
+                        queueLength)
                 field {
-                    title = "Time until playing"
+                    title = "Estimated Time until playing"
                     inline = true
-                    description = playing
+                    description = "~$playing".mdEscape()
                 }
                 field {
                     title = "Position in queue"
@@ -108,7 +112,8 @@ class AudioTrackLoader(val manager: MusicManager, val requestedBy: User, val con
             duration += it.duration
         }
         if (settings.maxQueueLength != -1 && (manager.queueLength() + duration) / (60 * 1000) > settings.maxQueueLength) {
-            context.send().error("Queueing this playlist will make the queue too long, try again when the queue is shorter").queue()
+            context.send().error(
+                    "Queueing this playlist will make the queue too long, try again when the queue is shorter").queue()
             return
         }
         val failedTracks = mutableListOf<AudioTrack>()
@@ -128,7 +133,8 @@ class AudioTrackLoader(val manager: MusicManager, val requestedBy: User, val con
             description {
                 append("**${p0.name}**")
 
-                append("\n\n Queued `${p0.tracks.size - failedTracks.size}` songs totaling `${MusicManager.parseMS(duration)}`")
+                append("\n\n Queued `${p0.tracks.size - failedTracks.size}` songs totaling `${MusicManager.parseMS(
+                        duration)}`")
 
                 if (failedTracks.isNotEmpty()) {
                     append("\n\nFailed to queue `${failedTracks.size}` songs because they were too long.\n\n")
@@ -144,7 +150,8 @@ class AudioTrackLoader(val manager: MusicManager, val requestedBy: User, val con
         // If the bot isn't playing, start
         if (!context.guild.selfMember.voiceState.inVoiceChannel()) {
             manager.audioPlayer.volume = 100
-            context.guild.audioManager.openAudioConnection(requestedBy.getMember(context.guild).voiceState.channel)
+            context.guild.audioManager.openAudioConnection(
+                    requestedBy.getMember(context.guild).voiceState.channel)
             manager.trackScheduler.playNextTrack()
         }
         manager.audioPlayer.isPaused = false

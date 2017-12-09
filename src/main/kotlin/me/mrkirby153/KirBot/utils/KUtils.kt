@@ -9,13 +9,18 @@ import me.mrkirby153.KirBot.realname.RealnameHandler
 import me.mrkirby153.KirBot.user.Clearance
 import net.dv8tion.jda.core.EmbedBuilder
 import net.dv8tion.jda.core.Permission
-import net.dv8tion.jda.core.entities.*
+import net.dv8tion.jda.core.entities.Guild
+import net.dv8tion.jda.core.entities.Member
+import net.dv8tion.jda.core.entities.MessageEmbed
+import net.dv8tion.jda.core.entities.TextChannel
+import net.dv8tion.jda.core.entities.User
 import java.awt.Color
 import java.io.File
 import java.io.InputStream
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
-import java.util.*
+import java.util.Locale
+import java.util.Properties
 
 fun File.child(path: String) = File(this, path)
 
@@ -69,7 +74,8 @@ fun Guild.shard(): Shard? {
 
 
 @JvmOverloads
-fun makeEmbed(title: String?, msg: String?, color: Color? = Color.WHITE, img: String? = null, thumb: String? = null, author: User? = null): MessageEmbed {
+fun makeEmbed(title: String?, msg: String?, color: Color? = Color.WHITE, img: String? = null,
+              thumb: String? = null, author: User? = null): MessageEmbed {
     return EmbedBuilder().run {
         setDescription(msg)
         setTitle(title, null)
@@ -127,6 +133,7 @@ inline fun <T : AutoCloseable, R> T.use(block: (T) -> R): R {
         }
     }
 }
+
 infix fun Any.botUrl(url: String): String {
     return Bot.constants.getProperty("bot-base-url") + "/" + url
 }
@@ -139,7 +146,8 @@ fun TextChannel.hide() {
                 override.delete().queue()
         }
     }
-    val public = this.getPermissionOverride(guild.publicRole) ?: this.createPermissionOverride(guild.publicRole).complete()
+    val public = this.getPermissionOverride(guild.publicRole) ?: this.createPermissionOverride(
+            guild.publicRole).complete()
     public.manager.deny(Permission.MESSAGE_READ).queue()
     PanelAPI.getChannels(this.guild).queue {
         it.text.filter { it.id == this.id }.forEach { it.update().queue() }
@@ -185,7 +193,8 @@ fun Guild.sync() {
                             val guildPermissions = it.role.permissionsRaw
                             val storedPermissions = it.permissions
                             if (guildPermissions != storedPermissions) {
-                                Bot.LOG.debug("Permissions for roleId ${it.role.name} have changed. Updating")
+                                Bot.LOG.debug(
+                                        "Permissions for roleId ${it.role.name} have changed. Updating")
                                 GuildRole.get(it.role).queue {
                                     it.update().queue()
                                 }
@@ -221,7 +230,9 @@ fun Guild.sync() {
         PanelAPI.getGroups(this).queue { group ->
             group.forEach { g ->
                 if (g.role != null) {
-                    g.members.map { this.getMemberById(it) }.filter { g.role !in it.roles }.forEach { u ->
+                    g.members.map {
+                        this.getMemberById(it)
+                    }.filter { g.role !in it.roles }.forEach { u ->
                         this.controller.addRolesToMember(u, g.role).queue()
                     }
                 }
@@ -231,4 +242,12 @@ fun Guild.sync() {
             }
         }
     }
+}
+
+fun Double.round(places: Int): Double {
+    var format = "#.#"
+    for (i in 0 until Math.min(places, 1) - 1) {
+        format += "#"
+    }
+    return DecimalFormat(format, DecimalFormatSymbols(Locale.US)).format(this).toDouble()
 }

@@ -13,6 +13,7 @@ class CommandDeQueue : CmdExecutor() {
 
         try {
             val song = context.data.musicManager.queue.removeAt(index.toInt())
+            context.data.musicManager.updateQueue()
             context.send().embed {
                 description {
                     +"**${song.track.info.title.mdEscape()}**" link song.track.info.uri

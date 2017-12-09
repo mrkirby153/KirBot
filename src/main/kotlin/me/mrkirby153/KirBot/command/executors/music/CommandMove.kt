@@ -18,6 +18,7 @@ class CommandMove : CmdExecutor() {
             val max = Math.max(0.0, song - 1)
             val queuedSong = context.data.musicManager.queue.removeAt(max.toInt())
             context.data.musicManager.queue.add(Math.max(0, toPosition.toInt() - 1), queuedSong)
+            context.data.musicManager.updateQueue()
             context.send().embed {
                 description {
                     +"**${queuedSong.track.info.title.mdEscape()}**" link queuedSong.track.info.uri

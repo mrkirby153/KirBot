@@ -30,6 +30,7 @@ class CommandQueue : CmdExecutor() {
                     context.send().success("Queue shuffled!").queue()
                 }
             }
+            context.data.musicManager.updateQueue()
             return
         }
         val musicManager = context.data.musicManager

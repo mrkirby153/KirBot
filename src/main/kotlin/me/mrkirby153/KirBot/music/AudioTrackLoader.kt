@@ -163,5 +163,6 @@ class AudioTrackLoader(val manager: MusicManager, val requestedBy: User, val con
         if (manager.nowPlaying == null) {
             manager.trackScheduler.playNextTrack()
         }
+        manager.updateQueue()
     }
 }

@@ -7,6 +7,7 @@ import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.embed.b
 import me.mrkirby153.KirBot.utils.embed.embed
 import me.mrkirby153.KirBot.utils.localizeTime
+import me.mrkirby153.KirBot.utils.mdEscape
 import java.awt.Color
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
@@ -44,7 +45,7 @@ class CommandPoll : CmdExecutor() {
             throw CommandException("Please specify options for the poll")
         }
 
-        val options = rawOptions.split(",").map(String::trim)
+        val options = rawOptions.split(",").map(String::trim).filter { it.isNotBlank() }.map(String::mdEscape)
 
         if (options.size <= 1) {
             throw CommandException("Please provide more than one option for the poll")

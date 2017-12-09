@@ -20,6 +20,7 @@ class ApiRequestProcessor(val apiRequest: ApiRequest<*>) : Runnable {
             if (Bot.debug)
                 e.printStackTrace()
             Bot.LOG.error("Caught exception from request ${apiRequest.javaClass}: [$e]")
+            debugLogger.debug("URL: ${apiRequest.url} (${apiRequest.method.value}); Data: ${apiRequest.data}")
         }
     }
 

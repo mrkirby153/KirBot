@@ -7,6 +7,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.utils.embed.embed
 import me.mrkirby153.KirBot.utils.embed.link
+import me.mrkirby153.KirBot.utils.mdEscape
 import java.awt.Color
 
 class TrackScheduler(val manager: MusicManager) : AudioEventAdapter() {
@@ -32,7 +33,7 @@ class TrackScheduler(val manager: MusicManager) : AudioEventAdapter() {
                 description {
                     +("**Now Playing**" link track.track.info.uri)
                     +"\n\n"
-                    +track.track.info.title
+                    +track.track.info.title.mdEscape()
                     +"\n\nLength: `${MusicManager.parseMS(track.track.duration)}`"
                     +"\n\nRequested By: `${track.queuedBy.name}`"
                     val next = manager.queue.peekFirst()

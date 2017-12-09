@@ -11,6 +11,7 @@ import me.mrkirby153.KirBot.utils.embed.embed
 import me.mrkirby153.KirBot.utils.embed.link
 import me.mrkirby153.KirBot.utils.getClearance
 import me.mrkirby153.KirBot.utils.localizeTime
+import me.mrkirby153.KirBot.utils.mdEscape
 import java.awt.Color
 import java.util.concurrent.TimeUnit
 
@@ -52,7 +53,7 @@ class CommandSkip : CmdExecutor() {
             description {
                 +b(context.author.name)
                 +" has voted to skip the current track: \n"
-                +currentlyPlaying.info.title link currentlyPlaying.info.uri
+                +currentlyPlaying.info.title.mdEscape() link currentlyPlaying.info.uri
                 +"\nReact with :thumbsup: or :thumbsdown: to vote"
                 +"\nWhichever has the most votes in ${localizeTime(skipTimer)} wins!"
             }

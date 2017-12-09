@@ -6,7 +6,8 @@ import me.mrkirby153.KirBot.music.MusicManager
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.botUrl
 import me.mrkirby153.KirBot.utils.embed.link
-import java.util.*
+import me.mrkirby153.KirBot.utils.mdEscape
+import java.util.Random
 
 class CommandQueue : CmdExecutor() {
 
@@ -50,7 +51,7 @@ class CommandQueue : CmdExecutor() {
                 else
                     +":speaker:"
                 val position  = "${MusicManager.parseMS(nowPlaying.position)}/${MusicManager.parseMS(nowPlaying.info.length)}"
-                +nowPlaying.info.title link nowPlaying.info.uri
+                +nowPlaying.info.title.mdEscape() link nowPlaying.info.uri
                 +"($position)"
                 +"\n\n:arrow_down_small: __Up Next__ :arrow_down_small:"
                 +"\n\n"

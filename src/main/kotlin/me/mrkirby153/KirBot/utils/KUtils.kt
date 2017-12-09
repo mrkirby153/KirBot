@@ -21,6 +21,7 @@ import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.util.Locale
 import java.util.Properties
+import java.util.regex.Pattern
 
 fun File.child(path: String) = File(this, path)
 
@@ -250,4 +251,20 @@ fun Double.round(places: Int): Double {
         format += "#"
     }
     return DecimalFormat(format, DecimalFormatSymbols(Locale.US)).format(this).toDouble()
+}
+
+fun String.mdEscape(): String {
+    val pattern = Pattern.compile("\\*|\\[|]|_|~|\\(|\\)")
+
+    val matcher = pattern.matcher(this)
+
+    return buildString {
+        var start = 0
+        while (matcher.find()) {
+            append(this@mdEscape.substring(start until matcher.start()))
+            append("\\${this@mdEscape.substring(matcher.start() until matcher.end())}")
+            start = matcher.end()
+        }
+        append(this@mdEscape.substring(start until this@mdEscape.length))
+    }
 }

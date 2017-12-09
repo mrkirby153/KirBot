@@ -5,6 +5,7 @@ import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.command.executors.CmdExecutor
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.embed.link
+import me.mrkirby153.KirBot.utils.mdEscape
 
 class CommandDeQueue : CmdExecutor() {
     override fun execute(context: Context, cmdContext: CommandContext) {
@@ -14,7 +15,7 @@ class CommandDeQueue : CmdExecutor() {
             val song = context.data.musicManager.queue.removeAt(index.toInt())
             context.send().embed {
                 description {
-                    +"**${song.track.info.title}**" link song.track.info.uri
+                    +"**${song.track.info.title.mdEscape()}**" link song.track.info.uri
                     +"\nRemoved `${song.track.info.title}` from the queue"
                 }
                 if (song.track.info.uri.contains("youtu"))

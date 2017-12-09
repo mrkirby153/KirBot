@@ -9,6 +9,7 @@ import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.Time
 import me.mrkirby153.KirBot.utils.embed.link
 import me.mrkirby153.KirBot.utils.getMember
+import me.mrkirby153.KirBot.utils.mdEscape
 import net.dv8tion.jda.core.entities.User
 
 class AudioTrackLoader(val manager: MusicManager, val requestedBy: User, val context: Context,
@@ -51,7 +52,7 @@ class AudioTrackLoader(val manager: MusicManager, val requestedBy: User, val con
             if (p0.info.uri.contains("youtu")) {
                 thumbnail = "https://i.ytimg.com/vi/${p0.info.identifier}/default.jpg"
             }
-            description { +("**${p0.info.title}**" link p0.info.uri) }
+            description { +("**${p0.info.title.mdEscape()}**" link p0.info.uri) }
 
             fields {
                 field {

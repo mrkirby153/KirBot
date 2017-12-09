@@ -47,6 +47,7 @@ class TrackScheduler(val manager: MusicManager) : AudioEventAdapter() {
         } else {
             // Reset
             Bot.LOG.debug("[MUSIC/${manager.guild.id}] Queue is empty, shutting down")
+            this.manager.disconnect()
         }
         manager.updateQueue()
     }

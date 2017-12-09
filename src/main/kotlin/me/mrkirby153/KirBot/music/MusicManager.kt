@@ -10,7 +10,7 @@ import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.entities.User
 import org.json.JSONArray
 import org.json.JSONObject
-import java.util.*
+import java.util.LinkedList
 import java.util.concurrent.TimeUnit
 
 class MusicManager(val guild: Guild) {
@@ -36,7 +36,8 @@ class MusicManager(val guild: Guild) {
 
     fun disconnect() {
         guild.audioManager.closeAudioConnection()
-        updateQueue()
+        audioPlayer.playTrack(null)
+        resetQueue()
     }
 
     fun queueLength(): Long {

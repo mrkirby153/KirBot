@@ -44,7 +44,11 @@ class MusicManager(val guild: Guild) {
         resetQueue()
     }
 
-    fun getBoundChannel() : TextChannel? = guild.getTextChannelById(this.boundChannel)
+    fun getBoundChannel() : TextChannel? {
+        if(this.boundChannel == null)
+            return null
+        return guild.getTextChannelById(this.boundChannel)
+    }
 
     fun queueLength(): Long {
         var length = 0L

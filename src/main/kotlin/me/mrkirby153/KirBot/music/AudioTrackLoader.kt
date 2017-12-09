@@ -155,9 +155,14 @@ class AudioTrackLoader(val manager: MusicManager, val requestedBy: User, val con
         // If the bot isn't playing, start
         if (!context.guild.selfMember.voiceState.inVoiceChannel()) {
             manager.audioPlayer.volume = 100
+            val voiceChannel = requestedBy.getMember(context.guild).voiceState.channel
             context.guild.audioManager.openAudioConnection(
-                    requestedBy.getMember(context.guild).voiceState.channel)
+                    voiceChannel)
             manager.trackScheduler.playNextTrack()
+            manager.boundChannel = context.channel.id
+            context.send().embed("Connecting to Voice..."){
+                description { +"Connected to voice channel ${voiceChannel.name} and binding to #${context.channel.name}" }
+            }.rest().queue()
         }
         manager.audioPlayer.isPaused = false
         if (manager.nowPlaying == null) {

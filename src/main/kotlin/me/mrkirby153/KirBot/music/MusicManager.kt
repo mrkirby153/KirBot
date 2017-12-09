@@ -7,6 +7,7 @@ import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.api.MusicSettings
 import me.mrkirby153.KirBot.redis.RedisConnector
 import net.dv8tion.jda.core.entities.Guild
+import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.User
 import org.json.JSONArray
 import org.json.JSONObject
@@ -29,6 +30,8 @@ class MusicManager(val guild: Guild) {
 
     val trackScheduler = TrackScheduler(this)
 
+    var boundChannel : String? = null
+
     init {
         guild.audioManager.sendingHandler = sender
         audioPlayer.addListener(trackScheduler)
@@ -37,8 +40,11 @@ class MusicManager(val guild: Guild) {
     fun disconnect() {
         guild.audioManager.closeAudioConnection()
         audioPlayer.playTrack(null)
+        boundChannel = null
         resetQueue()
     }
+
+    fun getBoundChannel() : TextChannel? = guild.getTextChannelById(this.boundChannel)
 
     fun queueLength(): Long {
         var length = 0L

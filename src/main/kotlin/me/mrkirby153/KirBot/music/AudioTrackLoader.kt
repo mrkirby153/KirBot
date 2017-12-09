@@ -20,7 +20,7 @@ class AudioTrackLoader(val manager: MusicManager, val requestedBy: User, val con
 
     override fun trackLoaded(p0: AudioTrack) {
         val queuedSong = MusicManager.QueuedSong(p0, requestedBy, context.channel.id)
-        var startIndex: Int
+        val startIndex: Int
         if (queuePosition != -1) {
             startIndex = if (queuePosition < 1) 0 else queuePosition - 1
             manager.queue.add(startIndex, queuedSong)
@@ -34,7 +34,6 @@ class AudioTrackLoader(val manager: MusicManager, val requestedBy: User, val con
         modifiedQueue.addAll(manager.queue.map { it.track })
         var toSubtract = 0L
         val queueLength = modifiedQueue.subList(0, Math.min(modifiedQueue.size - 1, startIndex + 1)).sumBy {
-            println("Song ${it.info.title} :: ${it.position}")
             toSubtract += it.position
             it.duration.toInt()
         } - toSubtract
@@ -50,9 +49,15 @@ class AudioTrackLoader(val manager: MusicManager, val requestedBy: User, val con
         // If the bot isn't playing, start
         if (!context.guild.selfMember.voiceState.inVoiceChannel()) {
             manager.audioPlayer.volume = 100
+            val voiceChannel = requestedBy.getMember(context.guild).voiceState.channel
             context.guild.audioManager.openAudioConnection(
-                    requestedBy.getMember(context.guild).voiceState.channel)
-            manager.trackScheduler.playNextTrack()
+                    voiceChannel)
+            // Bind to the channel
+            manager.boundChannel = context.channel.id
+            context.send().embed("Connecting to Voice..."){
+                description { +"Connected to voice channel ${voiceChannel.name} and binding to #${context.channel.name}" }
+            }.rest().queue()
+            manager.trackScheduler.playNextTrack(true)
         }
         manager.audioPlayer.isPaused = false
         if (manager.nowPlaying == null) {

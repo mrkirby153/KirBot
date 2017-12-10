@@ -15,7 +15,8 @@ class ApiRequestProcessor(val apiRequest: ApiRequest<*>) : Runnable {
 
     override fun run() {
         try {
-            apiRequest.execute(Companion.run(apiRequest))
+            val response = Companion.run(apiRequest) ?: return
+            apiRequest.execute(response)
         } catch (e: Throwable) {
             if (Bot.debug)
                 e.printStackTrace()

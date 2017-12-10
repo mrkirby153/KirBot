@@ -9,6 +9,7 @@ import me.mrkirby153.KirBot.utils.embed.embed
 import me.mrkirby153.KirBot.utils.embed.link
 import me.mrkirby153.KirBot.utils.mdEscape
 import java.awt.Color
+import java.util.concurrent.TimeUnit
 
 class TrackScheduler(val manager: MusicManager) : AudioEventAdapter() {
 
@@ -46,17 +47,19 @@ class TrackScheduler(val manager: MusicManager) : AudioEventAdapter() {
                             +"`${next.track.info.title}`"
                     }
                 }.build()
-                if(manager.nowPlayingMessage != null){
+                if (manager.nowPlayingMessage != null) {
                     manager.nowPlayingMessage?.delete()?.queue()
                 }
-                channel.sendMessage(embed).queue{ msg ->
+                channel.sendMessage(embed).queue { msg ->
                     manager.nowPlayingMessage = msg
                 }
             }
         } else {
             // Reset
             Bot.LOG.debug("[MUSIC/${manager.guild.id}] Queue is empty, shutting down")
-            this.manager.disconnect()
+            Bot.scheduler.schedule({
+                this.manager.disconnect()
+            }, 50, TimeUnit.MILLISECONDS)
         }
         manager.updateQueue()
     }

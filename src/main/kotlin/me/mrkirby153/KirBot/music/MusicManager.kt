@@ -30,6 +30,8 @@ class MusicManager(val guild: Guild) {
     val playing: Boolean
         get() = !audioPlayer.isPaused
 
+    var manualPause: Boolean = false
+
     val trackScheduler = TrackScheduler(this)
 
     var boundChannel : String? = null

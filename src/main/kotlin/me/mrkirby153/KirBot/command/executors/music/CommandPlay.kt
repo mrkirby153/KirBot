@@ -20,6 +20,7 @@ class CommandPlay : CmdExecutor() {
             if (context.data.musicManager.playing)
                 throw CommandException("Already playing.")
             context.data.musicManager.audioPlayer.isPaused = false
+            context.data.musicManager.manualPause = false
             context.channel.sendMessage(":arrow_forward: Music has been resumed").queue()
             return
         }

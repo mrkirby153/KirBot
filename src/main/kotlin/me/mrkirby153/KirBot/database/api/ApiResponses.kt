@@ -92,9 +92,6 @@ enum class ChannelType {
 
 class GuildChannel(val id: String, val guild: String, val name: String, val type: ChannelType) {
 
-    init {
-        println("Creating channel $id ($name) on $guild with type $type")
-    }
 
     val channel: Channel
         get() = when (type) {

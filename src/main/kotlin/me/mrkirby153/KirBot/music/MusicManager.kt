@@ -2,11 +2,13 @@ package me.mrkirby153.KirBot.music
 
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
+import com.sedmelluq.discord.lavaplayer.player.AudioPlayer
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.api.MusicSettings
 import me.mrkirby153.KirBot.redis.RedisConnector
 import net.dv8tion.jda.core.entities.Guild
+import net.dv8tion.jda.core.entities.Message
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.User
 import org.json.JSONArray
@@ -16,7 +18,7 @@ import java.util.concurrent.TimeUnit
 
 class MusicManager(val guild: Guild) {
 
-    val audioPlayer = Bot.playerManager.createPlayer()
+    val audioPlayer: AudioPlayer = Bot.playerManager.createPlayer()
 
     private val sender = AudioPlayerSendHandler(audioPlayer)
 
@@ -32,6 +34,8 @@ class MusicManager(val guild: Guild) {
 
     var boundChannel : String? = null
 
+    var nowPlayingMessage: Message? = null
+
     init {
         guild.audioManager.sendingHandler = sender
         audioPlayer.addListener(trackScheduler)
@@ -41,6 +45,7 @@ class MusicManager(val guild: Guild) {
         guild.audioManager.closeAudioConnection()
         audioPlayer.playTrack(null)
         boundChannel = null
+        nowPlayingMessage?.delete()?.queue()
         resetQueue()
     }
 

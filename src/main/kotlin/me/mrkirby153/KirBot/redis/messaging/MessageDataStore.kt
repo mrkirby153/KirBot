@@ -31,7 +31,7 @@ class MessageDataStore {
     fun pushMessage(message: net.dv8tion.jda.core.entities.Message) {
         RedisConnector.get().use {
             val json = encode(Message(message.id, message.guild.id, message.author.id, message.channel.id, message.content, message.creationTime.toEpochSecond()))
-            it.lpush(LIST_KEY, json.toString())
+            it.rpush(LIST_KEY, json.toString())
         }
     }
 

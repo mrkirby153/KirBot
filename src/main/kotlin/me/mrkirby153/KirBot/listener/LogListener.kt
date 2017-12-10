@@ -71,6 +71,7 @@ class LogListener(private val shard: Shard) : ListenerAdapter() {
                                 Color.BLUE,
                                 LogField("Old", "```${old.message}```", false), LogField("New", "```${event.message.content}````", false))
             }
+            Bot.messageDataStore.pushMessage(event.message)
         })
     }
 

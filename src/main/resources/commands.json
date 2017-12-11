@@ -393,5 +393,15 @@
         "description": "The user (as a mention) to display information for"
       }
     ]
+  },
+  {
+    "name": "eval",
+    "description": "Executes JavaScript on this server. (10 second execution time)",
+    "params": [
+      {
+        "name": "eval",
+        "description": "The script to evaluate"
+      }
+    ]
   }
 ]

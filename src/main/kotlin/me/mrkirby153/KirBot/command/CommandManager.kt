@@ -46,6 +46,7 @@ import me.mrkirby153.KirBot.command.help.HelpManager
 import me.mrkirby153.KirBot.command.processors.LaTeXProcessor
 import me.mrkirby153.KirBot.data.ServerData
 import me.mrkirby153.KirBot.database.api.GuildCommand
+import me.mrkirby153.KirBot.eval.CommandEval
 import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.getClearance
@@ -405,6 +406,12 @@ object CommandManager {
         register(CommandSpec("seen") {
             executor = CommandSeen()
             arguments(Arguments.user("user"))
+        })
+
+        register(CommandSpec("eval") {
+            clearance = Clearance.SERVER_ADMINISTRATOR
+            executor = CommandEval()
+            arguments(Arguments.rest("eval"))
         })
 
 

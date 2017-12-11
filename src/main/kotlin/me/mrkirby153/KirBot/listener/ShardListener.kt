@@ -5,6 +5,7 @@ import me.mrkirby153.KirBot.Shard
 import me.mrkirby153.KirBot.command.CommandManager
 import me.mrkirby153.KirBot.data.ServerData
 import me.mrkirby153.KirBot.database.api.GuildChannel
+import me.mrkirby153.KirBot.database.api.GuildMember
 import me.mrkirby153.KirBot.database.api.GuildRole
 import me.mrkirby153.KirBot.database.api.PanelAPI
 import me.mrkirby153.KirBot.database.api.Quote
@@ -21,6 +22,9 @@ import net.dv8tion.jda.core.events.channel.voice.VoiceChannelDeleteEvent
 import net.dv8tion.jda.core.events.channel.voice.update.VoiceChannelUpdateNameEvent
 import net.dv8tion.jda.core.events.guild.GuildJoinEvent
 import net.dv8tion.jda.core.events.guild.GuildLeaveEvent
+import net.dv8tion.jda.core.events.guild.member.GuildMemberJoinEvent
+import net.dv8tion.jda.core.events.guild.member.GuildMemberLeaveEvent
+import net.dv8tion.jda.core.events.guild.member.GuildMemberNickChangeEvent
 import net.dv8tion.jda.core.events.guild.voice.GuildVoiceJoinEvent
 import net.dv8tion.jda.core.events.guild.voice.GuildVoiceLeaveEvent
 import net.dv8tion.jda.core.events.guild.voice.GuildVoiceMoveEvent
@@ -46,6 +50,23 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
         val context = Context(event)
 
         CommandManager.execute(context, shard, event.guild)
+    }
+
+    override fun onGuildMemberJoin(event: GuildMemberJoinEvent) {
+        GuildMember.create(event.member).queue()
+    }
+
+    override fun onGuildMemberLeave(event: GuildMemberLeaveEvent) {
+        GuildMember.get(event.member).queue {
+            it.delete().queue()
+        }
+    }
+
+    override fun onGuildMemberNickChange(event: GuildMemberNickChangeEvent) {
+        GuildMember.get(event.member).queue { m ->
+            if (m.needsUpdate())
+                m.update().queue()
+        }
     }
 
     override fun onGuildLeave(event: GuildLeaveEvent) {
@@ -160,7 +181,8 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
 
     override fun onGuildVoiceMove(event: GuildVoiceMoveEvent) {
         val serverData = Bot.getShardForGuild(event.guild.id)?.getServerData(event.guild) ?: return
-        if (inChannel(event.channelJoined, event.guild.selfMember) && !serverData.musicManager.manualPause) {
+        if (inChannel(event.channelJoined,
+                event.guild.selfMember) && !serverData.musicManager.manualPause) {
             serverData.musicManager.audioPlayer.isPaused = false
         } else {
             if (inChannel(event.channelLeft, event.guild.selfMember))

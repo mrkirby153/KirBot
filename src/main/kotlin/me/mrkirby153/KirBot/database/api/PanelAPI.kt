@@ -14,7 +14,8 @@ object PanelAPI {
     internal val executor = Executors.newFixedThreadPool(3)
 
     fun registerServer(guild: Guild): ApiRequest<VoidApiResponse> {
-        return object : ApiRequest<VoidApiResponse>("/server/register", Methods.PUT, mapOf(Pair("name", guild.name), Pair("id", guild.id))) {
+        return object : ApiRequest<VoidApiResponse>("/server/register", Methods.PUT,
+                mapOf(Pair("name", guild.name), Pair("id", guild.id))) {
             override fun parse(json: JSONObject): VoidApiResponse {
                 return VoidApiResponse()
             }
@@ -30,14 +31,16 @@ object PanelAPI {
     }
 
     fun setServerName(guild: Guild): ApiRequest<VoidApiResponse> {
-        return object : ApiRequest<VoidApiResponse>("/server/${guild.id}/name", Methods.POST, mapOf(Pair("name", guild.name))) {
+        return object : ApiRequest<VoidApiResponse>("/server/${guild.id}/name", Methods.POST,
+                mapOf(Pair("name", guild.name))) {
             override fun parse(json: JSONObject): VoidApiResponse {
                 return VoidApiResponse()
             }
         }
     }
 
-    fun getChannels(guild: Guild) = object : ApiRequest<GuildChannels>("/server/${guild.id}/channels") {
+    fun getChannels(guild: Guild) = object :
+            ApiRequest<GuildChannels>("/server/${guild.id}/channels") {
         override fun parse(json: JSONObject): GuildChannels {
             val textChannels = mutableListOf<GuildChannel>()
             val voiceChannels = mutableListOf<GuildChannel>()
@@ -78,7 +81,8 @@ object PanelAPI {
             Bot.LOG.debug("Unregistering channels $toUnregister")
 
             toRegister.forEach {
-                val c = guild.getTextChannelById(it) as? Channel ?: guild.getVoiceChannelById(it) as? Channel ?: return@forEach
+                val c = guild.getTextChannelById(it) as? Channel ?: guild.getVoiceChannelById(
+                        it) as? Channel ?: return@forEach
                 GuildChannel.register(c).queue()
             }
 
@@ -96,7 +100,8 @@ object PanelAPI {
                 val roles = mutableListOf<GuildRole>()
                 json.getJSONArray("roles").forEach { r ->
                     val j = r as JSONObject
-                    roles.add(GuildRole(j.getString("id"), j.getString("name"), j.getString("server_id"), j.getLong("permissions")))
+                    roles.add(GuildRole(j.getString("id"), j.getString("name"),
+                            j.getString("server_id"), j.getLong("permissions")))
                 }
                 return roles
             }
@@ -134,4 +139,17 @@ object PanelAPI {
         }
     }
 
+    fun getMembers(guild: Guild): ApiRequest<List<GuildMember>> {
+        return object : ApiRequest<List<GuildMember>>("/server/${guild.id}/members") {
+
+            override fun parse(json: JSONObject): List<GuildMember> {
+                val list = mutableListOf<GuildMember>()
+                json.getJSONArray("members").map { it as JSONObject }.forEach {
+                    list.add(GuildMember.parse(it))
+                }
+                return list
+            }
+        }
+
+    }
 }

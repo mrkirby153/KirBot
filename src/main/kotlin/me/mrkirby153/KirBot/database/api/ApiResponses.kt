@@ -7,6 +7,7 @@ import me.mrkirby153.KirBot.utils.getMember
 import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.Channel
 import net.dv8tion.jda.core.entities.Guild
+import net.dv8tion.jda.core.entities.Member
 import net.dv8tion.jda.core.entities.Message
 import net.dv8tion.jda.core.entities.Role
 import net.dv8tion.jda.core.entities.TextChannel
@@ -401,6 +402,96 @@ class ClearanceOverride(val id: Int, val command: String, cl: String) {
                             j.getString("clearance")))
                 }
                 return overrides
+            }
+        }
+    }
+}
+
+class GuildMember(val id: String, val serverId: String, val userId: String, val username: String,
+                  val discrim: String, val nick: String?) {
+
+    val guild: Guild?
+        get() = Bot.getGuild(serverId)
+
+    val user: User?
+        get() = guild?.jda?.getUserById(userId)
+
+    val member: Member?
+        get() = if(user != null) guild?.getMember(user) else null
+
+    fun update(): ApiRequest<GuildMember> {
+        return object :
+                ApiRequest<GuildMember>("/member/$serverId/$userId", Methods.PATCH, buildQuery(member!!)) {
+            override fun parse(json: JSONObject): GuildMember {
+                return Companion.parse(json)
+            }
+
+        }
+    }
+
+    fun needsUpdate(): Boolean {
+        val user = this.user
+        val member = this.member
+        if(user == null || member == null){
+            Bot.LOG.debug("Deleting member $userId as they are no longer present in the guild")
+            this.delete().queue()
+            return false
+        }
+        if(user.name != this.username || user.discriminator != this.discrim)
+            return true
+        if(member.nickname != this.nick)
+            return true
+        return false
+    }
+
+    fun delete(): ApiRequest<VoidApiResponse> {
+        return object : ApiRequest<VoidApiResponse>("/member/$serverId/$userId", Methods.DELETE) {
+            override fun parse(json: JSONObject): VoidApiResponse {
+                return VoidApiResponse()
+            }
+        }
+    }
+
+    private fun buildQuery(member: Member): Map<String, String>? {
+        val map = mutableMapOf<String, String>()
+        map.put("server_id", serverId)
+        map.put("user_id", member.user.id)
+        map.put("user_name", member.user.name)
+        map.put("user_discrim", member.user.discriminator)
+        if (member.nickname != null)
+            map.put("user_nick", member.nickname)
+        else
+            map.put("user_nick", "")
+        return map
+    }
+
+    companion object {
+        fun parse(obj: JSONObject): GuildMember {
+            return GuildMember(obj.getString("id"), obj.getString("server_id"),
+                    obj.getString("user_id"), obj.getString("user_name"),
+                    obj.getString("user_discrim"), obj.optString("user_nick", null))
+        }
+
+        fun get(member: Member): ApiRequest<GuildMember> {
+            return object : ApiRequest<GuildMember>("/member/${member.guild.id}/${member.user.id}"){
+                override fun parse(json: JSONObject): GuildMember {
+                    return Companion.parse(json)
+                }
+
+            }
+        }
+
+        fun create(member: Member): ApiRequest<GuildMember> {
+            val map = mapOf(Pair("server_id", member.guild.id), Pair("user_id", member.user.id),
+                    Pair("user_name", member.user.name),
+                    Pair("user_discrim", member.user.discriminator)).toMutableMap()
+            if(member.nickname != null)
+                map.put("user_nick", member.nickname)
+            return object : ApiRequest<GuildMember>("/member", Methods.PUT,
+                    map) {
+                override fun parse(json: JSONObject): GuildMember {
+                    return Companion.parse(json)
+                }
             }
         }
     }

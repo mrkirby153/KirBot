@@ -32,6 +32,7 @@ import me.mrkirby153.KirBot.command.executors.moderation.CommandHideChannel
 import me.mrkirby153.KirBot.command.executors.moderation.CommandKick
 import me.mrkirby153.KirBot.command.executors.moderation.CommandMute
 import me.mrkirby153.KirBot.command.executors.moderation.CommandUnmute
+import me.mrkirby153.KirBot.command.executors.msc.CommandPing
 import me.mrkirby153.KirBot.command.executors.music.CommandConnect
 import me.mrkirby153.KirBot.command.executors.music.CommandDeQueue
 import me.mrkirby153.KirBot.command.executors.music.CommandDisconnect
@@ -108,7 +109,8 @@ object CommandManager {
             executor = CommandPoll()
             category = CommandCategory.FUN
             ignoreWhitelist = true
-            addExample("poll 30m Option 1, Option 2, Option 3", "poll 10m Question;Option1, Option 2, Option 3")
+            addExample("poll 30m Option 1, Option 2, Option 3",
+                    "poll 10m Question;Option1, Option 2, Option 3")
         })
 
         register(CommandSpec("kick") {
@@ -414,6 +416,11 @@ object CommandManager {
             arguments(Arguments.rest("eval"))
         })
 
+        register(CommandSpec("ping") {
+            executor = CommandPing()
+            category = CommandCategory.MISCELLANEOUS
+        })
+
 
         /// ------ REGISTER MESSAGE PROCESSORS ------
         registerProcessor(LaTeXProcessor::class)
@@ -452,7 +459,8 @@ object CommandManager {
         }
 
         // Drop the prefix
-        message = if (mention) message.replace(Regex("<@!?[0-9]+>\\s?"), "") else message.substring(prefix.length)
+        message = if (mention) message.replace(Regex("<@!?[0-9]+>\\s?"), "") else message.substring(
+                prefix.length)
 
         val parts: Array<String> = message.split(" ").toTypedArray()
 
@@ -466,7 +474,8 @@ object CommandManager {
         val whitelistedChannels = guildSettings.whitelistedChannels
         for (i in 0 until this.cmds.size) {
             val c = this.cmds[i]
-            if (c.aliases.map { it.toLowerCase() }.contains(command) || c.command.equals(command, true)) {
+            if (c.aliases.map { it.toLowerCase() }.contains(command) || c.command.equals(command,
+                    true)) {
                 // Check channel whitelist
                 if (whitelistedChannels.isNotEmpty() && context.channel.id !in whitelistedChannels && !c.ignoreWhitelist) {
                     Bot.LOG.debug("Ignoring command because channel whitelist")
@@ -474,7 +483,9 @@ object CommandManager {
                 }
 
                 // Check permissions
-                val missingPerms = c.permissions.filter { !context.guild.selfMember.hasPermission(context.channel as TextChannel, it) }
+                val missingPerms = c.permissions.filter {
+                    !context.guild.selfMember.hasPermission(context.channel as TextChannel, it)
+                }
                 if (missingPerms.isNotEmpty()) {
                     context.send().embed("Missing Permissions") {
                         color = Color.RED
@@ -488,7 +499,8 @@ object CommandManager {
 
                 val clearance = getEffectivePermission(c.command, guild, c.clearance)
                 if (clearance.value > context.author.getClearance(context.guild).value) {
-                    context.send().error("You do not have permission to perform this command!").queue {
+                    context.send().error(
+                            "You do not have permission to perform this command!").queue {
                         it.delete().queueAfter(10, TimeUnit.SECONDS)
                     }
                     return
@@ -500,7 +512,8 @@ object CommandManager {
                 var currentArg = 0
                 c.arguments.forEach { commandElement ->
                     if (commandElement is RestToString) {
-                        cmdContext.put(commandElement.key, commandElement.customParse(args.clone().drop(currentArg)))
+                        cmdContext.put(commandElement.key,
+                                commandElement.customParse(args.clone().drop(currentArg)))
                         return@forEach
                     }
                     try {
@@ -508,7 +521,8 @@ object CommandManager {
                             commandElement.parse(args[currentArg++], cmdContext)
                         } else {
                             if (commandElement.required) {
-                                throw ArgumentParseException("The argument `${commandElement.key.capitalize()}` is required!")
+                                throw ArgumentParseException(
+                                        "The argument `${commandElement.key.capitalize()}` is required!")
                             }
                         }
                     } catch (e: ArgumentParseException) {
@@ -593,7 +607,8 @@ object CommandManager {
             proc.guildData = guildData
             proc.shard = shard
             // Compile regex
-            val pattern = Pattern.compile("(?<=${escape(proc.startSequence)})(.*?)(?=${escape(proc.endSequence)})")
+            val pattern = Pattern.compile(
+                    "(?<=${escape(proc.startSequence)})(.*?)(?=${escape(proc.endSequence)})")
 
             val matches = mutableListOf<String>()
             loop@ while (true) {
@@ -602,7 +617,9 @@ object CommandManager {
                 if (matcher.find()) {
                     val part = rawMsgText.substring(matcher.start(), matcher.end())
                     matches.add(part)
-                    rawMsgText = rawMsgText.substring(startIndex = Math.min(matcher.end() + proc.endSequence.length, rawMsgText.length))
+                    rawMsgText = rawMsgText.substring(
+                            startIndex = Math.min(matcher.end() + proc.endSequence.length,
+                                    rawMsgText.length))
                     if (rawMsgText.isEmpty())
                         break@loop
                 } else {
@@ -611,7 +628,9 @@ object CommandManager {
             }
             proc.matches = matches.toTypedArray()
             if (proc.matches.isNotEmpty()) {
-                Bot.LOG.debug("Found match for processor ${proc.javaClass} [${proc.matches.joinToString(",")}]")
+                Bot.LOG.debug(
+                        "Found match for processor ${proc.javaClass} [${proc.matches.joinToString(
+                                ",")}]")
                 proc.process(context)
             }
             if (proc.stopProcessing)
@@ -627,7 +646,8 @@ object CommandManager {
         }
     }
 
-    private fun callCustomCommand(channel: MessageChannel, command: GuildCommand, args: Array<String>, sender: User) {
+    private fun callCustomCommand(channel: MessageChannel, command: GuildCommand,
+                                  args: Array<String>, sender: User) {
         var response = command.data
         for (i in 0..args.size - 1) {
             response = response.replace("%${i + 1}", args[i])
@@ -638,7 +658,8 @@ object CommandManager {
     fun findCommand(command: String): CommandSpec? {
         var foundCommand: CommandSpec? = null
         cmds.forEach {
-            if (it.command.equals(command, true) || it.aliases.map(String::toLowerCase).contains(command.toLowerCase()))
+            if (it.command.equals(command, true) || it.aliases.map(String::toLowerCase).contains(
+                    command.toLowerCase()))
                 foundCommand = it
             return@forEach
         }

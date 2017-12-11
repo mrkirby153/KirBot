@@ -403,5 +403,10 @@
         "description": "The script to evaluate"
       }
     ]
+  },
+  {
+    "name": "ping",
+    "description": "Tests the Bot's ping to Discord",
+    "params": []
   }
 ]

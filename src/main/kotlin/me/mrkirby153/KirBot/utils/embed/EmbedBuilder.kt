@@ -143,4 +143,6 @@ open class EmbedBuilder {
         embed.setFooter(footer.getText().toString(), footer.url)
         return embed.build()
     }
+
+    fun getDescription() = this.description.toString()
 }

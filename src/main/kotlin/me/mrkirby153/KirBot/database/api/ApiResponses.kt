@@ -5,14 +5,9 @@ import me.mrkirby153.KirBot.realname.RealnameSetting
 import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.getMember
 import net.dv8tion.jda.core.Permission
-import net.dv8tion.jda.core.entities.Channel
-import net.dv8tion.jda.core.entities.Guild
-import net.dv8tion.jda.core.entities.Member
-import net.dv8tion.jda.core.entities.Message
-import net.dv8tion.jda.core.entities.Role
-import net.dv8tion.jda.core.entities.TextChannel
-import net.dv8tion.jda.core.entities.User
+import net.dv8tion.jda.core.entities.*
 import org.json.JSONObject
+import java.sql.Timestamp
 
 class Realname(val firstName: String, val lastName: String) {
     companion object {
@@ -407,6 +402,86 @@ class ClearanceOverride(val id: Int, val command: String, cl: String) {
     }
 }
 
+class RssFeed(val id: String, val channelId: String, val serverId: String, val url: String, val failed: Boolean, val lastCheck: Timestamp?) {
+
+    val guild: Guild?
+        get() = Bot.getGuild(serverId)
+
+    val channel: TextChannel?
+        get() = guild?.getTextChannelById(this.channelId)
+
+    val items = mutableSetOf<FeedItem>()
+
+    data class FeedItem(val guid: String)
+
+    fun delete() = object : ApiRequest<VoidApiResponse>("/feed/$id", Methods.DELETE) {
+        override fun parse(json: JSONObject): VoidApiResponse {
+            return VoidApiResponse()
+        }
+    }
+
+    fun update(success: Boolean) = object : ApiRequest<VoidApiResponse>("/feed/server/$serverId/check", Methods.PATCH, mapOf(Pair("feed", id), Pair("success", success.toString()))) {
+        override fun parse(json: JSONObject): VoidApiResponse {
+            return VoidApiResponse()
+        }
+    }
+
+    fun posted(guid: String) {
+        val req = object : ApiRequest<FeedItem>("/feed/$id/item", Methods.PUT, mapOf(Pair("guid", guid))) {
+            override fun parse(json: JSONObject): FeedItem {
+                return FeedItem(json.getString("guid"))
+            }
+        }
+        req.queue({
+            items.add(it)
+        })
+    }
+
+    fun isPosted(guid: String) = items.contains(FeedItem(guid))
+
+    companion object {
+        fun get(id: String) = object : ApiRequest<RssFeed>("/feed/$id") {
+            override fun parse(json: JSONObject): RssFeed {
+                return parseFeed(json.getJSONObject("feed"))
+            }
+        }
+
+        fun get(guild: Guild) = object : ApiRequest<Array<RssFeed>>("/feed/server/${guild.id}") {
+            override fun parse(json: JSONObject): Array<RssFeed> {
+                val list = mutableListOf<RssFeed>()
+                json.getJSONArray("feeds").map { it as JSONObject }.forEach {
+                    list.add(parseFeed(it))
+                }
+                return list.toTypedArray()
+            }
+        }
+
+        fun parseFeed(json: JSONObject): RssFeed {
+            val timestamp: Timestamp? = if (!json.isNull("lastCheck")){
+                Timestamp(json.getLong("lastCheck"))
+            } else {
+                null
+            }
+            val rssFeed = RssFeed(json.getString("id"), json.getString("channel_id"),
+                    json.getString("server_id"), json.getString("feed_url"), json.optBoolean("failed", false), timestamp)
+
+            if(json.has("items")) {
+                json.getJSONArray("items").map { it as JSONObject }.forEach {
+                    rssFeed.items.add(RssFeed.FeedItem(it.getString("guid")))
+                }
+            }
+            return rssFeed
+        }
+
+        fun create(url: String, channel: String, guild: Guild) = object: ApiRequest<RssFeed>("/feed/server/${guild.id}", Methods.PUT,
+                mapOf(Pair("channel_id", channel), Pair("feed_url", url))) {
+            override fun parse(json: JSONObject): RssFeed {
+                return parseFeed(json)
+            }
+        }
+    }
+}
+
 class GuildMember(val id: String, val serverId: String, val userId: String, val username: String,
                   val discrim: String, val nick: String?) {
 
@@ -417,7 +492,7 @@ class GuildMember(val id: String, val serverId: String, val userId: String, val 
         get() = guild?.jda?.getUserById(userId)
 
     val member: Member?
-        get() = if(user != null) guild?.getMember(user) else null
+        get() = if (user != null) guild?.getMember(user) else null
 
     fun update(): ApiRequest<GuildMember> {
         return object :
@@ -432,14 +507,14 @@ class GuildMember(val id: String, val serverId: String, val userId: String, val 
     fun needsUpdate(): Boolean {
         val user = this.user
         val member = this.member
-        if(user == null || member == null){
+        if (user == null || member == null) {
             Bot.LOG.debug("Deleting member $userId as they are no longer present in the guild")
             this.delete().queue()
             return false
         }
-        if(user.name != this.username || user.discriminator != this.discrim)
+        if (user.name != this.username || user.discriminator != this.discrim)
             return true
-        if(member.nickname != this.nick)
+        if (member.nickname != this.nick)
             return true
         return false
     }
@@ -473,7 +548,7 @@ class GuildMember(val id: String, val serverId: String, val userId: String, val 
         }
 
         fun get(member: Member): ApiRequest<GuildMember> {
-            return object : ApiRequest<GuildMember>("/member/${member.guild.id}/${member.user.id}"){
+            return object : ApiRequest<GuildMember>("/member/${member.guild.id}/${member.user.id}") {
                 override fun parse(json: JSONObject): GuildMember {
                     return Companion.parse(json)
                 }
@@ -485,7 +560,7 @@ class GuildMember(val id: String, val serverId: String, val userId: String, val 
             val map = mapOf(Pair("server_id", member.guild.id), Pair("user_id", member.user.id),
                     Pair("user_name", member.user.name),
                     Pair("user_discrim", member.user.discriminator)).toMutableMap()
-            if(member.nickname != null)
+            if (member.nickname != null)
                 map.put("user_nick", member.nickname)
             return object : ApiRequest<GuildMember>("/member", Methods.PUT,
                     map) {

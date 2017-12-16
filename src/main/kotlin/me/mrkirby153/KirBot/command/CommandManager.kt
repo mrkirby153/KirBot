@@ -13,36 +13,15 @@ import me.mrkirby153.KirBot.command.executors.UpdateNicknames
 import me.mrkirby153.KirBot.command.executors.`fun`.CommandColor
 import me.mrkirby153.KirBot.command.executors.`fun`.CommandQuote
 import me.mrkirby153.KirBot.command.executors.`fun`.CommandSeen
-import me.mrkirby153.KirBot.command.executors.admin.CommandClean
-import me.mrkirby153.KirBot.command.executors.admin.CommandClearance
-import me.mrkirby153.KirBot.command.executors.admin.CommandDumpPermissions
-import me.mrkirby153.KirBot.command.executors.admin.CommandRefresh
-import me.mrkirby153.KirBot.command.executors.admin.CommandShutdown
-import me.mrkirby153.KirBot.command.executors.admin.CommandStats
-import me.mrkirby153.KirBot.command.executors.admin.CommandSu
+import me.mrkirby153.KirBot.command.executors.admin.*
 import me.mrkirby153.KirBot.command.executors.clearance.CommandOverrideClearance
 import me.mrkirby153.KirBot.command.executors.game.CommandOverwatch
-import me.mrkirby153.KirBot.command.executors.group.CommandCreateGroup
-import me.mrkirby153.KirBot.command.executors.group.CommandDeleteGroup
-import me.mrkirby153.KirBot.command.executors.group.CommandJoinGroup
-import me.mrkirby153.KirBot.command.executors.group.CommandLeaveGroup
-import me.mrkirby153.KirBot.command.executors.group.CommandListGroups
-import me.mrkirby153.KirBot.command.executors.moderation.CommandDisableSpamFilter
-import me.mrkirby153.KirBot.command.executors.moderation.CommandHideChannel
-import me.mrkirby153.KirBot.command.executors.moderation.CommandKick
-import me.mrkirby153.KirBot.command.executors.moderation.CommandMute
-import me.mrkirby153.KirBot.command.executors.moderation.CommandUnmute
+import me.mrkirby153.KirBot.command.executors.group.*
+import me.mrkirby153.KirBot.command.executors.moderation.*
 import me.mrkirby153.KirBot.command.executors.msc.CommandPing
-import me.mrkirby153.KirBot.command.executors.music.CommandConnect
-import me.mrkirby153.KirBot.command.executors.music.CommandDeQueue
-import me.mrkirby153.KirBot.command.executors.music.CommandDisconnect
-import me.mrkirby153.KirBot.command.executors.music.CommandMove
-import me.mrkirby153.KirBot.command.executors.music.CommandPlay
-import me.mrkirby153.KirBot.command.executors.music.CommandQueue
-import me.mrkirby153.KirBot.command.executors.music.CommandSkip
-import me.mrkirby153.KirBot.command.executors.music.CommandStop
-import me.mrkirby153.KirBot.command.executors.music.CommandVolume
+import me.mrkirby153.KirBot.command.executors.music.*
 import me.mrkirby153.KirBot.command.executors.polls.CommandPoll
+import me.mrkirby153.KirBot.command.executors.rss.CommandRss
 import me.mrkirby153.KirBot.command.help.HelpManager
 import me.mrkirby153.KirBot.command.processors.LaTeXProcessor
 import me.mrkirby153.KirBot.data.ServerData
@@ -52,11 +31,7 @@ import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.getClearance
 import net.dv8tion.jda.core.Permission
-import net.dv8tion.jda.core.entities.ChannelType
-import net.dv8tion.jda.core.entities.Guild
-import net.dv8tion.jda.core.entities.MessageChannel
-import net.dv8tion.jda.core.entities.TextChannel
-import net.dv8tion.jda.core.entities.User
+import net.dv8tion.jda.core.entities.*
 import java.awt.Color
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
@@ -421,6 +396,11 @@ object CommandManager {
             category = CommandCategory.MISCELLANEOUS
         })
 
+        register(CommandSpec("rss"){
+            clearance = Clearance.BOT_MANAGER
+            executor = CommandRss()
+            arguments(Arguments.string("action", false), Arguments.rest("parameters"))
+        })
 
         /// ------ REGISTER MESSAGE PROCESSORS ------
         registerProcessor(LaTeXProcessor::class)

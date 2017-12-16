@@ -16,6 +16,7 @@ import me.mrkirby153.KirBot.database.api.ApiRequestProcessor
 import me.mrkirby153.KirBot.error.UncaughtErrorReporter
 import me.mrkirby153.KirBot.redis.RedisConnector
 import me.mrkirby153.KirBot.redis.messaging.MessageDataStore
+import me.mrkirby153.KirBot.rss.FeedTask
 import me.mrkirby153.KirBot.seen.SeenStore
 import me.mrkirby153.KirBot.utils.HttpUtils
 import me.mrkirby153.KirBot.utils.localizeTime
@@ -33,6 +34,7 @@ import net.dv8tion.jda.core.hooks.ListenerAdapter
 import net.dv8tion.jda.core.requests.SessionReconnectQueue
 import org.slf4j.LoggerFactory
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 object Bot {
 
@@ -123,6 +125,8 @@ object Bot {
         RedisConnector.listen()
 
         HttpUtils.clearCache()
+
+        scheduler.scheduleAtFixedRate(FeedTask(), 0, 1, TimeUnit.HOURS)
 
         // Mark all shards as online
         shards.forEach { it.presence.status = OnlineStatus.ONLINE }

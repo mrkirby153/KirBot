@@ -1,7 +1,5 @@
 package me.mrkirby153.KirBot.command.args
 
-import me.mrkirby153.KirBot.command.CommandException
-
 class ArgumentParser(val arguments: Array<String>) {
 
     fun parse(args: Array<Argument>): CommandContext {
@@ -12,10 +10,12 @@ class ArgumentParser(val arguments: Array<String>) {
             val argument = args[i]
             if (argument.required && !argList.hasNext()) {
                 // Missing a required argument
-                throw CommandException("The argument \"${argument.key}\" is required!")
+                throw ArgumentParseException("The argument \"${argument.key}\" is required!")
             }
-            val parse = argument.element.parse(argList)!!
-            context.put(argument.key, parse)
+            if(argList.hasNext()) {
+                val parse = argument.element.parse(argList)!!
+                context.put(argument.key, parse)
+            }
         }
         return context
     }

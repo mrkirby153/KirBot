@@ -11,6 +11,7 @@ import com.sedmelluq.discord.lavaplayer.source.twitch.TwitchStreamAudioSourceMan
 import com.sedmelluq.discord.lavaplayer.source.vimeo.VimeoAudioSourceManager
 import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager
 import io.sentry.Sentry
+import me.mrkirby153.KirBot.command.CommandExecutor
 import me.mrkirby153.KirBot.data.ServerData
 import me.mrkirby153.KirBot.database.api.ApiRequestProcessor
 import me.mrkirby153.KirBot.error.UncaughtErrorReporter
@@ -125,6 +126,8 @@ object Bot {
         RedisConnector.listen()
 
         HttpUtils.clearCache()
+
+        CommandExecutor.loadAll()
 
         scheduler.scheduleAtFixedRate(FeedTask(), 0, 1, TimeUnit.HOURS)
 

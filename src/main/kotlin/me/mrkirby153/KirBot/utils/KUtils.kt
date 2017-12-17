@@ -10,18 +10,14 @@ import me.mrkirby153.KirBot.realname.RealnameHandler
 import me.mrkirby153.KirBot.user.Clearance
 import net.dv8tion.jda.core.EmbedBuilder
 import net.dv8tion.jda.core.Permission
-import net.dv8tion.jda.core.entities.Guild
-import net.dv8tion.jda.core.entities.Member
-import net.dv8tion.jda.core.entities.MessageEmbed
-import net.dv8tion.jda.core.entities.TextChannel
-import net.dv8tion.jda.core.entities.User
+import net.dv8tion.jda.core.entities.*
 import java.awt.Color
 import java.io.File
 import java.io.InputStream
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
-import java.util.Locale
-import java.util.Properties
+import java.util.*
+import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 
 fun File.child(path: String) = File(this, path)
@@ -297,3 +293,5 @@ fun String.mdEscape(): String {
         append(this@mdEscape.substring(start until this@mdEscape.length))
     }
 }
+
+fun Message.deleteAfter(time: Long, unit: TimeUnit) = this.delete().queueAfter(time, unit)

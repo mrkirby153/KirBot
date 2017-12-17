@@ -7,7 +7,7 @@ import me.mrkirby153.KirBot.command.args.CommandElement
 class StringElement : CommandElement<String> {
 
     override fun parse(list: ArgumentList): String {
-        return if (list.peek().startsWith("\"")) {
+        return if (list.peek().matches(Regex("^(?<!\\\\)\\\".*"))) {
             val string = buildString {
                 while (true) {
                     if(!list.hasNext()){
@@ -15,12 +15,12 @@ class StringElement : CommandElement<String> {
                     }
                     val next = list.popFirst()
                     append(next + " ")
-                    if (next.endsWith("\"")) {
+                    if (next.matches(Regex(".*(?<!\\\\)\\\"\$"))) {
                         break
                     }
                 }
             }
-            string.trim().substring(1..(string.length-3))
+            string.trim().substring(1..(string.length-3)).replace("\\\"", "\"")
         } else {
             list.popFirst()
         }

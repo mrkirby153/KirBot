@@ -1,25 +1,25 @@
 package me.mrkirby153.KirBot.command.args.elements
 
+import me.mrkirby153.KirBot.command.args.ArgumentList
 import me.mrkirby153.KirBot.command.args.ArgumentParseException
 import me.mrkirby153.KirBot.command.args.CommandElement
 
-class NumberElement(key: String, required: Boolean, val min: Double, val max: Double )
-    : CommandElement(key, required) {
+class NumberElement(private val min: Double, private val max: Double) : CommandElement<Double> {
 
-    override val friendlyName = "Number"
+    override fun parse(list: ArgumentList): Double {
+        val num = list.popFirst()
+        try {
+            val number = num.toDouble()
 
-    override fun parseValue(arg: String): Any {
-        try{
-            val number = arg.toDouble()
-            if(number < min){
-                throw ArgumentParseException("The provided number ($number) must be greater than $min")
+            if (number < min) {
+                throw ArgumentParseException(String.format("The number you specified (%.2f) must be greater than %.2f", number, min))
             }
-            if(number > max){
-                throw ArgumentParseException("The provided number ($number) must be less than $max")
+            if (number > max) {
+                throw ArgumentParseException(String.format("The number you specified (%.2f) must be less than %.2f", number, max))
             }
             return number
-        } catch(e: NumberFormatException){
-            throw ArgumentParseException("Please enter a number!")
+        } catch (e: Exception) {
+            throw ArgumentParseException("$num is not a number!")
         }
     }
 }

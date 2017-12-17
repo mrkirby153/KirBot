@@ -2,13 +2,8 @@ package me.mrkirby153.KirBot.listener
 
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.Shard
-import me.mrkirby153.KirBot.command.CommandManager
 import me.mrkirby153.KirBot.data.ServerData
-import me.mrkirby153.KirBot.database.api.GuildChannel
-import me.mrkirby153.KirBot.database.api.GuildMember
-import me.mrkirby153.KirBot.database.api.GuildRole
-import me.mrkirby153.KirBot.database.api.PanelAPI
-import me.mrkirby153.KirBot.database.api.Quote
+import me.mrkirby153.KirBot.database.api.*
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.embed.embed
 import me.mrkirby153.KirBot.utils.sync
@@ -49,7 +44,7 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
 
         val context = Context(event)
 
-        CommandManager.execute(context, shard, event.guild)
+//        CommandManager.execute(context, shard, event.guild)
     }
 
     override fun onGuildMemberJoin(event: GuildMemberJoinEvent) {

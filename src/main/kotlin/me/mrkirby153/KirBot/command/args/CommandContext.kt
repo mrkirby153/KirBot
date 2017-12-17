@@ -3,30 +3,22 @@ package me.mrkirby153.KirBot.command.args
 @Suppress("UNCHECKED_CAST")
 class CommandContext {
 
-    private val parsed = mutableMapOf<String, Any>()
+    private val arguments = mutableMapOf<String, Any>()
 
-    fun <T> get(key: String): T? {
-        return parsed[key] as T?
+    fun <T> get(key: String): T? = arguments[key] as T?
+
+    fun put(key: String, `object`: Any) = arguments.put(key, `object`)
+
+    fun has(key: String) = arguments.containsKey(key)
+
+    fun <T> ifPresent(key: String, action: (T) -> Unit) {
+        val d = arguments[key] ?: return
+        action.invoke(d as T)
     }
 
-    fun put(key: String, obj: Any) {
-        parsed.put(key, obj)
+    override fun toString(): String {
+        return "CommandContext(arguments=$arguments)"
     }
 
-    fun has(key: String): Boolean {
-        return parsed[key] != null
-    }
 
-    fun <T> has(key: String, data: (T) -> Unit) {
-        val d = parsed[key] ?: return
-        data.invoke(d as T)
-    }
-
-    fun number(key: String): Double? {
-        return get<Double>(key)
-    }
-
-    fun string(key: String): String? {
-        return get<String>(key)
-    }
 }

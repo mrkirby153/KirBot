@@ -4,15 +4,29 @@ import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.Shard
 import me.mrkirby153.KirBot.data.ServerData
 import me.mrkirby153.KirBot.utils.embed.ResponseBuilder
-import net.dv8tion.jda.core.entities.*
+import net.dv8tion.jda.core.entities.Message
+import net.dv8tion.jda.core.entities.User
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent
 
-class Context(val author: User, val user: User, val channel: MessageChannel, val guild: Guild, val shard: Shard,
-    val member: Member, val message: Message) {
+class Context(val shard: Shard, val message: Message) : Message by message {
 
-    constructor(event: MessageReceivedEvent): this(event.author, event.author,
-            event.channel, event.guild, Bot.getShardForGuild(event.guild.id)!!, event.member, event.message)
+    constructor(event: MessageReceivedEvent) : this(Bot.getShardForGuild(event.guild.id)!!, event.message)
+
+    var customAuthor: User? = null
+    var customMessage : String? = null
 
     val data: ServerData = Bot.getServerData(guild)!!
     fun send() = ResponseBuilder(this)
+
+    fun success() = message.addReaction(GREEN_CHECK).queue()
+
+    fun fail() = message.addReaction(RED_CROSS).queue()
+
+    override fun getAuthor(): User {
+        return customAuthor?: message.author
+    }
+
+    override fun getRawContent(): String {
+        return customMessage ?: message.rawContent
+    }
 }

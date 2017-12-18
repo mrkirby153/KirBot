@@ -1,8 +1,6 @@
 package me.mrkirby153.KirBot.command.args
 
-import me.mrkirby153.KirBot.command.args.elements.RegexElement
-import me.mrkirby153.KirBot.command.args.elements.RestAsString
-import me.mrkirby153.KirBot.command.args.elements.StringElement
+import me.mrkirby153.KirBot.command.args.elements.*
 
 
 interface CommandElement<out T> {
@@ -24,4 +22,8 @@ object Arguments {
     fun url(key: String, required: Boolean = true) = Argument(key, RegexElement(URL_REGEX, "Provide a valid URL"), required)
 
     fun restAsString(key: String) = Argument(key, RestAsString(), false)
+
+    fun number(key: String, required: Boolean = true, min : Number = Double.MIN_VALUE, max: Number = Double.MAX_VALUE) = Argument(key, NumberElement(min.toDouble(), max.toDouble()), required)
+
+    fun user(key: String, required : Boolean = true) = Argument(key, UserElement(), required)
 }

@@ -63,6 +63,7 @@ fun User.getClearance(server: Guild): Clearance {
 }
 
 fun Member.getClearance(server: Guild): Clearance = this.user.getClearance(server)
+fun Member.getClearance() = this.user.getClearance(this.guild)
 
 fun User.getMember(server: Guild) = server.getMember(this)
 
@@ -294,4 +295,11 @@ fun String.mdEscape(): String {
     }
 }
 
-fun Message.deleteAfter(time: Long, unit: TimeUnit) = this.delete().queueAfter(time, unit)
+fun Message.deleteAfter(time: Long, unit: TimeUnit) {
+    if (this.channel.checkPermissions(Permission.MESSAGE_MANAGE))
+        this.delete().queueAfter(time, unit)
+}
+
+fun <T : Channel> T.checkPermissions(vararg permission: Permission) = this.guild.selfMember.hasPermission(this, *permission)
+
+fun MessageChannel.checkPermissions(vararg permissions: Permission) = (this as? TextChannel)?.checkPermissions<TextChannel>(*permissions) != false

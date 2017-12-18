@@ -37,12 +37,15 @@ object CommandExecutor {
         Bot.LOG.info("Commands registered in ${Time.format(1, time, Time.TimeUnit.FIT)}")
     }
 
-    fun execute(context: Context, shard: Shard, guild: Guild) {
+    fun execute(context: Context) {
         if (context.channel.type == ChannelType.PRIVATE) {
             return
         }
 
-        var message = context.message.rawContent
+        val shard = context.shard
+        val guild = context.guild
+
+        var message = context.rawContent
 
         if (message.isEmpty())
             return
@@ -82,7 +85,7 @@ object CommandExecutor {
             Bot.LOG.debug("${context.author.id} was denied access to $cmd due to lack of clearance. Required: ${command.clearance}, Found: ${context.author.getClearance(guild)}")
             context.send().error("You do not have permission to perform this command!").queue {
                 it.deleteAfter(10, TimeUnit.SECONDS)
-                context.message.deleteAfter(10, TimeUnit.SECONDS)
+                context.deleteAfter(10, TimeUnit.SECONDS)
             }
             return
         }
@@ -97,7 +100,7 @@ object CommandExecutor {
         } catch (e: ArgumentParseException) {
             context.send().error(e.message ?: "Invalid argument format!").queue {
                 it.deleteAfter(10, TimeUnit.SECONDS)
-                context.message.deleteAfter(10, TimeUnit.SECONDS)
+                context.deleteAfter(10, TimeUnit.SECONDS)
             }
             return
         }
@@ -113,13 +116,14 @@ object CommandExecutor {
             executor.execute(context, cmdContext)
         } catch (e: CommandException) {
             context.send().error(e.message ?: "An unknown error has occurred!").queue {
-                context.message.deleteAfter(10, TimeUnit.SECONDS)
+                context.deleteAfter(10, TimeUnit.SECONDS)
                 it.deleteAfter(10, TimeUnit.SECONDS)
             }
         } catch (e: Exception) {
+            e.printStackTrace()
             context.send().error("An unknown error has occurred, please try again").queue {
                 it.deleteAfter(10, TimeUnit.SECONDS)
-                context.message.deleteAfter(10, TimeUnit.SECONDS)
+                context.deleteAfter(10, TimeUnit.SECONDS)
             }
         }
         Bot.LOG.debug("Command execution finished")
@@ -129,7 +133,7 @@ object CommandExecutor {
         val customCommand = shard.customCommands[guild.id].firstOrNull { it.name.equals(command, true) } ?: return
         if (customCommand.clearance.value > context.author.getClearance(guild).value) {
             context.send().error("You do not have permission to perform that command").queue {
-                context.message.deleteAfter(10, TimeUnit.SECONDS)
+                context.deleteAfter(10, TimeUnit.SECONDS)
                 it.deleteAfter(10, TimeUnit.SECONDS)
             }
             return

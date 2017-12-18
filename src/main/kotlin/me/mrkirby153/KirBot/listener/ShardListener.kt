@@ -45,7 +45,7 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
 
         val context = Context(event)
 
-        CommandExecutor.execute(context, shard, event.guild)
+        CommandExecutor.execute(context)
     }
 
     override fun onGuildMemberJoin(event: GuildMemberJoinEvent) {

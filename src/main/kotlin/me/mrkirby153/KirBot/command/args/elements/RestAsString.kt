@@ -7,5 +7,5 @@ class RestAsString : CommandElement<String> {
     override fun parse(list: ArgumentList) = buildString {
         while (list.peek() != null)
             append(list.popFirst() + " ")
-    }.trim()
+    }.trim().replace(Regex("^(?<!\\\\)\\\""), "").replace(Regex("(?<!\\\\)\\\"\$"), "")
 }

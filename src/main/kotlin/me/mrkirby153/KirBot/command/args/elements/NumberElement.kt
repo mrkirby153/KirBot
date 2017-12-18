@@ -12,13 +12,13 @@ class NumberElement(private val min: Double, private val max: Double) : CommandE
             val number = num.toDouble()
 
             if (number < min) {
-                throw ArgumentParseException(String.format("The number you specified (%.2f) must be greater than %.2f", number, min))
+                throw ArgumentParseException(String.format("The number you specified (%.2f) must be greater than %.1f", number, min))
             }
             if (number > max) {
-                throw ArgumentParseException(String.format("The number you specified (%.2f) must be less than %.2f", number, max))
+                throw ArgumentParseException(String.format("The number you specified (%.2f) must be less than %.1f", number, max))
             }
             return number
-        } catch (e: Exception) {
+        } catch (e: NumberFormatException) {
             throw ArgumentParseException("$num is not a number!")
         }
     }

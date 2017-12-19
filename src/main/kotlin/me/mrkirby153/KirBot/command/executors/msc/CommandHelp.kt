@@ -67,7 +67,7 @@ class CommandHelp : BaseCommand(CommandCategory.MISCELLANEOUS, Arguments.string(
         context.send().embed("Help: ${spec.aliases.first().mdEscape()}") {
             description {
                 appendln(u("Command Name"))
-                appendln("  [$prefix${spec.aliases[0]}")
+                appendln("  $prefix${spec.aliases[0]}")
                 +"\n"
                 appendln(u("Description"))
                 appendln("  ${help?.description ?: "No description provided"}")
@@ -91,9 +91,10 @@ class CommandHelp : BaseCommand(CommandCategory.MISCELLANEOUS, Arguments.string(
                 }
                 +"\n"
                 appendln(u("Clearance"))
-                +spec.clearance.toString()
+                +spec.clearance.friendlyName
                 +"\n"
                 if(help?.usage?.isNotEmpty() == true) {
+                    +"\n"
                     appendln(u("Example Usage"))
                     help.usage.forEach {
                         +"  `$cmdPrefix$it`\n"

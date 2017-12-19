@@ -17,6 +17,6 @@ class CommandHideChannel : BaseCommand(false, CommandCategory.MODERATION){
         val channel = (context.channel as? TextChannel) ?: return
         channel.hide()
         context.send().success("Channel hidden!").complete()
-        context.data.logger.log("Channel Hidden", "${context.author.name} has hidden #${context.channel.name}")
+        context.data.logger.log("Channel Hidden", "${context.author.asMention} has hidden ${(context.channel as TextChannel).asMention}")
     }
 }

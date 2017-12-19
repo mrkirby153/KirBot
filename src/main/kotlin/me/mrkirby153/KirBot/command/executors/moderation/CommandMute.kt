@@ -22,12 +22,12 @@ class CommandMute : BaseCommand(false, CommandCategory.MODERATION, Arguments.use
         if (context.channel !is TextChannel)
             throw CommandException("This command won't work in PMs")
 
-        if(!context.channel.checkPermissions(Permission.MANAGE_CHANNEL))
+        if (!context.channel.checkPermissions(Permission.MANAGE_CHANNEL))
             throw CommandException("Missing the required permission: `Manage Channel`")
         val channel = context.channel as TextChannel
         val override = channel.getPermissionOverride(member) ?: channel.createPermissionOverride(member).complete()
         override.manager.deny(Permission.MESSAGE_WRITE).queue()
         context.success()
-        context.data.logger.log("User Muted", "${context.author.name} has muted ${member.user.name} in #${context.channel.name}", Color.RED)
+        context.data.logger.log("User Muted", "${context.author.name} has muted ${member.user.name} in ${(context.channel as TextChannel).asMention}", Color.RED)
     }
 }

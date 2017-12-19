@@ -40,10 +40,10 @@ class LogListener(private val shard: Shard) : ListenerAdapter() {
             if(author != null && author.isBot)
                 return@getMessageContent
 
-            val authorMsg = if (author != null) "by `${author.name}#${author.discriminator}`" else ""
+            val authorMsg = if (author != null) "by *${author.name}#${author.discriminator}*" else ""
             shard.getServerData(event.guild).logger
                     .log("Message Deleted ",
-                            "A message $authorMsg was deleted in `#${chan.name}`", Color.BLUE,
+                            "A message $authorMsg was deleted in ${chan.asMention}", Color.BLUE,
                             LogField("Message", msg.message, true))
             Bot.messageDataStore.deleteMessage(event.messageId, {})
         })
@@ -52,7 +52,7 @@ class LogListener(private val shard: Shard) : ListenerAdapter() {
     override fun onMessageBulkDelete(event: MessageBulkDeleteEvent) {
         Bot.messageDataStore.bulkDelete(event.messageIds.toTypedArray(), {
             shard.getServerData(event.guild).logger
-                    .log("Message Deleted", "`${event.messageIds.size}` messages have been deleted from #${event.channel.name}", Color.RED)
+                    .log("Message Deleted", "${event.messageIds.size} messages have been deleted from ${event.channel.asMention}", Color.RED)
         })
     }
 
@@ -67,9 +67,9 @@ class LogListener(private val shard: Shard) : ListenerAdapter() {
                 if(user.isBot)
                     return@getMessageContent
                 shard.getServerData(event.guild).logger
-                        .log("Message Edit", "${user.name}#${user.discriminator} has edited their message",
+                        .log("Message Edit", "*${user.name}#${user.discriminator}* has edited their message in ${event.channel.asMention}",
                                 Color.BLUE,
-                                LogField("Old", "```${old.message}```", false), LogField("New", "```${event.message.content}````", false))
+                                LogField("Old", old.message, false), LogField("New", event.message.content, false))
             }
             Bot.messageDataStore.pushMessage(event.message)
         })

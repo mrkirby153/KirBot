@@ -3,10 +3,12 @@ package me.mrkirby153.KirBot.command.executors.moderation
 import me.mrkirby153.KirBot.command.*
 import me.mrkirby153.KirBot.command.args.Arguments
 import me.mrkirby153.KirBot.command.args.CommandContext
+import me.mrkirby153.KirBot.server.LogField
 import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.getMember
 import net.dv8tion.jda.core.entities.User
+import java.awt.Color
 
 @Command("kick")
 @RequiresClearance(Clearance.BOT_MANAGER)
@@ -18,8 +20,9 @@ class CommandKick : BaseCommand(false, CommandCategory.MODERATION, Arguments.use
 
         val member = user.getMember(context.guild)
         if (context.guild.selfMember.canInteract(member))
-            context.guild.controller.kick(member, "${context.author.name}#${context.author.discriminator} - $reason").queue{
+            context.guild.controller.kick(member, "${context.author.name}#${context.author.discriminator} - $reason").queue {
                 context.success()
+                context.data.logger.log("User Kicked", "${user.name}#${user.discriminator} was kicked by ${context.author.asMention}", Color.RED, LogField("reason", reason, false))
             }
         else
             throw CommandException("I cannot kick this user")

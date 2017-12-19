@@ -39,6 +39,6 @@ class CommandUnmute :BaseCommand(false, CommandCategory.MODERATION, Arguments.us
             override.delete().queue()
         }
         context.success()
-        context.data.logger.log("User Muted", "${context.author.name} has unmuted ${member.user.name} in #${context.channel.name}", Color.RED)
+        context.data.logger.log("User Muted", "${context.author.name} has unmuted ${member.user.name} in ${(context.channel as TextChannel).asMention}", Color.RED)
     }
 }

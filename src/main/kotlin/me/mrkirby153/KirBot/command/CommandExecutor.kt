@@ -5,6 +5,7 @@ import me.mrkirby153.KirBot.Shard
 import me.mrkirby153.KirBot.command.args.ArgumentParseException
 import me.mrkirby153.KirBot.command.args.ArgumentParser
 import me.mrkirby153.KirBot.command.args.CommandContext
+import me.mrkirby153.KirBot.command.help.HelpManager
 import me.mrkirby153.KirBot.database.api.GuildCommand
 import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
@@ -22,6 +23,7 @@ object CommandExecutor {
 
     val commands = mutableListOf<CommandSpec>()
 
+    val helpManager = HelpManager()
 
     fun loadAll() {
         Bot.LOG.info("Starting loading of commands, this may take a while")
@@ -35,6 +37,7 @@ object CommandExecutor {
             commands.forEach(CommandExecutor::registerCommand)
         }
         Bot.LOG.info("Commands registered in ${Time.format(1, time, Time.TimeUnit.FIT)}")
+        helpManager.load()
     }
 
     fun execute(context: Context) {
@@ -169,6 +172,16 @@ object CommandExecutor {
             e.printStackTrace()
             Bot.LOG.error("An error occurred when registering ${clazz.canonicalName}")
         }
+    }
+
+    fun getCommandsByCategory() : Map<CommandCategory, List<CommandSpec>> {
+        val categories = mutableMapOf<CommandCategory, MutableList<CommandSpec>>()
+        this.commands.forEach {
+            if(!categories.containsKey(it.category))
+                categories[it.category] = mutableListOf()
+            categories[it.category]?.add(it)
+        }
+        return categories
     }
 
     private fun getCommand(name: String) = this.commands.firstOrNull { it.aliases.map { it.toLowerCase() }.contains(name.toLowerCase()) }

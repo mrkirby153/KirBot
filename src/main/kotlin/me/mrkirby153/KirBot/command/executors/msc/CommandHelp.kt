@@ -71,6 +71,11 @@ class CommandHelp : BaseCommand(CommandCategory.MISCELLANEOUS, Arguments.string(
                 +"\n"
                 appendln(u("Description"))
                 appendln("  ${help?.description ?: "No description provided"}")
+                if(spec.aliases.size > 1){
+                    appendln("\n"+u("Aliases"))
+                    appendln("   - ${spec.aliases.drop(1).joinToString(", ").mdEscape()}")
+                    +"\n"
+                }
                 appendln(u("Usage"))
                 val params = buildString {
                     spec.arguments.forEach {

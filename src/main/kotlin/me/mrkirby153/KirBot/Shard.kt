@@ -6,7 +6,6 @@ import me.mrkirby153.KirBot.data.ServerData
 import me.mrkirby153.KirBot.database.api.ClearanceOverride
 import me.mrkirby153.KirBot.database.api.GuildCommand
 import me.mrkirby153.KirBot.database.api.GuildSettings
-import me.mrkirby153.KirBot.listener.AntiSpamListener
 import me.mrkirby153.KirBot.listener.LogListener
 import me.mrkirby153.KirBot.listener.ShardListener
 import net.dv8tion.jda.core.JDA
@@ -17,7 +16,6 @@ class Shard(val id: Int, private val jda: JDA, val bot: Bot) : JDA by jda {
 
     init {
         addEventListener(ShardListener(this, bot))
-        addEventListener(AntiSpamListener(this))
         addEventListener(LogListener(this))
     }
 

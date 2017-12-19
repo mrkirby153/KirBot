@@ -9,9 +9,8 @@ class HelpManager {
 
     val commands = mutableListOf<CommandHelp>()
 
-    private val INPUT_STREAM = this.javaClass.getResourceAsStream("/commands.json")!!
-
     fun load() {
+        val INPUT_STREAM = this.javaClass.getResourceAsStream("/commands.json")!!
         Bot.LOG.info("Started loading help from \"$INPUT_STREAM\"")
 
         val jsonArray = JSONArray(JSONTokener(INPUT_STREAM))

@@ -11,6 +11,7 @@ import me.mrkirby153.KirBot.utils.deleteAfter
 import me.mrkirby153.KirBot.utils.embed.b
 import me.mrkirby153.KirBot.utils.embed.embed
 import me.mrkirby153.KirBot.utils.localizeTime
+import me.mrkirby153.KirBot.utils.mdEscape
 import java.awt.Color
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
@@ -62,7 +63,7 @@ class CommandPoll : BaseCommand(false, CommandCategory.FUN, Arguments.string("du
                     title = "Options"
                     description {
                         options.filter { it.isNotEmpty() }.forEachIndexed {index, option ->
-                            appendln("${'\u0030' + (index)}\u20E3 **$option**")
+                            appendln("${'\u0030' + (index)}\u20E3 **${option.mdEscape()}**")
                         }
                     }
                 }

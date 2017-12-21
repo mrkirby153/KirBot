@@ -16,10 +16,10 @@ class ServerLogger(val server: Guild) {
         val chanId: String = LogListener.logChannelCache[server.id] ?: return
         if (chanId.isNotEmpty())
             server.getTextChannelById(chanId)?.sendMessage(buildString {
-                append("\u2500".repeat(45))
+                append("\u2500".repeat(24))
                 appendln("\nTime: *${SimpleDateFormat(Time.DATE_FORMAT_NOW + " Z").format(System.currentTimeMillis())}*")
                 appendln(b(subject))
-                appendln(message)
+                appendln("\n$message")
                 fields.forEach {
                     append(b(it.name))
                     append(": ")

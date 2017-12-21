@@ -4,7 +4,7 @@ import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.utils.Context
-import me.mrkirby153.KirBot.utils.Time
+import me.mrkirby153.kcutils.Time
 
 @Command("ping")
 class CommandPing : BaseCommand(false) {

@@ -23,6 +23,7 @@ import me.mrkirby153.KirBot.utils.HttpUtils
 import me.mrkirby153.KirBot.utils.localizeTime
 import me.mrkirby153.KirBot.utils.readProperties
 import me.mrkirby153.KirBot.utils.sync
+import me.mrkirby153.kcutils.readProperties
 import net.dv8tion.jda.core.AccountType
 import net.dv8tion.jda.core.JDA
 import net.dv8tion.jda.core.JDABuilder

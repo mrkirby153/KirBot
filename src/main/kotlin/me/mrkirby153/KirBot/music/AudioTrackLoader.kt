@@ -5,10 +5,10 @@ import com.sedmelluq.discord.lavaplayer.tools.FriendlyException
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import me.mrkirby153.KirBot.utils.Context
-import me.mrkirby153.KirBot.utils.Time
 import me.mrkirby153.KirBot.utils.embed.link
 import me.mrkirby153.KirBot.utils.getMember
 import me.mrkirby153.KirBot.utils.mdEscape
+import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.core.entities.User
 
 class AudioTrackLoader(val manager: MusicManager, val requestedBy: User, val context: Context,

@@ -2,8 +2,8 @@ package me.mrkirby153.KirBot.server.data
 
 import com.google.gson.GsonBuilder
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.utils.child
-import me.mrkirby153.KirBot.utils.mkdirIfNotExist
+import me.mrkirby153.kcutils.child
+import me.mrkirby153.kcutils.mkdirIfNotExist
 import net.dv8tion.jda.core.entities.Guild
 
 private val GSON = GsonBuilder().setPrettyPrinting().create()

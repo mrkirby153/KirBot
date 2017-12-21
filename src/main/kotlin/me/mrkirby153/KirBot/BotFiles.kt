@@ -1,7 +1,7 @@
 package me.mrkirby153.KirBot
 
-import me.mrkirby153.KirBot.utils.child
-import me.mrkirby153.KirBot.utils.createFileIfNotExist
+import me.mrkirby153.kcutils.child
+import me.mrkirby153.kcutils.createFileIfNotExist
 import java.io.File
 
 class BotFiles {

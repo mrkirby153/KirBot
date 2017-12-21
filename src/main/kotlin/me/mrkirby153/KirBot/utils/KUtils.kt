@@ -12,7 +12,6 @@ import net.dv8tion.jda.core.EmbedBuilder
 import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.*
 import java.awt.Color
-import java.io.File
 import java.io.InputStream
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
@@ -20,26 +19,8 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 
-fun File.child(path: String) = File(this, path)
-
-fun File.readProperties(): Properties {
-    return Properties().apply { load(this@readProperties.inputStream()) }
-}
-
 fun InputStream.readProperties(): Properties {
     return Properties().apply { load(this@readProperties) }
-}
-
-fun File.createFileIfNotExist(): File {
-    if (!this.exists())
-        this.createNewFile()
-    return this
-}
-
-fun File.mkdirIfNotExist(): File {
-    if (!this.exists())
-        this.mkdir()
-    return this
 }
 
 fun User.getClearance(server: Guild): Clearance {
@@ -113,24 +94,6 @@ fun roundTime(degree: Int, number: Double): Double {
     val sym = DecimalFormatSymbols(Locale.US)
     val twoDform = DecimalFormat(format, sym)
     return twoDform.format(number).toDouble()
-}
-
-inline fun <T : AutoCloseable, R> T.use(block: (T) -> R): R {
-    var closed = false
-    try {
-        return block(this)
-    } catch (e: Exception) {
-        closed = true
-        try {
-            this.close()
-        } catch (closeException: Exception) {
-        }
-        throw e
-    } finally {
-        if (!closed) {
-            this.close()
-        }
-    }
 }
 
 infix fun Any.botUrl(url: String): String {

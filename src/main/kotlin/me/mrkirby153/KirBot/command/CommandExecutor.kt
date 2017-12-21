@@ -9,9 +9,9 @@ import me.mrkirby153.KirBot.command.help.HelpManager
 import me.mrkirby153.KirBot.database.api.GuildCommand
 import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
-import me.mrkirby153.KirBot.utils.Time
 import me.mrkirby153.KirBot.utils.deleteAfter
 import me.mrkirby153.KirBot.utils.getClearance
+import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.core.entities.Channel
 import net.dv8tion.jda.core.entities.ChannelType
 import net.dv8tion.jda.core.entities.Guild

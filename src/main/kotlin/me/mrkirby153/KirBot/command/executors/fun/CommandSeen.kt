@@ -7,7 +7,7 @@ import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.args.Arguments
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.utils.Context
-import me.mrkirby153.KirBot.utils.Time
+import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.core.entities.User
 import java.text.SimpleDateFormat
 

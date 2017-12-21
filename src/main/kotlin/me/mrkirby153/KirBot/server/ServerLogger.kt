@@ -2,8 +2,8 @@ package me.mrkirby153.KirBot.server
 
 import me.mrkirby153.KirBot.listener.LogListener
 import me.mrkirby153.KirBot.utils.CachedValue
-import me.mrkirby153.KirBot.utils.Time
 import me.mrkirby153.KirBot.utils.embed.b
+import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.core.entities.Guild
 import java.awt.Color
 import java.text.SimpleDateFormat

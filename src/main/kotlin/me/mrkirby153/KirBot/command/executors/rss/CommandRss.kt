@@ -2,10 +2,7 @@ package me.mrkirby153.KirBot.command.executors.rss
 
 import com.rometools.rome.io.SyndFeedInput
 import com.rometools.rome.io.XmlReader
-import me.mrkirby153.KirBot.command.BaseCommand
-import me.mrkirby153.KirBot.command.Command
-import me.mrkirby153.KirBot.command.CommandException
-import me.mrkirby153.KirBot.command.RequiresClearance
+import me.mrkirby153.KirBot.command.*
 import me.mrkirby153.KirBot.command.args.Arguments
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.api.RssFeed
@@ -17,7 +14,7 @@ import java.util.concurrent.TimeUnit
 
 @Command("rss")
 @RequiresClearance(Clearance.BOT_MANAGER)
-class CommandRss : BaseCommand(Arguments.string("action", false), Arguments.restAsString("parameters")) {
+class CommandRss : BaseCommand(false, CommandCategory.MISCELLANEOUS, Arguments.string("action", false), Arguments.restAsString("parameters")) {
 
     override fun execute(context: Context, cmdContext: CommandContext) {
         val action = cmdContext.get<String>("action")?.toLowerCase()

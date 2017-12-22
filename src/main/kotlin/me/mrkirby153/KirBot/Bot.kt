@@ -22,6 +22,7 @@ import me.mrkirby153.KirBot.seen.SeenStore
 import me.mrkirby153.KirBot.utils.HttpUtils
 import me.mrkirby153.KirBot.utils.localizeTime
 import me.mrkirby153.KirBot.utils.readProperties
+import me.mrkirby153.KirBot.utils.redis.RedisConnection
 import me.mrkirby153.KirBot.utils.sync
 import me.mrkirby153.kcutils.readProperties
 import net.dv8tion.jda.core.AccountType
@@ -79,6 +80,8 @@ object Bot {
 
     val debug = properties.getProperty("debug", "false").toBoolean()
 
+    lateinit var redisConnection: RedisConnection
+
 
     fun start(token: String) {
         if (debug) {
@@ -123,6 +126,19 @@ object Bot {
         shards
                 .flatMap { it.guilds }
                 .forEach { it.sync() }
+
+        shards.forEach {
+            it.loadSettings()
+        }
+
+
+        val password = Bot.properties.getProperty("redis-password", "")
+        val host = Bot.properties.getProperty("redis-host", "localhost")
+        val port = Bot.properties.getProperty("redis-port", "6379").toInt()
+        val dbNumber = Bot.properties.getProperty("redis-db", "0").toInt()
+
+        this.redisConnection = RedisConnection(host, port,
+                if (password.isEmpty()) null else password, dbNumber)
 
         RedisConnector.listen()
 

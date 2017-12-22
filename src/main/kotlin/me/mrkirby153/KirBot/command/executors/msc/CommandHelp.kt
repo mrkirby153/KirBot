@@ -1,6 +1,11 @@
 package me.mrkirby153.KirBot.command.executors.msc
 
-import me.mrkirby153.KirBot.command.*
+import me.mrkirby153.KirBot.command.BaseCommand
+import me.mrkirby153.KirBot.command.Command
+import me.mrkirby153.KirBot.command.CommandCategory
+import me.mrkirby153.KirBot.command.CommandException
+import me.mrkirby153.KirBot.command.CommandExecutor
+import me.mrkirby153.KirBot.command.CommandSpec
 import me.mrkirby153.KirBot.command.args.Arguments
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.utils.Context
@@ -45,12 +50,12 @@ class CommandHelp : BaseCommand(CommandCategory.MISCELLANEOUS, Arguments.string(
                         }
                     }
                 }
-                if (context.shard.customCommands[context.guild.id].isNotEmpty()) {
+                if (context.shard.customCommands[context.guild.id]?.obj?.isNotEmpty()==true) {
                     field {
                         title = "Other Commands"
                         inline = true
                         description {
-                            context.shard.customCommands[context.guild.id].forEach {
+                            context.shard.customCommands[context.guild.id]?.obj?.forEach {
                                 +("$prefix${it.name.mdEscape()}" link ".")
                                 +"\n"
                             }

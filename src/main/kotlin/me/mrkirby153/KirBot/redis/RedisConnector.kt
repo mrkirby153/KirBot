@@ -1,42 +1,18 @@
 package me.mrkirby153.KirBot.redis
 
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.kcutils.Time
 import org.json.JSONObject
-import redis.clients.jedis.Jedis
-import redis.clients.jedis.JedisPool
-import redis.clients.jedis.JedisPoolConfig
+
+private const val MAX_RETRIES = 4
 
 object RedisConnector {
 
-
-    val jedisPool: JedisPool
-
     var running = true
 
-    init {
-        val prevClassloader = Thread.currentThread().contextClassLoader
-        Thread.currentThread().contextClassLoader = RedisConnector::class.java.classLoader
-        val config = JedisPoolConfig().apply {
-            maxWaitMillis = 1000
-            minIdle = 1
-            testOnBorrow = true
-            maxTotal = 20
-            blockWhenExhausted = true
-        }
+    var retries = 0
 
-        val password = Bot.properties.getProperty("redis-password", "")
-        val host = Bot.properties.getProperty("redis-host", "localhost")
-        val port = Bot.properties.getProperty("redis-port", "6379")
-        jedisPool = JedisPool(config, host, port.toInt(),
-                1000, if (password.isEmpty()) null else password)
-        Thread.currentThread().contextClassLoader = prevClassloader
-    }
-
-    fun get(): Jedis = jedisPool.resource.apply {
-        val dbNumber = Bot.properties.getProperty("redis-db", "0")
-        if (this.db.toInt() != dbNumber.toInt())
-            select(dbNumber.toInt())
-    }
+    fun get() = Bot.redisConnection.get()
 
     fun publish(channel: String, message: String) {
         get().use {
@@ -53,10 +29,20 @@ object RedisConnector {
             while(running) {
                 try {
                     get().use {
+                        retries = 0
                         it.psubscribe(RedisHandler(), "kirbot:*")
                     }
                 } catch (e: Exception) {
-                    Bot.LOG.error("Redis listener encountered an exception, restarting")
+                    if(retries > MAX_RETRIES){
+                        running = false
+                        Bot.LOG.error("Reached Max retry count, giving up.")
+                    } else {
+                        val waitTime = (2000 * (Math.pow(2.0, (retries++).toDouble()))).toLong()
+                        Bot.LOG.error(
+                                "Redis listener encountered an exception, retrying in ${Time.format(
+                                        1, waitTime)}")
+                        Thread.sleep(waitTime)
+                    }
                 }
             }
         }

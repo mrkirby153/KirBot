@@ -133,7 +133,7 @@ object CommandExecutor {
     }
 
     fun executeCustomCommand(context: Context, command: String, args: Array<String>, shard: Shard, guild: Guild) {
-        val customCommand = shard.customCommands[guild.id].firstOrNull { it.name.equals(command, true) } ?: return
+        val customCommand = shard.customCommands[guild.id]?.obj?.firstOrNull { it.name.equals(command, true) } ?: return
         if (customCommand.clearance.value > context.author.getClearance(guild).value) {
             context.send().error("You do not have permission to perform that command").queue {
                 context.deleteAfter(10, TimeUnit.SECONDS)
@@ -209,6 +209,6 @@ object CommandExecutor {
     }
 
     private fun getEffectivePermission(command: String, guild: Guild, default: Clearance): Clearance {
-        return Bot.getShardForGuild(guild.id)!!.clearanceOverrides[guild.id].firstOrNull { it.command.equals(command, true) }?.clearance ?: default
+        return Bot.getShardForGuild(guild.id)!!.clearanceOverrides[guild.id]?.obj?.firstOrNull { it.command.equals(command, true) }?.clearance ?: default
     }
 }

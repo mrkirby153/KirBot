@@ -11,6 +11,7 @@ object RedisCommandManager {
         register("update-names", UpdateAllServerNames())
         register("botchat", BotChat())
         register("nickname", SetNickname())
+        register("sync", SyncCommand())
     }
 
     fun getCommand(name: String): RedisCommandHandler? {

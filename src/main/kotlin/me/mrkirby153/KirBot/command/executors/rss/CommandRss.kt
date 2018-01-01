@@ -2,13 +2,18 @@ package me.mrkirby153.KirBot.command.executors.rss
 
 import com.rometools.rome.io.SyndFeedInput
 import com.rometools.rome.io.XmlReader
-import me.mrkirby153.KirBot.command.*
+import me.mrkirby153.KirBot.command.BaseCommand
+import me.mrkirby153.KirBot.command.Command
+import me.mrkirby153.KirBot.command.CommandCategory
+import me.mrkirby153.KirBot.command.CommandException
+import me.mrkirby153.KirBot.command.RequiresClearance
 import me.mrkirby153.KirBot.command.args.Arguments
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.api.RssFeed
 import me.mrkirby153.KirBot.rss.FeedTask
 import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
+import me.mrkirby153.kcutils.Time
 import java.net.URL
 import java.util.concurrent.TimeUnit
 
@@ -18,7 +23,7 @@ class CommandRss : BaseCommand(false, CommandCategory.MISCELLANEOUS, Arguments.s
 
     override fun execute(context: Context, cmdContext: CommandContext) {
         val action = cmdContext.get<String>("action")?.toLowerCase()
-        val parameters: List<String> = cmdContext.get<String>("parameters")?.toLowerCase()?.split(" ")?.filter { it.isNotEmpty() } ?: emptyList()
+        val parameters: List<String> = cmdContext.get<String>("parameters")?.split(" ")?.filter { it.isNotEmpty() } ?: emptyList()
         context.channel.sendTyping().queue()
         if (action == null || action == "list") {
             // Display feeds in this channel
@@ -32,8 +37,10 @@ class CommandRss : BaseCommand(false, CommandCategory.MISCELLANEOUS, Arguments.s
                             +it.url
                             if (!it.failed) {
                                 +" (Last Update: "
-                                if (it.lastCheck != null)
-                                    +it.lastCheck.toString()
+                                if (it.lastCheck != null) {
+                                    +Time.format(1, System.currentTimeMillis() - it.lastCheck.time)
+                                    +" Ago"
+                                }
                                 else
                                     +"Never"
                                 +")"

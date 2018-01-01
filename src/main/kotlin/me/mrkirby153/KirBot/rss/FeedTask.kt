@@ -47,7 +47,8 @@ class FeedTask : Runnable {
                 val remark = Remark(remarkOpts)
                 f.entries.filter { !feed.isPosted(it.uri) }.forEach {
                     // Should be unposted feeds
-                    val msg = remark.convertFragment(it.description.value)
+                    val toConvert = if(it.description != null) it.description.value else "No description provided"
+                    val msg = remark.convertFragment(toConvert)
                             .replace(Regex("\\s?#{1,4}\\s?"), "**").replace(Regex("!\\["), "[")
 
                     val embed = embed(it.title) {

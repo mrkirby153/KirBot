@@ -5,7 +5,13 @@ import me.mrkirby153.KirBot.realname.RealnameSetting
 import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.getMember
 import net.dv8tion.jda.core.Permission
-import net.dv8tion.jda.core.entities.*
+import net.dv8tion.jda.core.entities.Channel
+import net.dv8tion.jda.core.entities.Guild
+import net.dv8tion.jda.core.entities.Member
+import net.dv8tion.jda.core.entities.Message
+import net.dv8tion.jda.core.entities.Role
+import net.dv8tion.jda.core.entities.TextChannel
+import net.dv8tion.jda.core.entities.User
 import org.json.JSONObject
 import java.sql.Timestamp
 
@@ -458,7 +464,7 @@ class RssFeed(val id: String, val channelId: String, val serverId: String, val u
 
         fun parseFeed(json: JSONObject): RssFeed {
             val timestamp: Timestamp? = if (!json.isNull("lastCheck")){
-                Timestamp(json.getLong("lastCheck"))
+                Timestamp(json.getLong("lastCheck")*1000)
             } else {
                 null
             }

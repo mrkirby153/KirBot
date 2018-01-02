@@ -43,7 +43,10 @@ class MessageDataStore {
 
     fun pushMessage(message: net.dv8tion.jda.core.entities.Message) {
         RedisConnector.get().use {
-            it.rpush(LIST_KEY, storeMessage(message))
+            val key = storeMessage(message)
+            if(!existsInQueue(message)){
+                it.rpush(LIST_KEY, key)
+            }
         }
     }
 
@@ -84,6 +87,13 @@ class MessageDataStore {
         }
     }
 
+    private fun existsInQueue(message: net.dv8tion.jda.core.entities.Message): Boolean {
+        RedisConnector.get().use {
+            val messages = it.lrange(LIST_KEY, 0, -1)
+            return messages.firstOrNull { it == "$DATA_KEY_PREFIX:${message.id}" } != null
+        }
+    }
+
 
     private fun encode(message: Message): JSONObject = JSONObject().apply {
         put("id", message.id)
@@ -94,7 +104,8 @@ class MessageDataStore {
         put("time", message.time)
     }
 
-    private fun decode(obj: JSONObject): Message = Message(obj.getString("id"), obj.getString("server"),
+    private fun decode(obj: JSONObject): Message = Message(obj.getString("id"),
+            obj.getString("server"),
             obj.getString("author"), obj.getString("channel"), obj.getString("message"),
             obj.optLong("time"))
 

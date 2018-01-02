@@ -4,8 +4,12 @@ import me.mrkirby153.KirBot.Bot
 import org.json.JSONArray
 import org.json.JSONObject
 
+var apiReqCounter = 0L
+
 abstract class ApiRequest<out T>(val url: String, val method: Methods = Methods.GET,
                                  val data: Map<String, String>? = null) {
+
+    val apiReq = ++apiReqCounter
 
     private var callback: ((T) -> Unit)? = null
 
@@ -35,8 +39,8 @@ abstract class ApiRequest<out T>(val url: String, val method: Methods = Methods.
     }
 
     open fun onHttpError(error: Int, body: String) {
-        Bot.LOG.debug("[HTTP ERROR] Encountered an error ($error) when accessing \"$url\"")
-        Bot.LOG.debug("[HTTP ERROR] $body")
+        Bot.LOG.debug("{$apiReq} [HTTP ERROR] Encountered an error ($error) when accessing \"$url\"")
+        Bot.LOG.debug("{$apiReq} [HTTP ERROR] $body")
     }
 }
 

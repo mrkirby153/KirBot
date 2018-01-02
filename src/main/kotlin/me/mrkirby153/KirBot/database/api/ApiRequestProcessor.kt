@@ -55,11 +55,11 @@ class ApiRequestProcessor(val apiRequest: ApiRequest<*>) : Runnable {
                 build()
             }
 
-            debugLogger.debug("Making ${req.method()} to ${req.url()}")
+            debugLogger.debug("{${apiRequest.apiReq}} Making ${req.method()} to ${req.url()}")
 
             val resp = HttpUtils.CLIENT.newCall(req).execute()
 
-            debugLogger.debug("Received code ${resp.code()}")
+            debugLogger.debug("{${apiRequest.apiReq}} Received code ${resp.code()}")
 
             if (resp.body() != null) {
                 val inputStream = resp.body()!!.string()
@@ -85,7 +85,7 @@ class ApiRequestProcessor(val apiRequest: ApiRequest<*>) : Runnable {
                         apiRequest.onException(e)
                     }
                 } else {
-                    debugLogger.debug("Request failed.")
+                    debugLogger.debug("{${apiRequest.apiReq}} Request failed.")
                     return null
                 }
                 resp.close()

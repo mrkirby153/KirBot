@@ -16,7 +16,9 @@ class RedisDataStore<V>(val clazz: Class<V>, val key: String) : DataStore<String
 
     override fun clear() {
         Bot.redisConnection.get().use {
-            it.del(*it.keys("$key:*").toTypedArray())
+            val keys = it.keys("$key:*")
+            if (keys.isNotEmpty())
+                it.del(*keys.toTypedArray())
         }
     }
 

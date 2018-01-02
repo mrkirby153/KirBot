@@ -21,7 +21,8 @@ class ApiRequestProcessor(val apiRequest: ApiRequest<*>) : Runnable {
             if (Bot.debug)
                 e.printStackTrace()
             Bot.LOG.error("Caught exception from request ${apiRequest.javaClass}: [$e]")
-            debugLogger.debug("URL: ${apiRequest.url} (${apiRequest.method.value}); Data: ${apiRequest.data}")
+            debugLogger.debug(
+                    "URL: ${apiRequest.url} (${apiRequest.method.value}); Data: ${apiRequest.data}")
         }
     }
 
@@ -67,11 +68,25 @@ class ApiRequestProcessor(val apiRequest: ApiRequest<*>) : Runnable {
                     return null
                 }
 
-                val json = if (inputStream.isNotBlank()) JSONObject(JSONTokener(inputStream)) else JSONObject()
-                try {
-                    return apiRequest.parse(json)
-                } catch (e: Exception) {
-                    apiRequest.onException(e)
+                val json = if (inputStream.isNotBlank()) JSONObject(
+                        JSONTokener(inputStream)) else JSONObject()
+                if (json.optBoolean("success", false)) {
+                    val array = json.optJSONArray("data")
+                    val obj = json.optJSONObject("data")
+                    try {
+                        if (array != null) {
+                            return apiRequest.parse(array)
+                        } else if (obj != null) {
+                            return apiRequest.parse(obj)
+                        } else {
+                            return null
+                        }
+                    } catch (e: Exception) {
+                        apiRequest.onException(e)
+                    }
+                } else {
+                    debugLogger.debug("Request failed.")
+                    return null
                 }
                 resp.close()
             }

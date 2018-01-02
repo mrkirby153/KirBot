@@ -12,6 +12,7 @@ import net.dv8tion.jda.core.entities.Message
 import net.dv8tion.jda.core.entities.Role
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.User
+import org.json.JSONArray
 import org.json.JSONObject
 import java.sql.Timestamp
 
@@ -49,11 +50,10 @@ class GuildCommand(val name: String, val data: String, val clearance: Clearance,
     companion object {
         fun getCommands(guild: Guild) = object :
                 ApiRequest<List<GuildCommand>>("/server/${guild.id}/commands") {
-            override fun parse(json: JSONObject): List<GuildCommand> {
+            override fun parse(json: JSONArray): List<GuildCommand> {
                 val cmds = mutableListOf<GuildCommand>()
 
-                val array = json.getJSONArray("cmds")
-                array.forEach { obj ->
+                json.forEach { obj ->
                     val jsonObj = obj as JSONObject
                     cmds.add(GuildCommand(jsonObj.getString("name"),
                             jsonObj.getString("data"),
@@ -102,34 +102,22 @@ class GuildChannel(val id: String, val guild: String, val name: String, val type
         }
 
 
-    fun update(): ApiRequest<VoidApiResponse> {
+    fun update(): ApiRequest<Void> {
         val isHidden = channel.getPermissionOverride(channel.guild.publicRole)?.denied?.contains(
                 Permission.MESSAGE_READ) ?: false
-        return object : ApiRequest<VoidApiResponse>("/channel/${channel.id}", Methods.PATCH,
-                mapOf(Pair("name", channel.name), Pair("hidden", isHidden.toString()))) {
-            override fun parse(json: JSONObject): VoidApiResponse {
-                return VoidApiResponse();
-            }
-        }
+        return object : ApiRequest<Void>("/channel/${channel.id}", Methods.PATCH,
+                mapOf(Pair("name", channel.name), Pair("hidden", isHidden.toString()))) {}
     }
 
     companion object {
-        fun register(channel: Channel): ApiRequest<VoidApiResponse> {
-            return object : ApiRequest<VoidApiResponse>("/server/${channel.guild.id}/channel",
+        fun register(channel: Channel): ApiRequest<Void> {
+            return object : ApiRequest<Void>("/server/${channel.guild.id}/channel",
                     Methods.PUT, mapOf(Pair("id", channel.id), Pair("name", channel.name),
-                    Pair("type", if (channel is TextChannel) "TEXT" else "Voice"))) {
-                override fun parse(json: JSONObject): VoidApiResponse {
-                    return VoidApiResponse()
-                }
-            }
+                    Pair("type", if (channel is TextChannel) "TEXT" else "Voice"))) {}
         }
 
-        fun unregister(channel: String): ApiRequest<VoidApiResponse> {
-            return object : ApiRequest<VoidApiResponse>("/channel/$channel", Methods.DELETE) {
-                override fun parse(json: JSONObject): VoidApiResponse {
-                    return VoidApiResponse()
-                }
-            }
+        fun unregister(channel: String): ApiRequest<Void> {
+            return object : ApiRequest<Void>("/channel/$channel", Methods.DELETE) {}
         }
     }
 }
@@ -191,13 +179,8 @@ class ServerMessage(val id: String?, val channelId: String, val serverId: String
         }
 
         fun bulkDelete(messages: Collection<String>) = object :
-                ApiRequest<VoidApiResponse>("/message/bulkDelete", Methods.DELETE,
-                        mapOf(Pair("messages", messages.joinToString(",")))) {
-            override fun parse(json: JSONObject): VoidApiResponse {
-                return VoidApiResponse()
-            }
-
-        }
+                ApiRequest<Void>("/message/bulkDelete", Methods.DELETE,
+                        mapOf(Pair("messages", messages.joinToString(",")))) {}
     }
 }
 
@@ -205,11 +188,7 @@ class GuildRole(val id: String, val name: String, val serverId: String, val perm
     val guild = Bot.getGuild(serverId)
     val role = guild?.getRoleById(id)
 
-    fun delete() = object : ApiRequest<VoidApiResponse>("/role/$id", Methods.DELETE) {
-        override fun parse(json: JSONObject): VoidApiResponse {
-            return VoidApiResponse()
-        }
-    }
+    fun delete() = object : ApiRequest<Void>("/role/$id", Methods.DELETE) {}
 
     fun update() = object : ApiRequest<GuildRole>("/role/${role!!.id}",
             Methods.PATCH,
@@ -242,11 +221,7 @@ class GuildRole(val id: String, val name: String, val serverId: String, val perm
             }
         }
 
-        fun delete(id: String) = object : ApiRequest<VoidApiResponse>("/role/$id", Methods.DELETE) {
-            override fun parse(json: JSONObject): VoidApiResponse {
-                return VoidApiResponse()
-            }
-        }
+        fun delete(id: String) = object : ApiRequest<Void>("/role/$id", Methods.DELETE) {}
     }
 }
 
@@ -279,9 +254,9 @@ class Quote(val id: Int, val messageId: String, val user: String, val server: St
 
         fun get(guild: Guild): ApiRequest<Array<Quote>> = object :
                 ApiRequest<Array<Quote>>("/server/${guild.id}/quotes") {
-            override fun parse(json: JSONObject): Array<Quote> {
+            override fun parse(json: JSONArray): Array<Quote> {
                 val quotes = mutableListOf<Quote>()
-                json.getJSONArray("quotes").forEach { q ->
+                json.forEach { q ->
                     if (q is JSONObject) {
                         quotes.add(Quote(q.getInt("id"), q.getString("message_id"),
                                 q.getString("user"),
@@ -299,14 +274,14 @@ class Group(val id: String, val guild: String, val name: String, val roleId: Str
 
     val role: Role? = Bot.getGuild(guild)?.getRoleById(roleId)
 
-    fun addUser(user: User): ApiRequest<VoidApiResponse>? {
+    fun addUser(user: User): ApiRequest<Void>? {
         // Check if the user is in the group first
         if (user.id in members)
             return null
 
-        return object : ApiRequest<VoidApiResponse>("/group/$id/member", Methods.PUT,
+        return object : ApiRequest<Void>("/group/$id/member", Methods.PUT,
                 mapOf(Pair("id", user.id))) {
-            override fun parse(json: JSONObject): VoidApiResponse {
+            override fun parse(json: JSONObject): Void? {
                 members.add(user.id)
                 val guild = Bot.getGuild(guild)
                 if (guild != null) {
@@ -315,19 +290,19 @@ class Group(val id: String, val guild: String, val name: String, val roleId: Str
                         guild.controller.addRolesToMember(user.getMember(guild), role).queue()
                     }
                 }
-                return VoidApiResponse()
+                return null
             }
         }
     }
 
-    fun removeUser(user: User): ApiRequest<VoidApiResponse>? {
+    fun removeUser(user: User): ApiRequest<Void>? {
         if (user.id !in members) {
             return null
         }
 
         return object :
-                ApiRequest<VoidApiResponse>("/group/$id/member/${user.id}", Methods.DELETE) {
-            override fun parse(json: JSONObject): VoidApiResponse {
+                ApiRequest<Void>("/group/$id/member/${user.id}", Methods.DELETE) {
+            override fun parse(json: JSONObject): Void? {
                 members.remove(user.id)
                 val guild = Bot.getGuild(guild)
                 if (guild != null) {
@@ -336,18 +311,13 @@ class Group(val id: String, val guild: String, val name: String, val roleId: Str
                         guild.controller.removeRolesFromMember(user.getMember(guild), role).queue()
                     }
                 }
-                return VoidApiResponse()
+                return null
             }
         }
     }
 
-    fun delete(): ApiRequest<VoidApiResponse> {
-        return object : ApiRequest<VoidApiResponse>("/group/$id", Methods.DELETE) {
-            override fun parse(json: JSONObject): VoidApiResponse {
-                return VoidApiResponse()
-            }
-
-        }
+    fun delete(): ApiRequest<Void> {
+        return object : ApiRequest<Void>("/group/$id", Methods.DELETE) {}
     }
 
     companion object {
@@ -375,12 +345,8 @@ class ClearanceOverride(val id: Int, val command: String, cl: String) {
         }
     }
 
-    fun delete(): ApiRequest<VoidApiResponse> {
-        return object : ApiRequest<VoidApiResponse>("/overrides/$id", Methods.DELETE) {
-            override fun parse(json: JSONObject): VoidApiResponse {
-                return VoidApiResponse()
-            }
-        }
+    fun delete(): ApiRequest<Void> {
+        return object : ApiRequest<Void>("/overrides/$id", Methods.DELETE) {}
     }
 
     companion object {
@@ -396,9 +362,9 @@ class ClearanceOverride(val id: Int, val command: String, cl: String) {
 
         fun get(guild: Guild): ApiRequest<MutableList<ClearanceOverride>> = object :
                 ApiRequest<MutableList<ClearanceOverride>>("/server/${guild.id}/overrides") {
-            override fun parse(json: JSONObject): MutableList<ClearanceOverride> {
+            override fun parse(json: JSONArray): MutableList<ClearanceOverride> {
                 val overrides = mutableListOf<ClearanceOverride>()
-                json.getJSONArray("overrides").map { it as JSONObject }.forEach { j ->
+                json.map { it as JSONObject }.forEach { j ->
                     overrides.add(ClearanceOverride(j.getInt("id"), j.getString("command"),
                             j.getString("clearance")))
                 }
@@ -408,7 +374,8 @@ class ClearanceOverride(val id: Int, val command: String, cl: String) {
     }
 }
 
-class RssFeed(val id: String, val channelId: String, val serverId: String, val url: String, val failed: Boolean, val lastCheck: Timestamp?) {
+class RssFeed(val id: String, val channelId: String, val serverId: String, val url: String,
+              val failed: Boolean, val lastCheck: Timestamp?) {
 
     val guild: Guild?
         get() = Bot.getGuild(serverId)
@@ -420,20 +387,15 @@ class RssFeed(val id: String, val channelId: String, val serverId: String, val u
 
     data class FeedItem(val guid: String)
 
-    fun delete() = object : ApiRequest<VoidApiResponse>("/feed/$id", Methods.DELETE) {
-        override fun parse(json: JSONObject): VoidApiResponse {
-            return VoidApiResponse()
-        }
-    }
+    fun delete() = object : ApiRequest<Void>("/feed/$id", Methods.DELETE) {}
 
-    fun update(success: Boolean) = object : ApiRequest<VoidApiResponse>("/feed/server/$serverId/check", Methods.PATCH, mapOf(Pair("feed", id), Pair("success", success.toString()))) {
-        override fun parse(json: JSONObject): VoidApiResponse {
-            return VoidApiResponse()
-        }
-    }
+    fun update(success: Boolean) = object :
+            ApiRequest<Void>("/feed/server/$serverId/check", Methods.PATCH,
+                    mapOf(Pair("feed", id), Pair("success", success.toString()))) {}
 
     fun posted(guid: String) {
-        val req = object : ApiRequest<FeedItem>("/feed/$id/item", Methods.PUT, mapOf(Pair("guid", guid))) {
+        val req = object :
+                ApiRequest<FeedItem>("/feed/$id/item", Methods.PUT, mapOf(Pair("guid", guid))) {
             override fun parse(json: JSONObject): FeedItem {
                 return FeedItem(json.getString("guid"))
             }
@@ -453,9 +415,9 @@ class RssFeed(val id: String, val channelId: String, val serverId: String, val u
         }
 
         fun get(guild: Guild) = object : ApiRequest<Array<RssFeed>>("/feed/server/${guild.id}") {
-            override fun parse(json: JSONObject): Array<RssFeed> {
+            override fun parse(json: JSONArray): Array<RssFeed> {
                 val list = mutableListOf<RssFeed>()
-                json.getJSONArray("feeds").map { it as JSONObject }.forEach {
+                json.map { it as JSONObject }.forEach {
                     list.add(parseFeed(it))
                 }
                 return list.toTypedArray()
@@ -463,15 +425,16 @@ class RssFeed(val id: String, val channelId: String, val serverId: String, val u
         }
 
         fun parseFeed(json: JSONObject): RssFeed {
-            val timestamp: Timestamp? = if (!json.isNull("lastCheck")){
-                Timestamp(json.getLong("lastCheck")*1000)
+            val timestamp: Timestamp? = if (!json.isNull("lastCheck")) {
+                Timestamp(json.getLong("lastCheck") * 1000)
             } else {
                 null
             }
             val rssFeed = RssFeed(json.getString("id"), json.getString("channel_id"),
-                    json.getString("server_id"), json.getString("feed_url"), json.optBoolean("failed", false), timestamp)
+                    json.getString("server_id"), json.getString("feed_url"),
+                    json.optBoolean("failed", false), timestamp)
 
-            if(json.has("items")) {
+            if (json.has("items")) {
                 json.getJSONArray("items").map { it as JSONObject }.forEach {
                     rssFeed.items.add(RssFeed.FeedItem(it.getString("guid")))
                 }
@@ -479,8 +442,9 @@ class RssFeed(val id: String, val channelId: String, val serverId: String, val u
             return rssFeed
         }
 
-        fun create(url: String, channel: String, guild: Guild) = object: ApiRequest<RssFeed>("/feed/server/${guild.id}", Methods.PUT,
-                mapOf(Pair("channel_id", channel), Pair("feed_url", url))) {
+        fun create(url: String, channel: String, guild: Guild) = object :
+                ApiRequest<RssFeed>("/feed/server/${guild.id}", Methods.PUT,
+                        mapOf(Pair("channel_id", channel), Pair("feed_url", url))) {
             override fun parse(json: JSONObject): RssFeed {
                 return parseFeed(json)
             }
@@ -502,7 +466,8 @@ class GuildMember(val id: String, val serverId: String, val userId: String, val 
 
     fun update(): ApiRequest<GuildMember> {
         return object :
-                ApiRequest<GuildMember>("/member/$serverId/$userId", Methods.PATCH, buildQuery(member!!)) {
+                ApiRequest<GuildMember>("/member/$serverId/$userId", Methods.PATCH,
+                        buildQuery(member!!)) {
             override fun parse(json: JSONObject): GuildMember {
                 return Companion.parse(json)
             }
@@ -525,12 +490,8 @@ class GuildMember(val id: String, val serverId: String, val userId: String, val 
         return false
     }
 
-    fun delete(): ApiRequest<VoidApiResponse> {
-        return object : ApiRequest<VoidApiResponse>("/member/$serverId/$userId", Methods.DELETE) {
-            override fun parse(json: JSONObject): VoidApiResponse {
-                return VoidApiResponse()
-            }
-        }
+    fun delete(): ApiRequest<Void> {
+        return object : ApiRequest<Void>("/member/$serverId/$userId", Methods.DELETE) {}
     }
 
     private fun buildQuery(member: Member): Map<String, String>? {
@@ -554,7 +515,8 @@ class GuildMember(val id: String, val serverId: String, val userId: String, val 
         }
 
         fun get(member: Member): ApiRequest<GuildMember> {
-            return object : ApiRequest<GuildMember>("/member/${member.guild.id}/${member.user.id}") {
+            return object :
+                    ApiRequest<GuildMember>("/member/${member.guild.id}/${member.user.id}") {
                 override fun parse(json: JSONObject): GuildMember {
                     return Companion.parse(json)
                 }
@@ -577,5 +539,3 @@ class GuildMember(val id: String, val serverId: String, val userId: String, val 
         }
     }
 }
-
-class VoidApiResponse

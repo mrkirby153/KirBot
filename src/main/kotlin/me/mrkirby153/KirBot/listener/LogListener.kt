@@ -72,7 +72,7 @@ class LogListener(private val shard: Shard) : ListenerAdapter() {
                 shard.getServerData(event.guild).logger
                         .log("Message Edit", "*${user.name}#${user.discriminator}* has edited their message in ${event.channel.asMention}",
                                 Color.BLUE,
-                                LogField("Old", old.message, false), LogField("New", event.message.content, false))
+                                LogField("Old", old.message.replace("@", "@\u200B"), false), LogField("New", event.message.content.replace("@", "@\u200B"), false))
             }
             Bot.messageDataStore.pushMessage(event.message)
         })

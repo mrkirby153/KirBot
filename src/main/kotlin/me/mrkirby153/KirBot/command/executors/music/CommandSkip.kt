@@ -1,8 +1,6 @@
 package me.mrkirby153.KirBot.command.executors.music
 
-import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
-import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.Arguments
 import me.mrkirby153.KirBot.command.args.CommandContext
@@ -19,11 +17,11 @@ import java.awt.Color
 import java.util.concurrent.TimeUnit
 
 @Command("skip,next")
-class CommandSkip : BaseCommand(CommandCategory.MUSIC, Arguments.string("option", false)) {
+class CommandSkip : MusicCommand(Arguments.string("option", false)) {
 
     val skipCooldown = mutableMapOf<String, Long>()
 
-    override fun execute(context: Context, cmdContext: CommandContext) {
+    override fun exec(context: Context, cmdContext: CommandContext) {
         val musicManager = context.data.musicManager
         val musicSettings = MusicManager.musicSettings[context.guild.id] ?: throw CommandException("Could not load music settings")
 

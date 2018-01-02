@@ -1,6 +1,8 @@
 package me.mrkirby153.KirBot.command.executors.music
 
-import me.mrkirby153.KirBot.command.*
+import me.mrkirby153.KirBot.command.Command
+import me.mrkirby153.KirBot.command.CommandException
+import me.mrkirby153.KirBot.command.RequiresClearance
 import me.mrkirby153.KirBot.command.args.Arguments
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.user.Clearance
@@ -10,8 +12,8 @@ import me.mrkirby153.KirBot.utils.mdEscape
 
 @Command("dequeue")
 @RequiresClearance(Clearance.BOT_MANAGER)
-class CommandDeQueue : BaseCommand(CommandCategory.MUSIC, Arguments.number("position", min = 1)) {
-    override fun execute(context: Context, cmdContext: CommandContext) {
+class CommandDeQueue : MusicCommand(Arguments.number("position", min = 1)) {
+    override fun exec(context: Context, cmdContext: CommandContext) {
         val index = (cmdContext.get<Double>("position")?.toInt() ?: 1) - 1
 
         try {

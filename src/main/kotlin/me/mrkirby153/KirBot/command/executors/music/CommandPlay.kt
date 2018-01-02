@@ -1,9 +1,7 @@
 package me.mrkirby153.KirBot.command.executors.music
 
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
-import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.Arguments
 import me.mrkirby153.KirBot.command.args.CommandContext
@@ -14,8 +12,8 @@ import me.mrkirby153.KirBot.music.MusicManager
 import me.mrkirby153.KirBot.utils.Context
 
 @Command("play")
-class CommandPlay : BaseCommand(CommandCategory.MUSIC, Arguments.restAsString("query/url")) {
-    override fun execute(context: Context, cmdContext: CommandContext) {
+class CommandPlay : MusicCommand(Arguments.restAsString("query/url")) {
+    override fun exec(context: Context, cmdContext: CommandContext) {
         val data = cmdContext.get<String>("query/url") ?: ""
 
         val queuePosition =  -1 // TODO 12/17/2017 Reimplement QueueAt

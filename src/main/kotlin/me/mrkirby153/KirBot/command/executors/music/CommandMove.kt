@@ -1,6 +1,8 @@
 package me.mrkirby153.KirBot.command.executors.music
 
-import me.mrkirby153.KirBot.command.*
+import me.mrkirby153.KirBot.command.Command
+import me.mrkirby153.KirBot.command.CommandException
+import me.mrkirby153.KirBot.command.RequiresClearance
 import me.mrkirby153.KirBot.command.args.Arguments
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.user.Clearance
@@ -10,9 +12,9 @@ import me.mrkirby153.KirBot.utils.mdEscape
 
 @Command("move")
 @RequiresClearance(Clearance.BOT_MANAGER)
-class CommandMove : BaseCommand(CommandCategory.MUSIC, Arguments.number("from", min = 0), Arguments.number("to", false, min = 0)) {
+class CommandMove : MusicCommand(Arguments.number("from", min = 0), Arguments.number("to", false, min = 0)) {
 
-    override fun execute(context: Context, cmdContext: CommandContext) {
+    override fun exec(context: Context, cmdContext: CommandContext) {
         val song = cmdContext.get<Double>("from")?.toInt() ?: throw CommandException("Please specify a number")
 
         val toPosition = cmdContext.get<Double>("to")?.toInt() ?: 0

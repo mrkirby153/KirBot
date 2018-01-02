@@ -1,8 +1,6 @@
 package me.mrkirby153.KirBot.command.executors.music
 
-import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
-import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.args.Arguments
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.music.MusicManager
@@ -10,11 +8,11 @@ import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.botUrl
 import me.mrkirby153.KirBot.utils.embed.link
 import me.mrkirby153.KirBot.utils.mdEscape
-import java.util.*
+import java.util.Random
 
 @Command("queue,np,nowplaying")
-class CommandQueue : BaseCommand(CommandCategory.MUSIC, Arguments.string("option", false)) {
-    override fun execute(context: Context, cmdContext: CommandContext) {
+class CommandQueue : MusicCommand(Arguments.string("option", false)) {
+    override fun exec(context: Context, cmdContext: CommandContext) {
         if(cmdContext.has("option")){
             when(cmdContext.get<String>("option")!!.toLowerCase()){
                 "clear" -> {

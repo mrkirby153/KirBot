@@ -66,6 +66,9 @@ class LogListener(private val shard: Shard) : ListenerAdapter() {
                 val user = Bot.getUser(old.author) ?: return@getMessageContent
                 if(user.isBot)
                     return@getMessageContent
+                // Ignore messages that are the same
+                if(!event.message.isEdited || old.message.equals(event.message.content, true))
+                    return@getMessageContent
                 shard.getServerData(event.guild).logger
                         .log("Message Edit", "*${user.name}#${user.discriminator}* has edited their message in ${event.channel.asMention}",
                                 Color.BLUE,

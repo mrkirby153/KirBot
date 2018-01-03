@@ -4,8 +4,13 @@ import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.Shard
 import me.mrkirby153.KirBot.command.CommandExecutor
 import me.mrkirby153.KirBot.data.ServerData
-import me.mrkirby153.KirBot.database.api.*
+import me.mrkirby153.KirBot.database.api.GuildChannel
+import me.mrkirby153.KirBot.database.api.GuildMember
+import me.mrkirby153.KirBot.database.api.GuildRole
+import me.mrkirby153.KirBot.database.api.PanelAPI
+import me.mrkirby153.KirBot.database.api.Quote
 import me.mrkirby153.KirBot.utils.Context
+import me.mrkirby153.KirBot.utils.RED_CROSS
 import me.mrkirby153.KirBot.utils.embed.embed
 import me.mrkirby153.KirBot.utils.sync
 import net.dv8tion.jda.core.entities.Channel
@@ -154,6 +159,17 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
                                 }
                         }
                     })
+                }
+            }
+        }
+        if(event.reaction.emote.name == RED_CROSS){
+            event.channel.getMessageById(event.messageId).queue { msg ->
+                if(msg.author.id == event.guild.selfMember.user.id){
+                    if(msg.rawContent.startsWith("\u2063")){
+                        if(msg.mentionedUsers.contains(event.user)){
+                            msg.delete().queue()
+                        }
+                    }
                 }
             }
         }

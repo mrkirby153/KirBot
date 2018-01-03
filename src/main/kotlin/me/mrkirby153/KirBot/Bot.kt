@@ -18,6 +18,7 @@ import me.mrkirby153.KirBot.error.UncaughtErrorReporter
 import me.mrkirby153.KirBot.redis.RedisConnector
 import me.mrkirby153.KirBot.redis.messaging.MessageDataStore
 import me.mrkirby153.KirBot.rss.FeedTask
+import me.mrkirby153.KirBot.scheduler.Scheduler
 import me.mrkirby153.KirBot.seen.SeenStore
 import me.mrkirby153.KirBot.utils.HttpUtils
 import me.mrkirby153.KirBot.utils.localizeTime
@@ -145,6 +146,8 @@ object Bot {
         HttpUtils.clearCache()
 
         CommandExecutor.loadAll()
+
+        Scheduler.load()
 
         scheduler.scheduleAtFixedRate(FeedTask(), 0, 1, TimeUnit.HOURS)
 

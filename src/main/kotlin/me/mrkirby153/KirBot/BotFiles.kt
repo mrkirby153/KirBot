@@ -11,4 +11,11 @@ class BotFiles {
     val properties = data.child("config.properties").createFileIfNotExist()
 
     val admins = data.child("admins").createFileIfNotExist()
+
+    val schedule = data.child("schedule.json").apply {
+        if(!exists()){
+            createNewFile()
+            writeText("{}")
+        }
+    }
 }

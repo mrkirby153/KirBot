@@ -156,11 +156,11 @@ object CommandExecutor {
     fun registerCommand(clazz: Class<*>) {
         Bot.LOG.debug("Registering command ${clazz.canonicalName}")
         try {
+            val cmdAnnotation = clazz.getAnnotation(Command::class.java) ?: return
             val instance = clazz.newInstance() as? BaseCommand ?: return
 
             val spec = instance.commandSpec
 
-            val cmdAnnotation = clazz.getAnnotation(Command::class.java)
             spec.aliases.addAll(cmdAnnotation.value.split(","))
             spec.executor = instance
 

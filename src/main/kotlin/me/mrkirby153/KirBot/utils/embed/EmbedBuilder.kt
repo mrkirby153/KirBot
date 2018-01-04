@@ -2,6 +2,9 @@ package me.mrkirby153.KirBot.utils.embed
 
 import net.dv8tion.jda.core.entities.MessageEmbed
 import java.awt.Color
+import java.time.Instant
+import java.util.Calendar
+import java.util.concurrent.TimeUnit
 
 
 fun embed(title: String? = null, init: EmbedBuilder.() -> Unit): EmbedBuilder {
@@ -93,12 +96,38 @@ class Footer {
 }
 
 @Marker
+class Timestamp {
+    var timestamp: Instant? = null
+
+    fun now() {
+        timestamp = Instant.now()
+    }
+
+    fun future(time: Long, unit: TimeUnit) {
+        val calendar = Calendar.getInstance()
+        calendar.timeInMillis += TimeUnit.MILLISECONDS.convert(time, unit)
+        timestamp = calendar.toInstant()
+    }
+
+    fun past(time: Long, unit: TimeUnit) {
+        val calendar = Calendar.getInstance()
+        calendar.timeInMillis -= TimeUnit.MILLISECONDS.convert(time, unit)
+        timestamp = calendar.toInstant()
+    }
+
+    fun millis(millis: Long) {
+        timestamp = Instant.ofEpochMilli(millis)
+    }
+}
+
+@Marker
 open class EmbedBuilder {
     private val title = TextBuilder()
     private val description = TextBuilder()
     private val fields = FieldBuilder()
     private val author = Author()
     private val footer = Footer()
+    private val timestamp = Timestamp()
 
     var thumbnail: String? = null
     var color: Color? = null
@@ -125,6 +154,10 @@ open class EmbedBuilder {
         footer.init()
     }
 
+    fun timestamp(init: Timestamp.() -> Unit) {
+        timestamp.init()
+    }
+
     fun build(): MessageEmbed {
         val embed = net.dv8tion.jda.core.EmbedBuilder()
         if (title.toString().isNotEmpty())
@@ -141,6 +174,7 @@ open class EmbedBuilder {
         embed.setColor(color)
         embed.setAuthor(author.name, author.url, author.iconUrl)
         embed.setFooter(footer.getText().toString(), footer.url)
+        embed.setTimestamp(timestamp.timestamp)
         return embed.build()
     }
 

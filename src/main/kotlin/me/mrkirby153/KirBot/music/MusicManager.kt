@@ -99,7 +99,7 @@ class MusicManager(val guild: Guild) {
         val musicSettings = CacheBuilder.newBuilder().expireAfterWrite(30, TimeUnit.SECONDS).build(
                 object : CacheLoader<String, MusicSettings?>() {
                     override fun load(p0: String): MusicSettings? {
-                        val guid = Bot.getGuild(p0) ?: return null
+                        val guid = Bot.shardManager.getGuild(p0) ?: return null
                         return MusicSettings.get(guid).execute()
                     }
                 }

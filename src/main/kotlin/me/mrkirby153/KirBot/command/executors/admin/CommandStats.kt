@@ -19,7 +19,7 @@ class CommandStats : BaseCommand(CommandCategory.ADMIN) {
         var guilds = 0
         val users = mutableSetOf<String>()
 
-        for (shard in Bot.shards) {
+        for (shard in Bot.shardManager.shards) {
             guilds += shard.guilds.size
             users.addAll(shard.users.map { it.id })
         }

@@ -97,8 +97,8 @@ class GuildChannel(val id: String, val guild: String, val name: String, val type
 
     val channel: Channel
         get() = when (type) {
-            ChannelType.TEXT -> Bot.getGuild(guild)!!.getTextChannelById(id)
-            ChannelType.VOICE -> Bot.getGuild(guild)!!.getVoiceChannelById(id)
+            ChannelType.TEXT -> Bot.shardManager.getGuild(guild)!!.getTextChannelById(id)
+            ChannelType.VOICE -> Bot.shardManager.getGuild(guild)!!.getVoiceChannelById(id)
         }
 
 
@@ -152,9 +152,9 @@ class MusicSettings(val enabled: Boolean, whitelist: String, val channels: Array
 
 class ServerMessage(val id: String?, val channelId: String, val serverId: String,
                     val authorId: String, val content: String) {
-    val guild = Bot.getGuild(this.serverId)
+    val guild = Bot.shardManager.getGuild(this.serverId)
     val channel = guild?.getTextChannelById(this.channelId)
-    val author = Bot.getUser(this.authorId)
+    val author = Bot.shardManager.getUser(this.authorId)
 
     companion object {
         fun get(id: String): ApiRequest<ServerMessage> = object :
@@ -185,7 +185,7 @@ class ServerMessage(val id: String?, val channelId: String, val serverId: String
 }
 
 class GuildRole(val id: String, val name: String, val serverId: String, val permissions: Long) {
-    val guild = Bot.getGuild(serverId)
+    val guild = Bot.shardManager.getGuild(serverId)
     val role = guild?.getRoleById(id)
 
     fun delete() = object : ApiRequest<Void>("/role/$id", Methods.DELETE) {}
@@ -227,7 +227,7 @@ class GuildRole(val id: String, val name: String, val serverId: String, val perm
 
 class Quote(val id: Int, val messageId: String, val user: String, val server: String,
             val content: String) {
-    val guild = Bot.getGuild(server)
+    val guild = Bot.shardManager.getGuild(server)
 
     companion object {
         fun create(message: Message) = object : ApiRequest<Quote>("/server/quote",
@@ -272,7 +272,7 @@ class Quote(val id: Int, val messageId: String, val user: String, val server: St
 class Group(val id: String, val guild: String, val name: String, val roleId: String,
             val members: MutableList<String>) {
 
-    val role: Role? = Bot.getGuild(guild)?.getRoleById(roleId)
+    val role: Role? = Bot.shardManager.getGuild(guild)?.getRoleById(roleId)
 
     fun addUser(user: User): ApiRequest<Void>? {
         // Check if the user is in the group first
@@ -283,7 +283,7 @@ class Group(val id: String, val guild: String, val name: String, val roleId: Str
                 mapOf(Pair("id", user.id))) {
             override fun parse(json: JSONObject): Void? {
                 members.add(user.id)
-                val guild = Bot.getGuild(guild)
+                val guild = Bot.shardManager.getGuild(guild)
                 if (guild != null) {
                     val role = guild.getRoleById(roleId)
                     if (role != null) {
@@ -304,7 +304,7 @@ class Group(val id: String, val guild: String, val name: String, val roleId: Str
                 ApiRequest<Void>("/group/$id/member/${user.id}", Methods.DELETE) {
             override fun parse(json: JSONObject): Void? {
                 members.remove(user.id)
-                val guild = Bot.getGuild(guild)
+                val guild = Bot.shardManager.getGuild(guild)
                 if (guild != null) {
                     val role = guild.getRoleById(roleId)
                     if (role != null) {
@@ -378,7 +378,7 @@ class RssFeed(val id: String, val channelId: String, val serverId: String, val u
               val failed: Boolean, val lastCheck: Timestamp?) {
 
     val guild: Guild?
-        get() = Bot.getGuild(serverId)
+        get() = Bot.shardManager.getGuild(serverId)
 
     val channel: TextChannel?
         get() = guild?.getTextChannelById(this.channelId)
@@ -456,7 +456,7 @@ class GuildMember(val id: String, val serverId: String, val userId: String, val 
                   val discrim: String, val nick: String?) {
 
     val guild: Guild?
-        get() = Bot.getGuild(serverId)
+        get() = Bot.shardManager.getGuild(serverId)
 
     val user: User?
         get() = guild?.jda?.getUserById(userId)

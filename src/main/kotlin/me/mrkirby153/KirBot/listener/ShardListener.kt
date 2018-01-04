@@ -1,7 +1,6 @@
 package me.mrkirby153.KirBot.listener
 
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.Shard
 import me.mrkirby153.KirBot.command.CommandExecutor
 import me.mrkirby153.KirBot.data.ServerData
 import me.mrkirby153.KirBot.database.api.GuildChannel
@@ -9,6 +8,7 @@ import me.mrkirby153.KirBot.database.api.GuildMember
 import me.mrkirby153.KirBot.database.api.GuildRole
 import me.mrkirby153.KirBot.database.api.PanelAPI
 import me.mrkirby153.KirBot.database.api.Quote
+import me.mrkirby153.KirBot.sharding.Shard
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.RED_CROSS
 import me.mrkirby153.KirBot.utils.embed.embed
@@ -176,7 +176,7 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
     }
 
     override fun onGuildVoiceJoin(event: GuildVoiceJoinEvent) {
-        val serverData = Bot.getShardForGuild(event.guild.id)?.getServerData(event.guild) ?: return
+        val serverData = Bot.shardManager.getShard(event.guild)?.getServerData(event.guild) ?: return
 
         if (!serverData.musicManager.manualPause && serverData.musicManager.audioPlayer.isPaused) {
             if (event.guild.selfMember.voiceState.inVoiceChannel() && event.guild.selfMember.voiceState.channel.id == event.channelJoined.id)
@@ -186,13 +186,13 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
     }
 
     override fun onGuildVoiceLeave(event: GuildVoiceLeaveEvent) {
-        val serverData = Bot.getShardForGuild(event.guild.id)?.getServerData(event.guild) ?: return
+        val serverData = Bot.shardManager.getShard(event.guild)?.getServerData(event.guild) ?: return
         if (inChannel(event.channelLeft, event.guild.selfMember))
             pauseIfEmpty(event.channelLeft, serverData)
     }
 
     override fun onGuildVoiceMove(event: GuildVoiceMoveEvent) {
-        val serverData = Bot.getShardForGuild(event.guild.id)?.getServerData(event.guild) ?: return
+        val serverData = Bot.shardManager.getShard(event.guild)?.getServerData(event.guild) ?: return
         if (inChannel(event.channelJoined,
                 event.guild.selfMember) && !serverData.musicManager.manualPause) {
             serverData.musicManager.audioPlayer.isPaused = false

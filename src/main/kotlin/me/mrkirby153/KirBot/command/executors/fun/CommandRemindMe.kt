@@ -40,8 +40,8 @@ class CommandRemindMe : BaseCommand(CommandCategory.FUN, Arguments.string("time"
                        val query: String) : Schedulable {
 
         override fun run() {
-            Bot.getUser(user)?.let {
-                Bot.getGuild(guild)?.let {
+            Bot.shardManager.getUser(user)?.let {
+                Bot.shardManager.getGuild(guild)?.let {
                     it.getTextChannelById(channel)?.sendMessage(
                             "\u2063<@$user> You asked me to remind you about `$query`. React with $RED_CROSS to delete this message")?.queue{
                         it.addReaction(RED_CROSS).queue()

@@ -8,6 +8,6 @@ class BotChat: RedisCommandHandler {
         val server = json.getString("server")
         val channel = json.getString("channel")
         val msg = json.getString("message")
-        Bot.getShardForGuild(server)?.getTextChannelById(channel)?.sendMessage(msg)?.queue()
+        Bot.shardManager.getShard(server)?.getTextChannelById(channel)?.sendMessage(msg)?.queue()
     }
 }

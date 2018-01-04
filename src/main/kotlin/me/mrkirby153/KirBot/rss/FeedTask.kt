@@ -16,7 +16,7 @@ import java.net.URL
 class FeedTask : Runnable {
 
     override fun run() {
-        Bot.shards.forEach { shard ->
+        Bot.shardManager.shards.forEach { shard ->
             shard.guilds.forEach { guild ->
                 // Get the feeds for the guild
                 Bot.LOG.debug("Checking feeds for ${guild.id}")

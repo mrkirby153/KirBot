@@ -12,9 +12,9 @@ class ChannelVisibility : RedisCommandHandler {
         val visible = json.getBoolean("visible")
 
         if (!visible)
-            Bot.getGuild(server)?.getTextChannelById(chan)?.hide()
+            Bot.shardManager.getGuild(server)?.getTextChannelById(chan)?.hide()
         else
-            Bot.getGuild(server)?.getTextChannelById(chan)?.unhide()
+            Bot.shardManager.getGuild(server)?.getTextChannelById(chan)?.unhide()
     }
 
 }

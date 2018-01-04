@@ -8,7 +8,7 @@ class SetNickname: RedisCommandHandler {
         val server = json.getString("server")
         val nick = json.optString("nickname")
 
-        Bot.getGuild(server)?.let { guild ->
+        Bot.shardManager.getGuild(server)?.let { guild ->
             if(guild.selfMember.nickname != nick) {
                 Bot.LOG.debug("Updating nick to \"$nick\"")
                 guild.controller.setNickname(guild.selfMember, nick).queue()

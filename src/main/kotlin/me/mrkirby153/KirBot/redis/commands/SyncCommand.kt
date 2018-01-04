@@ -8,6 +8,6 @@ class SyncCommand : RedisCommandHandler {
     override fun handle(json: JSONObject) {
         val id = json.getString("guild")
         Bot.LOG.debug("Received Sync command from Panel for guild $id")
-        Bot.getShardForGuild(id)?.loadSettings(Bot.getGuild(id)!!)
+        Bot.shardManager.getShard(id)?.loadSettings(Bot.shardManager.getGuild(id)!!)
     }
 }

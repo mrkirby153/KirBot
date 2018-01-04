@@ -1,5 +1,6 @@
-package me.mrkirby153.KirBot
+package me.mrkirby153.KirBot.sharding
 
+import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.data.ServerData
 import me.mrkirby153.KirBot.database.api.ClearanceOverride
 import me.mrkirby153.KirBot.database.api.GuildCommand
@@ -45,7 +46,8 @@ class Shard(val id: Int, private val jda: JDA, val bot: Bot) : JDA by jda {
             serverSettings[guild.id] = it
         }
         GuildCommand.getCommands(guild).queue {
-            customCommands[guild.id] = CommandWrapper(it.toMutableList())
+            customCommands[guild.id] = CommandWrapper(
+                    it.toMutableList())
         }
         ClearanceOverride.get(guild).queue {
             clearanceOverrides[guild.id] = ClearanceWrapper(it)

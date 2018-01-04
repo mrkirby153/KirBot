@@ -2,7 +2,6 @@ package me.mrkirby153.KirBot
 
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
-import com.sedmelluq.discord.lavaplayer.jdaudp.NativeAudioSendFactory
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.source.beam.BeamAudioSourceManager
@@ -20,22 +19,15 @@ import me.mrkirby153.KirBot.redis.messaging.MessageDataStore
 import me.mrkirby153.KirBot.rss.FeedTask
 import me.mrkirby153.KirBot.scheduler.Scheduler
 import me.mrkirby153.KirBot.seen.SeenStore
+import me.mrkirby153.KirBot.sharding.ShardManager
 import me.mrkirby153.KirBot.utils.HttpUtils
 import me.mrkirby153.KirBot.utils.localizeTime
 import me.mrkirby153.KirBot.utils.readProperties
 import me.mrkirby153.KirBot.utils.redis.RedisConnection
 import me.mrkirby153.KirBot.utils.sync
 import me.mrkirby153.kcutils.readProperties
-import net.dv8tion.jda.core.AccountType
-import net.dv8tion.jda.core.JDA
-import net.dv8tion.jda.core.JDABuilder
 import net.dv8tion.jda.core.OnlineStatus
-import net.dv8tion.jda.core.entities.Game
 import net.dv8tion.jda.core.entities.Guild
-import net.dv8tion.jda.core.entities.User
-import net.dv8tion.jda.core.events.ReadyEvent
-import net.dv8tion.jda.core.hooks.ListenerAdapter
-import net.dv8tion.jda.core.requests.SessionReconnectQueue
 import org.slf4j.LoggerFactory
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -54,20 +46,14 @@ object Bot {
 
     val properties = files.properties.readProperties()
 
-    val numShards: Int = if (properties.getProperty("shards") == null) 1 else properties.getProperty("shards").toInt()
+    val numShards: Int = if (properties.getProperty(
+            "shards") == null) 1 else properties.getProperty("shards").toInt()
 
     val admins: List<String> = files.admins.run { this.readLines() }
 
     val seenStore = SeenStore()
 
     val messageDataStore = MessageDataStore()
-
-    val jda: JDA
-        get() = shards[0]
-
-    lateinit var shards: Array<Shard>
-
-    private val loadingShards = mutableListOf<Int>()
 
     val constants = Bot.javaClass.getResourceAsStream("/constants.properties").readProperties()
 
@@ -83,6 +69,8 @@ object Bot {
 
     lateinit var redisConnection: RedisConnection
 
+    lateinit var shardManager: ShardManager
+
 
     fun start(token: String) {
         if (debug) {
@@ -91,7 +79,8 @@ object Bot {
                 logger.level = Level.DEBUG
             }
         }
-        (LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME) as? Logger)?.level = Level.valueOf(System.getProperty("kirbot.global_log", "INFO"))
+        (LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME) as? Logger)?.level = Level.valueOf(
+                System.getProperty("kirbot.global_log", "INFO"))
         Bot.LOG.info("Starting KirBot ${constants.getProperty("bot-version")}")
         Bot.LOG.debug("\t + Base URL: ${constants.getProperty("bot-base-url")}")
         // Start up sentry
@@ -105,32 +94,25 @@ object Bot {
         initialized = true
         LOG.info("Initializing Bot ($numShards shards)")
         val startTime = System.currentTimeMillis()
-        shards = Array(numShards) { id ->
-            loadingShards.add(id)
-            LOG.info("Starting shard $id (${id + 1}/$numShards)")
-            val jda = buildJDA(id, token)
-            if (numShards > 1) {
-                Thread.sleep(5000)
-            }
-            Shard(id, jda, this)
+
+        shardManager = ShardManager(token, numShards)
+        shardManager.playing = "Starting up..."
+        shardManager.onlineStatus = OnlineStatus.IDLE
+        for (i in 0 until numShards) {
+            shardManager.addShard(i)
         }
-        LOG.info("Waiting for shards to connect.....")
-        while (loadingShards.size > 0) {
+        LOG.info("Waiting for shards to connect...")
+        while (!shardManager.isLoading()) {
             Thread.sleep(150)
         }
         val endTime = System.currentTimeMillis()
-        LOG.info("\n\n\nSHARDS INITIALIZED! (${localizeTime(((endTime - startTime) / 1000).toInt())})")
+        LOG.info("\n\n\nSHARDS INITIALIZED! (${localizeTime(
+                ((endTime - startTime) / 1000).toInt())})")
 
         LOG.info("Bot is connecting to discord")
 
-        LOG.info("Updating channels")
-        shards
-                .flatMap { it.guilds }
-                .forEach { it.sync() }
-
-        shards.forEach {
-            it.loadSettings()
-        }
+        LOG.info("Syncing Guilds")
+        shardManager.shards.flatMap { it.guilds }.forEach { it.sync() }
 
 
         val password = Bot.properties.getProperty("redis-password", "")
@@ -140,6 +122,10 @@ object Bot {
 
         this.redisConnection = RedisConnection(host, port,
                 if (password.isEmpty()) null else password, dbNumber)
+
+        shardManager.shards.forEach {
+            it.loadSettings()
+        }
 
         RedisConnector.listen()
 
@@ -151,62 +137,17 @@ object Bot {
 
         scheduler.scheduleAtFixedRate(FeedTask(), 0, 1, TimeUnit.HOURS)
 
-        // Mark all shards as online
-        shards.forEach { it.presence.status = OnlineStatus.ONLINE }
+        shardManager.onlineStatus = OnlineStatus.ONLINE
+        shardManager.playing = "!help"
 
     }
 
     fun stop() {
-        RedisConnector.running = false;
-        shards.forEach { it.shutdown() }
+        RedisConnector.running = false
+        shardManager.shutdown()
         LOG.info("Bot is disconnecting from Discord")
         System.exit(0)
     }
 
-    fun buildJDA(id: Int, token: String): JDA {
-        return JDABuilder(AccountType.BOT).run {
-            setToken(token)
-            setAutoReconnect(true)
-            setStatus(OnlineStatus.IDLE)
-            setBulkDeleteSplittingEnabled(false)
-            if (numShards > 1) {
-                useSharding(id, numShards)
-                setGame(Game.of("~help | Shard $id of $numShards"))
-            } else {
-                setGame(Game.of("| ~help"))
-            }
-            // JDA-NAS for sending audio packets via queue doesn't support the MacOS Kernel due to the inclusion of a
-            // native library.
-            if (!System.getProperty("os.name").contains("Mac"))
-                setAudioSendFactory(NativeAudioSendFactory())
-            addEventListener(object : ListenerAdapter() {
-                override fun onReady(event: ReadyEvent) {
-                    LOG.info("Shard $id is ready!")
-                    loadingShards.remove(id)
-                }
-            })
-            setReconnectQueue(SessionReconnectQueue())
-            buildAsync()
-        }
-    }
-
-    fun getUser(id: String): User? {
-        return getShardForUser(id)?.getUserById(id)
-    }
-
-    fun getShardForUser(id: String): Shard? {
-        return shards.firstOrNull { it.getUserById(id) != null }
-    }
-
-    fun getShardForGuild(id: String): Shard? {
-        return shards.firstOrNull { it.getGuildById(id) != null }
-    }
-
-    fun getGuild(id: String): Guild? {
-        return shards
-                .firstOrNull { it.getGuildById(id) != null }
-                ?.getGuildById(id)
-    }
-
-    fun getServerData(guild: Guild): ServerData? = getShardForGuild(guild.id)?.getServerData(guild)
+    fun getServerData(guild: Guild): ServerData? = shardManager.getShard(guild.id)?.getServerData(guild)
 }

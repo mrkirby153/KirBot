@@ -18,7 +18,7 @@ class UserElement : CommandElement<User> {
             if (matcher.find()) {
                 val id = first.substring(matcher.start() until matcher.end())
 
-                return Bot.getUser(id) ?: throw ArgumentParseException("The user $first was not found!")
+                return Bot.shardManager.getUser(id) ?: throw ArgumentParseException("The user $first was not found!")
             }
         } else if (first.matches(Regex("\\d+"))) {
             Bot.LOG.debug("Extracting user via id")
@@ -28,7 +28,7 @@ class UserElement : CommandElement<User> {
             if (matcher.find()) {
                 val id = first.substring(matcher.start() until matcher.end())
 
-                return Bot.getUser(id) ?: throw ArgumentParseException("The user $first was not found!")
+                return Bot.shardManager.getUser(id) ?: throw ArgumentParseException("The user $first was not found!")
             }
         }
         throw ArgumentParseException("The user $first was not found")

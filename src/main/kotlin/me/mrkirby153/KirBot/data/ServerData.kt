@@ -2,9 +2,9 @@ package me.mrkirby153.KirBot.data
 
 import com.google.gson.GsonBuilder
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.Shard
 import me.mrkirby153.KirBot.server.ServerLogger
 import me.mrkirby153.KirBot.server.data.DataRepository
+import me.mrkirby153.KirBot.sharding.Shard
 import me.mrkirby153.kcutils.child
 import me.mrkirby153.kcutils.mkdirIfNotExist
 import java.nio.charset.Charset

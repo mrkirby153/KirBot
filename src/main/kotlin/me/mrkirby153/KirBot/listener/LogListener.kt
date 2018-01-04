@@ -3,9 +3,9 @@ package me.mrkirby153.KirBot.listener
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.Shard
 import me.mrkirby153.KirBot.database.api.GuildSettings
 import me.mrkirby153.KirBot.server.LogField
+import me.mrkirby153.KirBot.sharding.Shard
 import net.dv8tion.jda.core.events.message.MessageBulkDeleteEvent
 import net.dv8tion.jda.core.events.message.MessageDeleteEvent
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent
@@ -20,7 +20,7 @@ class LogListener(private val shard: Shard) : ListenerAdapter() {
         val logChannelCache = CacheBuilder.newBuilder().expireAfterWrite(60, TimeUnit.SECONDS).build(
                 object : CacheLoader<String, String?>() {
                     override fun load(key: String): String? {
-                        return GuildSettings.get(Bot.getGuild(key)!!).execute()?.logChannel
+                        return GuildSettings.get(Bot.shardManager.getGuild(key)!!).execute()?.logChannel
                     }
                 }
         )
@@ -34,8 +34,8 @@ class LogListener(private val shard: Shard) : ListenerAdapter() {
             if(msg.id == "-1")
                 return@getMessageContent
 
-            val author = Bot.getUser(msg.author)
-            val chan = Bot.getGuild(msg.serverId)?.getTextChannelById(msg.channel) ?: return@getMessageContent
+            val author = Bot.shardManager.getUser(msg.author)
+            val chan = Bot.shardManager.getGuild(msg.serverId)?.getTextChannelById(msg.channel) ?: return@getMessageContent
 
             if(author != null && author.isBot)
                 return@getMessageContent
@@ -63,7 +63,7 @@ class LogListener(private val shard: Shard) : ListenerAdapter() {
             if(old != null){
                 if(old.id == "-1")
                     return@getMessageContent
-                val user = Bot.getUser(old.author) ?: return@getMessageContent
+                val user = Bot.shardManager.getUser(old.author) ?: return@getMessageContent
                 if(user.isBot)
                     return@getMessageContent
                 // Ignore messages that are the same

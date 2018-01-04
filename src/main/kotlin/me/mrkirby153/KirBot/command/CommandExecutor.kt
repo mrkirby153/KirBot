@@ -2,12 +2,12 @@ package me.mrkirby153.KirBot.command
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.Shard
 import me.mrkirby153.KirBot.command.args.ArgumentParseException
 import me.mrkirby153.KirBot.command.args.ArgumentParser
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.command.help.HelpManager
 import me.mrkirby153.KirBot.database.api.GuildCommand
+import me.mrkirby153.KirBot.sharding.Shard
 import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.deleteAfter
@@ -201,7 +201,7 @@ object CommandExecutor {
     }
 
     private fun canExecuteInChannel(command: CommandSpec, channel: Channel): Boolean {
-        val data = Bot.getShardForGuild(channel.guild.id)?.serverSettings?.get(
+        val data = Bot.shardManager.getShard(channel.guild)?.serverSettings?.get(
                 channel.guild.id) ?: return false
         return if (command.respectWhitelist) {
             if (data.whitelistedChannels.isEmpty())
@@ -213,7 +213,7 @@ object CommandExecutor {
     }
 
     private fun canExecuteInChannel(command: GuildCommand, channel: Channel): Boolean {
-        val data = Bot.getShardForGuild(channel.guild.id)?.serverSettings?.get(
+        val data = Bot.shardManager.getShard(channel.guild)?.serverSettings?.get(
                 channel.guild.id) ?: return false
         return if (command.respectWhitelist) {
             if (data.whitelistedChannels.isEmpty())
@@ -224,10 +224,4 @@ object CommandExecutor {
         }
     }
 
-    private fun getEffectivePermission(command: String, guild: Guild,
-                                       default: Clearance): Clearance {
-        return Bot.getShardForGuild(guild.id)!!.clearanceOverrides[guild.id]?.obj?.firstOrNull {
-            it.command.equals(command, true)
-        }?.clearance ?: default
-    }
 }

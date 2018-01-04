@@ -9,7 +9,7 @@ class UpdateNames : RedisCommandHandler {
     override fun handle(json: JSONObject) {
         val server = json.getString("server")
 
-        val guild = Bot.getGuild(server) ?: return
+        val guild = Bot.shardManager.getGuild(server) ?: return
         val data = Bot.getServerData(guild) ?: return
         RealnameHandler(guild, data).updateNames()
     }

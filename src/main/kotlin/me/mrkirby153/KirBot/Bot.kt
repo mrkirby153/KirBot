@@ -14,6 +14,7 @@ import me.mrkirby153.KirBot.command.CommandExecutor
 import me.mrkirby153.KirBot.data.ServerData
 import me.mrkirby153.KirBot.database.api.ApiRequestProcessor
 import me.mrkirby153.KirBot.error.UncaughtErrorReporter
+import me.mrkirby153.KirBot.logger.LogListener
 import me.mrkirby153.KirBot.redis.RedisConnector
 import me.mrkirby153.KirBot.redis.messaging.MessageDataStore
 import me.mrkirby153.KirBot.rss.FeedTask
@@ -105,6 +106,9 @@ object Bot {
         while (!shardManager.isLoading()) {
             Thread.sleep(150)
         }
+
+        shardManager.addListener(LogListener())
+
         val endTime = System.currentTimeMillis()
         LOG.info("\n\n\nSHARDS INITIALIZED! (${localizeTime(
                 ((endTime - startTime) / 1000).toInt())})")

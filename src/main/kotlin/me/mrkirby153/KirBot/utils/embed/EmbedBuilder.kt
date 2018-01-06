@@ -1,6 +1,7 @@
 package me.mrkirby153.KirBot.utils.embed
 
 import net.dv8tion.jda.core.entities.MessageEmbed
+import net.dv8tion.jda.core.entities.User
 import java.awt.Color
 import java.time.Instant
 import java.util.Calendar
@@ -64,6 +65,12 @@ class Author {
     var name: String? = null
     var url: String? = null
     var iconUrl: String? = null
+
+    fun user(user: User) {
+        name = user.name + "#" + user.discriminator
+        url = null
+        iconUrl = user.avatarUrl ?: user.defaultAvatarUrl
+    }
 }
 
 @Marker

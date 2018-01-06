@@ -1,6 +1,10 @@
 package me.mrkirby153.KirBot.command.executors.moderation
 
-import me.mrkirby153.KirBot.command.*
+import me.mrkirby153.KirBot.command.BaseCommand
+import me.mrkirby153.KirBot.command.Command
+import me.mrkirby153.KirBot.command.CommandCategory
+import me.mrkirby153.KirBot.command.CommandException
+import me.mrkirby153.KirBot.command.RequiresClearance
 import me.mrkirby153.KirBot.command.args.Arguments
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.user.Clearance
@@ -28,6 +32,6 @@ class CommandMute : BaseCommand(false, CommandCategory.MODERATION, Arguments.use
         val override = channel.getPermissionOverride(member) ?: channel.createPermissionOverride(member).complete()
         override.manager.deny(Permission.MESSAGE_WRITE).queue()
         context.success()
-        context.data.logger.log("User Muted", "${context.author.name} has muted ${member.user.name} in ${(context.channel as TextChannel).asMention}", Color.RED)
+        context.data .logManager.genericLog("User Muted", "${context.author.name} has muted ${member.user.name} in ${context.textChannel.asMention}", Color.MAGENTA, context.author)
     }
 }

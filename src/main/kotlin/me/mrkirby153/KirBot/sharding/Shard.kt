@@ -5,7 +5,6 @@ import me.mrkirby153.KirBot.data.ServerData
 import me.mrkirby153.KirBot.database.api.ClearanceOverride
 import me.mrkirby153.KirBot.database.api.GuildCommand
 import me.mrkirby153.KirBot.database.api.GuildSettings
-import me.mrkirby153.KirBot.listener.LogListener
 import me.mrkirby153.KirBot.listener.ShardListener
 import me.mrkirby153.KirBot.utils.redis.GenericWrapper
 import me.mrkirby153.KirBot.utils.redis.RedisDataStore
@@ -16,7 +15,7 @@ class Shard(val id: Int, private val jda: JDA, val bot: Bot) : JDA by jda {
 
     init {
         addEventListener(ShardListener(this, bot))
-        addEventListener(LogListener(this))
+//        addEventListener(OldLogListener(this))
     }
 
     val serverData = mutableMapOf<Long, ServerData>()

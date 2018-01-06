@@ -2,7 +2,7 @@ package me.mrkirby153.KirBot.data
 
 import com.google.gson.GsonBuilder
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.server.ServerLogger
+import me.mrkirby153.KirBot.logger.LogManager
 import me.mrkirby153.KirBot.server.data.DataRepository
 import me.mrkirby153.KirBot.sharding.Shard
 import me.mrkirby153.kcutils.child
@@ -32,7 +32,7 @@ class ServerData(val id: Long, val shard: Shard) {
         }
     }
 
-    val logger = ServerLogger(guild)
+    val logManager = LogManager(guild)
 
     val musicManager = me.mrkirby153.KirBot.music.MusicManager(guild)
 }

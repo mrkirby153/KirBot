@@ -1,6 +1,7 @@
 package me.mrkirby153.KirBot.utils
 
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.data.ServerData
 import me.mrkirby153.KirBot.database.api.GuildMember
 import me.mrkirby153.KirBot.database.api.GuildRole
 import me.mrkirby153.KirBot.database.api.GuildSettings
@@ -271,6 +272,18 @@ fun Message.deleteAfter(time: Long, unit: TimeUnit) {
         this.delete().queueAfter(time, unit)
 }
 
-fun <T : Channel> T.checkPermissions(vararg permission: Permission) = this.guild.selfMember.hasPermission(this, *permission)
+fun <T : Channel> T.checkPermissions(
+        vararg permission: Permission) = this.guild.selfMember.hasPermission(this, *permission)
 
-fun MessageChannel.checkPermissions(vararg permissions: Permission) = (this as? TextChannel)?.checkPermissions<TextChannel>(*permissions) != false
+fun MessageChannel.checkPermissions(
+        vararg permissions: Permission) = (this as? TextChannel)?.checkPermissions<TextChannel>(
+        *permissions) != false
+
+fun Guild.settings(): GuildSettings {
+    val shard = this.shard()!!
+    return shard.serverSettings[this.id]!!
+}
+
+fun Guild.data(): ServerData {
+    return shard()?.getServerData(this)!!
+}

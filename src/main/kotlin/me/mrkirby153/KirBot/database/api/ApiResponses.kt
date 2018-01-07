@@ -410,7 +410,7 @@ class RssFeed(val id: String, val channelId: String, val serverId: String, val u
     companion object {
         fun get(id: String) = object : ApiRequest<RssFeed>("/feed/$id") {
             override fun parse(json: JSONObject): RssFeed {
-                return parseFeed(json.getJSONObject("feed"))
+                return parseFeed(json)
             }
         }
 

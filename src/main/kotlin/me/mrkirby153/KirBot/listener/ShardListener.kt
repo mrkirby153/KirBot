@@ -40,12 +40,11 @@ import java.awt.Color
 
 class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
 
-    override fun onMessageReceived(event: MessageReceivedEvent?) {
-        if (event != null) {
+    override fun onMessageReceived(event: MessageReceivedEvent) {
+        if (!event.author.isFake)
             Bot.seenStore.update(event.author, event.guild)
-        }
 
-        if (event!!.author == shard.selfUser)
+        if (event.author == shard.selfUser)
             return
 
         val context = Context(event)
@@ -162,11 +161,11 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
                 }
             }
         }
-        if(event.reaction.emote.name == RED_CROSS){
+        if (event.reaction.emote.name == RED_CROSS) {
             event.channel.getMessageById(event.messageId).queue { msg ->
-                if(msg.author.id == event.guild.selfMember.user.id){
-                    if(msg.rawContent.startsWith("\u2063")){
-                        if(msg.mentionedUsers.contains(event.user)){
+                if (msg.author.id == event.guild.selfMember.user.id) {
+                    if (msg.rawContent.startsWith("\u2063")) {
+                        if (msg.mentionedUsers.contains(event.user)) {
                             msg.delete().queue()
                         }
                     }
@@ -176,7 +175,8 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
     }
 
     override fun onGuildVoiceJoin(event: GuildVoiceJoinEvent) {
-        val serverData = Bot.shardManager.getShard(event.guild)?.getServerData(event.guild) ?: return
+        val serverData = Bot.shardManager.getShard(event.guild)?.getServerData(
+                event.guild) ?: return
 
         if (!serverData.musicManager.manualPause && serverData.musicManager.audioPlayer.isPaused) {
             if (event.guild.selfMember.voiceState.inVoiceChannel() && event.guild.selfMember.voiceState.channel.id == event.channelJoined.id)
@@ -186,13 +186,15 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
     }
 
     override fun onGuildVoiceLeave(event: GuildVoiceLeaveEvent) {
-        val serverData = Bot.shardManager.getShard(event.guild)?.getServerData(event.guild) ?: return
+        val serverData = Bot.shardManager.getShard(event.guild)?.getServerData(
+                event.guild) ?: return
         if (inChannel(event.channelLeft, event.guild.selfMember))
             pauseIfEmpty(event.channelLeft, serverData)
     }
 
     override fun onGuildVoiceMove(event: GuildVoiceMoveEvent) {
-        val serverData = Bot.shardManager.getShard(event.guild)?.getServerData(event.guild) ?: return
+        val serverData = Bot.shardManager.getShard(event.guild)?.getServerData(
+                event.guild) ?: return
         if (inChannel(event.channelJoined,
                 event.guild.selfMember) && !serverData.musicManager.manualPause) {
             serverData.musicManager.audioPlayer.isPaused = false

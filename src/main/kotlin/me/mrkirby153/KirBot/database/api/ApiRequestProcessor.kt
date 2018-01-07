@@ -57,6 +57,10 @@ class ApiRequestProcessor(val apiRequest: ApiRequest<*>) : Runnable {
 
             debugLogger.debug("{${apiRequest.apiReq}} Making ${req.method()} to ${req.url()}")
 
+            apiRequest.data?.forEach { key, value ->
+                debugLogger.debug("   \"$key\" = \"$value\"")
+            }
+
             val resp = HttpUtils.CLIENT.newCall(req).execute()
 
             debugLogger.debug("{${apiRequest.apiReq}} Received code ${resp.code()}")

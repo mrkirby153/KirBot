@@ -12,6 +12,7 @@ import me.mrkirby153.KirBot.sharding.Shard
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.RED_CROSS
 import me.mrkirby153.KirBot.utils.embed.embed
+import me.mrkirby153.KirBot.utils.settings
 import me.mrkirby153.KirBot.utils.sync
 import net.dv8tion.jda.core.entities.Channel
 import net.dv8tion.jda.core.entities.Member
@@ -26,6 +27,8 @@ import net.dv8tion.jda.core.events.guild.GuildLeaveEvent
 import net.dv8tion.jda.core.events.guild.member.GuildMemberJoinEvent
 import net.dv8tion.jda.core.events.guild.member.GuildMemberLeaveEvent
 import net.dv8tion.jda.core.events.guild.member.GuildMemberNickChangeEvent
+import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleAddEvent
+import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleRemoveEvent
 import net.dv8tion.jda.core.events.guild.voice.GuildVoiceJoinEvent
 import net.dv8tion.jda.core.events.guild.voice.GuildVoiceLeaveEvent
 import net.dv8tion.jda.core.events.guild.voice.GuildVoiceMoveEvent
@@ -53,13 +56,48 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
     }
 
     override fun onGuildMemberJoin(event: GuildMemberJoinEvent) {
-        GuildMember.create(event.member).queue()
+        PanelAPI.getMembers(event.guild).queue { members ->
+            if (event.member.user.id in members.map { it.userId } && event.guild.settings().persistence) {
+                Bot.LOG.debug("User has previously joined, restoring state")
+                GuildMember.get(event.member).queue { member ->
+                    val guildController = event.guild.controller
+                    guildController.setNickname(event.member, member.nick).queue()
+                    guildController.addRolesToMember(event.member,
+                            member.roles.map {
+                                event.guild.getRoleById(it)
+                            }.filter { it != null }).queue()
+                }
+            } else {
+                Bot.LOG.debug("User has not joined before or persistence is disabled")
+                GuildMember.create(event.member).queue()
+            }
+        }
     }
 
     override fun onGuildMemberLeave(event: GuildMemberLeaveEvent) {
-        GuildMember.get(event.member).queue {
-            it.delete().queue()
+        if (!event.guild.settings().persistence) { // Delete the user if persistence is disabled
+            GuildMember.get(event.member).queue {
+                it.delete().queue()
+            }
         }
+    }
+
+    override fun onGuildMemberRoleAdd(event: GuildMemberRoleAddEvent) {
+        if (event.guild.settings().persistence)
+            GuildMember.get(event.member).queue { m ->
+                event.roles.forEach {
+                    m.addRole(it.id).queue()
+                }
+            }
+    }
+
+    override fun onGuildMemberRoleRemove(event: GuildMemberRoleRemoveEvent) {
+        if (event.guild.settings().persistence)
+            GuildMember.get(event.member).queue { m ->
+                event.roles.forEach {
+                    m.removeRole(it.id).queue()
+                }
+            }
     }
 
     override fun onGuildMemberNickChange(event: GuildMemberNickChangeEvent) {

@@ -70,7 +70,8 @@ class GuildSettings(val name: String, val nick: String?, val realnameSetting: Re
                     val requireRealname: Boolean,
                     val cmdDiscriminator: String, val logChannel: String?,
                     val whitelistedChannels: List<String>,
-                    val managerRoles: List<String>) {
+                    val managerRoles: List<String>,
+                    val persistence: Boolean) {
     companion object {
         fun get(guild: Guild) = object : ApiRequest<GuildSettings>("/server/${guild.id}/settings") {
             override fun parse(json: JSONObject): GuildSettings {
@@ -81,7 +82,7 @@ class GuildSettings(val name: String, val nick: String?, val realnameSetting: Re
                         RealnameSetting.valueOf(json.getString("realname")),
                         json.getInt("require_realname") == 1,
                         json.getString("command_discriminator"), json.optString("log_channel"),
-                        json.getJSONArray("cmd_whitelist").map { it.toString() }, roles)
+                        json.getJSONArray("cmd_whitelist").map { it.toString() }, roles, json.getInt("user_persistence") == 1)
             }
         }
     }
@@ -453,7 +454,7 @@ class RssFeed(val id: String, val channelId: String, val serverId: String, val u
 }
 
 class GuildMember(val id: String, val serverId: String, val userId: String, val username: String,
-                  val discrim: String, val nick: String?) {
+                  val discrim: String, val nick: String?, val roles: Array<String>) {
 
     val guild: Guild?
         get() = Bot.shardManager.getGuild(serverId)
@@ -473,6 +474,14 @@ class GuildMember(val id: String, val serverId: String, val userId: String, val 
             }
 
         }
+    }
+
+    fun addRole(role: String): ApiRequest<Void> {
+        return object : ApiRequest<Void>("/member/role/$userId/$role", Methods.PUT, mapOf(Pair("guild", ""))) {}
+    }
+
+    fun removeRole(role: String): ApiRequest<Void> {
+        return object : ApiRequest<Void>("/member/role/$userId/$role", Methods.DELETE) {}
     }
 
     fun needsUpdate(): Boolean {
@@ -509,9 +518,11 @@ class GuildMember(val id: String, val serverId: String, val userId: String, val 
 
     companion object {
         fun parse(obj: JSONObject): GuildMember {
+            val roleJson = obj.optJSONArray("roles")
             return GuildMember(obj.getString("id"), obj.getString("server_id"),
                     obj.getString("user_id"), obj.getString("user_name"),
-                    obj.getString("user_discrim"), obj.optString("user_nick", null))
+                    obj.getString("user_discrim"), obj.optString("user_nick", null),
+                    roleJson?.map { (it as JSONObject).getString("role_id") }?.toTypedArray() ?: emptyArray())
         }
 
         fun get(member: Member): ApiRequest<GuildMember> {

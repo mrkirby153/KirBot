@@ -41,6 +41,7 @@ class FeedTask : Runnable {
 
                 f.entries.filter { !feed.isPosted(it.uri) }.forEach {
                     feed.channel?.sendMessage(it.link)?.queue()
+                    feed.posted(it.uri)
                 }
                 feed.update(true).queue()
             } catch (e: Exception) {

@@ -222,9 +222,11 @@ fun Guild.sync() {
                     toDelete.add(m)
                 }
             }
-            Bot.LOG.debug("Deleting " + toDelete.map { it.userId })
-            toDelete.forEach { m ->
-                m.delete().queue()
+            if(!settings().persistence) {
+                Bot.LOG.debug("Deleting " + toDelete.map { it.userId })
+                toDelete.forEach { m ->
+                    m.delete().queue()
+                }
             }
 
             // To register
@@ -238,6 +240,30 @@ fun Guild.sync() {
 
             members.filter { it.needsUpdate() }.forEach {
                 it.update().queue()
+            }
+            PanelAPI.getMembers(this).queue {
+                it.forEach { m ->
+                    val toRemove = mutableListOf<String>()
+                    val toAdd = mutableListOf<String>()
+                    val member = this.getMember(m.user) ?: return@forEach
+
+                    val currentRoles = member.roles.map { it.id }
+
+                    toRemove.addAll(m.roles.filter { it !in currentRoles })
+                    toAdd.addAll(currentRoles.filter { it !in m.roles })
+
+                    if (toAdd.isNotEmpty())
+                        Bot.LOG.debug("Adding roles $toAdd to ${m.user}")
+                    if (toRemove.isNotEmpty())
+                        Bot.LOG.debug("Removing roles $toRemove to ${m.user}")
+
+                    toAdd.forEach {
+                        m.addRole(it).queue()
+                    }
+                    toRemove.forEach {
+                        m.removeRole(it).queue()
+                    }
+                }
             }
         }
     }

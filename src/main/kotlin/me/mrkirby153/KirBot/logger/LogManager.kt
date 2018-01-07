@@ -56,6 +56,9 @@ class LogManager(private val guild: Guild) {
             description {
                 +"$count messages were deleted from ${chan.asMention}"
             }
+            timestamp {
+                now()
+            }
         }.build())?.queue()
     }
 

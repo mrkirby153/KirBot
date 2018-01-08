@@ -16,7 +16,7 @@ import me.mrkirby153.kcutils.Time
 import java.util.concurrent.TimeUnit
 
 @Command("remindMe,remind")
-class CommandRemindMe : BaseCommand(CommandCategory.FUN, Arguments.string("time"),
+class CommandRemindMe : BaseCommand(false, CommandCategory.FUN, Arguments.string("time"),
         Arguments.restAsString("query")) {
 
     override fun execute(context: Context, cmdContext: CommandContext) {

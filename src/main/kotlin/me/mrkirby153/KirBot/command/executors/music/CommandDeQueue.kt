@@ -26,6 +26,9 @@ class CommandDeQueue : MusicCommand(Arguments.number("position", min = 1)) {
                 }
                 if (song.track.info.uri.contains("youtu"))
                     thumbnail = "https://i.ytimg.com/vi/${song.track.info.identifier}/default.jpg"
+                timestamp {
+                    now()
+                }
             }.rest().queue()
         } catch (e: IndexOutOfBoundsException) {
             throw CommandException("Position must be between 0 and ${context.data.musicManager.queue.size}")

@@ -67,6 +67,9 @@ class CommandQueue : MusicCommand(Arguments.string("option", false)) {
                 +"\n\n"
                 +("**View The Full Queue**" link botUrl("${context.guild.id}/queue"))
             }
+            timestamp {
+                now()
+            }
             footer {
                 text {
                     var duration = 0L

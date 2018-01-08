@@ -31,6 +31,9 @@ class CommandMove : MusicCommand(Arguments.number("from", min = 0), Arguments.nu
                 if (queuedSong.track.info.uri.contains("youtu")) {
                     thumbnail = "https://i.ytimg.com/vi/${queuedSong.track.info.identifier}/default.jpg"
                 }
+                timestamp {
+                    now()
+                }
             }.rest().queue()
         } catch (e: IndexOutOfBoundsException) {
             throw CommandException("There is nothing queued in that position")

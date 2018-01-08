@@ -98,6 +98,9 @@ class AudioTrackLoader(val manager: MusicManager, val requestedBy: User, val con
                     description = (position + 1).toString()
                 }
             }
+            timestamp {
+                now()
+            }
         }.rest().queue()
         manager.updateQueue()
     }

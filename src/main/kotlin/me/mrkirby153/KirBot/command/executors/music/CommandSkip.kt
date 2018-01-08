@@ -23,14 +23,16 @@ class CommandSkip : MusicCommand(Arguments.string("option", false)) {
 
     override fun exec(context: Context, cmdContext: CommandContext) {
         val musicManager = context.data.musicManager
-        val musicSettings = MusicManager.musicSettings[context.guild.id] ?: throw CommandException("Could not load music settings")
+        val musicSettings = MusicManager.musicSettings[context.guild.id] ?: throw CommandException(
+                "Could not load music settings")
 
         if (!musicManager.playing) {
             throw CommandException("I am not playing anything right now")
         }
         var shouldHalt = false
         cmdContext.ifPresent<String>("option") { action ->
-            if (action.equals("force", true) && context.author.getClearance(context.guild).value >= Clearance.BOT_MANAGER.value) {
+            if (action.equals("force", true) && context.author.getClearance(
+                    context.guild).value >= Clearance.BOT_MANAGER.value) {
                 forceSkip(context)
                 shouldHalt = true
             }
@@ -44,7 +46,8 @@ class CommandSkip : MusicCommand(Arguments.string("option", false)) {
                 if (skipIn == -1L)
                     append("Try again after your current poll expires")
                 else
-                    append("Try again in ${localizeTime(((skipIn - System.currentTimeMillis()) / 1000).toInt())}")
+                    append("Try again in ${localizeTime(
+                            ((skipIn - System.currentTimeMillis()) / 1000).toInt())}")
             })
         }
 
@@ -59,10 +62,13 @@ class CommandSkip : MusicCommand(Arguments.string("option", false)) {
                 +"\nReact with :thumbsup: or :thumbsdown: to vote"
                 +"\nWhichever has the most votes in ${localizeTime(skipTimer)} wins!"
             }
+            timestamp {
+                now()
+            }
         }.rest().queue { m ->
             skipCooldown[context.author.id] = System.currentTimeMillis() + (skipTimer * 1000) + 1500
             if (musicSettings.skipCooldown > 0)
-                skipCooldown[context.author.id] = (skipCooldown[context.author.id]?: 0) + (musicSettings.skipCooldown * 1000).toLong()
+                skipCooldown[context.author.id] = (skipCooldown[context.author.id] ?: 0) + (musicSettings.skipCooldown * 1000).toLong()
             m.addReaction("\uD83D\uDC4D").queue() // Thumbs up
             m.addReaction("\uD83D\uDC4E").queue() // Thumbs down
             m.editMessage(embed("Music") {
@@ -73,6 +79,7 @@ class CommandSkip : MusicCommand(Arguments.string("option", false)) {
                     context.send().embed("Music") {
                         color = Color.CYAN
                         description { +"The song has changed, canceling vote" }
+                        timestamp { now() }
                     }.rest().queue()
                     return@queueAfter
                 }
@@ -95,6 +102,7 @@ class CommandSkip : MusicCommand(Arguments.string("option", false)) {
                             appendln("The vote has failed.")
                         }
                     }
+                    timestamp { now() }
                 }.rest().queue()
             }
         }

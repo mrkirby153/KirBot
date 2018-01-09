@@ -3,6 +3,7 @@ package me.mrkirby153.KirBot.database.api
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.logger.ErrorLogger
 import me.mrkirby153.KirBot.utils.HttpUtils
 import okhttp3.FormBody
 import okhttp3.Request
@@ -21,6 +22,7 @@ class ApiRequestProcessor(val apiRequest: ApiRequest<*>) : Runnable {
             if (Bot.debug)
                 e.printStackTrace()
             Bot.LOG.error("Caught exception from request ${apiRequest.javaClass}: [$e]")
+            ErrorLogger.logThrowable(e)
             debugLogger.debug(
                     "URL: ${apiRequest.url} (${apiRequest.method.value}); Data: ${apiRequest.data}")
         }
@@ -86,10 +88,12 @@ class ApiRequestProcessor(val apiRequest: ApiRequest<*>) : Runnable {
                             return null
                         }
                     } catch (e: Exception) {
+                        ErrorLogger.logThrowable(e)
                         apiRequest.onException(e)
                     }
                 } else {
                     debugLogger.debug("{${apiRequest.apiReq}} Request failed.")
+                    debugLogger.debug("{${apiRequest.apiReq}} $inputStream")
                     return null
                 }
                 resp.close()

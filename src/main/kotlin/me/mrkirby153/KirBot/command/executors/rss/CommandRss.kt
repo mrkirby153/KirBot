@@ -10,6 +10,7 @@ import me.mrkirby153.KirBot.command.RequiresClearance
 import me.mrkirby153.KirBot.command.args.Arguments
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.api.RssFeed
+import me.mrkirby153.KirBot.logger.ErrorLogger
 import me.mrkirby153.KirBot.rss.FeedTask
 import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
@@ -76,7 +77,7 @@ class CommandRss : BaseCommand(false, CommandCategory.MISCELLANEOUS, Arguments.s
                             feed.posted(it.uri)
                         }
                     } catch (e: Exception) {
-                        e.printStackTrace()
+                        ErrorLogger.logThrowable(e)
                     }
                     context.send().success("Feed has been registered, new posts will be posted here").queue()
                 }

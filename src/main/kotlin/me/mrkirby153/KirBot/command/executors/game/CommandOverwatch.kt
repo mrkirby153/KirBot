@@ -6,6 +6,7 @@ import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.Arguments
 import me.mrkirby153.KirBot.command.args.CommandContext
+import me.mrkirby153.KirBot.logger.ErrorLogger
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.HttpUtils
 import me.mrkirby153.KirBot.utils.deleteAfter
@@ -151,6 +152,7 @@ class CommandOverwatch : BaseCommand(CommandCategory.FUN,
                             }
                         }.rest().queue()
                     } catch (e: Exception) {
+                        ErrorLogger.logThrowable(e)
                         throw CommandException("An error occurred when looking up that player")
                     }
                 }

@@ -1,0 +1,139 @@
+package me.mrkirby153.KirBot.logger
+
+import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.utils.FileDataStore
+import me.mrkirby153.KirBot.utils.deleteAfter
+import me.mrkirby153.KirBot.utils.embed.b
+import me.mrkirby153.kcutils.child
+import me.mrkirby153.kcutils.utils.IdGenerator
+import net.dv8tion.jda.core.entities.Guild
+import net.dv8tion.jda.core.entities.TextChannel
+import net.dv8tion.jda.core.entities.User
+import java.io.ByteArrayOutputStream
+import java.io.PrintStream
+import java.util.concurrent.TimeUnit
+
+
+object ErrorLogger {
+
+    private val chanId = Bot.properties.getProperty("error-channel", "0")
+    private val errorRepository = FileDataStore<String, ReportedError>(
+            Bot.files.data.child("errors.json"))
+    private val idGenerator = IdGenerator(IdGenerator.ALPHA)
+
+    private val channel: TextChannel? by lazy {
+        if (chanId == "0")
+            return@lazy null
+        Bot.shardManager.shards.forEach {
+            if (it.getTextChannelById(chanId) != null)
+                return@lazy it.getTextChannelById(chanId)
+        }
+        return@lazy null
+    }
+
+    fun logThrowable(throwable: Throwable, guild: Guild? = null, user: User? = null): String? {
+        if (channel == null)
+            return null
+        val dupe = findDupe(throwable)
+        if (dupe != null) {
+            Bot.LOG.debug("Found duplicate")
+            dupe.occurrences++
+            val shouldEdit = System.currentTimeMillis() - dupe.lastSeen > 30 * 1000 // Only edit the message once every 30 seconds
+            dupe.lastSeen = System.currentTimeMillis()
+            errorRepository[dupe.id] = dupe
+            if (shouldEdit)
+                channel?.getMessageById(dupe.messageId)?.queue {
+                    it.editMessage(buildReport(throwable, occurrences = dupe.occurrences,
+                            id = dupe.id)).queue()
+                }
+            return dupe.id
+        }
+        val id = buildString {
+            var i: String
+            do {
+                i = idGenerator.generate(10)
+            } while (i in errorRepository.keys())
+            append(i)
+        }
+        Bot.LOG.error("Logged error $id!")
+        channel?.sendMessage(buildReport(throwable, guild, user, id))?.queue {
+            errorRepository[id] = ReportedError(id, throwable.javaClass.canonicalName,
+                    throwable.message,
+                    buildStacktrace(throwable),
+                    it.id, 1, System.currentTimeMillis())
+        }
+        return id
+    }
+
+    private fun buildReport(throwable: Throwable, guild: Guild? = null,
+                            user: User? = null, id: String, occurrences: Int = 1): String {
+        return buildString {
+            append("───────────────────\n")
+            append(b("Unhandled Exception"))
+            append("\n")
+            append(b("Exception: "))
+            append(throwable.javaClass.canonicalName)
+            append(" (${throwable.message})")
+            append("\n")
+            if (guild != null) {
+                append("\n")
+                append(b("Guild: ") + "${guild.name} (`${guild.id}`)")
+            }
+            if (user != null) {
+                append("\n")
+                append(b("User: ") + "${user.name} (`${user.id}`)")
+            }
+            append("\n" + b("Thread: ") + Thread.currentThread().name)
+            if (occurrences > 1) {
+                append("\n" + b("Seen: ") + occurrences + " times")
+            }
+            append("\n" + b("ID: ") + id)
+        }
+    }
+
+    fun getTrace(id: String): String? = errorRepository[id]?.stacktrace
+
+    fun acknowledge(id: String) {
+        val error = errorRepository.remove(id) ?: return
+        channel?.getMessageById(error.messageId)?.queue({
+            it.delete().queue()
+        }, {
+            Bot.LOG.warn("Message $error was already deleted")
+        })
+        channel?.sendMessage("Acknowledged `$id`")?.queue {
+            it.deleteAfter(10, TimeUnit.SECONDS)
+        }
+    }
+
+    fun ackAll() {
+        val messageIds = errorRepository.values().map { it.messageId }.toMutableList()
+        if (messageIds.size < 2) {
+            channel?.deleteMessageById(messageIds[0])?.queue()
+        } else {
+            while (messageIds.isNotEmpty()) {
+                val toDelete = messageIds.subList(0, Math.min(messageIds.size, 99))
+                channel?.deleteMessagesByIds(toDelete)?.queue()
+                messageIds.removeAll(toDelete)
+            }
+        }
+        errorRepository.clear()
+    }
+
+    fun findDupe(throwable: Throwable): ReportedError? {
+        return errorRepository.values().firstOrNull {
+            it.exception.equals(throwable.javaClass.canonicalName, true) && it.msg.equals(
+                    throwable.message) && buildStacktrace(throwable).equals(it.stacktrace, true)
+        }
+    }
+
+    private fun buildStacktrace(throwable: Throwable): String {
+        val outputStream = ByteArrayOutputStream()
+        val ps = PrintStream(outputStream)
+        throwable.printStackTrace(ps)
+        return outputStream.toString()
+    }
+
+    data class ReportedError(val id: String, val exception: String, val msg: String?,
+                             val stacktrace: String,
+                             val messageId: String, var occurrences: Int, var lastSeen: Long)
+}

@@ -1,6 +1,6 @@
 package me.mrkirby153.KirBot.error
 
-import io.sentry.Sentry
+import me.mrkirby153.KirBot.logger.ErrorLogger
 
 class UncaughtErrorReporter : Thread.UncaughtExceptionHandler {
 
@@ -8,10 +8,6 @@ class UncaughtErrorReporter : Thread.UncaughtExceptionHandler {
         if (e == null)
             return
         e.printStackTrace()
-        Sentry.getContext().apply {
-            addTag("thread", t?.name ?: "Unknown Thread")
-        }
-        Sentry.capture(e)
-        Sentry.getContext().clear()
+        ErrorLogger.logThrowable(e)
     }
 }

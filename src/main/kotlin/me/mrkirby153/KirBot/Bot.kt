@@ -9,7 +9,6 @@ import com.sedmelluq.discord.lavaplayer.source.soundcloud.SoundCloudAudioSourceM
 import com.sedmelluq.discord.lavaplayer.source.twitch.TwitchStreamAudioSourceManager
 import com.sedmelluq.discord.lavaplayer.source.vimeo.VimeoAudioSourceManager
 import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager
-import io.sentry.Sentry
 import me.mrkirby153.KirBot.command.CommandExecutor
 import me.mrkirby153.KirBot.data.ServerData
 import me.mrkirby153.KirBot.database.api.ApiRequestProcessor
@@ -84,9 +83,6 @@ object Bot {
                 System.getProperty("kirbot.global_log", "INFO"))
         Bot.LOG.info("Starting KirBot ${constants.getProperty("bot-version")}")
         Bot.LOG.debug("\t + Base URL: ${constants.getProperty("bot-base-url")}")
-        // Start up sentry
-        Sentry.init()
-        Bot.LOG.debug("Starting Sentry")
 
         Thread.setDefaultUncaughtExceptionHandler(UncaughtErrorReporter())
 

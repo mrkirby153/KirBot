@@ -45,7 +45,6 @@ class FeedTask : Runnable {
                 }
                 feed.update(true).queue()
             } catch (e: Exception) {
-                e.printStackTrace()
                 feed.channel?.sendMessage(embed("Feed Error") {
                     color = Color.RED
                     description {

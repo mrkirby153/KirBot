@@ -1,6 +1,7 @@
 package me.mrkirby153.KirBot.redis
 
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.logger.ErrorLogger
 import me.mrkirby153.kcutils.Time
 import org.json.JSONObject
 
@@ -33,6 +34,7 @@ object RedisConnector {
                         it.psubscribe(RedisHandler(), "kirbot:*")
                     }
                 } catch (e: Exception) {
+                    ErrorLogger.logThrowable(e)
                     if(retries > MAX_RETRIES){
                         running = false
                         Bot.LOG.error("Reached Max retry count, giving up.")

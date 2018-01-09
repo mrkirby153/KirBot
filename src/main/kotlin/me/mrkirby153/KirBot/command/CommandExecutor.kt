@@ -7,6 +7,7 @@ import me.mrkirby153.KirBot.command.args.ArgumentParser
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.command.help.HelpManager
 import me.mrkirby153.KirBot.database.api.GuildCommand
+import me.mrkirby153.KirBot.logger.ErrorLogger
 import me.mrkirby153.KirBot.sharding.Shard
 import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
@@ -131,8 +132,9 @@ object CommandExecutor {
                     it.deleteAfter(10, TimeUnit.SECONDS)
                 }
             } catch (e: Exception) {
+               val id =  ErrorLogger.logThrowable(e, context.guild, context.author)
                 e.printStackTrace()
-                context.send().error("An unknown error has occurred, please try again").queue {
+                context.send().error("An unknown error has occurred, please try again. \nThis error can be referenced with id: `$id`").queue {
                     it.deleteAfter(10, TimeUnit.SECONDS)
                     context.deleteAfter(10, TimeUnit.SECONDS)
                 }
@@ -181,7 +183,7 @@ object CommandExecutor {
 
             commands.add(spec)
         } catch (e: Exception) {
-            e.printStackTrace()
+            ErrorLogger.logThrowable(e)
             Bot.LOG.error("An error occurred when registering ${clazz.canonicalName}")
         }
     }

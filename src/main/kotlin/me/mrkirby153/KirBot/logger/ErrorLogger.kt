@@ -1,7 +1,8 @@
 package me.mrkirby153.KirBot.logger
 
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.utils.FileDataStore
 import me.mrkirby153.KirBot.utils.deleteAfter
 import me.mrkirby153.KirBot.utils.embed.b
 import me.mrkirby153.kcutils.child
@@ -17,9 +18,11 @@ import java.util.concurrent.TimeUnit
 object ErrorLogger {
 
     private val chanId = Bot.properties.getProperty("error-channel", "0")
-    private val errorRepository = FileDataStore<String, ReportedError>(
-            Bot.files.data.child("errors.json"))
+    private val file = Bot.files.data.child("errors.json")
+    private var errorRepository = mutableMapOf<String, ReportedError>()
     private val idGenerator = IdGenerator(IdGenerator.ALPHA)
+
+    private val gson = Gson()
 
     private val channel: TextChannel? by lazy {
         if (chanId == "0")
@@ -29,6 +32,25 @@ object ErrorLogger {
                 return@lazy it.getTextChannelById(chanId)
         }
         return@lazy null
+    }
+
+    init {
+        load()
+    }
+
+    fun save() {
+        val json = gson.toJson(errorRepository)
+        file.writer().use {
+            it.write(json)
+            it.flush()
+        }
+    }
+
+    fun load() {
+        val typeToken = object : TypeToken<Map<String, ReportedError>>() {}.type
+        file.reader().use {
+            errorRepository = gson.fromJson(it, typeToken)
+        }
     }
 
     fun logThrowable(throwable: Throwable, guild: Guild? = null, user: User? = null): String? {
@@ -41,6 +63,7 @@ object ErrorLogger {
             val shouldEdit = System.currentTimeMillis() - dupe.lastSeen > 30 * 1000 // Only edit the message once every 30 seconds
             dupe.lastSeen = System.currentTimeMillis()
             errorRepository[dupe.id] = dupe
+            save()
             if (shouldEdit)
                 channel?.getMessageById(dupe.messageId)?.queue {
                     it.editMessage(buildReport(throwable, occurrences = dupe.occurrences,
@@ -52,7 +75,7 @@ object ErrorLogger {
             var i: String
             do {
                 i = idGenerator.generate(10)
-            } while (i in errorRepository.keys())
+            } while (i in errorRepository.keys)
             append(i)
         }
         Bot.LOG.error("Logged error $id!")
@@ -61,6 +84,7 @@ object ErrorLogger {
                     throwable.message,
                     buildStacktrace(throwable),
                     it.id, 1, System.currentTimeMillis())
+            save()
         }
         return id
     }
@@ -106,7 +130,7 @@ object ErrorLogger {
     }
 
     fun ackAll() {
-        val messageIds = errorRepository.values().map { it.messageId }.toMutableList()
+        val messageIds = errorRepository.values.map { it.messageId }.toMutableList()
         if (messageIds.size < 2) {
             channel?.deleteMessageById(messageIds[0])?.queue()
         } else {
@@ -117,10 +141,11 @@ object ErrorLogger {
             }
         }
         errorRepository.clear()
+        save()
     }
 
     fun findDupe(throwable: Throwable): ReportedError? {
-        return errorRepository.values().firstOrNull {
+        return errorRepository.values.firstOrNull {
             it.exception.equals(throwable.javaClass.canonicalName, true) && it.msg.equals(
                     throwable.message) && buildStacktrace(throwable).equals(it.stacktrace, true)
         }

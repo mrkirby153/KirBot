@@ -132,8 +132,8 @@ object CommandExecutor {
                     it.deleteAfter(10, TimeUnit.SECONDS)
                 }
             } catch (e: Exception) {
-               val id =  ErrorLogger.logThrowable(e, context.guild, context.author)
                 e.printStackTrace()
+                val id =  ErrorLogger.logThrowable(e, context.guild, context.author)
                 context.send().error("An unknown error has occurred, please try again. \nThis error can be referenced with id: `$id`").queue {
                     it.deleteAfter(10, TimeUnit.SECONDS)
                     context.deleteAfter(10, TimeUnit.SECONDS)

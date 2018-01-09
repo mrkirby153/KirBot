@@ -14,9 +14,13 @@ object PanelAPI {
 
     internal val executor = Executors.newFixedThreadPool(3)
 
-    fun registerServer(guild: Guild): ApiRequest<Void> {
-        return object : ApiRequest<Void>("/server/register", Methods.PUT,
-                mapOf(Pair("name", guild.name), Pair("id", guild.id))) {}
+    fun registerServer(guild: Guild): ApiRequest<GuildSettings> {
+        return object : ApiRequest<GuildSettings>("/server/register", Methods.PUT,
+                mapOf(Pair("name", guild.name), Pair("id", guild.id))) {
+            override fun parse(json: JSONObject): GuildSettings? {
+                return GuildSettings.parse(json)
+            }
+        }
     }
 
     fun unregisterServer(guild: Guild): ApiRequest<Void> {

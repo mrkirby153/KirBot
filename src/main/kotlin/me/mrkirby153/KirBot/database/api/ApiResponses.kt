@@ -75,15 +75,20 @@ class GuildSettings(val name: String, val nick: String?, val realnameSetting: Re
     companion object {
         fun get(guild: Guild) = object : ApiRequest<GuildSettings>("/server/${guild.id}/settings") {
             override fun parse(json: JSONObject): GuildSettings {
-                val managementRoles = json.getJSONArray("bot_manager")
-                val roles = mutableListOf<String>()
-                managementRoles.forEach { roles.add(it.toString()) }
-                return GuildSettings(json.getString("name"), json.optString("bot_nick"),
-                        RealnameSetting.valueOf(json.getString("realname")),
-                        json.getInt("require_realname") == 1,
-                        json.getString("command_discriminator"), json.optString("log_channel"),
-                        json.getJSONArray("cmd_whitelist").map { it.toString() }, roles, json.getInt("user_persistence") == 1)
+                return Companion.parse(json)
             }
+        }
+
+        fun parse(json: JSONObject): GuildSettings {
+            val managementRoles = json.getJSONArray("bot_manager")
+            val roles = mutableListOf<String>()
+            managementRoles.forEach { roles.add(it.toString()) }
+            return GuildSettings(json.getString("name"), json.optString("bot_nick"),
+                    RealnameSetting.valueOf(json.getString("realname")),
+                    json.getInt("require_realname") == 1,
+                    json.getString("command_discriminator"), json.optString("log_channel"),
+                    json.getJSONArray("cmd_whitelist").map { it.toString() }, roles,
+                    json.getInt("user_persistence") == 1)
         }
     }
 }

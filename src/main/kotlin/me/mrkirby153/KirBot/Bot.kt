@@ -138,7 +138,7 @@ object Bot {
         scheduler.scheduleAtFixedRate(FeedTask(), 0, 1, TimeUnit.HOURS)
 
         shardManager.onlineStatus = OnlineStatus.ONLINE
-        shardManager.playing = "!help"
+        shardManager.playing = properties.getOrDefault("playing-message", "!help").toString()
 
     }
 

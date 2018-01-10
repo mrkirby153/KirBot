@@ -16,7 +16,6 @@ object HttpUtils {
     val cache: Cache = Cache(cacheDirectory, maxCacheSize)
 
     val CLIENT: OkHttpClient = OkHttpClient.Builder().run {
-        cache(cache)
         build()
     }
 

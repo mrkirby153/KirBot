@@ -19,10 +19,10 @@ class CommandPlay : MusicCommand(Arguments.restAsString("query/url")) {
         val queuePosition =  -1 // TODO 12/17/2017 Reimplement QueueAt
 
         if (data.isBlank()) {
-            if (context.data.musicManager.playing)
+            if (context.kirbotGuild.musicManager.playing)
                 throw CommandException("Already playing.")
-            context.data.musicManager.audioPlayer.isPaused = false
-            context.data.musicManager.manualPause = false
+            context.kirbotGuild.musicManager.audioPlayer.isPaused = false
+            context.kirbotGuild.musicManager.manualPause = false
             context.channel.sendMessage(":arrow_forward: Music has been resumed").queue()
             return
         }
@@ -59,9 +59,9 @@ class CommandPlay : MusicCommand(Arguments.restAsString("query/url")) {
             url = YoutubeSearch(data).execute()
             msg.delete().queue()
         }
-        if (musicSettings.maxQueueLength != -1 && context.data.musicManager.queueLength() / (60 * 1000) >= musicSettings.maxQueueLength) {
+        if (musicSettings.maxQueueLength != -1 && context.kirbotGuild.musicManager.queueLength() / (60 * 1000) >= musicSettings.maxQueueLength) {
             throw CommandException("The queue is too long right now, please try again when it is shorter")
         }
-        Bot.playerManager.loadItem(url, AudioTrackLoader(context.data.musicManager, context.author, context, queuePosition))
+        Bot.playerManager.loadItem(url, AudioTrackLoader(context.kirbotGuild.musicManager, context.author, context, queuePosition))
     }
 }

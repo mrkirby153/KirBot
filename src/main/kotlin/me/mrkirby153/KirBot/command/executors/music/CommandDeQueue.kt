@@ -17,8 +17,8 @@ class CommandDeQueue : MusicCommand(Arguments.number("position", min = 1)) {
         val index = (cmdContext.get<Double>("position")?.toInt() ?: 1) - 1
 
         try {
-            val song = context.data.musicManager.queue.removeAt(index)
-            context.data.musicManager.updateQueue()
+            val song = context.kirbotGuild.musicManager.queue.removeAt(index)
+            context.kirbotGuild.musicManager.updateQueue()
             context.send().embed {
                 description {
                     +"**${song.track.info.title.mdEscape()}**" link song.track.info.uri
@@ -31,7 +31,7 @@ class CommandDeQueue : MusicCommand(Arguments.number("position", min = 1)) {
                 }
             }.rest().queue()
         } catch (e: IndexOutOfBoundsException) {
-            throw CommandException("Position must be between 0 and ${context.data.musicManager.queue.size}")
+            throw CommandException("Position must be between 0 and ${context.kirbotGuild.musicManager.queue.size}")
         }
     }
 }

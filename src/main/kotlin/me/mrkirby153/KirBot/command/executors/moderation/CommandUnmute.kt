@@ -45,7 +45,7 @@ class CommandUnmute : BaseCommand(false, CommandCategory.MODERATION, Arguments.u
             override.delete().queue()
         }
         context.success()
-        context.data.logManager.genericLog("User Unmuted",
+        context.kirbotGuild.logManager.genericLog("User Unmuted",
                 "${context.author.name} has unmuted ${member.user.name} in ${context.textChannel.asMention}",
                 Color.MAGENTA, context.author)
     }

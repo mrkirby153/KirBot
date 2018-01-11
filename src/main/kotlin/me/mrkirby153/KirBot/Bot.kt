@@ -10,7 +10,6 @@ import com.sedmelluq.discord.lavaplayer.source.twitch.TwitchStreamAudioSourceMan
 import com.sedmelluq.discord.lavaplayer.source.vimeo.VimeoAudioSourceManager
 import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager
 import me.mrkirby153.KirBot.command.CommandExecutor
-import me.mrkirby153.KirBot.data.ServerData
 import me.mrkirby153.KirBot.database.api.enableApiDebug
 import me.mrkirby153.KirBot.error.UncaughtErrorReporter
 import me.mrkirby153.KirBot.logger.LogListener
@@ -19,18 +18,19 @@ import me.mrkirby153.KirBot.redis.messaging.MessageDataStore
 import me.mrkirby153.KirBot.rss.FeedTask
 import me.mrkirby153.KirBot.scheduler.Scheduler
 import me.mrkirby153.KirBot.seen.SeenStore
+import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.sharding.ShardManager
 import me.mrkirby153.KirBot.utils.HttpUtils
 import me.mrkirby153.KirBot.utils.localizeTime
 import me.mrkirby153.KirBot.utils.readProperties
 import me.mrkirby153.KirBot.utils.redis.RedisConnection
-import me.mrkirby153.KirBot.utils.sync
+import me.mrkirby153.kcutils.Time
 import me.mrkirby153.kcutils.readProperties
 import net.dv8tion.jda.core.OnlineStatus
-import net.dv8tion.jda.core.entities.Guild
 import org.slf4j.LoggerFactory
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import kotlin.system.measureTimeMillis
 
 object Bot {
 
@@ -73,6 +73,7 @@ object Bot {
 
 
     fun start(token: String) {
+        val startupTime = System.currentTimeMillis()
         if (debug) {
             enableApiDebug()
             (LOG as? Logger)?.let { logger ->
@@ -98,10 +99,6 @@ object Bot {
         for (i in 0 until numShards) {
             shardManager.addShard(i)
         }
-        LOG.info("Waiting for shards to connect...")
-        while (!shardManager.isLoading()) {
-            Thread.sleep(150)
-        }
 
         shardManager.addListener(LogListener())
 
@@ -111,8 +108,15 @@ object Bot {
 
         LOG.info("Bot is connecting to discord")
 
-        LOG.info("Syncing Guilds")
-        shardManager.shards.flatMap { it.guilds }.forEach { it.sync() }
+        val guilds = shardManager.shards.flatMap { it.guilds }
+        LOG.info("Started syncing of ${guilds.size} guilds")
+        val syncTime = measureTimeMillis {
+            guilds.forEach {
+                LOG.info("Syncing guild ${it.id} (${it.name})")
+                KirBotGuild[it].sync()
+            }
+        }
+        LOG.info("Synced ${guilds.size} guilds in ${Time.format(1, syncTime)}")
 
 
         val password = Bot.properties.getProperty("redis-password", "")
@@ -122,10 +126,6 @@ object Bot {
 
         this.redisConnection = RedisConnection(host, port,
                 if (password.isEmpty()) null else password, dbNumber)
-
-        shardManager.shards.forEach {
-            it.loadSettings()
-        }
 
         RedisConnector.listen()
 
@@ -139,7 +139,7 @@ object Bot {
 
         shardManager.onlineStatus = OnlineStatus.ONLINE
         shardManager.playing = properties.getOrDefault("playing-message", "!help").toString()
-
+        LOG.info("Startup completed in ${Time.format(0, System.currentTimeMillis() - startupTime)}")
     }
 
     fun stop() {
@@ -149,5 +149,4 @@ object Bot {
         System.exit(0)
     }
 
-    fun getServerData(guild: Guild): ServerData? = shardManager.getShard(guild.id)?.getServerData(guild)
 }

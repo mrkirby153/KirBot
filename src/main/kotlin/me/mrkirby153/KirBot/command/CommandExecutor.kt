@@ -13,6 +13,7 @@ import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.deleteAfter
 import me.mrkirby153.KirBot.utils.getClearance
+import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.core.entities.Channel
 import net.dv8tion.jda.core.entities.ChannelType
@@ -53,14 +54,14 @@ object CommandExecutor {
             }
 
             val shard = context.shard
-            val guild = context.guild
+            val guild = context.kirbotGuild
 
-            var message = context.rawContent
+            var message = context.contentRaw
 
             if (message.isEmpty())
                 return@submit
 
-            val settings = shard.serverSettings[guild.id] ?: return@submit
+            val settings = guild.settings
 
             val prefix = settings.cmdDiscriminator
 
@@ -145,7 +146,7 @@ object CommandExecutor {
 
     fun executeCustomCommand(context: Context, command: String, args: Array<String>, shard: Shard,
                              guild: Guild) {
-        val customCommand = shard.customCommands[guild.id]?.obj?.firstOrNull {
+        val customCommand = context.kirbotGuild.customCommands.firstOrNull {
             it.name.equals(command, true)
         } ?: return
         if (customCommand.clearance.value > context.author.getClearance(guild).value) {
@@ -203,8 +204,7 @@ object CommandExecutor {
     }
 
     private fun canExecuteInChannel(command: CommandSpec, channel: Channel): Boolean {
-        val data = Bot.shardManager.getShard(channel.guild)?.serverSettings?.get(
-                channel.guild.id) ?: return false
+        val data = channel.guild.kirbotGuild.settings
         return if (command.respectWhitelist) {
             if (data.whitelistedChannels.isEmpty())
                 return true
@@ -215,8 +215,7 @@ object CommandExecutor {
     }
 
     private fun canExecuteInChannel(command: GuildCommand, channel: Channel): Boolean {
-        val data = Bot.shardManager.getShard(channel.guild)?.serverSettings?.get(
-                channel.guild.id) ?: return false
+        val data = channel.guild.kirbotGuild.settings
         return if (command.respectWhitelist) {
             if (data.whitelistedChannels.isEmpty())
                 return true

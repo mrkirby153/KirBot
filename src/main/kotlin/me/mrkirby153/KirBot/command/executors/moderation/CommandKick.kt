@@ -27,7 +27,7 @@ class CommandKick : BaseCommand(false, CommandCategory.MODERATION, Arguments.use
             context.guild.controller.kick(member,
                     "${context.author.name}#${context.author.discriminator} - $reason").queue {
                 context.success()
-                context.data.logManager.genericLog("User Kicked",
+                context.kirbotGuild.logManager.genericLog("User Kicked",
                         "${user.name}#${user.discriminator} was kicked by ${context.author.asMention}.\n\n**Reason:** $reason",
                         Color.RED, context.author)
             }

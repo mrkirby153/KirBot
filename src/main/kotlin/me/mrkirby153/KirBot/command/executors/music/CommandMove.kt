@@ -20,9 +20,9 @@ class CommandMove : MusicCommand(Arguments.number("from", min = 0), Arguments.nu
         val toPosition = cmdContext.get<Double>("to")?.toInt() ?: 0
         try {
             val max = Math.max(0, song - 1)
-            val queuedSong = context.data.musicManager.queue.removeAt(max)
-            context.data.musicManager.queue.add(Math.max(0, toPosition - 1), queuedSong)
-            context.data.musicManager.updateQueue()
+            val queuedSong = context.kirbotGuild.musicManager.queue.removeAt(max)
+            context.kirbotGuild.musicManager.queue.add(Math.max(0, toPosition - 1), queuedSong)
+            context.kirbotGuild.musicManager.updateQueue()
             context.send().embed {
                 description {
                     +"**${queuedSong.track.info.title.mdEscape()}**" link queuedSong.track.info.uri

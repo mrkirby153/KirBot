@@ -46,6 +46,9 @@ class TrackScheduler(val manager: MusicManager) : AudioEventAdapter() {
                         else
                             +"`${next.track.info.title}`"
                     }
+                    timestamp {
+                        now()
+                    }
                 }.build()
                 if (manager.nowPlayingMessage != null) {
                     manager.nowPlayingMessage?.delete()?.queue()

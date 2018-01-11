@@ -18,6 +18,6 @@ class CommandHideChannel : BaseCommand(false, CommandCategory.MODERATION){
         val channel = (context.channel as? TextChannel) ?: return
         channel.hide()
         context.send().success("Channel hidden!").complete()
-        context.data.logManager.genericLog("Channel Hidden", "${context.author.asMention} has hidden ${context.textChannel.asMention}", Color.GREEN, context.author)
+        context.kirbotGuild.logManager.genericLog("Channel Hidden", "${context.author.asMention} has hidden ${context.textChannel.asMention}", Color.GREEN, context.author)
     }
 }

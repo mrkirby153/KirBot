@@ -12,11 +12,11 @@ import me.mrkirby153.KirBot.utils.Context
 class CommandStop : MusicCommand() {
 
     override fun exec(context: Context, cmdContext: CommandContext) {
-        if (!context.data.musicManager.playing) {
+        if (!context.kirbotGuild.musicManager.playing) {
             throw CommandException("Music is already stopped")
         }
-        context.data.musicManager.audioPlayer.isPaused = true
-        context.data.musicManager.manualPause = true
+        context.kirbotGuild.musicManager.audioPlayer.isPaused = true
+        context.kirbotGuild.musicManager.manualPause = true
         context.channel.sendMessage(":pause_button: Music has been paused!").queue()
     }
 }

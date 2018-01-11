@@ -16,25 +16,25 @@ class CommandQueue : MusicCommand(Arguments.string("option", false)) {
         if(cmdContext.has("option")){
             when(cmdContext.get<String>("option")!!.toLowerCase()){
                 "clear" -> {
-                    context.data.musicManager.queue.clear()
+                    context.kirbotGuild.musicManager.queue.clear()
                     context.send().success("Queue cleared!").queue()
                 }
                 "shuffle" -> {
-                    val queue = context.data.musicManager.queue.toTypedArray().toMutableList()
+                    val queue = context.kirbotGuild.musicManager.queue.toTypedArray().toMutableList()
                     val random = Random()
-                    context.data.musicManager.queue.clear()
+                    context.kirbotGuild.musicManager.queue.clear()
                     while(queue.isNotEmpty()){
                         val element: MusicManager.QueuedSong = queue[random.nextInt(queue.size)]
-                        context.data.musicManager.queue.add(element)
+                        context.kirbotGuild.musicManager.queue.add(element)
                         queue.remove(element)
                     }
                     context.send().success("Queue shuffled!").queue()
                 }
             }
-            context.data.musicManager.updateQueue()
+            context.kirbotGuild.musicManager.updateQueue()
             return
         }
-        val musicManager = context.data.musicManager
+        val musicManager = context.kirbotGuild.musicManager
         if(musicManager.nowPlaying == null && musicManager.queue.isEmpty()){
             context.channel.sendMessage(":x: Nothing is playing right now!").queue()
             return

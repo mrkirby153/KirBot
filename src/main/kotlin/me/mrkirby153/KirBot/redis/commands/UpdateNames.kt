@@ -2,6 +2,7 @@ package me.mrkirby153.KirBot.redis.commands
 
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.realname.RealnameHandler
+import me.mrkirby153.KirBot.utils.kirbotGuild
 import org.json.JSONObject
 
 class UpdateNames : RedisCommandHandler {
@@ -10,8 +11,7 @@ class UpdateNames : RedisCommandHandler {
         val server = json.getString("server")
 
         val guild = Bot.shardManager.getGuild(server) ?: return
-        val data = Bot.getServerData(guild) ?: return
-        RealnameHandler(guild, data).updateNames()
+        RealnameHandler(guild.kirbotGuild).update()
     }
 
 }

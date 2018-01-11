@@ -2,18 +2,17 @@ package me.mrkirby153.KirBot.listener
 
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.CommandExecutor
-import me.mrkirby153.KirBot.data.ServerData
 import me.mrkirby153.KirBot.database.api.GuildChannel
 import me.mrkirby153.KirBot.database.api.GuildMember
 import me.mrkirby153.KirBot.database.api.GuildRole
 import me.mrkirby153.KirBot.database.api.PanelAPI
 import me.mrkirby153.KirBot.database.api.Quote
+import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.sharding.Shard
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.RED_CROSS
 import me.mrkirby153.KirBot.utils.embed.embed
-import me.mrkirby153.KirBot.utils.settings
-import me.mrkirby153.KirBot.utils.sync
+import me.mrkirby153.KirBot.utils.kirbotGuild
 import net.dv8tion.jda.core.entities.Channel
 import net.dv8tion.jda.core.entities.Member
 import net.dv8tion.jda.core.events.channel.text.TextChannelCreateEvent
@@ -40,6 +39,7 @@ import net.dv8tion.jda.core.events.role.update.GenericRoleUpdateEvent
 import net.dv8tion.jda.core.events.user.UserOnlineStatusUpdateEvent
 import net.dv8tion.jda.core.hooks.ListenerAdapter
 import java.awt.Color
+import java.util.concurrent.TimeUnit
 
 class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
 
@@ -57,7 +57,7 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
 
     override fun onGuildMemberJoin(event: GuildMemberJoinEvent) {
         PanelAPI.getMembers(event.guild).queue { members ->
-            if (event.member.user.id in members.map { it.userId } && event.guild.settings().persistence) {
+            if (event.member.user.id in members.map { it.userId } && event.guild.kirbotGuild.settings.persistence) {
                 Bot.LOG.debug("User has previously joined, restoring state")
                 GuildMember.get(event.member).queue { member ->
                     val guildController = event.guild.controller
@@ -75,7 +75,7 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
     }
 
     override fun onGuildMemberLeave(event: GuildMemberLeaveEvent) {
-        if (!event.guild.settings().persistence) { // Delete the user if persistence is disabled
+        if (!event.guild.kirbotGuild.settings.persistence) { // Delete the user if persistence is disabled
             GuildMember.get(event.member).queue {
                 it.delete().queue()
             }
@@ -83,7 +83,7 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
     }
 
     override fun onGuildMemberRoleAdd(event: GuildMemberRoleAddEvent) {
-        if (event.guild.settings().persistence)
+        if (event.guild.kirbotGuild.settings.persistence)
             GuildMember.get(event.member).queue { m ->
                 event.roles.forEach {
                     m.addRole(it.id).queue()
@@ -92,7 +92,7 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
     }
 
     override fun onGuildMemberRoleRemove(event: GuildMemberRoleRemoveEvent) {
-        if (event.guild.settings().persistence)
+        if (event.guild.kirbotGuild.settings.persistence)
             GuildMember.get(event.member).queue { m ->
                 event.roles.forEach {
                     m.removeRole(it.id).queue()
@@ -109,12 +109,13 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
 
     override fun onGuildLeave(event: GuildLeaveEvent) {
         PanelAPI.unregisterServer(event.guild).queue()
+        event.guild.kirbotGuild.onPart()
     }
 
     override fun onGuildJoin(event: GuildJoinEvent) {
-        PanelAPI.registerServer(event.guild).queue {
-            event.guild.sync()
-        }
+        Bot.scheduler.schedule({
+            event.guild.kirbotGuild.sync()
+        }, 0, TimeUnit.MILLISECONDS)
     }
 
     override fun onUserOnlineStatusUpdate(event: UserOnlineStatusUpdateEvent) {
@@ -213,38 +214,35 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
     }
 
     override fun onGuildVoiceJoin(event: GuildVoiceJoinEvent) {
-        val serverData = Bot.shardManager.getShard(event.guild)?.getServerData(
-                event.guild) ?: return
+        val guild = event.guild.kirbotGuild
 
-        if (!serverData.musicManager.manualPause && serverData.musicManager.audioPlayer.isPaused) {
+        if (!guild.musicManager.manualPause && guild.musicManager.audioPlayer.isPaused) {
             if (event.guild.selfMember.voiceState.inVoiceChannel() && event.guild.selfMember.voiceState.channel.id == event.channelJoined.id)
                 Bot.LOG.debug("Resuming music in ${event.guild.id}:${event.channelJoined.id}")
-            serverData.musicManager.audioPlayer.isPaused = false
+            guild.musicManager.audioPlayer.isPaused = false
         }
     }
 
     override fun onGuildVoiceLeave(event: GuildVoiceLeaveEvent) {
-        val serverData = Bot.shardManager.getShard(event.guild)?.getServerData(
-                event.guild) ?: return
+        val guild = event.guild.kirbotGuild
         if (inChannel(event.channelLeft, event.guild.selfMember))
-            pauseIfEmpty(event.channelLeft, serverData)
+            pauseIfEmpty(event.channelLeft, guild)
     }
 
     override fun onGuildVoiceMove(event: GuildVoiceMoveEvent) {
-        val serverData = Bot.shardManager.getShard(event.guild)?.getServerData(
-                event.guild) ?: return
-        if (inChannel(event.channelJoined,
-                event.guild.selfMember) && !serverData.musicManager.manualPause) {
-            serverData.musicManager.audioPlayer.isPaused = false
+        val guild = event.guild.kirbotGuild
+        if (inChannel(event.channelJoined, event.guild.selfMember) && !guild.musicManager.manualPause) {
+            Bot.LOG.debug("Resuming in ${guild.id} as someone joined!")
+            guild.musicManager.audioPlayer.isPaused = false
         } else {
             if (inChannel(event.channelLeft, event.guild.selfMember))
-                pauseIfEmpty(event.channelLeft, serverData)
+                pauseIfEmpty(event.channelLeft, guild)
         }
     }
 
-    private fun pauseIfEmpty(channel: Channel, serverData: ServerData) {
+    private fun pauseIfEmpty(channel: Channel, guild: KirBotGuild) {
         if (channel.members.none { m -> m.user.id != channel.guild.selfMember.user.id }) {
-            serverData.musicManager.audioPlayer.isPaused = true
+            guild.musicManager.audioPlayer.isPaused = true
             Bot.LOG.debug(
                     "Pausing music in ${channel.guild.id}:${channel.id} as nobody is in the chanel")
         }

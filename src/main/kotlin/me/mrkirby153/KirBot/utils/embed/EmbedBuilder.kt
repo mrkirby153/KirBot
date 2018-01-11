@@ -138,6 +138,7 @@ open class EmbedBuilder {
 
     var thumbnail: String? = null
     var color: Color? = null
+    var image: String? = null
 
 
     fun title(init: TextBuilder.() -> Unit): TextBuilder {
@@ -182,6 +183,7 @@ open class EmbedBuilder {
         embed.setAuthor(author.name, author.url, author.iconUrl)
         embed.setFooter(footer.getText().toString(), footer.url)
         embed.setTimestamp(timestamp.timestamp)
+        embed.setImage(image)
         return embed.build()
     }
 

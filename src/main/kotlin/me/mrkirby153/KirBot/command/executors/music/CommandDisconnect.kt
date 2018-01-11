@@ -10,10 +10,10 @@ import java.awt.Color
 class CommandDisconnect : MusicCommand() {
 
     override fun exec(context: Context, cmdContext: CommandContext) {
-        context.data.musicManager.disconnect()
-        context.data.musicManager.queue.clear()
-        context.data.musicManager.audioPlayer.playTrack(null)
-        context.data.musicManager.resetQueue()
+        context.kirbotGuild.musicManager.disconnect()
+        context.kirbotGuild.musicManager.queue.clear()
+        context.kirbotGuild.musicManager.audioPlayer.playTrack(null)
+        context.kirbotGuild.musicManager.resetQueue()
         context.channel.sendMessage(embed("Success") {
             description { +"Disconnected and cleared the queue :wave:" }
             timestamp { now() }

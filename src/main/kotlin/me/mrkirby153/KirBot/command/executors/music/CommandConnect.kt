@@ -13,7 +13,7 @@ class CommandConnect : MusicCommand() {
         val channel = context.author.getMember(context.guild).voiceState.channel ?: throw CommandException("Please join a voice channel first!")
         // Connect or summon
         if (!context.guild.selfMember.voiceState.inVoiceChannel()) {
-            context.data.musicManager.audioPlayer.volume = 100
+            context.kirbotGuild.musicManager.audioPlayer.volume = 100
             context.guild.audioManager.openAudioConnection(channel)
             context.success()
         } else {

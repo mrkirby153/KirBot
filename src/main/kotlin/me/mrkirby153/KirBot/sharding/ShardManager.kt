@@ -3,6 +3,7 @@ package me.mrkirby153.KirBot.sharding
 import com.sedmelluq.discord.lavaplayer.jdaudp.NativeAudioSendFactory
 import me.mrkirby153.KirBot.Bot
 import net.dv8tion.jda.core.AccountType
+import net.dv8tion.jda.core.JDA
 import net.dv8tion.jda.core.JDABuilder
 import net.dv8tion.jda.core.OnlineStatus
 import net.dv8tion.jda.core.entities.Game
@@ -20,24 +21,26 @@ class ShardManager(val token: String, private val totalShards: Int) {
 
     var playing: String = ""
         set(game) {
-            if (totalShards > 1) {
-                this.shards.forEach {
-                    it.presence.game = Game.playing("$game | Shard ${it.id} of $totalShards")
-                }
-            } else {
-                this.shards.forEach {
-                    it.presence.game = Game.playing(game)
-                }
-            }
             field = game
+            Bot.LOG.debug("Updating playing game to $game")
+            shards.forEach { updatePresence(it) }
         }
     var onlineStatus: OnlineStatus = OnlineStatus.IDLE
         set(status) {
+            field = status
+            Bot.LOG.debug("Updating online status to $status")
             shards.forEach {
-                it.presence.status = status
+                updatePresence(it)
             }
-            field = onlineStatus
         }
+
+    private fun updatePresence(jda: JDA) {
+        val game = if (totalShards > 1) Game.playing(
+                "$playing | Shard ${jda.shardInfo.shardId} of $totalShards") else Game.playing(
+                playing)
+        Bot.LOG.debug("Updating presence for $jda to $game ($onlineStatus)")
+        jda.presence.setPresence(onlineStatus, game)
+    }
 
     fun addShard(id: Int) {
         if (id > totalShards) {
@@ -117,13 +120,13 @@ class ShardManager(val token: String, private val totalShards: Int) {
             override fun onReady(event: ReadyEvent?) {
                 Bot.LOG.info("Shard $id is ready!")
                 loadingShards.remove(id)
-                event?.jda?.removeEventListener(this)
-                val game = Game.playing(
-                        this@ShardManager.playing + (if (totalShards > 1) " | Shard $id of $totalShards" else ""))
-                event?.jda?.presence?.setPresence(onlineStatus, game)
+                event?.jda?.let {
+                    removeEventListener(this);
+                    updatePresence(it)
+                }
             }
         })
         setReconnectQueue(SessionReconnectQueue())
-        buildAsync()
+        buildBlocking()
     }
 }

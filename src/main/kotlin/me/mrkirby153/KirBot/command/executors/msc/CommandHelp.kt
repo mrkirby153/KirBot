@@ -24,7 +24,9 @@ class CommandHelp : BaseCommand(CommandCategory.MISCELLANEOUS, Arguments.string(
         if (!cmdContext.has("command")) {
             displayAllCommands(context)
         } else {
-            val command = CommandExecutor.commands.firstOrNull { cmdContext.get<String>("command")!!.toLowerCase() in it.aliases } ?: throw CommandException("No command was found with that name")
+            val command = CommandExecutor.commands.firstOrNull {
+                cmdContext.get<String>("command")!!.toLowerCase() in it.aliases
+            } ?: throw CommandException("No command was found with that name")
             displayHelpForCommand(context, command)
         }
     }
@@ -34,7 +36,7 @@ class CommandHelp : BaseCommand(CommandCategory.MISCELLANEOUS, Arguments.string(
             color = Color.BLUE
             val prefix = cmdPrefix.mdEscape()
             description {
-                +"The command prefix for this server is: `${context.shard.serverSettings[context.guild.id]?.cmdDiscriminator ?: "!"}` \n\n"
+                +"The command prefix for this server is: `${context.kirbotGuild.settings.cmdDiscriminator ?: "!"}` \n\n"
                 +"Below is a list of all the commands available. \n Type `$cmdPrefix$aliasUsed <command>` for more info"
                 +"\n\nFor a full list of custom commands available on this server, "
                 +("Click Here" link (botUrl("${context.guild.id}/customCommands")))
@@ -42,7 +44,7 @@ class CommandHelp : BaseCommand(CommandCategory.MISCELLANEOUS, Arguments.string(
             fields {
                 for ((category, commands) in CommandExecutor.getCommandsByCategory()) {
                     val enabled = MusicManager.musicSettings[context.guild.id]?.enabled ?: false
-                    if(category == CommandCategory.MUSIC && !enabled){
+                    if (category == CommandCategory.MUSIC && !enabled) {
                         continue
                     }
                     field {
@@ -50,7 +52,7 @@ class CommandHelp : BaseCommand(CommandCategory.MISCELLANEOUS, Arguments.string(
                         inline = true
                         description {
                             commands.forEach {
-                                if(it.clearance == Clearance.BOT_OWNER)
+                                if (it.clearance == Clearance.BOT_OWNER)
                                     return@forEach
                                 +("$prefix${it.aliases.first().mdEscape()}" link ".")
                                 +"\n"
@@ -58,12 +60,13 @@ class CommandHelp : BaseCommand(CommandCategory.MISCELLANEOUS, Arguments.string(
                         }
                     }
                 }
-                if (context.shard.customCommands[context.guild.id]?.obj?.isNotEmpty()==true) {
+                val commands = context.kirbotGuild.customCommands
+                if (commands.isNotEmpty()) {
                     field {
                         title = "Other Commands"
                         inline = true
                         description {
-                            context.shard.customCommands[context.guild.id]?.obj?.forEach {
+                            commands.forEach {
                                 +("$prefix${it.name.mdEscape()}" link ".")
                                 +"\n"
                             }
@@ -84,8 +87,8 @@ class CommandHelp : BaseCommand(CommandCategory.MISCELLANEOUS, Arguments.string(
                 +"\n"
                 appendln(u("Description"))
                 appendln("  ${help?.description ?: "No description provided"}")
-                if(spec.aliases.size > 1){
-                    appendln("\n"+u("Aliases"))
+                if (spec.aliases.size > 1) {
+                    appendln("\n" + u("Aliases"))
                     appendln("   - ${spec.aliases.drop(1).joinToString(", ").mdEscape()}")
                     +"\n"
                 }
@@ -111,7 +114,7 @@ class CommandHelp : BaseCommand(CommandCategory.MISCELLANEOUS, Arguments.string(
                 appendln(u("Clearance"))
                 +spec.clearance.friendlyName
                 +"\n"
-                if(help?.usage?.isNotEmpty() == true) {
+                if (help?.usage?.isNotEmpty() == true) {
                     +"\n"
                     appendln(u("Example Usage"))
                     help.usage.forEach {

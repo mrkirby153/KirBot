@@ -22,7 +22,7 @@ class CommandSkip : MusicCommand(Arguments.string("option", false)) {
     val skipCooldown = mutableMapOf<String, Long>()
 
     override fun exec(context: Context, cmdContext: CommandContext) {
-        val musicManager = context.data.musicManager
+        val musicManager = context.kirbotGuild.musicManager
         val musicSettings = MusicManager.musicSettings[context.guild.id] ?: throw CommandException(
                 "Could not load music settings")
 
@@ -97,7 +97,7 @@ class CommandSkip : MusicCommand(Arguments.string("option", false)) {
                     description {
                         if (skip > stay) {
                             appendln("The vote has passed. Playing the next song")
-                            context.data.musicManager.trackScheduler.playNextTrack()
+                            context.kirbotGuild.musicManager.trackScheduler.playNextTrack()
                         } else {
                             appendln("The vote has failed.")
                         }
@@ -111,6 +111,6 @@ class CommandSkip : MusicCommand(Arguments.string("option", false)) {
 
     private fun forceSkip(context: Context) {
         context.channel.sendMessage("Skipping song and playing the next...").queue()
-        context.data.musicManager.trackScheduler.playNextTrack()
+        context.kirbotGuild.musicManager.trackScheduler.playNextTrack()
     }
 }

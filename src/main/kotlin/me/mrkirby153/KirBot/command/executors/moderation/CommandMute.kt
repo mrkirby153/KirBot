@@ -32,6 +32,6 @@ class CommandMute : BaseCommand(false, CommandCategory.MODERATION, Arguments.use
         val override = channel.getPermissionOverride(member) ?: channel.createPermissionOverride(member).complete()
         override.manager.deny(Permission.MESSAGE_WRITE).queue()
         context.success()
-        context.data .logManager.genericLog("User Muted", "${context.author.name} has muted ${member.user.name} in ${context.textChannel.asMention}", Color.MAGENTA, context.author)
+        context.kirbotGuild.logManager.genericLog("User Muted", "${context.author.name} has muted ${member.user.name} in ${context.textChannel.asMention}", Color.MAGENTA, context.author)
     }
 }

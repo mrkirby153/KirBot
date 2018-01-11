@@ -1,147 +1,133 @@
 package me.mrkirby153.KirBot.realname
 
-import me.mrkirby153.KirBot.data.ServerData
+import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.api.GuildSettings
 import me.mrkirby153.KirBot.database.api.Realname
+import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.utils.getMember
-import net.dv8tion.jda.core.Permission
-import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.entities.Member
 import net.dv8tion.jda.core.entities.Role
-import net.dv8tion.jda.core.exceptions.PermissionException
-import net.dv8tion.jda.core.utils.PermissionUtil
 
 
-class RealnameHandler(var server: Guild, var serverData: ServerData) {
+class RealnameHandler(var guild: KirBotGuild) {
 
-    @JvmOverloads
-    fun updateNames(silent: Boolean = false) {
-        GuildSettings.get(server).queue { settings ->
-
-            // Clean up roles if the server doesn't require real names
+    fun update() {
+        Bot.LOG.debug("Updating nicknames on ${guild.id}")
+        GuildSettings.get(guild).queue { settings ->
             if (!settings.requireRealname) {
-                cleanupRealNameRoles()
+                cleanupRealnameRoles() // Clean up the roles if the server doesn't require real names
             }
 
             if (settings.realnameSetting == RealnameSetting.OFF) {
-                // Reset
-                if (!(serverData.repository.getBoolean("has-reset-names") ?: false)) {
-                    server.members.forEach {
-                        if (settings.requireRealname)
-                            server.controller.removeRolesFromMember(it, getUnidentifiedRole(), getIdentifiedRole())
+                if (!guild.extraData.optBoolean("hasResetNames", false)) {
+                    guild.members.forEach {
                         setNickname(it, null)
                     }
-                    serverData.repository.put("has-reset-names", true)
+                    guild.extraData.put("hasResetNames", true)
+                    guild.saveData()
                 }
                 return@queue
             }
-            // Remove the old key
-            serverData.repository.remove("has-reset-names")
 
-            Realname.get(server.members.map { it.user }).queue { map ->
+            guild.extraData.remove("hasResetNames")?.let { guild.saveData() }
+
+            Realname.get(guild.members.map { it.user }).queue { map ->
                 map.forEach { user, realname ->
-                    if (user.isBot) {
-                        if (settings.requireRealname)
-                            server.controller.modifyMemberRoles(user.getMember(server), arrayListOf(getIdentifiedRole()), arrayListOf(getUnidentifiedRole()).toList()).queue()
+                    if (user.isBot) { // All bots are automatically identified
+                        if (settings.requireRealname) {
+                            guild.controller.modifyMemberRoles(user.getMember(guild),
+                                    arrayListOf(getIdentifiedRole()),
+                                    arrayListOf(getUnidentifiedRole())).queue()
+                        }
                         return@forEach
                     }
 
                     if (realname == null) {
-                        if (settings.requireRealname)
-                            server.controller.modifyMemberRoles(user.getMember(server), arrayListOf(getUnidentifiedRole()), arrayListOf(getIdentifiedRole())).queue()
-                        setNickname(user.getMember(server), null)
+                        if (settings.requireRealname) {
+                            guild.controller.modifyMemberRoles(user.getMember(guild),
+                                    arrayListOf(getUnidentifiedRole()),
+                                    arrayListOf(getIdentifiedRole())).queue()
+                            setNickname(user.getMember(guild), null)
+                        }
                     } else {
-                        var name: String? = ""
-                        when (settings.realnameSetting) {
+                        var name: String? = null
+                        name = when (settings.realnameSetting) {
                             RealnameSetting.FIRST_ONLY -> {
-                                name = realname.firstName
+                                realname.firstName
                             }
                             RealnameSetting.FIRST_LAST -> {
-                                name = "${realname.firstName} ${realname.lastName}"
+                                "${realname.firstName} ${realname.lastName}"
                             }
                             else -> {
-                                name = null
+                                null
                             }
                         }
-                        if (settings.requireRealname)
-                            server.controller.modifyMemberRoles(user.getMember(server), arrayListOf(getIdentifiedRole()), arrayListOf(getUnidentifiedRole())).queue()
-                        setNickname(user.getMember(server), name)
+                        if (settings.requireRealname) {
+                            guild.controller.modifyMemberRoles(user.getMember(guild),
+                                    arrayListOf(getIdentifiedRole()),
+                                    arrayListOf(getUnidentifiedRole())).queue()
+                        }
+                        setNickname(user.getMember(guild), name)
                     }
                 }
             }
         }
     }
 
-    fun setNickname(member: Member, name: String?) {
-        if (PermissionUtil.checkPermission(server.selfMember, Permission.NICKNAME_MANAGE))
-            try {
-                server.controller.setNickname(member, name).queue()
-            } catch (e: PermissionException) {
-                // Ignore
-            }
-    }
-
-    fun addRoleToUser(member: Member, role: Role) {
-        if (member.roles.contains(role))
+    private fun setNickname(member: Member, name: String?) {
+        if (!guild.selfMember.canInteract(member)) {
+            Bot.LOG.debug("Cannot interact with $member. Not changing nickname")
             return
-        server.controller.addRolesToMember(member, role).complete()
+        }
+        Bot.LOG.debug(
+                "Updating nickname of ${member.user.name}#${member.user.discriminator} to $name")
+        guild.controller.setNickname(member, name).queue()
     }
 
-    fun removeRoleFromUser(member: Member, role: Role) {
-        if (!member.roles.contains(role))
-            return
-        server.controller.removeRolesFromMember(member, role).complete()
+    private fun getUnidentifiedRole(): Role {
+        val roleId = guild.extraData.optString("unidentifiedRoleId")
+        val role = getOrCreateRole(roleId, "Unidentified")
+        if (role.id != roleId) {
+            guild.extraData.put("unidentifiedRoleId", role.id)
+            guild.saveData()
+        }
+        return role
     }
 
-    private fun cleanupRealNameRoles() {
-        val repository = serverData.repository
-        val unidentified = repository.get(String::class.java, "unidentified-roleId")
-        val id = repository.get(String::class.java, "identified-roleId")
-
-        if (unidentified != null)
-            try {
-                server.roles.first { it.id == unidentified }.delete().queue()
-            } catch(e: NoSuchElementException) {
-                // Ignore
-            }
-
-        if (id != null)
-            try {
-                server.roles.first { it.id == id }.delete().queue()
-            } catch(e: NoSuchElementException) {
-                // Ignore
-            }
-
-        repository.remove("unidentified-roleId")
-        repository.remove("identified-roleId")
-        return
-    }
-
-    fun getUnidentifiedRole(): Role {
-        val roleId = serverData.repository.get(String::class.java, "unidentified-roleId")
-        if (roleId == null) {
-            // Create, save, and return the roleId
-            val role = server.controller.createRole().complete(true)
-            role.manager.setName("Unidentified").complete(true)
-            serverData.repository.put("unidentified-roleId", role.id)
-            return role
-        } else {
-            val role = server.roles.first { it.id == roleId }
-            return role
+    private fun cleanupRealnameRoles() {
+        val unidentified = guild.extraData.optString("unidentifiedRoleId")
+        val identified = guild.extraData.optString("identifiedRoleId")
+        if (unidentified != null) {
+            Bot.LOG.debug("Cleaning up unidentified role on $guild")
+            guild.roles.firstOrNull { it.id == unidentified }?.delete()?.queue()
+            guild.extraData.remove("unidentifiedRoleId")
+            guild.saveData()
+        }
+        if (identified != null) {
+            Bot.LOG.debug("Cleaning up identified role on $guild")
+            guild.roles.firstOrNull { it.id == identified }?.delete()?.queue()
+            guild.extraData.remove("identifiedRoleId")
+            guild.saveData()
         }
     }
 
-    fun getIdentifiedRole(): Role {
-        val roleId = serverData.repository.get(String::class.java, "identified-roleId")
-        if (roleId == null) {
-            // Create, save, and return the roleId
-            val role = server.controller.createRole().complete(true)
-            role.manager.setName("Identified").complete(true)
-            serverData.repository.put("identified-roleId", role.id)
-            return role
+    private fun getIdentifiedRole(): Role {
+        val roleId = guild.extraData.optString("identifiedRoleId")
+        val role = getOrCreateRole(roleId, "Identified")
+        if (role.id != roleId) {
+            guild.extraData.put("identifiedRoleId", role.id)
+            guild.saveData()
+        }
+        return role
+    }
+
+    private fun getOrCreateRole(id: String?, name: String): Role {
+        return if (id != null) {
+            guild.roles.firstOrNull { it.id == id } ?: getOrCreateRole(null, name)
         } else {
-            val role = server.roles.first { it.id == roleId }
-            return role
+            val role = guild.controller.createRole().complete()
+            role.manager.setName(name).queue()
+            role
         }
     }
 }

@@ -1,12 +1,8 @@
 package me.mrkirby153.KirBot.utils
 
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.data.ServerData
-import me.mrkirby153.KirBot.database.api.GuildMember
-import me.mrkirby153.KirBot.database.api.GuildRole
-import me.mrkirby153.KirBot.database.api.GuildSettings
 import me.mrkirby153.KirBot.database.api.PanelAPI
-import me.mrkirby153.KirBot.realname.RealnameHandler
+import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.sharding.Shard
 import me.mrkirby153.KirBot.user.Clearance
 import net.dv8tion.jda.core.EmbedBuilder
@@ -41,13 +37,12 @@ fun User.getClearance(server: Guild): Clearance {
         return Clearance.SERVER_ADMINISTRATOR
     val shard = Bot.shardManager.getShard(server)
     if (shard != null) {
-        val managerRoles = shard.serverSettings[server.id]?.managerRoles
-        if (managerRoles != null)
-            server.getMember(this).roles.map { it.id }.forEach { role ->
-                if (role in managerRoles) {
-                    return Clearance.BOT_MANAGER
-                }
+        val managerRoles = server.kirbotGuild.settings.managerRoles
+        server.getMember(this).roles.map { it.id }.forEach { role ->
+            if (role in managerRoles) {
+                return Clearance.BOT_MANAGER
             }
+        }
     }
     return Clearance.USER
 }
@@ -133,141 +128,8 @@ fun TextChannel.unhide() {
     }
 }
 
-fun Guild.sync() {
-    Bot.LOG.debug("Syncing guild ${this.id}")
-    PanelAPI.serverExists(this).queue { exists ->
-        if (!exists)
-            PanelAPI.registerServer(this).queue {
-                this.sync()
-            }
-        else
-            GuildSettings.get(this).queue { settings ->
-                if (this.selfMember.nickname != settings.nick) {
-                    Bot.LOG.debug("Updating nickname to \"${settings.nick}\"")
-                    if (settings.nick?.isEmpty() == true)
-                        this.controller.setNickname(this.selfMember, null).queue()
-                    else
-                        this.controller.setNickname(this.selfMember, settings.nick).queue()
-                }
-                if (settings.name != this.name) {
-                    Bot.LOG.debug("Name has changed on ${this.name} syncing")
-                    PanelAPI.setServerName(this).queue()
-                }
-                PanelAPI.updateChannels(this)
-
-                PanelAPI.getRoles(this).queue { r ->
-
-                    val storedRoleIds = r.map { it.id }
-
-                    r.forEach {
-                        if (it.role != null) {
-                            val guildPermissions = it.role.permissionsRaw
-                            val storedPermissions = it.permissions
-                            if (guildPermissions != storedPermissions) {
-                                Bot.LOG.debug(
-                                        "Permissions for roleId ${it.role.name} have changed. Updating")
-                                GuildRole.get(it.role).queue {
-                                    it.update().queue()
-                                }
-                            }
-                        }
-                    }
-
-                    val toAdd = mutableListOf<String>()
-                    val toRemove = mutableListOf<String>()
-
-                    toRemove.addAll(storedRoleIds)
-
-                    toRemove.removeAll(this.roles.map { it.id })
-                    toAdd.addAll(this.roles.filter { it.id !in storedRoleIds }.map { it.id })
-
-                    Bot.LOG.debug("Adding roles $toAdd")
-                    Bot.LOG.debug("Removing roles $toRemove")
-
-                    toAdd.map { this.getRoleById(it) }.filter { it != null }.forEach { role ->
-                        GuildRole.create(role).queue()
-                    }
-
-                    toRemove.forEach { role ->
-                        GuildRole.delete(role).queue()
-                    }
-
-
-                }
-            }
-        RealnameHandler(this, shard()!!.getServerData(this)).updateNames()
-
-        // Sync groups
-        PanelAPI.getGroups(this).queue { group ->
-            group.forEach { g ->
-                if (g.role != null) {
-                    g.members.map {
-                        this.getMemberById(it)
-                    }.filter { g.role !in it.roles }.forEach { u ->
-                        this.controller.addRolesToMember(u, g.role).queue()
-                    }
-                }
-                this.members.filter { g.role in it.roles }.filter { it.user.id !in g.members }.forEach {
-                    this.controller.removeRolesFromMember(it, g.role).queue()
-                }
-            }
-        }
-
-        // Sync Members
-        PanelAPI.getMembers(this).queue { members ->
-            val toDelete = mutableListOf<GuildMember>()
-            val currentMembers = this.members.map { it.user.id }
-            members.forEach { m ->
-                if (m.userId !in currentMembers) {
-                    toDelete.add(m)
-                }
-            }
-            if(!settings().persistence) {
-                Bot.LOG.debug("Deleting " + toDelete.map { it.userId })
-                toDelete.forEach { m ->
-                    m.delete().queue()
-                }
-            }
-
-            // To register
-            val newMembers = this.members.filter { it.user.id !in members.map { it.userId } }
-
-            Bot.LOG.debug("Adding " + newMembers.map { it.user.id })
-
-            newMembers.forEach {
-                GuildMember.create(it).queue()
-            }
-
-            members.filter { it.needsUpdate() }.forEach {
-                it.update().queue()
-            }
-            PanelAPI.getMembers(this).queue {
-                it.forEach { m ->
-                    val toRemove = mutableListOf<String>()
-                    val toAdd = mutableListOf<String>()
-                    val member = this.getMember(m.user) ?: return@forEach
-
-                    val currentRoles = member.roles.map { it.id }
-
-                    toRemove.addAll(m.roles.filter { it !in currentRoles })
-                    toAdd.addAll(currentRoles.filter { it !in m.roles })
-
-                    if (toAdd.isNotEmpty())
-                        Bot.LOG.debug("Adding roles $toAdd to ${m.user}")
-                    if (toRemove.isNotEmpty())
-                        Bot.LOG.debug("Removing roles $toRemove to ${m.user}")
-
-                    toAdd.forEach {
-                        m.addRole(it).queue()
-                    }
-                    toRemove.forEach {
-                        m.removeRole(it).queue()
-                    }
-                }
-            }
-        }
-    }
-}
+val Guild.kirbotGuild
+    get() = KirBotGuild[this]
 
 fun Double.round(places: Int): Double {
     var format = "#.#"
@@ -305,11 +167,3 @@ fun MessageChannel.checkPermissions(
         vararg permissions: Permission) = (this as? TextChannel)?.checkPermissions<TextChannel>(
         *permissions) != false
 
-fun Guild.settings(): GuildSettings {
-    val shard = this.shard()!!
-    return shard.serverSettings[this.id]!!
-}
-
-fun Guild.data(): ServerData {
-    return shard()?.getServerData(this)!!
-}

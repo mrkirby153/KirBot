@@ -29,8 +29,8 @@ fun enableApiDebug() {
     apiLogger.debug("Debug logging enabled!")
 }
 
-abstract class ApiRequest<T>(val url: String, val method: Methods = Methods.GET,
-                             val data: Map<String, String>? = null) : Callable<T> {
+abstract class ApiRequest<T>(private val url: String, private val method: Methods = Methods.GET,
+                             private val data: Map<String, String>? = null) : Callable<T> {
 
     private val apiReq = ++apiReqCounter
 
@@ -54,7 +54,12 @@ abstract class ApiRequest<T>(val url: String, val method: Methods = Methods.GET,
     }
 
     fun execute(timeout: Long = 1, unit: TimeUnit = TimeUnit.SECONDS): T {
+        apiLogger.debug("{$apiReq} Waiting for completion...")
         return queue(null).get(timeout, unit)
+    }
+
+    fun get(timeout: Long = 1, unit: TimeUnit = TimeUnit.SECONDS): T {
+        return execute(timeout, unit)
     }
 
     open fun onHttpError(error: Int, body: String) {
@@ -113,8 +118,12 @@ abstract class ApiRequest<T>(val url: String, val method: Methods = Methods.GET,
                         apiLogger.warn(
                                 "{$apiReq} parse() returned null, but the callback is not null. The callback will NOT be executed")
                     }
-                    if (data != null)
-                        callback?.invoke(data)
+                    if (data != null) {
+                        // Run the callback in its own thread and return the callable
+                        executor.submit {
+                            callback?.invoke(data)
+                        }
+                    }
                     return data
                 } catch (e: Exception) {
                     ErrorLogger.logThrowable(e)

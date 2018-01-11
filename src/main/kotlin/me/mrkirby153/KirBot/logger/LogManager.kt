@@ -3,7 +3,7 @@ package me.mrkirby153.KirBot.logger
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.utils.embed.b
 import me.mrkirby153.KirBot.utils.embed.embed
-import me.mrkirby153.KirBot.utils.settings
+import me.mrkirby153.KirBot.utils.kirbotGuild
 import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.entities.Message
 import net.dv8tion.jda.core.entities.TextChannel
@@ -14,7 +14,7 @@ class LogManager(private val guild: Guild) {
 
     val logChannel: TextChannel?
         get() {
-            val chanId = guild.settings().logChannel ?: return null
+            val chanId = guild.kirbotGuild.settings.logChannel ?: return null
             if(chanId.isEmpty())
                 return null
             return guild.getTextChannelById(chanId)

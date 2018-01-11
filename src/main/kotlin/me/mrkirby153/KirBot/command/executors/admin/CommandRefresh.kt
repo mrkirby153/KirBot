@@ -9,7 +9,7 @@ import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.api.PanelAPI
 import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
-import me.mrkirby153.KirBot.utils.sync
+import me.mrkirby153.KirBot.utils.kirbotGuild
 
 @Command("refresh")
 @RequiresClearance(Clearance.SERVER_ADMINISTRATOR)
@@ -24,7 +24,7 @@ class CommandRefresh : BaseCommand(CommandCategory.ADMIN, Arguments.string("item
                 context.success()
             }
             "all" -> {
-                context.guild.sync()
+                context.guild.kirbotGuild.sync()
                 context.success()
             }
             else -> {

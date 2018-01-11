@@ -11,7 +11,7 @@ import com.sedmelluq.discord.lavaplayer.source.vimeo.VimeoAudioSourceManager
 import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager
 import me.mrkirby153.KirBot.command.CommandExecutor
 import me.mrkirby153.KirBot.data.ServerData
-import me.mrkirby153.KirBot.database.api.ApiRequestProcessor
+import me.mrkirby153.KirBot.database.api.enableApiDebug
 import me.mrkirby153.KirBot.error.UncaughtErrorReporter
 import me.mrkirby153.KirBot.logger.LogListener
 import me.mrkirby153.KirBot.redis.RedisConnector
@@ -74,7 +74,7 @@ object Bot {
 
     fun start(token: String) {
         if (debug) {
-            ApiRequestProcessor.debug()
+            enableApiDebug()
             (LOG as? Logger)?.let { logger ->
                 logger.level = Level.DEBUG
             }

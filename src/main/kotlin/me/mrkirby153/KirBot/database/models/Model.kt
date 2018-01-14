@@ -48,8 +48,12 @@ open class Model {
     fun save() {
         val builder = QueryBuilder(this.javaClass, this)
         if (this.exists()) {
-            builder.update()
+            if (isDirty()) {
+                updateTimestamps()
+                builder.update()
+            }
         } else {
+            updateTimestamps()
             builder.create()
         }
     }
@@ -136,7 +140,7 @@ open class Model {
 
         fun primaryKey(clazz: Class<out Model>): String {
             clazz.fields.forEach { field ->
-                if(field.isAnnotationPresent(PrimaryKey::class.java)){
+                if (field.isAnnotationPresent(PrimaryKey::class.java)) {
                     return getColumnName(field)
                 }
             }

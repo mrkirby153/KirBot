@@ -99,7 +99,6 @@ class QueryBuilder<T : Model>(private val model: Class<T>, val instance: T? = nu
             selectors.forEach { selector ->
                 ps.setObject(index++, selector.value)
             }
-            println(ps)
             ps.executeUpdate()
         }
     }

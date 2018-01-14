@@ -10,6 +10,7 @@ import com.sedmelluq.discord.lavaplayer.source.twitch.TwitchStreamAudioSourceMan
 import com.sedmelluq.discord.lavaplayer.source.vimeo.VimeoAudioSourceManager
 import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager
 import me.mrkirby153.KirBot.command.CommandExecutor
+import me.mrkirby153.KirBot.database.DatabaseConnection
 import me.mrkirby153.KirBot.database.api.enableApiDebug
 import me.mrkirby153.KirBot.error.UncaughtErrorReporter
 import me.mrkirby153.KirBot.logger.LogListener
@@ -71,6 +72,8 @@ object Bot {
 
     lateinit var shardManager: ShardManager
 
+    lateinit var database: DatabaseConnection
+
 
     fun start(token: String) {
         val startupTime = System.currentTimeMillis()
@@ -90,6 +93,14 @@ object Bot {
         if (initialized)
             throw IllegalStateException("Bot has already been initialized!")
         initialized = true
+
+        // Attempt database initialization
+        LOG.info("Initializing database connection")
+        database = DatabaseConnection(properties.getProperty("database-host"),
+                properties.getProperty("database-port").toInt(), properties.getProperty("database"),
+                properties.getProperty("database-username"),
+                properties.getProperty("database-password"))
+
         LOG.info("Initializing Bot ($numShards shards)")
         val startTime = System.currentTimeMillis()
 

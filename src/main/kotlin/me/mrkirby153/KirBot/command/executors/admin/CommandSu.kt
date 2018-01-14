@@ -17,7 +17,6 @@ import net.dv8tion.jda.core.entities.User
 class CommandSu : BaseCommand(CommandCategory.ADMIN, Arguments.user("user"), Arguments.string("command")) {
 
     override fun execute(context: Context, cmdContext: CommandContext) {
-        throw Exception("bad boy whatchu gonna do?")
         val user = cmdContext.get<User>("user")
         val command = cmdContext.get<String>("command")
 

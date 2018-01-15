@@ -10,13 +10,35 @@ class QueryBuilder<T : Model>(private val model: Class<T>, val instance: T? = nu
     private val selectors = mutableListOf<QuerySelector>()
 
 
+    /**
+     * Adds a selector to the query, narrowing the scope
+     *
+     * @param col The column
+     * @param test The logical test to use
+     * @param value The value of the column
+     *
+     * @return The query builder
+     */
     fun where(col: String, test: String, value: Any): QueryBuilder<T> {
         selectors.add(QuerySelector(col, test, value))
         return this
     }
 
+    /**
+     * Adds a selector to the query, narrowing the scope. This however, defaults to the "=" logical test.
+     *
+     * @param col The column
+     * @param value The value
+     *
+     * @return The query builder
+     */
     fun where(col: String, value: Any): QueryBuilder<T> = where(col, "=", value)
 
+    /**
+     * Executes the query and returns all models that match
+     *
+     * @return A list of models matching the query, or an empty array
+     */
     fun get(): List<T> {
         populateSelectors()
         val query = "SELECT ${buildColumns()} FROM `${Model.getTable(
@@ -40,6 +62,9 @@ class QueryBuilder<T : Model>(private val model: Class<T>, val instance: T? = nu
         return list
     }
 
+    /**
+     * Creates a model in the database
+     */
     fun create() {
         if (instance == null)
             throw IllegalArgumentException("Instance is null")
@@ -60,6 +85,11 @@ class QueryBuilder<T : Model>(private val model: Class<T>, val instance: T? = nu
         }
     }
 
+    /**
+     * Checks if a model exists in the database
+     *
+     * @return True if the model exists
+     */
     fun exists(): Boolean {
         if (instance == null)
             throw IllegalArgumentException("instance is null")
@@ -76,6 +106,18 @@ class QueryBuilder<T : Model>(private val model: Class<T>, val instance: T? = nu
         }
     }
 
+    /**
+     * Gets the first model matching the query
+     *
+     * @return The first model or null if it doesn't exist
+     */
+    fun first(): T? {
+        return get().firstOrNull()
+    }
+
+    /**
+     * Updates the model in the database
+     */
     fun update() {
         if (instance == null)
             throw IllegalArgumentException("Instance is null")
@@ -103,6 +145,9 @@ class QueryBuilder<T : Model>(private val model: Class<T>, val instance: T? = nu
         }
     }
 
+    /**
+     * Populates selector list with the primary key if it doesn't exist
+     */
     private fun populateSelectors() {
         if (instance != null)
             if (selectors.isEmpty()) {
@@ -111,8 +156,18 @@ class QueryBuilder<T : Model>(private val model: Class<T>, val instance: T? = nu
             }
     }
 
+    /**
+     * Builds a list of columns for the query
+     *
+     * @return The column list
+     */
     private fun buildColumns() = Model.getColumns(model).joinToString(", ") { "`$it`" }
 
+    /**
+     * Builds the selector statement for scoping the query
+     *
+     * @return The selector statement
+     */
     private fun buildSelectorStatement() = buildString {
         append("WHERE ")
         append(selectors.joinToString(", ") { "`${it.column}` ${it.test} ?" })

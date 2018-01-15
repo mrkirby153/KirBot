@@ -248,6 +248,8 @@ open class Model {
          *
          * @return A list of models
          */
+        @JvmStatic
+        @JvmOverloads
         fun <T : Model> get(clazz: Class<T>, value: Any, column: String? = null): List<T> {
             return QueryBuilder(clazz).where(column ?: Companion.primaryKey(clazz),
                     value).get()
@@ -261,6 +263,8 @@ open class Model {
          *
          * @return The model
          */
+        @JvmStatic
+        @JvmOverloads
         fun <T : Model> first(clazz: Class<T>, value: Any, column: String? = null): T? {
             return QueryBuilder(clazz).where(column ?: Companion.primaryKey(clazz), value).first()
         }
@@ -273,6 +277,7 @@ open class Model {
          *
          * @return A list of models
          */
+        @JvmStatic
         fun <T : Model> get(clazz: Class<T>, vararg columns: Pair<String, Any>): List<T> {
             return QueryBuilder(clazz).apply {
                 columns.forEach {
@@ -289,6 +294,7 @@ open class Model {
          *
          * @return The model, or null if it doesn't exist
          */
+        @JvmStatic
         fun <T : Model> first(clazz: Class<T>, vararg columns: Pair<String, Any>): T? {
             return QueryBuilder(clazz).apply {
                 columns.forEach {

@@ -11,3 +11,6 @@ annotation class Table(val value: String)
 
 @Target(AnnotationTarget.CLASS)
 annotation class Timestamps(val value: Boolean)
+
+@Target(AnnotationTarget.FIELD)
+annotation class JsonArray

@@ -1,5 +1,7 @@
 package me.mrkirby153.KirBot.database.models
 
+import org.json.JSONArray
+import org.json.JSONTokener
 import java.lang.reflect.Field
 import java.lang.reflect.Modifier
 import java.sql.ResultSet
@@ -117,8 +119,16 @@ open class Model {
             field.isAccessible = true
             val columnName = getColumnName(field)
             if (field.kotlinProperty?.isFinal == true) {
-                (field.kotlinProperty as? KMutableProperty)?.setter?.call(this,
-                        rs.getObject(columnName))
+                var obj = rs.getObject(columnName)
+                if (field.isAnnotationPresent(JsonArray::class.java)) {
+                    val list = mutableListOf<String>()
+                    val json = JSONArray(JSONTokener(obj.toString()))
+                    json.forEach {
+                        list.add(it.toString())
+                    }
+                    obj = list
+                }
+                (field.kotlinProperty as? KMutableProperty)?.setter?.call(this, obj)
             }
         }
         updateState()
@@ -133,8 +143,16 @@ open class Model {
         val map = mutableMapOf<String, Any?>()
 
         getAccessibleFields(this.javaClass).forEach { field ->
-            if (!isTransient(field))
-                map[getColumnName(field)] = field.get(this)
+            if (!isTransient(field)) {
+                if (field.isAnnotationPresent(JsonArray::class.java)) {
+                    // Convert to a json array
+                    val json = JSONArray()
+                    val data = field.get(this) as Collection<*>
+                    data.forEach { json.put(it) }
+                    map[getColumnName(field)] = json.toString()
+                } else
+                    map[getColumnName(field)] = field.get(this)
+            }
         }
 
         return map

@@ -68,12 +68,12 @@ class QueryBuilder<T : Model>(private val model: Class<T>, val instance: T? = nu
     fun create() {
         if (instance == null)
             throw IllegalArgumentException("Instance is null")
-        val placeholders = "?, ".repeat(buildColumns().length)
         val colData = instance.getColumnData()
+        val placeholders = "?, ".repeat(colData.size)
         val query = "INSERT INTO ${Model.getTable(
                 model)} (${colData.keys.joinToString(", ") { "`$it`" }}) VALUES(${
         placeholders.substring(
-                0..placeholders.length - 2)
+                0..placeholders.length - 3)
         })"
 
         Model.factory.getConnection().prepareStatement(query).use { ps ->
@@ -81,6 +81,7 @@ class QueryBuilder<T : Model>(private val model: Class<T>, val instance: T? = nu
             colData.values.forEach { value ->
                 ps.setObject(index++, value)
             }
+            println(ps)
             ps.executeUpdate()
         }
     }

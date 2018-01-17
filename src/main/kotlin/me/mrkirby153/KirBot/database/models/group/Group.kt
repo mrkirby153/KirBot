@@ -10,7 +10,7 @@ import net.dv8tion.jda.core.entities.Role
 import java.sql.Timestamp
 
 @Table("groups")
-class Group {
+class Group : Model(){
 
     @PrimaryKey
     var id = ""
@@ -25,7 +25,7 @@ class Group {
     private var roleId = ""
 
     @Column("deleted_at")
-    var deletedAt: Timestamp = Timestamp(0)
+    var deletedAt: Timestamp? = null
 
     @Transient
     var server: Guild? = null

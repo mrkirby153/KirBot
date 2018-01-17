@@ -12,6 +12,8 @@ import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager
 import me.mrkirby153.KirBot.command.CommandExecutor
 import me.mrkirby153.KirBot.database.DatabaseConnection
 import me.mrkirby153.KirBot.database.api.enableApiDebug
+import me.mrkirby153.KirBot.database.models.ConnectionFactory
+import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.error.UncaughtErrorReporter
 import me.mrkirby153.KirBot.logger.LogListener
 import me.mrkirby153.KirBot.redis.RedisConnector
@@ -29,6 +31,7 @@ import me.mrkirby153.kcutils.Time
 import me.mrkirby153.kcutils.readProperties
 import net.dv8tion.jda.core.OnlineStatus
 import org.slf4j.LoggerFactory
+import java.sql.Connection
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import kotlin.system.measureTimeMillis
@@ -100,6 +103,12 @@ object Bot {
                 properties.getProperty("database-port").toInt(), properties.getProperty("database"),
                 properties.getProperty("database-username"),
                 properties.getProperty("database-password"))
+
+        Model.factory = object : ConnectionFactory {
+            override fun getConnection(): Connection {
+                return this@Bot.database.getConnection()
+            }
+        }
 
         LOG.info("Initializing Bot ($numShards shards)")
         val startTime = System.currentTimeMillis()

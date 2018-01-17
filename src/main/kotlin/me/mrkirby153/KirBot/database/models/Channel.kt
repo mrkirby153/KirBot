@@ -53,4 +53,10 @@ class Channel : Model() {
         TEXT,
         UNKNOWN
     }
+
+    override fun toString(): String {
+        return "Channel(id='$id', guildId='$guildId', name='$name', typeRaw='$typeRaw', hidden=$hidden)"
+    }
+
+
 }

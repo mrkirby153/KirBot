@@ -22,7 +22,7 @@ class ServerSettings : Model() {
     private var requireRealname = false
 
     @Column("command_discriminator")
-    var cmdDiscriminator = ""
+    var cmdDiscriminator = "!"
 
     @Column("log_channel")
     var logChannel: String? = null
@@ -36,10 +36,10 @@ class ServerSettings : Model() {
     var botManagerRoles = mutableListOf<String>()
 
     @Column("bot_nick")
-    val botNick: String? = null
+    var botNick: String? = null
 
     @Column("user_persistence")
-    val persistence = false
+    var persistence = false
 
     @Transient
     var realname: RealnameSetting = RealnameSetting.OFF

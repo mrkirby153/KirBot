@@ -14,16 +14,16 @@ class GuildMember : Model() {
     var id = ""
 
     @Column("server_id")
-    private var serverId = ""
+    var serverId = ""
 
     @Column("user_id")
-    private var userId = ""
+    var userId = ""
 
     @Column("user_name")
     var name = ""
 
     @Column("user_discrim")
-    var discrim = 0
+    var discrim = ""
 
     @Column("user_nick")
     var nick: String? = null
@@ -32,7 +32,11 @@ class GuildMember : Model() {
     var user: User? = null
         get() = Bot.shardManager.getUser(this.userId)
         set(user) {
-            this.userId = user!!.id
+            if (user != null) {
+                this.userId = user.id
+                this.name = user.name
+                this.discrim = user.discriminator
+            }
             field = user
         }
 

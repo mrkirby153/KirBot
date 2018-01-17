@@ -3,6 +3,7 @@ package me.mrkirby153.KirBot.database
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
+import me.mrkirby153.KirBot.Bot
 import java.sql.Connection
 import java.util.concurrent.Executors
 
@@ -19,6 +20,7 @@ class DatabaseConnection(host: String, port: Int, database: String,
         cfg.jdbcUrl = "jdbc:mysql://$host:$port/$database?useSSL=false"
         cfg.username = username
         cfg.password = password
+        cfg.leakDetectionThreshold = if(Bot.debug) 2000 else 0
 
         println("Connecting to ${cfg.jdbcUrl}")
 

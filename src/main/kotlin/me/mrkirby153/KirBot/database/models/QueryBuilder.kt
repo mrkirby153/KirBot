@@ -63,6 +63,22 @@ class QueryBuilder<T : Model>(private val model: Class<T>, val instance: T? = nu
     }
 
     /**
+     * Deletes a model from the database
+     */
+    fun delete() {
+        populateSelectors()
+        val query = "DELETE FROM `${Model.getTable(model)}` ${buildSelectorStatement()}"
+
+        Model.factory.getConnection().prepareStatement(query).use { ps ->
+            var index = 1
+            selectors.forEach { s ->
+                ps.setObject(index++, s.value)
+            }
+            ps.executeUpdate()
+        }
+    }
+
+    /**
      * Creates a model in the database
      */
     fun create() {

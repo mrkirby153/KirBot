@@ -71,6 +71,14 @@ open class Model {
             updateTimestamps()
             builder.create()
         }
+        updateState()
+    }
+
+    /**
+     * Deletes the model
+     */
+    fun delete() {
+        QueryBuilder(this.javaClass, this).delete()
     }
 
     /**

@@ -22,19 +22,35 @@ class Channel : Model() {
     @Column("hidden")
     var hidden = false
 
-    val type: Type
+    @Transient
+    var type: Type = Type.UNKNOWN
         get() = Type.valueOf(this.typeRaw)
+        set(value) {
+            this.typeRaw = value.toString()
+            field = value
+        }
 
-    val guild: Guild?
+    @Transient
+    var guild: Guild? = null
         get() = Bot.shardManager.getGuild(this.guildId)
+        set(guild) {
+            this.guildId = guild!!.id
+            field = guild
+        }
 
-    val channel: Channel?
+    @Transient
+    var channel: Channel? = null
         get() = guild?.getTextChannelById(this.id) as? Channel ?: guild?.getVoiceChannelById(
                 this.id) as? Channel
+        set(channel) {
+            this.id = channel!!.id
+            field = channel
+        }
 
 
     enum class Type {
         VOICE,
-        TEXT
+        TEXT,
+        UNKNOWN
     }
 }

@@ -1,0 +1,51 @@
+package me.mrkirby153.KirBot.database.models.guild
+
+import me.mrkirby153.KirBot.database.models.Column
+import me.mrkirby153.KirBot.database.models.JsonArray
+import me.mrkirby153.KirBot.database.models.Model
+import me.mrkirby153.KirBot.database.models.PrimaryKey
+import me.mrkirby153.KirBot.database.models.Table
+import me.mrkirby153.KirBot.realname.RealnameSetting
+
+@Table("server_settings")
+class ServerSettings : Model() {
+
+    @PrimaryKey
+    var id = ""
+
+    var name = ""
+
+    @Column("realname")
+    private var realnameRaw = ""
+
+    @Column("require_realname")
+    private var requireRealname = false
+
+    @Column("command_discriminator")
+    var cmdDiscriminator = ""
+
+    @Column("log_channel")
+    var logChannel: String? = null
+
+    @Column("cmd_whitelist")
+    @JsonArray
+    var cmdWhitelist = mutableListOf<String>()
+
+    @Column("bot_manager")
+    @JsonArray
+    var botManagerRoles = mutableListOf<String>()
+
+    @Column("bot_nick")
+    val botNick: String? = null
+
+    @Column("user_persistence")
+    val persistence = false
+
+    @Transient
+    var realname: RealnameSetting = RealnameSetting.OFF
+        get() = RealnameSetting.valueOf(realnameRaw)
+        set(setting) {
+            this.realnameRaw = setting.toString()
+            field = setting
+        }
+}

@@ -3,6 +3,7 @@ package me.mrkirby153.KirBot.database.models.guild
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.models.Column
 import me.mrkirby153.KirBot.database.models.Model
+import me.mrkirby153.KirBot.database.models.PrimaryKey
 import me.mrkirby153.KirBot.database.models.Table
 import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.entities.Role
@@ -10,6 +11,7 @@ import net.dv8tion.jda.core.entities.Role
 @Table("roles")
 class Role : Model() {
 
+    @PrimaryKey
     var id = ""
 
     @Column("server_id")
@@ -19,9 +21,19 @@ class Role : Model() {
 
     var permissions = 0L
 
-    val guild: Guild?
+    @Transient
+    var guild: Guild? = null
         get() = Bot.shardManager.getGuild(serverId)
+        set(guild) {
+            this.serverId = guild!!.id
+            field = guild
+        }
 
-    val role: Role?
+    @Transient
+    var role: Role? = null
         get() = guild?.getRoleById(this.id)
+        set(role) {
+            this.id = role!!.id
+            field = role
+        }
 }

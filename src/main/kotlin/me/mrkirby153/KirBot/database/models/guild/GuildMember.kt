@@ -28,8 +28,13 @@ class GuildMember : Model() {
     @Column("user_nick")
     var nick: String? = null
 
-    val user: User?
-        get() = Bot.shardManager.getUser(this.id)
+    @Transient
+    var user: User? = null
+        get() = Bot.shardManager.getUser(this.userId)
+        set(user) {
+            this.userId = user!!.id
+            field = user
+        }
 
     val roles: List<GuildMemberRole>
         get() = Model.get(GuildMemberRole::class.java, this.userId, "user_id")

@@ -15,7 +15,7 @@ class GroupMember : Model() {
     var id = ""
 
     @Column("user_id")
-    var userId = ""
+    private var userId = ""
 
     @Column("group_id")
     var groupId = ""
@@ -23,6 +23,11 @@ class GroupMember : Model() {
     @Column("deleted_at")
     var deletedAt = Timestamp(0)
 
-    val user: User?
+    @Transient
+    var user: User? = null
         get() = Bot.shardManager.getUser(this.userId)
+        set(user){
+            this.userId = user!!.id
+            field = user
+        }
 }

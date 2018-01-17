@@ -25,12 +25,27 @@ class GuildMemberRole : Model() {
     private var roleId = ""
 
 
-    val server: Guild?
+    @Transient
+    var server: Guild? = null
         get() = Bot.shardManager.getGuild(this.serverId)
+        set(guild) {
+            this.serverId = guild!!.id
+            field = guild
+        }
 
-    val user: User?
+    @Transient
+    var user: User? = null
         get() = Bot.shardManager.getUser(this.userId)
+        set(user) {
+            this.userId = user!!.id
+            field = user
+        }
 
-    val role: Role?
+    @Transient
+    var role: Role? = null
         get() = server?.getRoleById(this.roleId)
+        set(role) {
+            this.roleId = role!!.id
+            field = role
+        }
 }

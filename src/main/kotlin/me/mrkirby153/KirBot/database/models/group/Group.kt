@@ -27,11 +27,21 @@ class Group {
     @Column("deleted_at")
     var deletedAt: Timestamp = Timestamp(0)
 
-    val server: Guild?
+    @Transient
+    var server: Guild? = null
         get() = Bot.shardManager.getGuild(this.serverId)
+        set(guild) {
+            this.serverId = guild!!.id
+            field = guild
+        }
 
-    val role: Role?
+    @Transient
+    var role: Role? = null
         get() = server?.getRoleById(this.roleId)
+        set(role) {
+            this.roleId = role!!.id
+            field = role
+        }
 
     val members: List<GroupMember>
         get() = Model.get(GroupMember::class.java, this.id, "group_id")

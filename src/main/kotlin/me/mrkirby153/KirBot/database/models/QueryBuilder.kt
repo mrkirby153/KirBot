@@ -45,17 +45,19 @@ class QueryBuilder<T : Model>(private val model: Class<T>, val instance: T? = nu
                 model)}` ${buildSelectorStatement()}"
 
         val list = mutableListOf<T>()
-        Model.factory.getConnection().prepareStatement(query).use { ps ->
-            var index = 1
-            selectors.forEach { s ->
-                ps.setObject(index++, s.value)
-            }
+        Model.factory.getConnection().use {
+            it.prepareStatement(query).use { ps ->
+                var index = 1
+                selectors.forEach { s ->
+                    ps.setObject(index++, s.value)
+                }
 
-            ps.executeQuery().use { rs ->
-                while (rs.next()) {
-                    val instance = model.newInstance()
-                    instance.populate(rs)
-                    list.add(instance)
+                ps.executeQuery().use { rs ->
+                    while (rs.next()) {
+                        val instance = model.newInstance()
+                        instance.populate(rs)
+                        list.add(instance)
+                    }
                 }
             }
         }
@@ -69,12 +71,14 @@ class QueryBuilder<T : Model>(private val model: Class<T>, val instance: T? = nu
         populateSelectors()
         val query = "DELETE FROM `${Model.getTable(model)}` ${buildSelectorStatement()}"
 
-        Model.factory.getConnection().prepareStatement(query).use { ps ->
-            var index = 1
-            selectors.forEach { s ->
-                ps.setObject(index++, s.value)
+        Model.factory.getConnection().use {
+            it.prepareStatement(query).use { ps ->
+                var index = 1
+                selectors.forEach { s ->
+                    ps.setObject(index++, s.value)
+                }
+                ps.executeUpdate()
             }
-            ps.executeUpdate()
         }
     }
 
@@ -92,13 +96,15 @@ class QueryBuilder<T : Model>(private val model: Class<T>, val instance: T? = nu
                 0..placeholders.length - 3)
         })"
 
-        Model.factory.getConnection().prepareStatement(query).use { ps ->
-            var index = 1
-            colData.values.forEach { value ->
-                ps.setObject(index++, value)
+        Model.factory.getConnection().use {
+            it.prepareStatement(query).use { ps ->
+                var index = 1
+                colData.values.forEach { value ->
+                    ps.setObject(index++, value)
+                }
+                println(ps)
+                ps.executeUpdate()
             }
-            println(ps)
-            ps.executeUpdate()
         }
     }
 
@@ -112,13 +118,15 @@ class QueryBuilder<T : Model>(private val model: Class<T>, val instance: T? = nu
             throw IllegalArgumentException("instance is null")
         populateSelectors()
         val query = "SELECT 1 FROM `${Model.getTable(model)}` ${buildSelectorStatement()}"
-        Model.factory.getConnection().prepareStatement(query).use { ps ->
-            var index = 1
-            selectors.forEach {
-                ps.setObject(index++, it.value)
-            }
-            ps.executeQuery().use { rs ->
-                return rs.next()
+        Model.factory.getConnection().use {
+            it.prepareStatement(query).use { ps ->
+                var index = 1
+                selectors.forEach {
+                    ps.setObject(index++, it.value)
+                }
+                ps.executeQuery().use { rs ->
+                    return rs.next()
+                }
             }
         }
     }
@@ -149,16 +157,18 @@ class QueryBuilder<T : Model>(private val model: Class<T>, val instance: T? = nu
         }
         val query = "UPDATE `${Model.getTable(model)}` SET $params ${buildSelectorStatement()}"
 
-        Model.factory.getConnection().prepareStatement(query).use { ps ->
-            var index = 1
-            cols.values.forEach { value ->
-                ps.setObject(index++, value)
-            }
+        Model.factory.getConnection().use {
+            it.prepareStatement(query).use { ps ->
+                var index = 1
+                cols.values.forEach { value ->
+                    ps.setObject(index++, value)
+                }
 
-            selectors.forEach { selector ->
-                ps.setObject(index++, selector.value)
+                selectors.forEach { selector ->
+                    ps.setObject(index++, selector.value)
+                }
+                ps.executeUpdate()
             }
-            ps.executeUpdate()
         }
     }
 

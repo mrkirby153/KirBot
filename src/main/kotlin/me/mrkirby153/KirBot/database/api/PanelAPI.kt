@@ -14,22 +14,8 @@ object PanelAPI {
 
     internal val executor = Executors.newFixedThreadPool(3)
 
-    fun registerServer(guild: Guild): ApiRequest<GuildSettings> {
-        return object : ApiRequest<GuildSettings>("/server/register", Methods.PUT,
-                mapOf(Pair("name", guild.name), Pair("id", guild.id))) {
-            override fun parse(json: JSONObject): GuildSettings? {
-                return GuildSettings.parse(json)
-            }
-        }
-    }
-
     fun unregisterServer(guild: Guild): ApiRequest<Void> {
         return object : ApiRequest<Void>("/server/${guild.id}", Methods.DELETE) {}
-    }
-
-    fun setServerName(guild: Guild): ApiRequest<Void> {
-        return object : ApiRequest<Void>("/server/${guild.id}/name", Methods.POST,
-                mapOf(Pair("name", guild.name))) {}
     }
 
     fun getChannels(guild: Guild) = object :
@@ -84,29 +70,6 @@ object PanelAPI {
             }
 
             callback?.invoke()
-        }
-    }
-
-    fun getRoles(guild: Guild): ApiRequest<List<GuildRole>> {
-        return object : ApiRequest<List<GuildRole>>("/server/${guild.id}/roles") {
-            override fun parse(json: JSONArray): List<GuildRole> {
-                val roles = mutableListOf<GuildRole>()
-                json.forEach { r ->
-                    val j = r as JSONObject
-                    roles.add(GuildRole(j.getString("id"), j.getString("name"),
-                            j.getString("server_id"), j.getLong("permissions")))
-                }
-                return roles
-            }
-        }
-    }
-
-    fun serverExists(guild: Guild): ApiRequest<Boolean> {
-        return object : ApiRequest<Boolean>("/server/${guild.id}") {
-            override fun parse(json: JSONObject): Boolean {
-                return json.getBoolean("exists")
-            }
-
         }
     }
 

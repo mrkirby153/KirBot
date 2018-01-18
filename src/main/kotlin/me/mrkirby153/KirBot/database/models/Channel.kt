@@ -5,6 +5,7 @@ import net.dv8tion.jda.core.entities.Channel
 import net.dv8tion.jda.core.entities.Guild
 
 @Table("channels")
+@AutoIncrementing(false)
 class Channel : Model() {
 
     @PrimaryKey

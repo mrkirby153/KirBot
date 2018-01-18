@@ -1,5 +1,6 @@
 package me.mrkirby153.KirBot.database.models.guild
 
+import me.mrkirby153.KirBot.database.models.AutoIncrementing
 import me.mrkirby153.KirBot.database.models.Column
 import me.mrkirby153.KirBot.database.models.JsonArray
 import me.mrkirby153.KirBot.database.models.Model
@@ -7,6 +8,7 @@ import me.mrkirby153.KirBot.database.models.PrimaryKey
 import me.mrkirby153.KirBot.database.models.Table
 
 @Table("music_settings")
+@AutoIncrementing(false)
 class MusicSettings : Model() {
 
     @PrimaryKey

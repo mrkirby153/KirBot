@@ -1,6 +1,7 @@
 package me.mrkirby153.KirBot.database.models.guild
 
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.database.models.AutoIncrementing
 import me.mrkirby153.KirBot.database.models.Column
 import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.database.models.PrimaryKey
@@ -10,6 +11,7 @@ import net.dv8tion.jda.core.entities.Role
 import net.dv8tion.jda.core.entities.User
 
 @Table("guild_member_roles")
+@AutoIncrementing(false)
 class GuildMemberRole : Model() {
 
     @PrimaryKey

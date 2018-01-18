@@ -1,5 +1,6 @@
 package me.mrkirby153.KirBot.database.models
 
+import java.sql.Statement
 import kotlin.reflect.KClass
 
 class QueryBuilder<T : Model>(private val model: Class<T>, val instance: T? = null) {
@@ -97,13 +98,19 @@ class QueryBuilder<T : Model>(private val model: Class<T>, val instance: T? = nu
         })"
 
         Model.factory.getConnection().use {
-            it.prepareStatement(query).use { ps ->
+            it.prepareStatement(query, Statement.RETURN_GENERATED_KEYS).use { ps ->
                 var index = 1
                 colData.values.forEach { value ->
                     ps.setObject(index++, value)
                 }
                 println(ps)
                 ps.executeUpdate()
+                val rs = ps.generatedKeys
+                if (rs.next()) {
+                    if (Model.autoIncrementing(model)) {
+                        instance.set(Model.primaryKey(model), rs.getObject(1))
+                    }
+                }
             }
         }
     }

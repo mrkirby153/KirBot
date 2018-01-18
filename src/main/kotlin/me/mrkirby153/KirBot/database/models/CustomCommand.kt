@@ -1,6 +1,7 @@
 package me.mrkirby153.KirBot.database.models
 
 @Table("custom_commands")
+@AutoIncrementing(false)
 class CustomCommand : Model() {
 
     @PrimaryKey

@@ -136,10 +136,23 @@ open class Model {
                     }
                     obj = list
                 }
-                (field.kotlinProperty as? KMutableProperty)?.setter?.call(this, obj)
+                set(columnName, obj)
             }
         }
         updateState()
+    }
+
+    /**
+     * Sets a column on the model
+     *
+     * @param column The column
+     * @param value  The value to set
+     */
+    fun set(column: String, value: Any?) {
+        getAccessibleFields(this.javaClass).filter { getColumnName(it) == column }.forEach {
+            it.isAccessible = true
+            (it.kotlinProperty as? KMutableProperty)?.setter?.call(this, value)
+        }
     }
 
     /**
@@ -151,6 +164,8 @@ open class Model {
         val map = mutableMapOf<String, Any?>()
 
         getAccessibleFields(this.javaClass).forEach { field ->
+            if (!field.isAccessible)
+                field.isAccessible = true
             if (!isTransient(field)) {
                 if (field.isAnnotationPresent(JsonArray::class.java)) {
                     // Convert to a json array
@@ -327,6 +342,11 @@ open class Model {
                     where(it.first, it.second)
                 }
             }.first()
+        }
+
+        @JvmStatic
+        fun <T: Model> autoIncrementing(clazz: Class<T>): Boolean{
+            return clazz.getAnnotation(AutoIncrementing::class.java)?.value ?: true
         }
     }
 }

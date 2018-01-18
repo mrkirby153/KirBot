@@ -14,3 +14,6 @@ annotation class Timestamps(val value: Boolean)
 
 @Target(AnnotationTarget.FIELD)
 annotation class JsonArray
+
+@Target(AnnotationTarget.CLASS)
+annotation class AutoIncrementing(val value: Boolean)

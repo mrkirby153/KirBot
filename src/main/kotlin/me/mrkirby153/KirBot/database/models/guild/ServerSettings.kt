@@ -1,5 +1,6 @@
 package me.mrkirby153.KirBot.database.models.guild
 
+import me.mrkirby153.KirBot.database.models.AutoIncrementing
 import me.mrkirby153.KirBot.database.models.Column
 import me.mrkirby153.KirBot.database.models.JsonArray
 import me.mrkirby153.KirBot.database.models.Model
@@ -8,6 +9,7 @@ import me.mrkirby153.KirBot.database.models.Table
 import me.mrkirby153.KirBot.realname.RealnameSetting
 
 @Table("server_settings")
+@AutoIncrementing(false)
 class ServerSettings : Model() {
 
     @PrimaryKey

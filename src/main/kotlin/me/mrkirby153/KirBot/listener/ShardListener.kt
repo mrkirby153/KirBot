@@ -3,10 +3,12 @@ package me.mrkirby153.KirBot.listener
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.CommandExecutor
 import me.mrkirby153.KirBot.database.api.GuildChannel
-import me.mrkirby153.KirBot.database.api.GuildMember
 import me.mrkirby153.KirBot.database.api.GuildRole
-import me.mrkirby153.KirBot.database.api.PanelAPI
 import me.mrkirby153.KirBot.database.api.Quote
+import me.mrkirby153.KirBot.database.models.Model
+import me.mrkirby153.KirBot.database.models.guild.GuildMember
+import me.mrkirby153.KirBot.database.models.guild.GuildMemberRole
+import me.mrkirby153.KirBot.database.models.guild.ServerSettings
 import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.sharding.Shard
 import me.mrkirby153.KirBot.utils.Context
@@ -56,59 +58,65 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
     }
 
     override fun onGuildMemberJoin(event: GuildMemberJoinEvent) {
-        PanelAPI.getMembers(event.guild).queue { members ->
-            if (event.member.user.id in members.map { it.userId } && event.guild.kirbotGuild.settings.persistence) {
-                Bot.LOG.debug("User has previously joined, restoring state")
-                GuildMember.get(event.member).queue { member ->
-                    val guildController = event.guild.controller
-                    guildController.setNickname(event.member, member.nick).queue()
-                    guildController.addRolesToMember(event.member,
-                            member.roles.map {
-                                event.guild.getRoleById(it)
-                            }.filter { it != null }).queue()
-                }
-            } else {
-                Bot.LOG.debug("User has not joined before or persistence is disabled")
-                GuildMember.create(event.member).queue()
+        val member = Model.first(me.mrkirby153.KirBot.database.models.guild.GuildMember::class.java,
+                Pair("server_id", event.guild.id), Pair("user_id", event.user.id))
+        if (member == null) {
+            Bot.LOG.debug("User has not joined before, or persistence is disabled")
+            val m = me.mrkirby153.KirBot.database.models.guild.GuildMember()
+            m.id = Model.randomId()
+            m.serverId = event.guild.id
+            m.user = event.user
+            m.save()
+        } else {
+            if (event.guild.kirbotGuild.settings.persistence) {
+                Bot.LOG.debug("User has joined. Restoring their state")
+                val controller = event.guild.controller
+                controller.setNickname(event.member, member.nick).queue()
+                controller.addRolesToMember(event.member,
+                        member.roles.map { it.role }.filter { it != null }).queue()
             }
         }
     }
 
     override fun onGuildMemberLeave(event: GuildMemberLeaveEvent) {
         if (!event.guild.kirbotGuild.settings.persistence) { // Delete the user if persistence is disabled
-            GuildMember.get(event.member).queue {
-                it.delete().queue()
-            }
+            val member = Model.first(
+                    me.mrkirby153.KirBot.database.models.guild.GuildMember::class.java,
+                    Pair("server_id", event.guild.id), Pair("user_id", event.user.id))
+            member?.roles?.forEach { it.delete() }
+            member?.delete()
         }
     }
 
     override fun onGuildMemberRoleAdd(event: GuildMemberRoleAddEvent) {
-        if (event.guild.kirbotGuild.settings.persistence)
-            GuildMember.get(event.member).queue { m ->
-                event.roles.forEach {
-                    m.addRole(it.id).queue()
-                }
-            }
-    }
-
-    override fun onGuildMemberRoleRemove(event: GuildMemberRoleRemoveEvent) {
-        if (event.guild.kirbotGuild.settings.persistence)
-            GuildMember.get(event.member).queue { m ->
-                event.roles.forEach {
-                    m.removeRole(it.id).queue()
-                }
-            }
-    }
-
-    override fun onGuildMemberNickChange(event: GuildMemberNickChangeEvent) {
-        GuildMember.get(event.member).queue { m ->
-            if (m.needsUpdate())
-                m.update().queue()
+        event.roles.forEach {
+            Bot.LOG.debug("Adding role ${it.name}(${it.id}) to ${event.user} ")
+            val role = GuildMemberRole()
+            role.id = Model.randomId()
+            role.role = it
+            role.user = event.user
+            role.save()
         }
     }
 
+    override fun onGuildMemberRoleRemove(event: GuildMemberRoleRemoveEvent) {
+        event.roles.forEach {
+            Model.get(GuildMemberRole::class.java, Pair("server_id", event.guild),
+                    Pair("user_id", event.user.id), Pair("role_id", it.id)).forEach { it.delete() }
+        }
+    }
+
+    override fun onGuildMemberNickChange(event: GuildMemberNickChangeEvent) {
+       Model.first(GuildMember::class.java, Pair("server_id", event.guild.id), Pair("user_id", event.user.id))?.run {
+           nick = event.newNick
+           save()
+       }
+        // TODO 1/20/18: Broadcast a log event
+    }
+
     override fun onGuildLeave(event: GuildLeaveEvent) {
-        PanelAPI.unregisterServer(event.guild).queue()
+        Model.first(ServerSettings::class.java, event.guild.id)?.delete()
+        // TODO 1/20/18: Delete the relations as well
         event.guild.kirbotGuild.onPart()
     }
 
@@ -139,15 +147,17 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
     }
 
     override fun onTextChannelUpdateName(event: TextChannelUpdateNameEvent) {
-        PanelAPI.getChannels(event.guild).queue {
-            it.text.filter { it.channel.id == event.channel.id }.forEach { it.update().queue() }
-        }
+        val chan = Model.first(me.mrkirby153.KirBot.database.models.Channel::class.java,
+                event.channel.id) ?: return
+        chan.name = event.channel.name
+        chan.save()
     }
 
     override fun onVoiceChannelUpdateName(event: VoiceChannelUpdateNameEvent) {
-        PanelAPI.getChannels(event.guild).queue {
-            it.voice.filter { it.channel.id == event.channel.id }.forEach { it.update().queue() }
-        }
+        val chan = Model.first(me.mrkirby153.KirBot.database.models.Channel::class.java,
+                event.channel.id) ?: return
+        chan.name = event.channel.name
+        chan.save()
     }
 
     override fun onRoleCreate(event: RoleCreateEvent) {
@@ -231,7 +241,8 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
 
     override fun onGuildVoiceMove(event: GuildVoiceMoveEvent) {
         val guild = event.guild.kirbotGuild
-        if (inChannel(event.channelJoined, event.guild.selfMember) && !guild.musicManager.manualPause) {
+        if (inChannel(event.channelJoined,
+                event.guild.selfMember) && !guild.musicManager.manualPause) {
             Bot.LOG.debug("Resuming in ${guild.id} as someone joined!")
             guild.musicManager.audioPlayer.isPaused = false
         } else {

@@ -93,6 +93,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         if (settings.name != this.name) {
             Bot.LOG.debug("Name has changed on ${this.name}, updating")
             guild.name = this.name
+            guild.save()
         }
 
         updateChannels()
@@ -132,10 +133,6 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         val groups = Model.get(Group::class.java, Pair("server_id", this.id))
 
         groups.forEach { g ->
-            if (g.deletedAt != null) {
-                g.delete()
-                return@forEach
-            }
             if (g.role != null) {
                 g.members.map {
                     this.getMemberById(it.id)

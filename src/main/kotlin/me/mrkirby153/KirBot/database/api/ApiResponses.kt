@@ -3,13 +3,10 @@ package me.mrkirby153.KirBot.database.api
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.realname.RealnameSetting
 import me.mrkirby153.KirBot.user.Clearance
-import me.mrkirby153.KirBot.utils.getMember
 import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.Channel
 import net.dv8tion.jda.core.entities.Guild
-import net.dv8tion.jda.core.entities.Member
 import net.dv8tion.jda.core.entities.Message
-import net.dv8tion.jda.core.entities.Role
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.User
 import org.json.JSONArray
@@ -127,8 +124,6 @@ class GuildChannel(val id: String, val guild: String, val name: String, val type
         }
     }
 }
-
-data class GuildChannels(val text: List<GuildChannel>, val voice: List<GuildChannel>)
 
 class MusicSettings(val enabled: Boolean, whitelist: String, val channels: Array<String>,
                     val blacklistedSongs: Array<String>,
@@ -275,70 +270,6 @@ class Quote(val id: Int, val messageId: String, val user: String, val server: St
     }
 }
 
-class Group(val id: String, val guild: String, val name: String, val roleId: String,
-            val members: MutableList<String>) {
-
-    val role: Role? = Bot.shardManager.getGuild(guild)?.getRoleById(roleId)
-
-    fun addUser(user: User): ApiRequest<Void>? {
-        // Check if the user is in the group first
-        if (user.id in members)
-            return null
-
-        return object : ApiRequest<Void>("/group/$id/member", Methods.PUT,
-                mapOf(Pair("id", user.id))) {
-            override fun parse(json: JSONObject): Void? {
-                members.add(user.id)
-                val guild = Bot.shardManager.getGuild(guild)
-                if (guild != null) {
-                    val role = guild.getRoleById(roleId)
-                    if (role != null) {
-                        guild.controller.addRolesToMember(user.getMember(guild), role).queue()
-                    }
-                }
-                return null
-            }
-        }
-    }
-
-    fun removeUser(user: User): ApiRequest<Void>? {
-        if (user.id !in members) {
-            return null
-        }
-
-        return object :
-                ApiRequest<Void>("/group/$id/member/${user.id}", Methods.DELETE) {
-            override fun parse(json: JSONObject): Void? {
-                members.remove(user.id)
-                val guild = Bot.shardManager.getGuild(guild)
-                if (guild != null) {
-                    val role = guild.getRoleById(roleId)
-                    if (role != null) {
-                        guild.controller.removeRolesFromMember(user.getMember(guild), role).queue()
-                    }
-                }
-                return null
-            }
-        }
-    }
-
-    fun delete(): ApiRequest<Void> {
-        return object : ApiRequest<Void>("/group/$id", Methods.DELETE) {}
-    }
-
-    companion object {
-        fun create(guild: Guild, name: String, role: Role) = object :
-                ApiRequest<Group>("/server/${guild.id}/groups", Methods.PUT,
-                        mapOf(Pair("name", name), Pair("role", role.id))) {
-            override fun parse(json: JSONObject): Group {
-                return Group(json.getString("id"), json.getString("server_id"),
-                        json.getString("group_name"), json.getString("role_id"), mutableListOf())
-            }
-        }
-
-    }
-}
-
 class ClearanceOverride(val id: Int, val command: String, cl: String) {
     var clearance = Clearance.valueOf(cl)
 
@@ -458,100 +389,3 @@ class RssFeed(val id: String, val channelId: String, val serverId: String, val u
     }
 }
 
-class GuildMember(val id: String, val serverId: String, val userId: String, val username: String,
-                  val discrim: String, val nick: String?, val roles: Array<String>) {
-
-    val guild: Guild?
-        get() = Bot.shardManager.getGuild(serverId)
-
-    val user: User?
-        get() = guild?.jda?.getUserById(userId)
-
-    val member: Member?
-        get() = if (user != null) guild?.getMember(user) else null
-
-    fun update(): ApiRequest<GuildMember> {
-        return object :
-                ApiRequest<GuildMember>("/member/$serverId/$userId", Methods.PATCH,
-                        buildQuery(member!!)) {
-            override fun parse(json: JSONObject): GuildMember {
-                return Companion.parse(json)
-            }
-
-        }
-    }
-
-    fun addRole(role: String): ApiRequest<Void> {
-        return object : ApiRequest<Void>("/member/role/$userId/$role", Methods.PUT, mapOf(Pair("guild", ""))) {}
-    }
-
-    fun removeRole(role: String): ApiRequest<Void> {
-        return object : ApiRequest<Void>("/member/role/$userId/$role", Methods.DELETE) {}
-    }
-
-    fun needsUpdate(): Boolean {
-        val user = this.user
-        val member = this.member
-        if (user == null || member == null) {
-            Bot.LOG.debug("Deleting member $userId as they are no longer present in the guild")
-            this.delete().queue()
-            return false
-        }
-        if (user.name != this.username || user.discriminator != this.discrim)
-            return true
-        if (member.nickname != this.nick)
-            return true
-        return false
-    }
-
-    fun delete(): ApiRequest<Void> {
-        return object : ApiRequest<Void>("/member/$serverId/$userId", Methods.DELETE) {}
-    }
-
-    private fun buildQuery(member: Member): Map<String, String>? {
-        val map = mutableMapOf<String, String>()
-        map.put("server_id", serverId)
-        map.put("user_id", member.user.id)
-        map.put("user_name", member.user.name)
-        map.put("user_discrim", member.user.discriminator)
-        if (member.nickname != null)
-            map.put("user_nick", member.nickname)
-        else
-            map.put("user_nick", "")
-        return map
-    }
-
-    companion object {
-        fun parse(obj: JSONObject): GuildMember {
-            val roleJson = obj.optJSONArray("roles")
-            return GuildMember(obj.getString("id"), obj.getString("server_id"),
-                    obj.getString("user_id"), obj.getString("user_name"),
-                    obj.getString("user_discrim"), obj.optString("user_nick", null),
-                    roleJson?.map { (it as JSONObject).getString("role_id") }?.toTypedArray() ?: emptyArray())
-        }
-
-        fun get(member: Member): ApiRequest<GuildMember> {
-            return object :
-                    ApiRequest<GuildMember>("/member/${member.guild.id}/${member.user.id}") {
-                override fun parse(json: JSONObject): GuildMember {
-                    return Companion.parse(json)
-                }
-
-            }
-        }
-
-        fun create(member: Member): ApiRequest<GuildMember> {
-            val map = mapOf(Pair("server_id", member.guild.id), Pair("user_id", member.user.id),
-                    Pair("user_name", member.user.name),
-                    Pair("user_discrim", member.user.discriminator)).toMutableMap()
-            if (member.nickname != null)
-                map.put("user_nick", member.nickname)
-            return object : ApiRequest<GuildMember>("/member", Methods.PUT,
-                    map) {
-                override fun parse(json: JSONObject): GuildMember {
-                    return Companion.parse(json)
-                }
-            }
-        }
-    }
-}

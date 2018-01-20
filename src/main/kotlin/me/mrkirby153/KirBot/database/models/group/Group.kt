@@ -8,7 +8,6 @@ import me.mrkirby153.KirBot.database.models.PrimaryKey
 import me.mrkirby153.KirBot.database.models.Table
 import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.entities.Role
-import java.sql.Timestamp
 
 @Table("groups")
 @AutoIncrementing(false)
@@ -25,9 +24,6 @@ class Group : Model(){
 
     @Column("role_id")
     private var roleId = ""
-
-    @Column("deleted_at")
-    var deletedAt: Timestamp? = null
 
     @Transient
     var server: Guild? = null

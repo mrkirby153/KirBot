@@ -6,7 +6,6 @@ import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.RequiresClearance
 import me.mrkirby153.KirBot.command.args.Arguments
 import me.mrkirby153.KirBot.command.args.CommandContext
-import me.mrkirby153.KirBot.database.api.PanelAPI
 import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.kirbotGuild
@@ -19,10 +18,6 @@ class CommandRefresh : BaseCommand(CommandCategory.ADMIN, Arguments.string("item
         val arg = cmdContext.get<String>("item")
 
         when(arg) {
-            "channels" -> {
-                PanelAPI.updateChannels(context.guild)
-                context.success()
-            }
             "all" -> {
                 context.guild.kirbotGuild.sync()
                 context.success()

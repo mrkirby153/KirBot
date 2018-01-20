@@ -204,7 +204,7 @@ class QueryBuilder<T : Model>(private val model: Class<T>, val instance: T? = nu
      */
     private fun buildSelectorStatement() = buildString {
         append("WHERE ")
-        append(selectors.joinToString(", ") { "`${it.column}` ${it.test} ?" })
+        append(selectors.joinToString("AND ") { "`${it.column}` ${it.test} ?" })
     }
 
     private data class QuerySelector(val column: String, val test: String, val value: Any)

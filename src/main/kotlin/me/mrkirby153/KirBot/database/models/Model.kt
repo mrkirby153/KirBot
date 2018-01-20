@@ -1,5 +1,6 @@
 package me.mrkirby153.KirBot.database.models
 
+import me.mrkirby153.kcutils.utils.IdGenerator
 import org.json.JSONArray
 import org.json.JSONTokener
 import java.lang.reflect.Field
@@ -185,6 +186,8 @@ open class Model {
     companion object {
         lateinit var factory: ConnectionFactory
 
+        private val idGenerator: IdGenerator = IdGenerator(IdGenerator.ALPHA + IdGenerator.NUMBERS)
+
         /**
          * Gets the table for a model
          *
@@ -345,8 +348,10 @@ open class Model {
         }
 
         @JvmStatic
-        fun <T: Model> autoIncrementing(clazz: Class<T>): Boolean{
+        fun <T : Model> autoIncrementing(clazz: Class<T>): Boolean {
             return clazz.getAnnotation(AutoIncrementing::class.java)?.value ?: true
         }
+
+        fun randomId() = this.idGenerator.generate(10)
     }
 }

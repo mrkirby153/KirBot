@@ -13,35 +13,6 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.sql.Timestamp
 
-class Realname(val firstName: String, val lastName: String) {
-    companion object {
-        fun get(user: User): ApiRequest<Realname> = object :
-                ApiRequest<Realname>("/user/${user.id}/name") {
-            override fun parse(json: JSONObject): Realname {
-                return Realname(json.getString("first_name"), json.getString("last_name"))
-            }
-        }
-
-        fun get(users: Collection<User>) = object :
-                ApiRequest<Map<User, Realname?>>("/user/names", Methods.POST,
-                        mutableMapOf(Pair("names",
-                                users.joinToString(",") { it.id }))) {
-            override fun parse(json: JSONObject): Map<User, Realname?> {
-                val map = mutableMapOf<User, Realname?>()
-
-                users.forEach {
-                    val obj = json.optJSONObject(it.id)
-                    if (obj == null)
-                        map[it] = null
-                    else
-                        map[it] = Realname(obj.getString("first_name"), obj.getString("last_name"))
-                }
-                return map
-            }
-        }
-    }
-}
-
 class GuildCommand(val name: String, val data: String, val clearance: Clearance,
                    val respectWhitelist: Boolean) {
     companion object {

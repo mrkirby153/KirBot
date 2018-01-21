@@ -43,5 +43,5 @@ class GuildMember : Model() {
         }
 
     val roles: List<GuildMemberRole>
-        get() = Model.get(GuildMemberRole::class.java, this.userId, "user_id")
+        get() = Model.get(GuildMemberRole::class.java, Pair("server_id", serverId), Pair("user_id", userId))
 }

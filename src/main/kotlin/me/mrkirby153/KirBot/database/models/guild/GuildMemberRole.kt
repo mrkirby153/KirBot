@@ -48,6 +48,7 @@ class GuildMemberRole : Model() {
         get() = server?.getRoleById(this.roleId)
         set(role) {
             this.roleId = role!!.id
+            this.serverId = role.guild.id
             field = role
         }
 }

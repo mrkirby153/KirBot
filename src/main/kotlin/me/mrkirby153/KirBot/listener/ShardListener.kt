@@ -101,7 +101,7 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
 
     override fun onGuildMemberRoleRemove(event: GuildMemberRoleRemoveEvent) {
         event.roles.forEach {
-            Model.get(GuildMemberRole::class.java, Pair("server_id", event.guild),
+            Model.get(GuildMemberRole::class.java, Pair("server_id", event.guild.id),
                     Pair("user_id", event.user.id), Pair("role_id", it.id)).forEach { it.delete() }
         }
     }

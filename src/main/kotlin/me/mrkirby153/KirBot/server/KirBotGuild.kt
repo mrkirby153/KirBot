@@ -134,8 +134,12 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
 
         groups.forEach { g ->
             if (g.role != null) {
-                g.members.map {
-                    this.getMemberById(it.id)
+                g.members.mapNotNull {
+                    val u = it.user
+                    if (u == null)
+                        null
+                    else
+                        this.getMemberById(u.id)
                 }.filter { g.role !in it.roles }.forEach { u ->
                     this.controller.addRolesToMember(u, g.role).queue()
                 }

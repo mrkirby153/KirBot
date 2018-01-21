@@ -1,7 +1,6 @@
 package me.mrkirby153.KirBot.realname
 
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.database.api.GuildSettings
 import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.utils.getMember
 import net.dv8tion.jda.core.entities.Member
@@ -12,78 +11,77 @@ class RealnameHandler(var guild: KirBotGuild) {
 
     fun update() {
         Bot.LOG.debug("Updating nicknames on ${guild.id}")
-        GuildSettings.get(guild).queue { settings ->
-            if (!settings.requireRealname) {
-                cleanupRealnameRoles() // Clean up the roles if the server doesn't require real names
+        val settings = guild.settings
+        if (!settings.requireRealname) {
+            cleanupRealnameRoles() // Clean up the roles if the server doesn't require real names
+        }
+
+        if (settings.realname == RealnameSetting.OFF) {
+            if (!guild.extraData.optBoolean("hasResetNames", false)) {
+                guild.members.forEach {
+                    setNickname(it, null)
+                }
+                guild.extraData.put("hasResetNames", true)
+                guild.saveData()
+            }
+            return
+        }
+
+        guild.extraData.remove("hasResetNames")?.let { guild.saveData() }
+
+        val query = "SELECT `id`, `first_name`, `last_name`, CONCAT(`first_name`, ' ', `last_name`) AS 'combined' FROM `user_info` WHERE `id` IN (${guild.members.joinToString(
+                ", ") { "'${it.user.id}'" }})"
+        val realname = mutableMapOf<String, Triple<String, String, String>>()
+        Bot.database.getConnection().use { connection ->
+            connection.prepareStatement(query).use { ps ->
+                ps.executeQuery().use { rs ->
+                    println(rs)
+                    while (rs.next()) {
+                        realname.put(rs.getString("id"),
+                                Triple(rs.getString("first_name"), rs.getString("last_name"),
+                                        rs.getString("combined")))
+                    }
+                }
+            }
+        }
+
+        guild.members.forEach { member ->
+            val user = member.user
+            val name = realname[user.id]
+            if (user.isBot) { // All bots are automatically identified
+                if (settings.requireRealname) {
+                    guild.controller.modifyMemberRoles(member,
+                            arrayListOf(getIdentifiedRole()),
+                            arrayListOf(getUnidentifiedRole())).queue()
+                }
+                return@forEach
             }
 
-            if (settings.realnameSetting == RealnameSetting.OFF) {
-                if (!guild.extraData.optBoolean("hasResetNames", false)) {
-                    guild.members.forEach {
-                        setNickname(it, null)
-                    }
-                    guild.extraData.put("hasResetNames", true)
-                    guild.saveData()
+            if (name == null) {
+                if (settings.requireRealname) {
+                    guild.controller.modifyMemberRoles(user.getMember(guild),
+                            arrayListOf(getUnidentifiedRole()),
+                            arrayListOf(getIdentifiedRole())).queue()
+                    setNickname(user.getMember(guild), null)
                 }
-                return@queue
-            }
-
-            guild.extraData.remove("hasResetNames")?.let { guild.saveData() }
-
-            val query = "SELECT `id`, `first_name`, `last_name`, CONCAT(`first_name`, ' ', `last_name`) AS 'combined' FROM `user_info` WHERE `id` IN (${guild.members.joinToString(
-                    ", ") { "'${it.user.id}'" }})"
-            val realname = mutableMapOf<String, Triple<String, String, String>>()
-            Bot.database.getConnection().use { connection ->
-                connection.prepareStatement(query).use { ps ->
-                    ps.executeQuery().use { rs ->
-                        println(rs)
-                        while (rs.next()) {
-                            realname.put(rs.getString("id"),
-                                    Triple(rs.getString("first_name"), rs.getString("last_name"),
-                                            rs.getString("combined")))
-                        }
+            } else {
+                val nickName: String? = when (settings.realname) {
+                    RealnameSetting.FIRST_ONLY -> {
+                        name.first
+                    }
+                    RealnameSetting.FIRST_LAST -> {
+                        name.third
+                    }
+                    else -> {
+                        null
                     }
                 }
-            }
-
-            guild.members.forEach { member ->
-                val user = member.user
-                val name = realname[user.id]
-                if (user.isBot) { // All bots are automatically identified
-                    if (settings.requireRealname) {
-                        guild.controller.modifyMemberRoles(member,
-                                arrayListOf(getIdentifiedRole()),
-                                arrayListOf(getUnidentifiedRole())).queue()
-                    }
-                    return@forEach
+                if (settings.requireRealname) {
+                    guild.controller.modifyMemberRoles(user.getMember(guild),
+                            arrayListOf(getIdentifiedRole()),
+                            arrayListOf(getUnidentifiedRole())).queue()
                 }
-
-                if (name == null) {
-                    if (settings.requireRealname) {
-                        guild.controller.modifyMemberRoles(user.getMember(guild),
-                                arrayListOf(getUnidentifiedRole()),
-                                arrayListOf(getIdentifiedRole())).queue()
-                        setNickname(user.getMember(guild), null)
-                    }
-                } else {
-                    val nickName: String? = when (settings.realnameSetting) {
-                        RealnameSetting.FIRST_ONLY -> {
-                            name.first
-                        }
-                        RealnameSetting.FIRST_LAST -> {
-                            name.third
-                        }
-                        else -> {
-                            null
-                        }
-                    }
-                    if (settings.requireRealname) {
-                        guild.controller.modifyMemberRoles(user.getMember(guild),
-                                arrayListOf(getIdentifiedRole()),
-                                arrayListOf(getUnidentifiedRole())).queue()
-                    }
-                    setNickname(user.getMember(guild), nickName)
-                }
+                setNickname(user.getMember(guild), nickName)
             }
         }
     }

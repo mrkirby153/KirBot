@@ -2,7 +2,6 @@ package me.mrkirby153.KirBot.listener
 
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.CommandExecutor
-import me.mrkirby153.KirBot.database.api.GuildChannel
 import me.mrkirby153.KirBot.database.api.GuildRole
 import me.mrkirby153.KirBot.database.api.Quote
 import me.mrkirby153.KirBot.database.models.Model
@@ -131,19 +130,31 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
     }
 
     override fun onTextChannelDelete(event: TextChannelDeleteEvent) {
-        GuildChannel.unregister(event.channel.id).queue()
+        Model.first(me.mrkirby153.KirBot.database.models.Channel::class.java, event.channel.id)?.delete()
     }
 
     override fun onVoiceChannelDelete(event: VoiceChannelDeleteEvent) {
-        GuildChannel.unregister(event.channel.id).queue()
+        Model.first(me.mrkirby153.KirBot.database.models.Channel::class.java, event.channel.id)?.delete()
     }
 
     override fun onTextChannelCreate(event: TextChannelCreateEvent) {
-        GuildChannel.register(event.channel).queue()
+        val channel = me.mrkirby153.KirBot.database.models.Channel()
+        channel.id = event.channel.id
+        channel.guild = event.guild
+        channel.name = event.channel.name
+        channel.type = me.mrkirby153.KirBot.database.models.Channel.Type.TEXT
+        channel.hidden = false
+        channel.create()
     }
 
     override fun onVoiceChannelCreate(event: VoiceChannelCreateEvent) {
-        GuildChannel.register(event.channel).queue()
+        val channel = me.mrkirby153.KirBot.database.models.Channel()
+        channel.id = event.channel.id
+        channel.guild = event.guild
+        channel.name = event.channel.name
+        channel.type = me.mrkirby153.KirBot.database.models.Channel.Type.VOICE
+        channel.hidden = false
+        channel.create()
     }
 
     override fun onTextChannelUpdateName(event: TextChannelUpdateNameEvent) {

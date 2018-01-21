@@ -2,9 +2,8 @@ package me.mrkirby153.KirBot.server
 
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.api.ClearanceOverride
-import me.mrkirby153.KirBot.database.api.GuildCommand
-import me.mrkirby153.KirBot.database.api.GuildSettings
 import me.mrkirby153.KirBot.database.models.Channel
+import me.mrkirby153.KirBot.database.models.CustomCommand
 import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.database.models.group.Group
 import me.mrkirby153.KirBot.database.models.guild.GuildMember
@@ -32,8 +31,8 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         Bot.LOG.debug("Constructing KirBotGuild for $guild")
     }
 
-    lateinit var settings: GuildSettings
-    lateinit var customCommands: MutableList<GuildCommand>
+    lateinit var settings: ServerSettings
+    lateinit var customCommands: MutableList<CustomCommand>
     lateinit var clearanceOverrides: MutableList<ClearanceOverride>
 
     val isReady: Boolean
@@ -52,9 +51,11 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
     private fun loadSettings() {
         Bot.LOG.debug("Loading settings for ${this}")
 
-        settings = GuildSettings.get(this).get()
+        settings = Model.first(ServerSettings::class.java,
+                Pair("id", this.id)) ?: throw IllegalStateException(
+                "Attempting to load settings for a guild that doesn't exist")
 
-        customCommands = GuildCommand.getCommands(this).get().toMutableList()
+        customCommands = Model.get(CustomCommand::class.java, Pair("server", this.id)).toMutableList()
 
         clearanceOverrides = ClearanceOverride.get(this).get()
 
@@ -84,10 +85,10 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
             loadSettings()
 
 
-        if (this.selfMember.nickname != settings.nick) {
-            Bot.LOG.debug("Updating nickname to \"${settings.nick}\"")
+        if (this.selfMember.nickname != settings.botNick) {
+            Bot.LOG.debug("Updating nickname to \"${settings.botNick}\"")
             this.controller.setNickname(this.selfMember,
-                    if (settings.nick?.isEmpty() == true) null else settings.nick).queue()
+                    if (settings.botNick?.isEmpty() == true) null else settings.botNick).queue()
         }
 
         if (settings.name != this.name) {

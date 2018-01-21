@@ -21,7 +21,7 @@ class ServerSettings : Model() {
     private var realnameRaw = ""
 
     @Column("require_realname")
-    private var requireRealname = false
+    var requireRealname = false
 
     @Column("command_discriminator")
     var cmdDiscriminator = "!"

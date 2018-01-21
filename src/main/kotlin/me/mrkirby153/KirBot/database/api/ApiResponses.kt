@@ -1,99 +1,17 @@
 package me.mrkirby153.KirBot.database.api
 
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.realname.RealnameSetting
 import me.mrkirby153.KirBot.user.Clearance
-import net.dv8tion.jda.core.Permission
-import net.dv8tion.jda.core.entities.Channel
 import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.entities.Message
 import net.dv8tion.jda.core.entities.TextChannel
-import net.dv8tion.jda.core.entities.User
 import org.json.JSONArray
 import org.json.JSONObject
 import java.sql.Timestamp
 
-class GuildCommand(val name: String, val data: String, val clearance: Clearance,
-                   val respectWhitelist: Boolean) {
-    companion object {
-        fun getCommands(guild: Guild) = object :
-                ApiRequest<List<GuildCommand>>("/server/${guild.id}/commands") {
-            override fun parse(json: JSONArray): List<GuildCommand> {
-                val cmds = mutableListOf<GuildCommand>()
-
-                json.forEach { obj ->
-                    val jsonObj = obj as JSONObject
-                    cmds.add(GuildCommand(jsonObj.getString("name"),
-                            jsonObj.getString("data"),
-                            Clearance.valueOf(jsonObj.getString("clearance")),
-                            jsonObj.getInt("respect_whitelist") == 1))
-                }
-                return cmds
-            }
-        }
-    }
-}
-
-class GuildSettings(val name: String, val nick: String?, val realnameSetting: RealnameSetting,
-                    val requireRealname: Boolean,
-                    val cmdDiscriminator: String, val logChannel: String?,
-                    val whitelistedChannels: List<String>,
-                    val managerRoles: List<String>,
-                    val persistence: Boolean) {
-    companion object {
-        fun get(guild: Guild) = object : ApiRequest<GuildSettings>("/server/${guild.id}/settings") {
-            override fun parse(json: JSONObject): GuildSettings {
-                return Companion.parse(json)
-            }
-        }
-
-        fun parse(json: JSONObject): GuildSettings {
-            val managementRoles = json.getJSONArray("bot_manager")
-            val roles = mutableListOf<String>()
-            managementRoles.forEach { roles.add(it.toString()) }
-            return GuildSettings(json.getString("name"), json.optString("bot_nick"),
-                    RealnameSetting.valueOf(json.getString("realname")),
-                    json.getInt("require_realname") == 1,
-                    json.getString("command_discriminator"), json.optString("log_channel"),
-                    json.getJSONArray("cmd_whitelist").map { it.toString() }, roles,
-                    json.getInt("user_persistence") == 1)
-        }
-    }
-}
-
 enum class ChannelType {
     VOICE,
     TEXT
-}
-
-class GuildChannel(val id: String, val guild: String, val name: String, val type: ChannelType) {
-
-
-    val channel: Channel
-        get() = when (type) {
-            ChannelType.TEXT -> Bot.shardManager.getGuild(guild)!!.getTextChannelById(id)
-            ChannelType.VOICE -> Bot.shardManager.getGuild(guild)!!.getVoiceChannelById(id)
-        }
-
-
-    fun update(): ApiRequest<Void> {
-        val isHidden = channel.getPermissionOverride(channel.guild.publicRole)?.denied?.contains(
-                Permission.MESSAGE_READ) ?: false
-        return object : ApiRequest<Void>("/channel/${channel.id}", Methods.PATCH,
-                mapOf(Pair("name", channel.name), Pair("hidden", isHidden.toString()))) {}
-    }
-
-    companion object {
-        fun register(channel: Channel): ApiRequest<Void> {
-            return object : ApiRequest<Void>("/server/${channel.guild.id}/channel",
-                    Methods.PUT, mapOf(Pair("id", channel.id), Pair("name", channel.name),
-                    Pair("type", if (channel is TextChannel) "TEXT" else "Voice"))) {}
-        }
-
-        fun unregister(channel: String): ApiRequest<Void> {
-            return object : ApiRequest<Void>("/channel/$channel", Methods.DELETE) {}
-        }
-    }
 }
 
 class MusicSettings(val enabled: Boolean, whitelist: String, val channels: Array<String>,

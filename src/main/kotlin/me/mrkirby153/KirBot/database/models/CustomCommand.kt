@@ -1,5 +1,7 @@
 package me.mrkirby153.KirBot.database.models
 
+import me.mrkirby153.KirBot.user.Clearance
+
 @Table("custom_commands")
 @AutoIncrementing(false)
 class CustomCommand : Model() {
@@ -19,4 +21,7 @@ class CustomCommand : Model() {
 
     @Column("respect_whitelist")
     var respectWhitelist: Boolean = true
+
+    val clearance: Clearance
+        get() = Clearance.valueOf(clearanceRaw)
 }

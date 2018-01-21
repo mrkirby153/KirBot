@@ -37,7 +37,7 @@ fun User.getClearance(server: Guild): Clearance {
         return Clearance.SERVER_ADMINISTRATOR
     val shard = Bot.shardManager.getShard(server)
     if (shard != null) {
-        val managerRoles = server.kirbotGuild.settings.managerRoles
+        val managerRoles = server.kirbotGuild.settings.botManagerRoles
         server.getMember(this).roles.map { it.id }.forEach { role ->
             if (role in managerRoles) {
                 return Clearance.BOT_MANAGER

@@ -6,7 +6,7 @@ import me.mrkirby153.KirBot.command.args.ArgumentParseException
 import me.mrkirby153.KirBot.command.args.ArgumentParser
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.command.help.HelpManager
-import me.mrkirby153.KirBot.database.api.GuildCommand
+import me.mrkirby153.KirBot.database.models.CustomCommand
 import me.mrkirby153.KirBot.logger.ErrorLogger
 import me.mrkirby153.KirBot.sharding.Shard
 import me.mrkirby153.KirBot.user.Clearance
@@ -206,20 +206,20 @@ object CommandExecutor {
     private fun canExecuteInChannel(command: CommandSpec, channel: Channel): Boolean {
         val data = channel.guild.kirbotGuild.settings
         return if (command.respectWhitelist) {
-            if (data.whitelistedChannels.isEmpty())
+            if (data.cmdWhitelist.isEmpty())
                 return true
-            data.whitelistedChannels.any { it == channel.id }
+            data.cmdWhitelist.any { it == channel.id }
         } else {
             true
         }
     }
 
-    private fun canExecuteInChannel(command: GuildCommand, channel: Channel): Boolean {
+    private fun canExecuteInChannel(command: CustomCommand, channel: Channel): Boolean {
         val data = channel.guild.kirbotGuild.settings
         return if (command.respectWhitelist) {
-            if (data.whitelistedChannels.isEmpty())
+            if (data.cmdWhitelist.isEmpty())
                 return true
-            data.whitelistedChannels.any { it == channel.id }
+            data.cmdWhitelist.any { it == channel.id }
         } else {
             true
         }

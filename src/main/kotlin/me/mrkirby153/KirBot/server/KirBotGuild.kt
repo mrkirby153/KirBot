@@ -117,7 +117,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         rolesToAdd.addAll(this.roles.filter { it.id !in roles.map { it.id } })
 
         Bot.LOG.debug("Adding roles ${rolesToAdd.map { it.id }}")
-        Bot.LOG.debug("Adding roles ${rolesToRemove.map { it.id }}")
+        Bot.LOG.debug("Removing roles ${rolesToRemove.map { it.id }}")
 
         rolesToAdd.forEach {
             val role = me.mrkirby153.KirBot.database.models.guild.Role()

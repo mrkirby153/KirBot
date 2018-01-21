@@ -36,6 +36,7 @@ class Role : Model() {
         get() = guild?.getRoleById(this.id)
         set(role) {
             this.id = role!!.id
+            this.name = role.name
             field = role
         }
 }

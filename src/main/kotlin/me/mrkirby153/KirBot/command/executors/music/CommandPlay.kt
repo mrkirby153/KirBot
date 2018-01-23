@@ -5,10 +5,9 @@ import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.Arguments
 import me.mrkirby153.KirBot.command.args.CommandContext
-import me.mrkirby153.KirBot.database.api.MusicSettings
+import me.mrkirby153.KirBot.database.models.guild.MusicSettings
 import me.mrkirby153.KirBot.google.YoutubeSearch
 import me.mrkirby153.KirBot.music.AudioTrackLoader
-import me.mrkirby153.KirBot.music.MusicManager
 import me.mrkirby153.KirBot.utils.Context
 
 @Command("play")
@@ -35,7 +34,7 @@ class CommandPlay : MusicCommand(Arguments.restAsString("query/url")) {
             throw CommandException("I am already playing music in **${context.guild.selfMember.voiceState.channel.name}**. Join me there!")
         }
 
-        val musicSettings = MusicManager.musicSettings[context.guild.id] ?: throw CommandException("Error retrieving music settings")
+        val musicSettings = context.kirbotGuild.musicManager.settings
         val restrictMode = musicSettings.whitelistMode
         val channels = musicSettings.channels.filter { it.isNotEmpty() }
         val currChannel = context.member.voiceState.channel

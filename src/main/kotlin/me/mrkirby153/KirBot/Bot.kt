@@ -11,13 +11,11 @@ import com.sedmelluq.discord.lavaplayer.source.vimeo.VimeoAudioSourceManager
 import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager
 import me.mrkirby153.KirBot.command.CommandExecutor
 import me.mrkirby153.KirBot.database.DatabaseConnection
-import me.mrkirby153.KirBot.database.api.enableApiDebug
 import me.mrkirby153.KirBot.database.models.ConnectionFactory
 import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.error.UncaughtErrorReporter
 import me.mrkirby153.KirBot.logger.LogListener
 import me.mrkirby153.KirBot.redis.RedisConnector
-import me.mrkirby153.KirBot.redis.messaging.MessageDataStore
 import me.mrkirby153.KirBot.rss.FeedTask
 import me.mrkirby153.KirBot.scheduler.Scheduler
 import me.mrkirby153.KirBot.seen.SeenStore
@@ -57,8 +55,6 @@ object Bot {
 
     val seenStore = SeenStore()
 
-    val messageDataStore = MessageDataStore()
-
     val constants = Bot.javaClass.getResourceAsStream("/constants.properties").readProperties()
 
     val playerManager: AudioPlayerManager = DefaultAudioPlayerManager().apply {
@@ -81,7 +77,6 @@ object Bot {
     fun start(token: String) {
         val startupTime = System.currentTimeMillis()
         if (debug) {
-            enableApiDebug()
             (LOG as? Logger)?.let { logger ->
                 logger.level = Level.DEBUG
             }

@@ -4,7 +4,6 @@ import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.Arguments
 import me.mrkirby153.KirBot.command.args.CommandContext
-import me.mrkirby153.KirBot.music.MusicManager
 import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.embed.b
@@ -23,8 +22,7 @@ class CommandSkip : MusicCommand(Arguments.string("option", false)) {
 
     override fun exec(context: Context, cmdContext: CommandContext) {
         val musicManager = context.kirbotGuild.musicManager
-        val musicSettings = MusicManager.musicSettings[context.guild.id] ?: throw CommandException(
-                "Could not load music settings")
+        val musicSettings = musicManager.settings
 
         if (!musicManager.playing) {
             throw CommandException("I am not playing anything right now")

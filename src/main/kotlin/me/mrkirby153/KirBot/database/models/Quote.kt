@@ -1,11 +1,9 @@
 package me.mrkirby153.KirBot.database.models
 
-import java.math.BigInteger
-
 @Table("quotes")
 class Quote : Model() {
 
-    var id: BigInteger? = null
+    var id: Long? = null
 
     @Column("server_id")
     var serverId = ""

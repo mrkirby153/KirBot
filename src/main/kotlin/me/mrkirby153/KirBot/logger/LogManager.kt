@@ -1,6 +1,8 @@
 package me.mrkirby153.KirBot.logger
 
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.database.models.Model
+import me.mrkirby153.KirBot.database.models.guild.GuildMessage
 import me.mrkirby153.KirBot.utils.embed.b
 import me.mrkirby153.KirBot.utils.embed.embed
 import me.mrkirby153.KirBot.utils.kirbotGuild
@@ -15,39 +17,34 @@ class LogManager(private val guild: Guild) {
     val logChannel: TextChannel?
         get() {
             val chanId = guild.kirbotGuild.settings.logChannel ?: return null
-            if(chanId.isEmpty())
+            if (chanId.isEmpty())
                 return null
             return guild.getTextChannelById(chanId)
         }
 
     fun logMessageDelete(id: String) {
-        Bot.messageDataStore.getMessageContent(id, { msg ->
-            if (msg == null)
-                return@getMessageContent
-            if (msg.id == "-1")
-                return@getMessageContent
+        val msg = Model.first(GuildMessage::class.java, Pair("id", id)) ?: return
 
-            val author = Bot.shardManager.getUser(msg.author) ?: return@getMessageContent
-            val chan = guild.getTextChannelById(msg.channel) ?: return@getMessageContent
+        val author = Bot.shardManager.getUser(msg.author) ?: return
+        val chan = guild.getTextChannelById(msg.channel) ?: return
 
-            if (author.isBot)
-                return@getMessageContent
+        if (author.isBot)
+            return
 
-            logChannel?.sendMessage(embed("Message Deleted") {
-                color = Color.RED
-                author {
-                    user(author)
-                }
-                description {
-                    +"Message deleted in ${chan.asMention}"
-                    +"\n\n"
-                    +msg.message
-                }
-                timestamp {
-                    now()
-                }
-            }.build())?.queue()
-        })
+        logChannel?.sendMessage(embed("Message Deleted") {
+            color = Color.RED
+            author {
+                user(author)
+            }
+            description {
+                +"Message deleted in ${chan.asMention}"
+                +"\n\n"
+                +msg.message
+            }
+            timestamp {
+                now()
+            }
+        }.build())?.queue()
     }
 
     fun logBulkDelete(chan: TextChannel, count: Int) {
@@ -63,35 +60,32 @@ class LogManager(private val guild: Guild) {
     }
 
     fun logEdit(message: Message) {
-        Bot.messageDataStore.getMessageContent(message.id, { old ->
-            if (old == null)
-                return@getMessageContent
-            val user = message.author
-            if (user.isBot)
-                return@getMessageContent
-            if (old.message.equals(message.contentDisplay, true)) {
-                return@getMessageContent
-            }
+        val old = Model.first(GuildMessage::class.java, Pair("id", message.id)) ?: return
+        val user = message.author
+        if (user.isBot)
+            return
+        if (old.message.equals(message.contentDisplay, true)) {
+            return
+        }
 
-            logChannel?.sendMessage(embed("Message Edit") {
-                color = Color.CYAN
-                author {
-                    user(user)
-                }
-                description {
-                    +"Message edited in ${message.textChannel.asMention}"
-                    +"\n\n"
-                    +(b("Old: "))
-                    +old.message
-                    +"\n"
-                    +(b("New: "))
-                    +message.contentDisplay
-                }
-                timestamp {
-                    now()
-                }
-            }.build())?.queue()
-        })
+        logChannel?.sendMessage(embed("Message Edit") {
+            color = Color.CYAN
+            author {
+                user(user)
+            }
+            description {
+                +"Message edited in ${message.textChannel.asMention}"
+                +"\n\n"
+                +(b("Old: "))
+                +old.message
+                +"\n"
+                +(b("New: "))
+                +message.contentDisplay
+            }
+            timestamp {
+                now()
+            }
+        }.build())?.queue()
     }
 
     fun genericLog(title: String, description: String, color: Color? = Color.BLUE,

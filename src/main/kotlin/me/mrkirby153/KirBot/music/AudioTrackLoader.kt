@@ -39,7 +39,7 @@ class AudioTrackLoader(val manager: MusicManager, val requestedBy: User, val con
         } - toSubtract
         val position = manager.queue.indexOf(queuedSong)
         // Check track duration
-        val settings = MusicManager.musicSettings[context.guild.id] ?: return
+        val settings = context.kirbotGuild.musicManager.settings
         if (settings.maxSongLength != -1)
             if (p0.duration / (60 * 1000) > settings.maxSongLength) {
                 context.send().error("That song is too long. The max song length is ${Time.format(1,
@@ -110,7 +110,7 @@ class AudioTrackLoader(val manager: MusicManager, val requestedBy: User, val con
     }
 
     override fun playlistLoaded(p0: AudioPlaylist) {
-        val settings = MusicManager.musicSettings[context.guild.id] ?: return
+        val settings = context.kirbotGuild.musicManager.settings
         if (!settings.playlists) {
             context.send().error("Playlists cannot currently be played").queue()
             return

@@ -3,12 +3,15 @@ package me.mrkirby153.KirBot.rss
 import com.rometools.rome.io.SyndFeedInput
 import com.rometools.rome.io.XmlReader
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.database.api.RssFeed
+import me.mrkirby153.KirBot.database.models.Model
+import me.mrkirby153.KirBot.database.models.rss.FeedItem
+import me.mrkirby153.KirBot.database.models.rss.RssFeed
 import me.mrkirby153.KirBot.utils.embed.embed
 import me.mrkirby153.KirBot.utils.embed.inlineCode
 import net.dv8tion.jda.core.entities.Guild
 import java.awt.Color
 import java.net.URL
+import java.sql.Timestamp
 
 class FeedTask : Runnable {
 
@@ -24,11 +27,10 @@ class FeedTask : Runnable {
 
     companion object {
         fun checkFeeds(guild: Guild, ignoreFailed: Boolean = false) {
-            RssFeed.get(guild).queue { feeds ->
-                feeds.filter { ignoreFailed || !it.failed }.forEach { feed ->
-                    // Retrieve the feed
-                    checkFeed(feed)
-                }
+            val feeds = Model.get(RssFeed::class.java,
+                    Pair("server_id", guild.id))
+            feeds.filter { ignoreFailed || !it.failed }.forEach {
+                checkFeed(it)
             }
         }
 
@@ -39,12 +41,20 @@ class FeedTask : Runnable {
                 val input = SyndFeedInput()
                 val f = input.build(XmlReader(url))
 
-                f.entries.filter { !feed.isPosted(it.uri) }.forEach {
+                val posted = Model.get(FeedItem::class.java, Pair("rss_feed_id", feed.id)).map { it.guid }
+                f.entries.filter { it.uri !in posted }.forEach {
                     feed.channel?.sendMessage(it.link)?.queue()
-                    feed.posted(it.uri)
+                    val item = FeedItem()
+                    item.id = Model.randomId()
+                    item.feedId = feed.id
+                    item.guid = it.uri
+                    item.save()
                 }
-                feed.update(true).queue()
+                feed.failed = false
+                feed.lastCheck = Timestamp(System.currentTimeMillis())
+                feed.save()
             } catch (e: Exception) {
+                e.printStackTrace()
                 feed.channel?.sendMessage(embed("Feed Error") {
                     color = Color.RED
                     description {
@@ -55,7 +65,9 @@ class FeedTask : Runnable {
                         +"```$e```"
                     }
                 }.build())?.queue()
-                feed.update(false).queue()
+                feed.failed = true
+                feed.lastCheck = Timestamp(System.currentTimeMillis())
+                feed.save()
             }
         }
     }

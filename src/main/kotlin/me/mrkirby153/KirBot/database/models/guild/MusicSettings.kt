@@ -41,5 +41,18 @@ class MusicSettings : Model() {
         return "MusicSettings(id='$id', enabled=$enabled, modeRaw='$modeRaw', channels=$channels, maxQueueLength=$maxQueueLength, playlists=$playlists, maxSongLength=$maxSongLength, skipCooldown=$skipCooldown, skipTimer=$skipTimer)"
     }
 
+    @Transient
+    var whitelistMode: WhitelistMode = WhitelistMode.OFF
+        get() = WhitelistMode.valueOf(modeRaw)
+        set(mode) {
+            modeRaw = mode.toString()
+            field = mode
+        }
+
+    enum class WhitelistMode {
+        WHITELIST,
+        BLACKLIST,
+        OFF
+    }
 
 }

@@ -37,6 +37,7 @@ class Role : Model() {
         set(role) {
             this.id = role!!.id
             this.name = role.name
+            this.permissions = role.permissionsRaw
             field = role
         }
 }

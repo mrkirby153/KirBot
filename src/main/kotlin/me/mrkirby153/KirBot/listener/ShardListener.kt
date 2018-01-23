@@ -2,11 +2,11 @@ package me.mrkirby153.KirBot.listener
 
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.CommandExecutor
-import me.mrkirby153.KirBot.database.api.GuildRole
-import me.mrkirby153.KirBot.database.api.Quote
 import me.mrkirby153.KirBot.database.models.Model
+import me.mrkirby153.KirBot.database.models.Quote
 import me.mrkirby153.KirBot.database.models.guild.GuildMember
 import me.mrkirby153.KirBot.database.models.guild.GuildMemberRole
+import me.mrkirby153.KirBot.database.models.guild.Role
 import me.mrkirby153.KirBot.database.models.guild.ServerSettings
 import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.sharding.Shard
@@ -57,11 +57,11 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
     }
 
     override fun onGuildMemberJoin(event: GuildMemberJoinEvent) {
-        val member = Model.first(me.mrkirby153.KirBot.database.models.guild.GuildMember::class.java,
-                Pair("server_id", event.guild.id), Pair("user_id", event.user.id))
+        val member = Model.first(GuildMember::class.java, Pair("server_id", event.guild.id),
+                Pair("user_id", event.user.id))
         if (member == null) {
             Bot.LOG.debug("User has not joined before, or persistence is disabled")
-            val m = me.mrkirby153.KirBot.database.models.guild.GuildMember()
+            val m = GuildMember()
             m.id = Model.randomId()
             m.serverId = event.guild.id
             m.user = event.user
@@ -79,9 +79,8 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
 
     override fun onGuildMemberLeave(event: GuildMemberLeaveEvent) {
         if (!event.guild.kirbotGuild.settings.persistence) { // Delete the user if persistence is disabled
-            val member = Model.first(
-                    me.mrkirby153.KirBot.database.models.guild.GuildMember::class.java,
-                    Pair("server_id", event.guild.id), Pair("user_id", event.user.id))
+            val member = Model.first(GuildMember::class.java, Pair("server_id", event.guild.id),
+                    Pair("user_id", event.user.id))
             member?.roles?.forEach { it.delete() }
             member?.delete()
         }
@@ -106,10 +105,11 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
     }
 
     override fun onGuildMemberNickChange(event: GuildMemberNickChangeEvent) {
-       Model.first(GuildMember::class.java, Pair("server_id", event.guild.id), Pair("user_id", event.user.id))?.run {
-           nick = event.newNick
-           save()
-       }
+        Model.first(GuildMember::class.java, Pair("server_id", event.guild.id),
+                Pair("user_id", event.user.id))?.run {
+            nick = event.newNick
+            save()
+        }
         // TODO 1/20/18: Broadcast a log event
     }
 
@@ -130,11 +130,13 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
     }
 
     override fun onTextChannelDelete(event: TextChannelDeleteEvent) {
-        Model.first(me.mrkirby153.KirBot.database.models.Channel::class.java, event.channel.id)?.delete()
+        Model.first(me.mrkirby153.KirBot.database.models.Channel::class.java,
+                event.channel.id)?.delete()
     }
 
     override fun onVoiceChannelDelete(event: VoiceChannelDeleteEvent) {
-        Model.first(me.mrkirby153.KirBot.database.models.Channel::class.java, event.channel.id)?.delete()
+        Model.first(me.mrkirby153.KirBot.database.models.Channel::class.java,
+                event.channel.id)?.delete()
     }
 
     override fun onTextChannelCreate(event: TextChannelCreateEvent) {
@@ -172,59 +174,61 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
     }
 
     override fun onRoleCreate(event: RoleCreateEvent) {
-        GuildRole.create(event.role).queue()
+        val role = Role()
+        role.role = event.role
+        role.guild = event.guild
+        role.save()
     }
 
     override fun onGenericRoleUpdate(event: GenericRoleUpdateEvent) {
-        GuildRole.get(event.role).queue {
-            it.update().queue()
-        }
+        val role = Model.first(Role::class.java, Pair("id", event.role.id)) ?: return
+        role.role = event.role
+        role.save()
     }
 
     override fun onRoleDelete(event: RoleDeleteEvent) {
-        GuildRole.get(event.role).queue {
-            it.delete().queue()
-        }
+        Model.first(Role::class.java, Pair("id", event.role.id))?.delete()
     }
 
     override fun onMessageReactionAdd(event: MessageReactionAddEvent) {
         // TODO 2017-09-07: Quoting should be a privilege, not a right
-        if (event.reaction.emote.name == "\uD83D\uDDE8" /* Left speech bubble */) {
+        if (event.reaction.reactionEmote.name == "\uD83D\uDDE8" /* Left speech bubble */) {
             event.channel.getMessageById(event.messageId).queue { message ->
                 if (message != null) {
-                    Quote.get(event.guild).queue({ quotes ->
-                        if (event.messageId !in quotes.map { it.messageId }) {
-                            if (!message.content.isNullOrBlank())
-                                Quote.create(message).queue {
-                                    message.pin().queue()
-                                    event.channel.sendMessage(embed("Quote") {
-                                        color = Color.BLUE
-                                        description {
-                                            +"A new quote has been made by `${event.member.user.name}#${event.member.user.discriminator}`"
-                                        }
-                                        fields {
-                                            field {
-                                                title = "ID"
-                                                inline = true
-                                                description = it.id.toString()
-                                            }
-                                            field {
-                                                title = "Message"
-                                                inline = false
-                                                description = it.content
-                                            }
-                                        }
-                                    }.build()).queue()
-                                }
+                    val q = Model.first(Quote::class.java, Pair("message_id", event.messageId))
+                    if (q != null)
+                        return@queue // The quote already exists
+                    val quote = Quote()
+                    quote.serverId = event.guild.id
+                    quote.messageId = event.messageId
+                    quote.user = message.author.name
+                    quote.content = message.contentDisplay
+                    quote.save()
+                    event.channel.sendMessage(embed("Quote") {
+                        color = Color.BLUE
+                        description {
+                            +"A new quote has been made by  `${event.member.user.name}#${event.member.user.discriminator}`"
                         }
-                    })
+                        fields {
+                            field {
+                                title = "ID"
+                                inline = true
+                                description = quote.id.toString()
+                            }
+                            field {
+                                title = "Message"
+                                inline = false
+                                description = quote.content
+                            }
+                        }
+                    }.build()).queue()
                 }
             }
         }
-        if (event.reaction.emote.name == RED_CROSS) {
+        if (event.reaction.reactionEmote.name == RED_CROSS) {
             event.channel.getMessageById(event.messageId).queue { msg ->
                 if (msg.author.id == event.guild.selfMember.user.id) {
-                    if (msg.rawContent.startsWith("\u2063")) {
+                    if (msg.contentRaw.startsWith("\u2063")) {
                         if (msg.mentionedUsers.contains(event.user)) {
                             msg.delete().queue()
                         }

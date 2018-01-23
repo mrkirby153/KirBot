@@ -1,11 +1,10 @@
 package me.mrkirby153.KirBot.music
 
-import com.google.common.cache.CacheBuilder
-import com.google.common.cache.CacheLoader
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.database.api.MusicSettings
+import me.mrkirby153.KirBot.database.models.Model
+import me.mrkirby153.KirBot.database.models.guild.MusicSettings
 import me.mrkirby153.KirBot.redis.RedisConnector
 import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.entities.Message
@@ -14,7 +13,6 @@ import net.dv8tion.jda.core.entities.User
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.LinkedList
-import java.util.concurrent.TimeUnit
 
 class MusicManager(val guild: Guild) {
 
@@ -34,9 +32,12 @@ class MusicManager(val guild: Guild) {
 
     val trackScheduler = TrackScheduler(this)
 
-    var boundChannel : String? = null
+    var boundChannel: String? = null
 
     var nowPlayingMessage: Message? = null
+
+    val settings: MusicSettings
+        get() = Model.first(MusicSettings::class.java, Pair("id", this.guild.id))!!
 
     init {
         guild.audioManager.sendingHandler = sender
@@ -51,8 +52,8 @@ class MusicManager(val guild: Guild) {
         resetQueue()
     }
 
-    fun getBoundChannel() : TextChannel? {
-        if(this.boundChannel == null)
+    fun getBoundChannel(): TextChannel? {
+        if (this.boundChannel == null)
             return null
         return guild.getTextChannelById(this.boundChannel)
     }
@@ -96,14 +97,6 @@ class MusicManager(val guild: Guild) {
     }
 
     companion object {
-        val musicSettings = CacheBuilder.newBuilder().expireAfterWrite(30, TimeUnit.SECONDS).build(
-                object : CacheLoader<String, MusicSettings?>() {
-                    override fun load(p0: String): MusicSettings? {
-                        val guid = Bot.shardManager.getGuild(p0) ?: return null
-                        return MusicSettings.get(guid).execute()
-                    }
-                }
-        )
 
         fun parseMS(ms: Long): String = buildString {
             val totalSeconds = ms / 1000

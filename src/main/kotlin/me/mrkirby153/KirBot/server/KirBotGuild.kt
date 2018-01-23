@@ -1,7 +1,6 @@
 package me.mrkirby153.KirBot.server
 
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.database.api.ClearanceOverride
 import me.mrkirby153.KirBot.database.models.Channel
 import me.mrkirby153.KirBot.database.models.CustomCommand
 import me.mrkirby153.KirBot.database.models.Model
@@ -33,7 +32,6 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
 
     lateinit var settings: ServerSettings
     lateinit var customCommands: MutableList<CustomCommand>
-    lateinit var clearanceOverrides: MutableList<ClearanceOverride>
 
     val isReady: Boolean
         get() = isSynced && settingsLoaded
@@ -48,7 +46,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
     private val dataFile = Bot.files.data.child("servers").mkdirIfNotExist().child(
             "${this.id}.json")
 
-    private fun loadSettings() {
+    fun loadSettings() {
         Bot.LOG.debug("Loading settings for ${this}")
 
         settings = Model.first(ServerSettings::class.java,
@@ -56,8 +54,6 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
                 "Attempting to load settings for a guild that doesn't exist")
 
         customCommands = Model.get(CustomCommand::class.java, Pair("server", this.id)).toMutableList()
-
-        clearanceOverrides = ClearanceOverride.get(this).get()
 
         loadData()
 

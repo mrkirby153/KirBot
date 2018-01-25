@@ -23,6 +23,7 @@ class CommandDeleteGroup : BaseCommand(CommandCategory.GROUPS, Arguments.string(
 
         val group = groups.firstOrNull { it.name.equals(name, true) } ?: throw CommandException(
                 "A group with that name was not found!")
+        group.role?.delete()?.queue()
         group.delete()
 
         context.send().success("Deleted group `$name`").queue()

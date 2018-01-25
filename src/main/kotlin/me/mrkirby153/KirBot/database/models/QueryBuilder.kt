@@ -108,7 +108,7 @@ class QueryBuilder<T : Model>(private val model: Class<T>, val instance: T? = nu
                 val rs = ps.generatedKeys
                 if (rs.next()) {
                     if (Model.autoIncrementing(model)) {
-                        instance.set(Model.primaryKey(model), rs.getObject(1))
+                        instance.set(Model.primaryKey(model), rs.getLong(1))
                     }
                 }
             }

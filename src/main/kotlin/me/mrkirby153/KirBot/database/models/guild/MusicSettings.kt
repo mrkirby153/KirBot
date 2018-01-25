@@ -14,7 +14,7 @@ class MusicSettings : Model() {
     @PrimaryKey
     var id = ""
 
-    var enabled = false
+    var enabled = true
 
     @Column("mode")
     private var modeRaw = "OFF"
@@ -35,7 +35,7 @@ class MusicSettings : Model() {
     var skipCooldown = 0
 
     @Column("skip_timer")
-    var skipTimer = 0
+    var skipTimer = 30
 
     override fun toString(): String {
         return "MusicSettings(id='$id', enabled=$enabled, modeRaw='$modeRaw', channels=$channels, maxQueueLength=$maxQueueLength, playlists=$playlists, maxSongLength=$maxSongLength, skipCooldown=$skipCooldown, skipTimer=$skipTimer)"

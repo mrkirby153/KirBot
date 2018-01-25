@@ -7,6 +7,7 @@ import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.database.models.group.Group
 import me.mrkirby153.KirBot.database.models.guild.GuildMember
 import me.mrkirby153.KirBot.database.models.guild.GuildMemberRole
+import me.mrkirby153.KirBot.database.models.guild.MusicSettings
 import me.mrkirby153.KirBot.database.models.guild.ServerSettings
 import me.mrkirby153.KirBot.logger.LogManager
 import me.mrkirby153.KirBot.music.MusicManager
@@ -75,6 +76,9 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
             guild.id = this.id
             guild.realname = RealnameSetting.OFF
             guild.save()
+            val musicSettings = MusicSettings()
+            musicSettings.id = this.id
+            musicSettings.save()
         }
 
         if (!settingsLoaded)

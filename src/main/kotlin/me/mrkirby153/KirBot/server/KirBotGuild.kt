@@ -191,8 +191,13 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         members.forEach { m ->
             val toRemove = mutableListOf<GuildMemberRole>()
             val toAdd = mutableListOf<Role>()
+            if(m.user == null) {
+                Bot.LOG.debug("Removing ${m.userId} as they no longer exist")
+                m.delete()
+                return@forEach
+            }
 
-            val member = getMemberById(m.user?.id) ?: return@forEach
+            val member = getMemberById(m.user!!.id) ?: return@forEach
             val current = member.roles
 
             toRemove.addAll(m.roles.filter { it.role?.id !in current.map { it.id } })

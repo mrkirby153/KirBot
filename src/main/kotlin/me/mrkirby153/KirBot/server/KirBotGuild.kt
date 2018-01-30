@@ -54,7 +54,8 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
                 Pair("id", this.id)) ?: throw IllegalStateException(
                 "Attempting to load settings for a guild that doesn't exist")
 
-        customCommands = Model.get(CustomCommand::class.java, Pair("server", this.id)).toMutableList()
+        customCommands = Model.get(CustomCommand::class.java,
+                Pair("server", this.id)).toMutableList()
 
         loadData()
 
@@ -148,6 +149,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
                 Bot.LOG.debug("Role was deleted. Removing from the database")
                 g.members.forEach { it.delete() }
                 g.delete()
+                return@forEach
             }
             this.members.filter { g.role !in it.roles }.filter { it.user.id !in g.members.map { it.id } }.forEach {
                 this.controller.removeRolesFromMember(it, g.role).queue()
@@ -191,7 +193,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         members.forEach { m ->
             val toRemove = mutableListOf<GuildMemberRole>()
             val toAdd = mutableListOf<Role>()
-            if(m.user == null) {
+            if (m.user == null) {
                 Bot.LOG.debug("Removing ${m.userId} as they no longer exist")
                 m.delete()
                 return@forEach

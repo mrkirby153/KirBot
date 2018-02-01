@@ -9,6 +9,7 @@ import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.database.models.Quote
 import me.mrkirby153.KirBot.utils.Context
+import me.mrkirby153.KirBot.utils.botUrl
 import me.mrkirby153.KirBot.utils.escapeMentions
 
 @Command("quote")
@@ -21,5 +22,15 @@ class CommandQuote : BaseCommand(false, CommandCategory.FUN, Arguments.number("i
             throw CommandException("That quote doesn't exist")
         }
         context.channel.sendMessage("\"${q.content.escapeMentions()}\" \n - ${q.user}").queue()
+    }
+}
+
+@Command("quotes")
+class CommandQuotes : BaseCommand(false, CommandCategory.FUN) {
+    override fun execute(context: Context, cmdContext: CommandContext) {
+        val quoteCount = Model.get(Quote::class.java, Pair("server_id", context.guild.id)).size
+        context.channel.sendMessage(
+                ":left_speech_bubble: **Quotes**\n\n Total: $quoteCount \n\n Full List: " + botUrl(
+                        "${context.guild.id}/quotes")).queue()
     }
 }

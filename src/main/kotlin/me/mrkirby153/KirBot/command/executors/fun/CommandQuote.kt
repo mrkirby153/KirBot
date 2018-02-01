@@ -9,6 +9,7 @@ import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.database.models.Quote
 import me.mrkirby153.KirBot.utils.Context
+import me.mrkirby153.KirBot.utils.escapeMentions
 
 @Command("quote")
 class CommandQuote : BaseCommand(false, CommandCategory.FUN, Arguments.number("id")) {
@@ -19,6 +20,6 @@ class CommandQuote : BaseCommand(false, CommandCategory.FUN, Arguments.number("i
         if (q.serverId != context.guild.id) {
             throw CommandException("That quote doesn't exist")
         }
-        context.channel.sendMessage("\"${q.content}\" \n - ${q.user}").queue()
+        context.channel.sendMessage("\"${q.content.escapeMentions()}\" \n - ${q.user}").queue()
     }
 }

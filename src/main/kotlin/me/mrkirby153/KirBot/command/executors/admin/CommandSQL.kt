@@ -36,10 +36,9 @@ class CommandSQL : BaseCommand(false, CommandCategory.ADMIN, Arguments.restAsStr
                             val builder = TableBuilder(columns.toTypedArray())
 
                             while (rs.next()) {
-                                val data = mutableListOf<String>()
+                                val data = mutableListOf<String?>()
                                 columns.forEach {
-                                    if (rs.getString(it) != null)
-                                        data.add(rs.getString(it))
+                                    data.add(rs.getString(it))
                                 }
                                 builder.addRow(data.toTypedArray())
                             }
@@ -55,8 +54,8 @@ class CommandSQL : BaseCommand(false, CommandCategory.ADMIN, Arguments.restAsStr
                             context.channel.sendMessage(
                                     ":ballot_box_with_check: ${statement.updateCount} row(s) updated").queue()
                         }
-                    } catch(ex: SQLException){
-                        context.channel.sendMessage(":x: Error: ```${ex.message}```").queue{msg ->
+                    } catch (ex: SQLException) {
+                        context.channel.sendMessage(":x: Error: ```${ex.message}```").queue { msg ->
                             msg.deleteAfter(10, TimeUnit.SECONDS)
                             context.deleteAfter(10, TimeUnit.SECONDS)
                         }

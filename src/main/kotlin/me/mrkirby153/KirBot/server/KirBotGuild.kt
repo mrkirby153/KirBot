@@ -175,7 +175,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         Bot.LOG.debug("Adding ${newMembers.map { it.user.id }}")
         newMembers.forEach {
             val member = GuildMember()
-            member.id = keyGen.generate()
+            member.id = Model.randomId()
             member.user = it.user
             member.serverId = this.id
             member.nick = it.nickname

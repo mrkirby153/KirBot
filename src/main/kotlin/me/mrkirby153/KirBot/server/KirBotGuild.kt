@@ -15,6 +15,7 @@ import me.mrkirby153.KirBot.realname.RealnameHandler
 import me.mrkirby153.KirBot.realname.RealnameSetting
 import me.mrkirby153.KirBot.utils.getMember
 import me.mrkirby153.kcutils.child
+import me.mrkirby153.kcutils.createFileIfNotExist
 import me.mrkirby153.kcutils.mkdirIfNotExist
 import me.mrkirby153.kcutils.utils.IdGenerator
 import net.dv8tion.jda.core.entities.Guild
@@ -45,7 +46,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
 
     var extraData = JSONObject()
     private val dataFile = Bot.files.data.child("servers").mkdirIfNotExist().child(
-            "${this.id}.json")
+            "${this.id}.json").createFileIfNotExist().apply { writeText("{}") }
 
     fun loadSettings() {
         Bot.LOG.debug("Loading settings for ${this}")
@@ -75,11 +76,14 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
             Bot.LOG.debug("Guild does not exist... Creating")
             guild = ServerSettings()
             guild.id = this.id
+            guild.name = this.name
             guild.realname = RealnameSetting.OFF
             guild.save()
             val musicSettings = MusicSettings()
             musicSettings.id = this.id
             musicSettings.save()
+            sync()
+            return
         }
 
         if (!settingsLoaded)

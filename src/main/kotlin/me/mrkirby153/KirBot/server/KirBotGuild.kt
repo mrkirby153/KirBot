@@ -9,6 +9,7 @@ import me.mrkirby153.KirBot.database.models.guild.GuildMember
 import me.mrkirby153.KirBot.database.models.guild.GuildMemberRole
 import me.mrkirby153.KirBot.database.models.guild.MusicSettings
 import me.mrkirby153.KirBot.database.models.guild.ServerSettings
+import me.mrkirby153.KirBot.infraction.Infractions
 import me.mrkirby153.KirBot.logger.LogManager
 import me.mrkirby153.KirBot.music.MusicManager
 import me.mrkirby153.KirBot.realname.RealnameHandler
@@ -225,6 +226,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
             }
             toRemove.forEach { it.delete() }
         }
+        Infractions.importFromBanlist(this)
     }
 
     fun saveData() {

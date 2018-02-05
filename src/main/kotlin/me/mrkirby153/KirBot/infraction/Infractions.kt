@@ -1,7 +1,7 @@
 package me.mrkirby153.KirBot.infraction
 
-import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.models.Model
+import me.mrkirby153.KirBot.database.models.QueryBuilder
 import me.mrkirby153.KirBot.server.KirBotGuild
 import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.entities.User
@@ -48,7 +48,7 @@ object Infractions {
         infraction.issuerId = issuer.id
         infraction.reason = reason
         infraction.type = type
-        infraction.created_at = Timestamp(System.currentTimeMillis())
+        infraction.createdAt = Timestamp(System.currentTimeMillis())
         infraction.save()
     }
 
@@ -73,25 +73,20 @@ object Infractions {
 
 
     fun importFromBanlist(guild: KirBotGuild) {
-        val hasImported = guild.extraData.optBoolean("banlist_imported", false)
-        if (hasImported)
-            return
-        Bot.LOG.debug("Importing the ban list for guild ${guild.id} (${guild.name})")
-        var count = 0
         guild.banList.queue { bans ->
-            bans.forEach {
-                val infraction = Infraction()
-                infraction.type = InfractionType.BAN
-                infraction.issuerId = null
-                infraction.reason = it.reason
-                infraction.userId = it.user.id
-                infraction.save()
-                count++
-            }
+            bans.filter {
+                !QueryBuilder(Infraction::class).where("user_id", it.user.id).where(
+                        "type", "ban").exists()
+            }.forEach {
+                        val infraction = Infraction()
+                        infraction.type = InfractionType.BAN
+                        infraction.issuerId = null
+                        infraction.reason = it.reason
+                        infraction.userId = it.user.id
+                        infraction.guild = guild.id
+                        infraction.createdAt = Timestamp(System.currentTimeMillis())
+                        infraction.save()
+                    }
         }
-
-        guild.extraData.put("banlist_imported", true)
-        guild.saveData()
-        Bot.LOG.debug("Imported $count bans")
     }
 }

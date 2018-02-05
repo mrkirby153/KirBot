@@ -52,7 +52,7 @@ class QueryBuilder<T : Model>(private val model: Class<T>, val instance: T? = nu
                 selectors.forEach { s ->
                     ps.setObject(index++, s.value)
                 }
-
+                println(ps)
                 ps.executeQuery().use { rs ->
                     while (rs.next()) {
                         val instance = model.newInstance()
@@ -103,7 +103,6 @@ class QueryBuilder<T : Model>(private val model: Class<T>, val instance: T? = nu
                 colData.values.forEach { value ->
                     ps.setObject(index++, value)
                 }
-                println(ps)
                 ps.executeUpdate()
                 val rs = ps.generatedKeys
                 if (rs.next()) {
@@ -121,8 +120,6 @@ class QueryBuilder<T : Model>(private val model: Class<T>, val instance: T? = nu
      * @return True if the model exists
      */
     fun exists(): Boolean {
-        if (instance == null)
-            throw IllegalArgumentException("instance is null")
         populateSelectors()
         val query = "SELECT 1 FROM `${Model.getTable(model)}` ${buildSelectorStatement()}"
         Model.factory.getConnection().use {

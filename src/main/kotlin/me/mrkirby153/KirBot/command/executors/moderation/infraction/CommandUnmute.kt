@@ -1,4 +1,4 @@
-package me.mrkirby153.KirBot.command.executors.moderation
+package me.mrkirby153.KirBot.command.executors.moderation.infraction
 
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command

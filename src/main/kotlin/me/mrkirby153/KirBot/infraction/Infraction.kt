@@ -12,7 +12,7 @@ import java.sql.Timestamp
 class Infraction : Model() {
 
     @PrimaryKey
-    var id: Int = 0
+    var id: Long? = null
 
     @Column("user_id")
     var userId: String = ""
@@ -32,6 +32,10 @@ class Infraction : Model() {
     @Column("revoked_at")
     var revokedAt: Timestamp? = null
 
+    @Column("created_at")
+    var createdAt: Timestamp? = null
+
+    @Transient
     var type: InfractionType = InfractionType.UNKNOWN
         get() = InfractionType.getType(this.typeRaw)
         set(type) {

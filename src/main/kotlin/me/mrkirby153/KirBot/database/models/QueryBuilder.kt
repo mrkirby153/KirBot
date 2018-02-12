@@ -200,8 +200,12 @@ class QueryBuilder<T : Model>(private val model: Class<T>, val instance: T? = nu
      * @return The selector statement
      */
     private fun buildSelectorStatement() = buildString {
-        append("WHERE ")
-        append(selectors.joinToString("AND ") { "`${it.column}` ${it.test} ?" })
+        if(selectors.isNotEmpty()) {
+            append("WHERE ")
+            append(selectors.joinToString("AND ") { "`${it.column}` ${it.test} ?" })
+        } else {
+            append("")
+        }
     }
 
     private data class QuerySelector(val column: String, val test: String, val value: Any)

@@ -52,7 +52,6 @@ class QueryBuilder<T : Model>(private val model: Class<T>, val instance: T? = nu
                 selectors.forEach { s ->
                     ps.setObject(index++, s.value)
                 }
-                println(ps)
                 ps.executeQuery().use { rs ->
                     while (rs.next()) {
                         val instance = model.newInstance()

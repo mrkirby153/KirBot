@@ -22,7 +22,7 @@ class DatabaseConnection(host: String, port: Int, database: String,
         cfg.password = password
         cfg.leakDetectionThreshold = if(Bot.debug) 2000 else 0
 
-        println("Connecting to ${cfg.jdbcUrl}")
+        Bot.LOG.debug("Connecting to ${cfg.jdbcUrl}")
 
         // Optimizations for the connections
         cfg.addDataSourceProperty("cachePrepStmts", true)

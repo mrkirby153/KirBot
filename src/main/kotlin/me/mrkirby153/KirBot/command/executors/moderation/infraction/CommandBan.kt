@@ -34,8 +34,7 @@ class CommandBan : BaseCommand(false, CommandCategory.MODERATION, Arguments.user
             throw CommandException("You cannot kick this user")
 
         Infractions.ban(user.id, context.guild, context.author, reason, 7)
-        context.channel.sendMessage(
-                ":ok_hand: Banned **${user.name}#${user.discriminator}** (`${user.id}`) (`$reason`)").queue()
+        context.send().success("Banned **${user.name}#${user.discriminator}** (`${user.id}`) (`$reason`)", true).queue()
     }
 }
 
@@ -49,7 +48,7 @@ class CommandForceBan : BaseCommand(false, CommandCategory.MODERATION, Arguments
                 "Please specify a reason")
 
         Infractions.ban(user, context.guild, context.author, reason, 7)
-        context.channel.sendMessage(":ok_hand: Banned `$user` (`$reason`)").queue()
+        context.send().success("Banned `$user` (`$reason`)", true).queue()
     }
 }
 
@@ -60,6 +59,6 @@ class CommandUnban : BaseCommand(false, CommandCategory.MODERATION, Arguments.st
         val user = cmdContext.get<String>("user") ?: throw CommandException("Please specify a user")
 
         Infractions.unban(user, context.guild, context.author)
-        context.channel.sendMessage(":ok_hand: Unbanned `$user`").queue()
+        context.send().success("Unbanned `$user`", true).queue()
     }
 }

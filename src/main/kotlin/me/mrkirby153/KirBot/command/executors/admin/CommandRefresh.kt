@@ -23,7 +23,6 @@ class CommandRefresh : BaseCommand(CommandCategory.ADMIN, Arguments.string("item
                 context.success()
             }
             else -> {
-                context.fail()
                 context.send().error("Not a valid item to refresh!").queue()
             }
         }

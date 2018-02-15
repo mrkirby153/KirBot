@@ -7,6 +7,8 @@ import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.RequiresClearance
 import me.mrkirby153.KirBot.command.args.Arguments
 import me.mrkirby153.KirBot.command.args.CommandContext
+import me.mrkirby153.KirBot.infraction.InfractionType
+import me.mrkirby153.KirBot.infraction.Infractions
 import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.checkPermissions
@@ -18,20 +20,29 @@ import java.awt.Color
 
 @Command("mute,shutup,quiet")
 @RequiresClearance(Clearance.BOT_MANAGER)
-class CommandMute : BaseCommand(false, CommandCategory.MODERATION, Arguments.user("user")) {
+class CommandMute : BaseCommand(false, CommandCategory.MODERATION, Arguments.user("user"),
+        Arguments.restAsString("reason")) {
     override fun execute(context: Context, cmdContext: CommandContext) {
-        val user = cmdContext.get<User>("user") ?: throw CommandException("Please specify a user to mute")
-
-        val member = user.getMember(context.guild) ?: throw CommandException("This user isn't a part of the guild!")
+        val user = cmdContext.get<User>("user") ?: throw CommandException(
+                "Please specify a user to mute")
+        val reason = cmdContext.get<String>("reason") ?: throw CommandException(
+                "Please specify a reason")
+        val member = user.getMember(context.guild) ?: throw CommandException(
+                "This user isn't a part of the guild!")
         if (context.channel !is TextChannel)
             throw CommandException("This command won't work in PMs")
 
         if (!context.channel.checkPermissions(Permission.MANAGE_CHANNEL))
             throw CommandException("Missing the required permission: `Manage Channel`")
         val channel = context.channel as TextChannel
-        val override = channel.getPermissionOverride(member) ?: channel.createPermissionOverride(member).complete()
+        val override = channel.getPermissionOverride(member) ?: channel.createPermissionOverride(
+                member).complete()
         override.manager.deny(Permission.MESSAGE_WRITE).queue()
-        context.success()
-        context.kirbotGuild.logManager.genericLog("User Muted", "${context.author.name} has muted ${member.user.name} in ${context.textChannel.asMention}", Color.MAGENTA, context.author)
+        context.send().success("Muted **${user.name}#${user.discriminator}** (`$reason`)", true).queue()
+        Infractions.createInfraction(user.id, context.guild, context.author, reason,
+                InfractionType.MUTE)
+        context.kirbotGuild.logManager.genericLog("User Muted",
+                "${context.author.name} has muted ${member.user.name} in ${context.textChannel.asMention}",
+                Color.MAGENTA, context.author)
     }
 }

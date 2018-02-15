@@ -23,6 +23,7 @@ class CommandSeen : BaseCommand(CommandCategory.FUN, Arguments.user("user")) {
             }.rest().queue()
         } else {
             context.send().embed("Seen") {
+                thumbnail = user.effectiveAvatarUrl
                 fields {
                     field {
                         title = "Last Message"

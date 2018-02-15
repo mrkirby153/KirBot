@@ -29,8 +29,8 @@ class CommandRemindMe : BaseCommand(false, CommandCategory.FUN, Arguments.string
 
         Scheduler.submit(RemindAction(context.guild.id, context.channel.id, context.author.id,
                 query), time, TimeUnit.MILLISECONDS)
-        context.channel.sendMessage("Ok, I will remind you in `${Time.format(1, time,
-                smallest = Time.TimeUnit.SECONDS)}` about `$query`").queue{
+        context.send().success("Ok, I will remind you in `${Time.format(1, time,
+                smallest = Time.TimeUnit.SECONDS)}` about `$query`", true).queue{
             it.deleteAfter(10, TimeUnit.SECONDS)
             context.deleteAfter(10, TimeUnit.SECONDS)
         }

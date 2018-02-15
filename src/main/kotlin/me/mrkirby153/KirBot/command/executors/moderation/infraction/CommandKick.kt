@@ -32,6 +32,6 @@ class CommandKick : BaseCommand(false, CommandCategory.MODERATION, Arguments.use
         Infractions.kick(user, context.guild, context.author, reason)
         context.kirbotGuild.logManager.genericLog("User Kicked",
                 "${user.name}#${user.discriminator} was kicked by ${context.author.asMention}. \n\n**Reason:** $reason")
-        context.channel.sendMessage(":ok_hand: Kicked **${user.name}#${user.discriminator}** (`$reason`)").queue()
+        context.send().success("Kicked **${user.name}#${user.discriminator}** (`$reason`)", true).queue()
     }
 }

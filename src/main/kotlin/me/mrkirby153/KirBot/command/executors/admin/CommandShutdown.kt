@@ -8,16 +8,12 @@ import me.mrkirby153.KirBot.command.RequiresClearance
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
-import java.awt.Color
 
 @Command("shutdown")
 @RequiresClearance(Clearance.BOT_OWNER)
 class CommandShutdown : BaseCommand(false, CommandCategory.ADMIN) {
 
     override fun execute(context: Context, cmdContext: CommandContext) {
-        context.send().embed("Shut Down") {
-            color = Color.RED
-            description { +"Good bye! :wave:" }
-        }.rest().queue { Bot.stop() }
+        context.send().success("Shutting down...", true).queue{ Bot.stop() }
     }
 }

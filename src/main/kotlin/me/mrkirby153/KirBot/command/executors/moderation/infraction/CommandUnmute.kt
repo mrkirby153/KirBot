@@ -7,6 +7,8 @@ import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.RequiresClearance
 import me.mrkirby153.KirBot.command.args.Arguments
 import me.mrkirby153.KirBot.command.args.CommandContext
+import me.mrkirby153.KirBot.database.models.Model
+import me.mrkirby153.KirBot.infraction.Infraction
 import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.checkPermissions
@@ -15,6 +17,7 @@ import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.User
 import java.awt.Color
+import java.sql.Timestamp
 
 @Command("unmute,unquiet")
 @RequiresClearance(Clearance.BOT_MANAGER)
@@ -32,10 +35,7 @@ class CommandUnmute : BaseCommand(false, CommandCategory.MODERATION, Arguments.u
             throw CommandException("Missing the required permission: `Manage Channel`")
         val override = (context.channel as TextChannel).getPermissionOverride(member)
         if (override == null || !override.denied.contains(Permission.MESSAGE_WRITE)) {
-            context.send().embed("Warning") {
-                color = Color.YELLOW
-                description { +"That user isn't muted!" }
-            }.rest().queue()
+            throw CommandException("That user isn't muted!")
             return
         }
         if (override.denied.size > 1) {
@@ -44,7 +44,13 @@ class CommandUnmute : BaseCommand(false, CommandCategory.MODERATION, Arguments.u
         } else {
             override.delete().queue()
         }
-        context.success()
+        // Remove the infraction
+        Model.get(Infraction::class.java, Pair("user_id", user.id), Pair("guild", context.guild.id), Pair("type", "mute"), Pair("active", true)).forEach {
+            it.active = false
+            it.revokedAt = Timestamp(System.currentTimeMillis())
+            it.save()
+        }
+        context.send().success("Unmuted **${user.name}#${user.discriminator}**", true).queue()
         context.kirbotGuild.logManager.genericLog("User Unmuted",
                 "${context.author.name} has unmuted ${member.user.name} in ${context.textChannel.asMention}",
                 Color.MAGENTA, context.author)

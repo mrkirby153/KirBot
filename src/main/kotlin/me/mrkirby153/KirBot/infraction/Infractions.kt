@@ -40,7 +40,7 @@ object Infractions {
         }
     }
 
-    private fun createInfraction(user: String, guild: Guild, issuer: User, reason: String?,
+    fun createInfraction(user: String, guild: Guild, issuer: User, reason: String?,
                                  type: InfractionType) {
         val infraction = Infraction()
         infraction.userId = user

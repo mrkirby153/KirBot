@@ -22,14 +22,14 @@ class CommandColor : BaseCommand(CommandCategory.FUN, Arguments.string("color"))
 
         if (colorString.equals("reset", true)) {
             resetColor(context.author.getMember(context.guild))
-            context.send().success("Reset your color").queue()
+            context.send().success("Reset your color", true).queue()
             return
         }
 
         try {
             val color = Color.decode(colorString)
             setColorRole(context, context.author.getMember(context.guild), color)
-            context.send().success("Set your roleId color to `$colorString`").queue()
+            context.send().success("Set your color to `$colorString`", true).queue()
         } catch (e: NumberFormatException) {
             context.send().error("That is not a valid hexadecimal color!").queue()
         }

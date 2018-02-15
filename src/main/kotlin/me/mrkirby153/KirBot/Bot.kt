@@ -28,6 +28,9 @@ import me.mrkirby153.KirBot.utils.redis.RedisConnection
 import me.mrkirby153.kcutils.Time
 import me.mrkirby153.kcutils.readProperties
 import net.dv8tion.jda.core.OnlineStatus
+import okhttp3.Request
+import org.json.JSONObject
+import org.json.JSONTokener
 import org.slf4j.LoggerFactory
 import java.sql.Connection
 import java.util.concurrent.Executors
@@ -48,8 +51,7 @@ object Bot {
 
     val properties = files.properties.readProperties()
 
-    val numShards: Int = if (properties.getProperty(
-            "shards") == null) 1 else properties.getProperty("shards").toInt()
+    var numShards: Int = 1
 
     val admins: List<String> = files.admins.run { this.readLines() }
 
@@ -91,6 +93,15 @@ object Bot {
         if (initialized)
             throw IllegalStateException("Bot has already been initialized!")
         initialized = true
+
+        // Get the number of shards to start with
+        numShards = if (properties.getProperty("shards") == null || properties.getProperty(
+                        "shards") == "auto") {
+            LOG.info("Automatically determining the number of shards to use")
+            getNumShards(token)
+        } else {
+            properties.getProperty("shards").toInt()
+        }
 
         // Attempt database initialization
         LOG.info("Initializing database connection")
@@ -162,6 +173,27 @@ object Bot {
         shardManager.shutdown()
         LOG.info("Bot is disconnecting from Discord")
         System.exit(0)
+    }
+
+    private fun getNumShards(token: String): Int {
+        LOG.debug("Asking Discord for the number of shards to use...")
+        val request = Request.Builder().apply {
+            url("https://discordapp.com/api/v6/gateway/bot")
+            header("Authorization", "Bot $token")
+        }.build()
+        val response = HttpUtils.CLIENT.newCall(request).execute()
+        if(response.code() != 200)
+            throw RuntimeException("Received non-success code (${response.code()}) from Discord, aborting")
+        val body = response.body()?.string()
+        if (body.isNullOrEmpty()) {
+            throw RuntimeException(
+                    "Could not determine the number of shards. Must be specified manually")
+        }
+        LOG.debug("Received body $body")
+        val json = JSONObject(JSONTokener(body))
+        val shards = json.getInt("shards")
+        LOG.debug("Discord returned $shards shards.")
+        return shards
     }
 
 }

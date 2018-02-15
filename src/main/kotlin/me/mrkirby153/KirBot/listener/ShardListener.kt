@@ -33,6 +33,7 @@ import net.dv8tion.jda.core.events.guild.voice.GuildVoiceJoinEvent
 import net.dv8tion.jda.core.events.guild.voice.GuildVoiceLeaveEvent
 import net.dv8tion.jda.core.events.guild.voice.GuildVoiceMoveEvent
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent
+import net.dv8tion.jda.core.events.message.MessageUpdateEvent
 import net.dv8tion.jda.core.events.message.react.MessageReactionAddEvent
 import net.dv8tion.jda.core.events.role.RoleCreateEvent
 import net.dv8tion.jda.core.events.role.RoleDeleteEvent
@@ -54,6 +55,18 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
         val context = Context(event)
 
         CommandExecutor.execute(context)
+    }
+
+    override fun onMessageUpdate(event: MessageUpdateEvent) {
+        // If the message was edited
+       if(event.channel.latestMessageId == event.messageId){
+           // Only process if it's the last message
+           if(event.author == shard.selfUser){
+               return // Lets not update the message
+           }
+           val context = Context(shard, event.message)
+           CommandExecutor.execute(context)
+       }
     }
 
     override fun onGuildMemberJoin(event: GuildMemberJoinEvent) {

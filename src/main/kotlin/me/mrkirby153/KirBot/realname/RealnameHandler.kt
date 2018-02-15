@@ -17,13 +17,15 @@ class RealnameHandler(var guild: KirBotGuild) {
         }
 
         if (settings.realname == RealnameSetting.OFF) {
-            if (!guild.extraData.optBoolean("hasResetNames", false)) {
+            var hasReset = guild.extraData.optBoolean("hasResetNames", false)
+            if (!hasReset) {
                 guild.members.forEach {
                     setNickname(it, null)
                 }
-                guild.extraData.put("hasResetNames", true)
-                guild.saveData()
+                hasReset = true
             }
+            guild.extraData.put("hasResetNames", hasReset)
+            guild.saveData()
             return
         }
 

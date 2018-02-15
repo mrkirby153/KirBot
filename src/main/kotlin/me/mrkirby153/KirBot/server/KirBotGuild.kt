@@ -16,7 +16,6 @@ import me.mrkirby153.KirBot.realname.RealnameHandler
 import me.mrkirby153.KirBot.realname.RealnameSetting
 import me.mrkirby153.KirBot.utils.getMember
 import me.mrkirby153.kcutils.child
-import me.mrkirby153.kcutils.createFileIfNotExist
 import me.mrkirby153.kcutils.mkdirIfNotExist
 import me.mrkirby153.kcutils.utils.IdGenerator
 import net.dv8tion.jda.core.entities.Guild
@@ -25,7 +24,6 @@ import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.VoiceChannel
 import org.json.JSONObject
 import org.json.JSONTokener
-import java.io.FileWriter
 
 class KirBotGuild(val guild: Guild) : Guild by guild {
 
@@ -46,8 +44,13 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
     val logManager = LogManager(this)
 
     var extraData = JSONObject()
-    private val dataFile = Bot.files.data.child("servers").mkdirIfNotExist().child(
-            "${this.id}.json").createFileIfNotExist().apply { writeText("{}") }
+    private val dataFile = Bot.files.data.child("servers").mkdirIfNotExist().child("${this.id}.json").apply {
+        if(!exists()) {
+            Bot.LOG.debug("Data file doesn't exist for ${guild} creating...")
+            createNewFile()
+            writeText("{}")
+        }
+    }
 
     fun loadSettings() {
         Bot.LOG.debug("Loading settings for ${this}")
@@ -230,14 +233,13 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
     }
 
     fun saveData() {
+        Bot.LOG.debug("Saving data for $guild")
         val json = this.extraData.toString()
-        FileWriter(dataFile).use {
-            it.write(json)
-            it.flush()
-        }
+        dataFile.writeText(json)
     }
 
     fun loadData() {
+        Bot.LOG.debug("Loading data for $guild")
         dataFile.inputStream().use {
             this.extraData = JSONObject(JSONTokener(it))
         }

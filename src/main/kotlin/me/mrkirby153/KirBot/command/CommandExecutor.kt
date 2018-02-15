@@ -30,7 +30,8 @@ object CommandExecutor {
     val helpManager = HelpManager()
 
     private val executorThread = Executors.newFixedThreadPool(2,
-            ThreadFactoryBuilder().setDaemon(true).setNameFormat("KirBot Command Executor-%d").build())
+            ThreadFactoryBuilder().setDaemon(true).setNameFormat(
+                    "KirBot Command Executor-%d").build())
 
     fun loadAll() {
         Bot.LOG.info("Starting loading of commands, this may take a while")
@@ -65,16 +66,24 @@ object CommandExecutor {
 
             val prefix = settings.cmdDiscriminator
 
+            val isMention = message.matches(Regex("^<@!?${context.jda.selfUser.id}>.*"))
+
             if (!message.startsWith(prefix)) {
-                return@submit
+                if (!isMention)
+                    return@submit
             }
 
             Bot.LOG.debug("Processing message \"$message\"")
 
-            message = message.substring(prefix.length)
+            message = if (isMention) message.replace(Regex("^<@!?${context.jda.selfUser.id}>"),
+                    "") else message.substring(prefix.length)
 
-            val parts = message.split(" ").filter { it.isNotEmpty() }.map { it.trim() }.toTypedArray()
-
+            val parts = message.split(
+                    " ").filter { it.isNotEmpty() }.map { it.trim() }.toTypedArray()
+            if (parts.isEmpty() && isMention) {
+                context.send().info("The command prefix on this server is `$prefix`").queue()
+                return@submit
+            }
             val cmd = parts[0].toLowerCase()
 
             Bot.LOG.debug("Looking up $cmd on ${guild.id}")
@@ -134,8 +143,9 @@ object CommandExecutor {
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
-                val id =  ErrorLogger.logThrowable(e, context.guild, context.author)
-                context.send().error("An unknown error has occurred, please try again. \nThis error can be referenced with id: `$id`").queue {
+                val id = ErrorLogger.logThrowable(e, context.guild, context.author)
+                context.send().error(
+                        "An unknown error has occurred, please try again. \nThis error can be referenced with id: `$id`").queue {
                     it.deleteAfter(10, TimeUnit.SECONDS)
                     context.deleteAfter(10, TimeUnit.SECONDS)
                 }

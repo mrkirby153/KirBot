@@ -17,10 +17,10 @@ class DatabaseConnection(host: String, port: Int, database: String,
 
     init {
         val cfg = HikariConfig()
-        cfg.jdbcUrl = "jdbc:mysql://$host:$port/$database?useSSL=false"
+        cfg.jdbcUrl = "jdbc:mysql://$host:$port/$database?useSSL=false&useUnicode=yes&characterEncoding=UTF-8"
         cfg.username = username
         cfg.password = password
-        cfg.leakDetectionThreshold = if(Bot.debug) 2000 else 0
+        cfg.leakDetectionThreshold = if (Bot.debug) 2000 else 0
 
         Bot.LOG.debug("Connecting to ${cfg.jdbcUrl}")
 

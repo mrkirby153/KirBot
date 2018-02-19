@@ -10,6 +10,7 @@ services:
             MYSQL_RANDOM_ROOT_PASSWORD: "yes"
         volumes:
             - ./.data/db:/var/lib/mysql
+            - ./conf/mysql:/etc/mysql/conf.d
     redis:
         image: redis:3.2
         restart: always

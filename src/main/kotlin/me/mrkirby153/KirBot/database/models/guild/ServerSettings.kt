@@ -43,6 +43,9 @@ class ServerSettings : Model() {
     @Column("user_persistence")
     var persistence = false
 
+    @Column("log_timezone")
+    var logTimezone = "UTC"
+
     @Transient
     var realname: RealnameSetting = RealnameSetting.OFF
         get() = RealnameSetting.valueOf(realnameRaw)

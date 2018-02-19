@@ -13,10 +13,10 @@ import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.KirBot.utils.getMember
+import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.User
-import java.awt.Color
 
 @Command("mute,shutup,quiet")
 @RequiresClearance(Clearance.BOT_MANAGER)
@@ -38,11 +38,11 @@ class CommandMute : BaseCommand(false, CommandCategory.MODERATION, Arguments.use
         val override = channel.getPermissionOverride(member) ?: channel.createPermissionOverride(
                 member).complete()
         override.manager.deny(Permission.MESSAGE_WRITE).queue()
-        context.send().success("Muted **${user.name}#${user.discriminator}** (`$reason`)", true).queue()
+        context.send().success("Muted **${user.name}#${user.discriminator}** (`$reason`)",
+                true).queue()
         Infractions.createInfraction(user.id, context.guild, context.author, reason,
                 InfractionType.MUTE)
-        context.kirbotGuild.logManager.genericLog("User Muted",
-                "${context.author.name} has muted ${member.user.name} in ${context.textChannel.asMention}",
-                Color.MAGENTA, context.author)
+        context.kirbotGuild.logManager.genericLog(":zipper_mouth:",
+                "${member.user.nameAndDiscrim} (`${member.user.id}`) Muted by ${context.author.nameAndDiscrim} (`$reason`)")
     }
 }

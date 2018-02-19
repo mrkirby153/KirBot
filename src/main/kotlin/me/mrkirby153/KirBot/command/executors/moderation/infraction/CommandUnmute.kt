@@ -13,10 +13,10 @@ import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.KirBot.utils.getMember
+import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.User
-import java.awt.Color
 import java.sql.Timestamp
 
 @Command("unmute,unquiet")
@@ -45,14 +45,14 @@ class CommandUnmute : BaseCommand(false, CommandCategory.MODERATION, Arguments.u
             override.delete().queue()
         }
         // Remove the infraction
-        Model.get(Infraction::class.java, Pair("user_id", user.id), Pair("guild", context.guild.id), Pair("type", "mute"), Pair("active", true)).forEach {
+        Model.get(Infraction::class.java, Pair("user_id", user.id), Pair("guild", context.guild.id),
+                Pair("type", "mute"), Pair("active", true)).forEach {
             it.active = false
             it.revokedAt = Timestamp(System.currentTimeMillis())
             it.save()
         }
         context.send().success("Unmuted **${user.name}#${user.discriminator}**", true).queue()
-        context.kirbotGuild.logManager.genericLog("User Unmuted",
-                "${context.author.name} has unmuted ${member.user.name} in ${context.textChannel.asMention}",
-                Color.MAGENTA, context.author)
+        context.kirbotGuild.logManager.genericLog(":open_mouth:",
+                "${member.user.nameAndDiscrim} (`${member.user.id}`) Unmuted by ${context.author.nameAndDiscrim}")
     }
 }

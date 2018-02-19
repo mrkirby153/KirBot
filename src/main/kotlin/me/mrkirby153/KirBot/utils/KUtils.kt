@@ -15,8 +15,13 @@ import net.dv8tion.jda.core.entities.MessageChannel
 import net.dv8tion.jda.core.entities.MessageEmbed
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.User
+import org.json.JSONObject
+import org.json.JSONTokener
 import java.awt.Color
+import java.io.DataOutputStream
 import java.io.InputStream
+import java.net.HttpURLConnection
+import java.net.URL
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.util.Locale
@@ -56,6 +61,29 @@ fun Guild.shard(): Shard? {
     return Bot.shardManager.getShard(this)
 }
 
+fun uploadToHastebin(text: String, callback: (String) -> Unit) {
+    Bot.scheduler.schedule({
+        callback.invoke(syncUploadToHastebin(text))
+    }, 0, TimeUnit.MILLISECONDS)
+}
+
+fun syncUploadToHastebin(text: String): String {
+    val url = URL("https://paste.mrkirby153.com/documents")
+    val con = url.openConnection() as HttpURLConnection
+    con.requestMethod = "POST"
+    con.doInput = true
+    con.doOutput = true
+    con.setRequestProperty("User-Agent", "KirBot/${Bot.constants.getProperty("bot-version")}")
+
+    val os = DataOutputStream(con.outputStream)
+    os.write(text.toByteArray())
+    os.flush()
+    os.close()
+
+    val json = JSONObject(JSONTokener(con.inputStream))
+    con.disconnect()
+    return "https://paste.mrkirby153.com/raw/${json["key"]}"
+}
 
 @JvmOverloads
 fun makeEmbed(title: String?, msg: String?, color: Color? = Color.WHITE, img: String? = null,
@@ -175,3 +203,6 @@ fun String.escapeMentions(): String {
     // Replace all @ symbols with @ followed by a Zero-Width Space
     return this.replace("@", "@\u200B")
 }
+
+val User.nameAndDiscrim
+    get() = this.name + "#" + this.discriminator

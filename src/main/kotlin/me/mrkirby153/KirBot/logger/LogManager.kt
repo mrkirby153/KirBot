@@ -3,16 +3,18 @@ package me.mrkirby153.KirBot.logger
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.database.models.guild.GuildMessage
-import me.mrkirby153.KirBot.utils.embed.b
-import me.mrkirby153.KirBot.utils.embed.embed
+import me.mrkirby153.KirBot.server.KirBotGuild
+import me.mrkirby153.KirBot.utils.CustomEmoji
+import me.mrkirby153.KirBot.utils.escapeMentions
 import me.mrkirby153.KirBot.utils.kirbotGuild
-import net.dv8tion.jda.core.entities.Guild
+import me.mrkirby153.KirBot.utils.mdEscape
+import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import net.dv8tion.jda.core.entities.Message
 import net.dv8tion.jda.core.entities.TextChannel
-import net.dv8tion.jda.core.entities.User
-import java.awt.Color
+import java.util.Calendar
+import java.util.TimeZone
 
-class LogManager(private val guild: Guild) {
+class LogManager(private val guild: KirBotGuild) {
 
     val logChannel: TextChannel?
         get() {
@@ -28,81 +30,54 @@ class LogManager(private val guild: Guild) {
         val author = Bot.shardManager.getUser(msg.author) ?: return
         val chan = guild.getTextChannelById(msg.channel) ?: return
 
-        if (author.isBot)
-            return
+        val ignored = guild.extraData.optJSONArray("log-ignored")?.map { it.toString() }
+        if (ignored != null && author.id in ignored)
+            return // The user is in the ignored log array
 
-        logChannel?.sendMessage(embed("Message Deleted") {
-            color = Color.RED
-            author {
-                user(author)
-            }
-            description {
-                +"Message deleted in ${chan.asMention}"
-                +"\n\n"
-                +msg.message
-            }
-            timestamp {
-                now()
-            }
-        }.build())?.queue()
+        this.genericLog(":wastebasket:",
+                "${author.nameAndDiscrim}(`${author.id}`) Message deleted in **#${chan.name}** \n ${msg.message.escapeMentions().mdEscape()}")
     }
 
-    fun logBulkDelete(chan: TextChannel, count: Int) {
-        logChannel?.sendMessage(embed("Bulk Delete") {
-            color = Color.RED
-            description {
-                +"$count messages were deleted from ${chan.asMention}"
-            }
-            timestamp {
-                now()
-            }
-        }.build())?.queue()
+    fun logBulkDelete(chan: TextChannel, messages: List<String>) {
+        this.genericLog(":wastebasket:",
+                "${messages.size} messages deleted in **#${chan.name}**")
     }
 
     fun logEdit(message: Message) {
         val old = Model.first(GuildMessage::class.java, Pair("id", message.id)) ?: return
         val user = message.author
-        if (user.isBot)
-            return
+        val ignored = guild.extraData.optJSONArray("log-ignored")?.map { it.toString() }
+        if (ignored != null && user.id in ignored)
+            return // The user is in the ignored log array
         if (old.message.equals(message.contentDisplay, true)) {
             return
         }
 
-        logChannel?.sendMessage(embed("Message Edit") {
-            color = Color.CYAN
-            author {
-                user(user)
-            }
-            description {
-                +"Message edited in ${message.textChannel.asMention}"
-                +"\n\n"
-                +(b("Old: "))
-                +old.message
-                +"\n"
-                +(b("New: "))
-                +message.contentDisplay
-            }
-            timestamp {
-                now()
-            }
-        }.build())?.queue()
+        this.genericLog(":pencil:",
+                "${user.nameAndDiscrim} Message edited in **#${message.textChannel.name}** \n **B:** ${old.message} \n **A:** ${message.contentRaw.escapeMentions()}")
     }
 
-    fun genericLog(title: String, description: String, color: Color? = Color.BLUE,
-                   user: User? = null) {
-        logChannel?.sendMessage(embed(title) {
-            this.color = color ?: Color.BLUE
-            description {
-                +description
-            }
-            if (user != null) {
-                author {
-                    user(user)
-                }
-            }
-            timestamp {
-                now()
-            }
-        }.build())?.queue()
+    fun genericLog(emoj: CustomEmoji, message: String) {
+        genericLog(emoj.toString(), message)
+    }
+
+    fun genericLog(emoji: String, message: String) {
+        val timezone = TimeZone.getTimeZone(this.guild.settings.logTimezone)
+        val calendar = Calendar.getInstance(timezone)
+        val hours = calendar.get(Calendar.HOUR_OF_DAY)
+        val minutes = calendar.get(Calendar.MINUTE)
+        logChannel?.sendMessage(buildString {
+            append("`[")
+            if (hours < 10)
+                append("0")
+            append(hours)
+            append(":")
+            if (minutes < 10)
+                append("0")
+            append(minutes)
+            append("]` ")
+            append(emoji)
+            append(" $message")
+        })?.queue()
     }
 }

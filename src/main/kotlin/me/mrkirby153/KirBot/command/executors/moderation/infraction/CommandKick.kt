@@ -12,6 +12,7 @@ import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.getClearance
 import me.mrkirby153.KirBot.utils.getMember
+import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import net.dv8tion.jda.core.entities.User
 
 @Command("kick")
@@ -30,8 +31,9 @@ class CommandKick : BaseCommand(false, CommandCategory.MODERATION, Arguments.use
                         context.guild).value)
             throw CommandException("You cannot kick this user")
         Infractions.kick(user, context.guild, context.author, reason)
-        context.kirbotGuild.logManager.genericLog("User Kicked",
-                "${user.name}#${user.discriminator} was kicked by ${context.author.asMention}. \n\n**Reason:** $reason")
-        context.send().success("Kicked **${user.name}#${user.discriminator}** (`$reason`)", true).queue()
+        context.kirbotGuild.logManager.genericLog(":boot:",
+                "${user.name}#${user.discriminator} (`${user.id}`) was kicked by ${context.author.nameAndDiscrim} (`$reason`)")
+        context.send().success("Kicked **${user.name}#${user.discriminator}** (`$reason`)",
+                true).queue()
     }
 }

@@ -105,10 +105,7 @@ object CommandExecutor {
                 Bot.LOG.debug(
                         "${context.author.id} was denied access to $cmd due to lack of clearance. Required: ${command.clearance}, Found: ${context.author.getClearance(
                                 guild)}")
-                context.send().error("You do not have permission to perform this command!").queue {
-                    it.deleteAfter(10, TimeUnit.SECONDS)
-                    context.deleteAfter(10, TimeUnit.SECONDS)
-                }
+                context.send().error("You do not have permission to perform this command!").queue()
                 return@submit
             }
 
@@ -120,10 +117,7 @@ object CommandExecutor {
             try {
                 cmdContext = parser.parse(command.arguments.toTypedArray())
             } catch (e: ArgumentParseException) {
-                context.send().error(e.message ?: "Invalid argument format!").queue {
-                    it.deleteAfter(10, TimeUnit.SECONDS)
-                    context.deleteAfter(10, TimeUnit.SECONDS)
-                }
+                context.send().error(e.message ?: "Invalid argument format!").queue()
                 return@submit
             }
 
@@ -137,18 +131,12 @@ object CommandExecutor {
                 executor.cmdPrefix = prefix
                 executor.execute(context, cmdContext)
             } catch (e: CommandException) {
-                context.send().error(e.message ?: "An unknown error has occurred!").queue {
-                    context.deleteAfter(10, TimeUnit.SECONDS)
-                    it.deleteAfter(10, TimeUnit.SECONDS)
-                }
+                context.send().error(e.message ?: "An unknown error has occurred!").queue()
             } catch (e: Exception) {
                 e.printStackTrace()
                 val id = ErrorLogger.logThrowable(e, context.guild, context.author)
                 context.send().error(
-                        "An unknown error has occurred, please try again. \nThis error can be referenced with id: `$id`").queue {
-                    it.deleteAfter(10, TimeUnit.SECONDS)
-                    context.deleteAfter(10, TimeUnit.SECONDS)
-                }
+                        "An unknown error has occurred, please try again. \nThis error can be referenced with id: `$id`").queue()
             }
             Bot.LOG.debug("Command execution finished")
         })

@@ -78,9 +78,9 @@ class CommandClean :
                 } else {
                     channel.deleteMessages(toDelete).queue()
                 }
-                waitMessage.editMessage(":ok_hand: Deleted $deletedMessages messages").queue {
-                    it.deleteAfter(10, TimeUnit.SECONDS)
-                }
+            }
+            waitMessage.editMessage(":ok_hand: Deleted $deletedMessages messages").queue {
+                it.deleteAfter(10, TimeUnit.SECONDS)
             }
         } else {
             throw CommandException("This should never happen - CommandClean")

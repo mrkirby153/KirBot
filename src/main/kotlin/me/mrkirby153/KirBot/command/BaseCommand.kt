@@ -56,6 +56,10 @@ abstract class BaseCommand(val respectWhitelist: Boolean = true,
         }
     }
 
+    fun getSubCommandClearance(name: String): Clearance {
+        return getSubCommand(name)?.getAnnotation(Command::class.java)?.clearance ?: Clearance.USER
+    }
+
     fun invokeSubCommand(name: String, context: Context, cmdContext: CommandContext) {
         Bot.LOG.debug("Invoking sub-command $name")
         getSubCommand(name)?.invoke(this, context, cmdContext)

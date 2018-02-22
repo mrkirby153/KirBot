@@ -94,20 +94,6 @@ object CommandExecutor {
                 executeCustomCommand(context, cmd, args, shard, guild)
                 return@submit
             }
-
-            if (!canExecuteInChannel(command, context.channel as Channel)) {
-                Bot.LOG.debug("Ignoring command because of channel whitelist")
-                return@submit
-            }
-
-            if (command.clearance.value > context.author.getClearance(guild).value) {
-                Bot.LOG.debug(
-                        "${context.author.id} was denied access to $cmd due to lack of clearance. Required: ${command.clearance}, Found: ${context.author.getClearance(
-                                guild)}")
-                context.send().error("You do not have permission to perform this command!").queue()
-                return@submit
-            }
-
             // Here we check for sub-command
 
             // Check the first argument for sub-command
@@ -117,6 +103,25 @@ object CommandExecutor {
             Bot.LOG.debug("Subcommand? $isSubCommand")
 
             val effectiveArgs = if (isSubCommand) args.drop(1) else args.toList()
+
+            if (!canExecuteInChannel(command, context.channel as Channel)) {
+                Bot.LOG.debug("Ignoring command because of channel whitelist")
+                return@submit
+            }
+
+            if (!isSubCommand && command.clearance.value > context.author.getClearance(guild).value) {
+                Bot.LOG.debug(
+                        "${context.author.id} was denied access to $cmd due to lack of clearance. Required: ${command.clearance}, Found: ${context.author.getClearance(
+                                guild)}")
+                context.send().error("You do not have permission to perform this command!").queue()
+                return@submit
+            }
+
+            if(isSubCommand && command.getSubCommandClearance(subCommand).value > context.author.getClearance(guild).value){
+                context.send().error("You do not have permission to perform this command!").queue()
+                return@submit
+            }
+
 
             Bot.LOG.debug("Beginning parsing of arguments: [${effectiveArgs.joinToString(",")}]")
 

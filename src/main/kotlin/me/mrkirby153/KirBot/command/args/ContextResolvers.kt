@@ -91,29 +91,27 @@ object ContextResolvers {
         registerResolver("number") { args, params ->
             val num = args.popFirst()
 
-            val min = if (params.size == 1) {
+            val min = if (params.isNotEmpty()) {
                 if (params[0] == "x") Double.MIN_VALUE else params[0].toDouble()
             } else Double.MIN_VALUE
             val max = if (params.size == 2) {
                 if (params[1] == "x")
                     Double.MAX_VALUE else params[1].toDouble()
             } else Double.MAX_VALUE
-
-            println("Min: $min, Max: $max")
-
             try {
                 val number = num.toDouble()
 
-                if (number < min)
-                    throw ArgumentParseException(String.format(
-                            "The number you specified (%.2f) must be greater than %.2f", num, min))
-                if (number > max)
+                if (number < min) {
                     throw ArgumentParseException(
-                            String.format("The number you specified (%.2f) must be less than %.2f",
-                                    num, max))
+                            "Specify a number greater than " + String.format("%.2f", min))
+                }
+                if (number > max) {
+                    throw ArgumentParseException(
+                            "Specify a number less than " + String.format("%.2f", max))
+                }
                 return@registerResolver number
             } catch (e: NumberFormatException) {
-                throw ArgumentParseException("$num is not a number!")
+                throw ArgumentParseException("`$num` is not a number!")
             }
         }
 

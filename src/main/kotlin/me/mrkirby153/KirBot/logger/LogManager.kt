@@ -11,6 +11,7 @@ import me.mrkirby153.KirBot.utils.mdEscape
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import net.dv8tion.jda.core.entities.Message
 import net.dv8tion.jda.core.entities.TextChannel
+import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.TimeZone
 
@@ -64,17 +65,9 @@ class LogManager(private val guild: KirBotGuild) {
     fun genericLog(emoji: String, message: String) {
         val timezone = TimeZone.getTimeZone(this.guild.settings.logTimezone)
         val calendar = Calendar.getInstance(timezone)
-        val hours = calendar.get(Calendar.HOUR_OF_DAY)
-        val minutes = calendar.get(Calendar.MINUTE)
         logChannel?.sendMessage(buildString {
             append("`[")
-            if (hours < 10)
-                append("0")
-            append(hours)
-            append(":")
-            if (minutes < 10)
-                append("0")
-            append(minutes)
+            append(SimpleDateFormat("HH:mm:ss").format(calendar.timeInMillis))
             append("]` ")
             append(emoji)
             append(" $message")

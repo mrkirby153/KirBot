@@ -9,7 +9,6 @@ import me.mrkirby153.KirBot.command.help.HelpManager
 import me.mrkirby153.KirBot.database.models.CustomCommand
 import me.mrkirby153.KirBot.logger.ErrorLogger
 import me.mrkirby153.KirBot.sharding.Shard
-import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.deleteAfter
 import me.mrkirby153.KirBot.utils.getClearance
@@ -25,7 +24,7 @@ import kotlin.system.measureTimeMillis
 
 object CommandExecutor {
 
-    val commands = mutableListOf<CommandSpec>()
+    val commands = mutableListOf<BaseCommand>()
 
     val helpManager = HelpManager()
 
@@ -109,13 +108,30 @@ object CommandExecutor {
                 return@submit
             }
 
-            Bot.LOG.debug("Beginning parsing of arguments: [${args.joinToString(",")}]")
+            // Here we check for sub-command
 
-            val parser = ArgumentParser(args)
+            // Check the first argument for sub-command
+            val isSubCommand = if (args.isNotEmpty()) command.hasSubCommand(args[0]) else false
+            val subCommand = if (args.isNotEmpty()) args[0] else ""
+
+            Bot.LOG.debug("Subcommand? $isSubCommand")
+
+            val effectiveArgs = if (isSubCommand) args.drop(1) else args.toList()
+
+            Bot.LOG.debug("Beginning parsing of arguments: [${effectiveArgs.joinToString(",")}]")
+
+            val parser = ArgumentParser(effectiveArgs.toTypedArray())
 
             val cmdContext: CommandContext
-            try {
-                cmdContext = parser.parse(command.arguments.toTypedArray())
+            cmdContext = try {
+                if (!isSubCommand) {
+                    parser.parse(command.argumentList)
+                } else {
+                    Bot.LOG.debug("Processing sub-command arguments")
+                    val sc = command.getSubCommand(subCommand) ?: throw ArgumentParseException(
+                            "Error: Sub-command retrieval failed")
+                    parser.parse(sc.getAnnotation(Command::class.java).arguments)
+                }
             } catch (e: ArgumentParseException) {
                 context.send().error(e.message ?: "Invalid argument format!").queue()
                 return@submit
@@ -126,10 +142,14 @@ object CommandExecutor {
             Bot.LOG.debug("Executing command: $cmd")
 
             try {
-                val executor = command.executor
-                executor.aliasUsed = cmd
-                executor.cmdPrefix = prefix
-                executor.execute(context, cmdContext)
+                command.aliasUsed = cmd
+                command.cmdPrefix = prefix
+                if (isSubCommand) {
+                    Bot.LOG.debug("Executing sub-command $subCommand")
+                    command.getSubCommand(subCommand)?.invoke(command, context, cmdContext)
+                } else {
+                    command.execute(context, cmdContext)
+                }
             } catch (e: CommandException) {
                 context.send().error(e.message ?: "An unknown error has occurred!").queue()
             } catch (e: Exception) {
@@ -169,26 +189,16 @@ object CommandExecutor {
     fun registerCommand(clazz: Class<*>) {
         Bot.LOG.debug("Registering command ${clazz.canonicalName}")
         try {
-            val cmdAnnotation = clazz.getAnnotation(Command::class.java) ?: return
             val instance = clazz.newInstance() as? BaseCommand ?: return
-
-            val spec = instance.commandSpec
-
-            spec.aliases.addAll(cmdAnnotation.value.split(","))
-            spec.executor = instance
-
-            val clearanceAnnotation = clazz.getAnnotation(RequiresClearance::class.java)
-            spec.clearance = clearanceAnnotation?.value ?: Clearance.USER
-
-            commands.add(spec)
+            commands.add(instance)
         } catch (e: Exception) {
             ErrorLogger.logThrowable(e)
             Bot.LOG.error("An error occurred when registering ${clazz.canonicalName}")
         }
     }
 
-    fun getCommandsByCategory(): Map<CommandCategory, List<CommandSpec>> {
-        val categories = mutableMapOf<CommandCategory, MutableList<CommandSpec>>()
+    fun getCommandsByCategory(): Map<CommandCategory, List<BaseCommand>> {
+        val categories = mutableMapOf<CommandCategory, MutableList<BaseCommand>>()
         this.commands.forEach {
             if (!categories.containsKey(it.category))
                 categories[it.category] = mutableListOf()
@@ -201,7 +211,7 @@ object CommandExecutor {
         it.aliases.map { it.toLowerCase() }.contains(name.toLowerCase())
     }
 
-    private fun canExecuteInChannel(command: CommandSpec, channel: Channel): Boolean {
+    private fun canExecuteInChannel(command: BaseCommand, channel: Channel): Boolean {
         val data = channel.guild.kirbotGuild.settings
         return if (command.respectWhitelist) {
             if (data.cmdWhitelist.isEmpty())

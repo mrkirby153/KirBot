@@ -4,8 +4,6 @@ import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
-import me.mrkirby153.KirBot.command.RequiresClearance
-import me.mrkirby153.KirBot.command.args.Arguments
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.database.models.group.Group
@@ -13,9 +11,9 @@ import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.kcutils.utils.IdGenerator
 
-@Command("createGroup,cg")
-@RequiresClearance(Clearance.SERVER_ADMINISTRATOR)
-class CommandCreateGroup : BaseCommand(CommandCategory.GROUPS, Arguments.string("name")) {
+@Command(name = "createGroup,cg", arguments = ["<name:string,rest>"],
+        clearance = Clearance.SERVER_ADMINISTRATOR)
+class CommandCreateGroup : BaseCommand(CommandCategory.GROUPS) {
 
     override fun execute(context: Context, cmdContext: CommandContext) {
         val name = cmdContext.get<String>("name") ?: throw CommandException("Please specify a name")

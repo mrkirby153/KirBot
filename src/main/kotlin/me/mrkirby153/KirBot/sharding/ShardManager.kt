@@ -76,8 +76,10 @@ class ShardManager(val token: String, private val totalShards: Int) {
 
     fun getUser(id: String): User? {
         shards.forEach {
-            if (it.getUserById(id) != null)
-                return it.getUserById(id)
+            val user = it.getUserById(id)
+            if (user != null) {
+                return user
+            }
         }
         return null
     }

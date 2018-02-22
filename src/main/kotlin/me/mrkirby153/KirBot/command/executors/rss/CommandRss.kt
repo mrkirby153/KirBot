@@ -7,8 +7,6 @@ import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
-import me.mrkirby153.KirBot.command.RequiresClearance
-import me.mrkirby153.KirBot.command.args.Arguments
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.database.models.rss.FeedItem
@@ -20,11 +18,9 @@ import me.mrkirby153.kcutils.Time
 import java.net.URL
 import java.util.concurrent.TimeUnit
 
-@Command("rss")
-@RequiresClearance(Clearance.BOT_MANAGER)
+@Command(name = "rss", arguments = ["[action:string]", "[parameters:string,rest]"], clearance = Clearance.BOT_MANAGER)
 class CommandRss :
-        BaseCommand(false, CommandCategory.MISCELLANEOUS, Arguments.string("action", false),
-                Arguments.restAsString("parameters")) {
+        BaseCommand(false, CommandCategory.MISCELLANEOUS) {
 
     override fun execute(context: Context, cmdContext: CommandContext) {
         val action = cmdContext.get<String>("action")?.toLowerCase()

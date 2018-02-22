@@ -1,15 +1,16 @@
 package me.mrkirby153.KirBot.command.executors.music
 
+import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.embed.embed
 import java.awt.Color
 
-@Command("disconnect,dc")
-class CommandDisconnect : MusicCommand() {
+@Command(name = "disconnect,dc")
+class CommandDisconnect : BaseCommand() {
 
-    override fun exec(context: Context, cmdContext: CommandContext) {
+    override fun execute(context: Context, cmdContext: CommandContext) {
         context.kirbotGuild.musicManager.disconnect()
         context.kirbotGuild.musicManager.queue.clear()
         context.kirbotGuild.musicManager.audioPlayer.playTrack(null)

@@ -4,8 +4,6 @@ import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
-import me.mrkirby153.KirBot.command.RequiresClearance
-import me.mrkirby153.KirBot.command.args.Arguments
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.infraction.Infractions
 import me.mrkirby153.KirBot.user.Clearance
@@ -14,10 +12,8 @@ import me.mrkirby153.KirBot.utils.getClearance
 import me.mrkirby153.KirBot.utils.getMember
 import net.dv8tion.jda.core.entities.User
 
-@Command("ban")
-@RequiresClearance(Clearance.BOT_MANAGER)
-class CommandBan : BaseCommand(false, CommandCategory.MODERATION, Arguments.user("user"),
-        Arguments.restAsString("reason")) {
+@Command(name = "ban", arguments = ["<user:user>", "<reason:string,rest>"], clearance = Clearance.BOT_MANAGER)
+class CommandBan : BaseCommand(false, CommandCategory.MODERATION) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val user = cmdContext.get<User>("user") ?: throw CommandException("Please specify a user")
 
@@ -38,10 +34,8 @@ class CommandBan : BaseCommand(false, CommandCategory.MODERATION, Arguments.user
     }
 }
 
-@Command("forceban")
-@RequiresClearance(Clearance.BOT_MANAGER)
-class CommandForceBan : BaseCommand(false, CommandCategory.MODERATION, Arguments.string("user"),
-        Arguments.restAsString("reason")) {
+@Command(name = "forceban", arguments = ["<user:snowflake>", "<reason:string,rest>"], clearance = Clearance.BOT_MANAGER)
+class CommandForceBan : BaseCommand(false, CommandCategory.MODERATION) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val user = cmdContext.get<String>("user") ?: throw CommandException("Please specify a user")
         val reason = cmdContext.get<String>("reason") ?: throw CommandException(
@@ -52,9 +46,8 @@ class CommandForceBan : BaseCommand(false, CommandCategory.MODERATION, Arguments
     }
 }
 
-@Command("unban")
-@RequiresClearance(Clearance.BOT_MANAGER)
-class CommandUnban : BaseCommand(false, CommandCategory.MODERATION, Arguments.string("user")) {
+@Command(name = "unban", arguments = ["<user:snowflake>"], clearance = Clearance.BOT_MANAGER)
+class CommandUnban : BaseCommand(false, CommandCategory.MODERATION) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val user = cmdContext.get<String>("user") ?: throw CommandException("Please specify a user")
 

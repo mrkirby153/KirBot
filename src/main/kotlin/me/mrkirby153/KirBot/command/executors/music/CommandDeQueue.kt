@@ -1,19 +1,24 @@
 package me.mrkirby153.KirBot.command.executors.music
 
+import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandException
-import me.mrkirby153.KirBot.command.RequiresClearance
-import me.mrkirby153.KirBot.command.args.Arguments
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.embed.link
 import me.mrkirby153.KirBot.utils.mdEscape
 
-@Command("dequeue")
-@RequiresClearance(Clearance.BOT_MANAGER)
-class CommandDeQueue : MusicCommand(Arguments.number("position", min = 1)) {
-    override fun exec(context: Context, cmdContext: CommandContext) {
+@Command(name = "dequeue", clearance = Clearance.BOT_MANAGER, arguments = ["<position:int,1,x>"])
+class CommandDeQueue : BaseCommand() {
+
+    override fun execute(context: Context, cmdContext: CommandContext) {
+        if (context.kirbotGuild.musicManager.settings.enabled) {
+            return
+        } else {
+            Bot.LOG.debug("Music is disabled in ${context.guild.id}, ignoring")
+        }
         val index = (cmdContext.get<Double>("position")?.toInt() ?: 1) - 1
 
         try {
@@ -31,7 +36,8 @@ class CommandDeQueue : MusicCommand(Arguments.number("position", min = 1)) {
                 }
             }.rest().queue()
         } catch (e: IndexOutOfBoundsException) {
-            throw CommandException("Position must be between 0 and ${context.kirbotGuild.musicManager.queue.size}")
+            throw CommandException(
+                    "Position must be between 0 and ${context.kirbotGuild.musicManager.queue.size}")
         }
     }
 }

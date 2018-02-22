@@ -5,8 +5,6 @@ import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
-import me.mrkirby153.KirBot.command.RequiresClearance
-import me.mrkirby153.KirBot.command.args.Arguments
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.user.Clearance
@@ -16,9 +14,8 @@ import me.mrkirby153.kcutils.utils.TableBuilder
 import java.sql.SQLException
 import java.util.concurrent.TimeUnit
 
-@Command("sql")
-@RequiresClearance(Clearance.BOT_OWNER)
-class CommandSQL : BaseCommand(false, CommandCategory.ADMIN, Arguments.restAsString("query")) {
+@Command(name = "sql", arguments = ["<query:string,rest>"], clearance = Clearance.BOT_OWNER)
+class CommandSQL : BaseCommand(false, CommandCategory.ADMIN) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val query = cmdContext.get<String>("query") ?: throw CommandException(
                 "Please specify a query")

@@ -1,20 +1,24 @@
 package me.mrkirby153.KirBot.command.executors.music
 
+import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandException
-import me.mrkirby153.KirBot.command.RequiresClearance
-import me.mrkirby153.KirBot.command.args.Arguments
 import me.mrkirby153.KirBot.command.args.CommandContext
-import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.embed.link
 import me.mrkirby153.KirBot.utils.mdEscape
 
-@Command("move")
-@RequiresClearance(Clearance.BOT_MANAGER)
-class CommandMove : MusicCommand(Arguments.number("from", min = 0), Arguments.number("to", false, min = 0)) {
+@Command(name = "move", arguments = ["<from:int,0,x>", "[to:int,0,x]"])
+class CommandMove : BaseCommand() {
 
-    override fun exec(context: Context, cmdContext: CommandContext) {
+    override fun execute(context: Context, cmdContext: CommandContext) {
+        if (context.kirbotGuild.musicManager.settings.enabled) {
+            return
+        } else {
+            Bot.LOG.debug("Music is disabled in ${context.guild.id}, ignoring")
+        }
+
         val song = cmdContext.get<Double>("from")?.toInt() ?: throw CommandException("Please specify a number")
 
         val toPosition = cmdContext.get<Double>("to")?.toInt() ?: 0

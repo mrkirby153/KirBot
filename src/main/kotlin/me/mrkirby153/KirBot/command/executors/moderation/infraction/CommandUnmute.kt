@@ -4,8 +4,6 @@ import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
-import me.mrkirby153.KirBot.command.RequiresClearance
-import me.mrkirby153.KirBot.command.args.Arguments
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.infraction.Infraction
@@ -19,9 +17,8 @@ import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.User
 import java.sql.Timestamp
 
-@Command("unmute,unquiet")
-@RequiresClearance(Clearance.BOT_MANAGER)
-class CommandUnmute : BaseCommand(false, CommandCategory.MODERATION, Arguments.user("user")) {
+@Command(name = "unmute,unquiet", arguments = ["<user:user>"], clearance = Clearance.BOT_MANAGER)
+class CommandUnmute : BaseCommand(false, CommandCategory.MODERATION) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val user = cmdContext.get<User>("user") ?: throw CommandException(
                 "Please specify a user to unmute!")

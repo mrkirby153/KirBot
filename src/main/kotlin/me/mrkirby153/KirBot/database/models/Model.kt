@@ -147,7 +147,7 @@ open class Model {
      * Sets a column on the model
      *
      * @param column The column
-     * @param value  The value to set
+     * @param value  The name to set
      */
     fun set(column: String, value: Any?) {
         getAccessibleFields(this.javaClass).filter { getColumnName(it) == column }.forEach {
@@ -157,7 +157,7 @@ open class Model {
     }
 
     /**
-     * Gets a key/value pair of the column data and its values
+     * Gets a key/name pair of the column data and its values
      *
      * @return A map of the keys and values for the column
      */
@@ -213,7 +213,7 @@ open class Model {
 
         /**
          * Converts a field's name into a column name. If the field is annotated with a [Column] annotation
-         * it will use this value. If it isn't set, the field's name will be used
+         * it will use this name. If it isn't set, the field's name will be used
          *
          * @param field The field
          *
@@ -236,7 +236,7 @@ open class Model {
 
         /**
          * Checks if the model has `created_at` and `updated_at` columns and if they should be updated.
-         * This checks for the [Timestamps] annotation on a class, and returns its value. Defaults
+         * This checks for the [Timestamps] annotation on a class, and returns its name. Defaults
          * to "true" if the annotation doesn't exist
          *
          * @param clazz The class to check
@@ -288,7 +288,7 @@ open class Model {
          * Gets a model by its primary key
          *
          * @param clazz The class of the model
-         * @param value The value of the primary key
+         * @param value The name of the primary key
          *
          * @return A list of models
          */
@@ -303,7 +303,7 @@ open class Model {
          * Gets the first instnace of a module matching its primary key
          *
          * @param clazz The class
-         * @param value The value of the key
+         * @param value The name of the key
          *
          * @return The model
          */

@@ -4,7 +4,6 @@ import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
-import me.mrkirby153.KirBot.command.args.Arguments
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.database.models.Quote
@@ -12,8 +11,8 @@ import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.botUrl
 import me.mrkirby153.KirBot.utils.escapeMentions
 
-@Command("quote")
-class CommandQuote : BaseCommand(false, CommandCategory.FUN, Arguments.number("id", false)) {
+@Command(name = "quote", arguments = ["[id:int,0,x]"])
+class CommandQuote : BaseCommand(false, CommandCategory.FUN) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         if (!cmdContext.has("id")) {
             context.channel.sendMessage(
@@ -21,7 +20,7 @@ class CommandQuote : BaseCommand(false, CommandCategory.FUN, Arguments.number("i
                             "to quote it. You can retrieve a quote by its id by typing `${cmdPrefix}quote <id>`. To view a full list of quotes, type `${cmdPrefix}quotes`").queue()
             return
         }
-        val quote = cmdContext.get<Double>("id")
+        val quote = cmdContext.get<Int>("id")
         val q = Model.first(Quote::class.java,
                 quote.toString()) ?: throw CommandException("That quote doesn't exist")
         if (q.serverId != context.guild.id) {
@@ -31,7 +30,7 @@ class CommandQuote : BaseCommand(false, CommandCategory.FUN, Arguments.number("i
     }
 }
 
-@Command("quotes")
+@Command(name = "quotes")
 class CommandQuotes : BaseCommand(false, CommandCategory.FUN) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val quoteCount = Model.get(Quote::class.java, Pair("server_id", context.guild.id)).size

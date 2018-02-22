@@ -16,7 +16,7 @@ class QueryBuilder<T : Model>(private val model: Class<T>, val instance: T? = nu
      *
      * @param col The column
      * @param test The logical test to use
-     * @param value The value of the column
+     * @param value The name of the column
      *
      * @return The query builder
      */
@@ -29,7 +29,7 @@ class QueryBuilder<T : Model>(private val model: Class<T>, val instance: T? = nu
      * Adds a selector to the query, narrowing the scope. This however, defaults to the "=" logical test.
      *
      * @param col The column
-     * @param value The value
+     * @param value The name
      *
      * @return The query builder
      */

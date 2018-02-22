@@ -1,15 +1,23 @@
 package me.mrkirby153.KirBot.command.executors.music
 
+import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
+import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.getMember
 
-@Command("connect,summon")
-class CommandConnect : MusicCommand() {
+@Command(name = "connect,summon")
+class CommandConnect : BaseCommand(CommandCategory.MUSIC) {
 
-    override fun exec(context: Context, cmdContext: CommandContext) {
+    override fun execute(context: Context, cmdContext: CommandContext) {
+        if (context.kirbotGuild.musicManager.settings.enabled) {
+            return
+        } else {
+            Bot.LOG.debug("Music is disabled in ${context.guild.id}, ignoring")
+        }
         val channel = context.author.getMember(context.guild).voiceState.channel ?: throw CommandException("Please join a voice channel first!")
         // Connect or summon
         if (!context.guild.selfMember.voiceState.inVoiceChannel()) {

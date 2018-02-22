@@ -4,17 +4,14 @@ import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
-import me.mrkirby153.KirBot.command.RequiresClearance
-import me.mrkirby153.KirBot.command.args.Arguments
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import net.dv8tion.jda.core.entities.User
 
-@Command("log-hide")
-@RequiresClearance(Clearance.SERVER_ADMINISTRATOR)
-class CommandLogHide : BaseCommand(false, CommandCategory.MODERATION, Arguments.user("user")) {
+@Command(name = "log-hide", arguments = ["<user:user>"], clearance = Clearance.SERVER_ADMINISTRATOR)
+class CommandLogHide : BaseCommand(false, CommandCategory.MODERATION) {
 
     override fun execute(context: Context, cmdContext: CommandContext) {
         val userId = cmdContext.get<User>("user")?.id ?: return
@@ -31,9 +28,8 @@ class CommandLogHide : BaseCommand(false, CommandCategory.MODERATION, Arguments.
     }
 }
 
-@Command("log-show")
-@RequiresClearance(Clearance.SERVER_ADMINISTRATOR)
-class CommandLogUnhide : BaseCommand(false, CommandCategory.MODERATION, Arguments.user("user")) {
+@Command(name = "log-show", arguments = ["<user:user>"], clearance = Clearance.SERVER_ADMINISTRATOR)
+class CommandLogUnhide : BaseCommand(false, CommandCategory.MODERATION) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val userId = cmdContext.get<User>("user")?.id ?: return
 
@@ -49,8 +45,7 @@ class CommandLogUnhide : BaseCommand(false, CommandCategory.MODERATION, Argument
     }
 }
 
-@Command("log-hidden")
-@RequiresClearance(Clearance.SERVER_ADMINISTRATOR)
+@Command(name = "log-hidden", clearance = Clearance.SERVER_ADMINISTRATOR)
 class CommandLogHidden : BaseCommand(false, CommandCategory.MODERATION) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val currentlyHidden = context.kirbotGuild.extraData.optJSONArray(

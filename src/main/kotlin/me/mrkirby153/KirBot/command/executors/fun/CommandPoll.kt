@@ -4,7 +4,6 @@ import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
-import me.mrkirby153.KirBot.command.args.Arguments
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.deleteAfter
@@ -16,8 +15,8 @@ import java.awt.Color
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 
-@Command("poll")
-class CommandPoll : BaseCommand(false, CommandCategory.FUN, Arguments.string("duration"), Arguments.string("question"), Arguments.restAsString("options")) {
+@Command(name = "poll", arguments = ["<duration:string>", "<question:string>", "<options:string,rest>"])
+class CommandPoll : BaseCommand(false, CommandCategory.FUN) {
     val time = mutableMapOf<String, Int>()
 
     init {

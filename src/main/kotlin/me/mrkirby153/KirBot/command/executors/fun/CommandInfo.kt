@@ -5,7 +5,6 @@ import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
-import me.mrkirby153.KirBot.command.args.Arguments
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.database.models.guild.GuildMember
@@ -23,8 +22,8 @@ import net.dv8tion.jda.core.entities.Member
 import net.dv8tion.jda.core.entities.User
 import java.text.SimpleDateFormat
 
-@Command("info")
-class CommandInfo : BaseCommand(CommandCategory.FUN, Arguments.user("user", false)) {
+@Command(name = "info", arguments = ["[user:user]"])
+class CommandInfo : BaseCommand(CommandCategory.FUN) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val user = cmdContext.get<User>("user") ?: context.author
 

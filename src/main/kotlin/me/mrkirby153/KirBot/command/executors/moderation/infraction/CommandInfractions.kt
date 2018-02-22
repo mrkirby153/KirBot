@@ -4,8 +4,6 @@ import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
-import me.mrkirby153.KirBot.command.RequiresClearance
-import me.mrkirby153.KirBot.command.args.Arguments
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.infraction.Infraction
@@ -13,10 +11,8 @@ import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.kcutils.utils.TableBuilder
 
-@Command("infractions")
-@RequiresClearance(Clearance.BOT_MANAGER)
-class CommandInfractions :
-        BaseCommand(false, CommandCategory.MODERATION, Arguments.string("user")) {
+@Command(name = "infractions", arguments = ["[user:snowflake]"], clearance = Clearance.BOT_MANAGER)
+class CommandInfractions : BaseCommand(false, CommandCategory.MODERATION) {
 
     override fun execute(context: Context, cmdContext: CommandContext) {
         val user = cmdContext.get<String>("user") ?: throw CommandException("Specify a user")

@@ -8,7 +8,7 @@ import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.database.models.group.Group
 import me.mrkirby153.KirBot.utils.Context
 
-@Command("groups")
+@Command(name = "groups")
 class CommandListGroups : BaseCommand(CommandCategory.GROUPS) {
     override fun execute(context: Context, cmdContext: CommandContext) {
 

@@ -3,19 +3,15 @@ package me.mrkirby153.KirBot.command.executors.`fun`
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
-import me.mrkirby153.KirBot.command.RequiresClearance
-import me.mrkirby153.KirBot.command.args.Arguments
 import me.mrkirby153.KirBot.command.args.CommandContext
-import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.getMember
 import net.dv8tion.jda.core.entities.Member
 import net.dv8tion.jda.core.entities.Role
 import java.awt.Color
 
-@Command("color")
-@RequiresClearance(Clearance.USER)
-class CommandColor : BaseCommand(CommandCategory.FUN, Arguments.string("color")) {
+@Command(name = "color", arguments = ["<color:string>"])
+class CommandColor : BaseCommand(CommandCategory.FUN) {
 
     override fun execute(context: Context, cmdContext: CommandContext) {
         val colorString = cmdContext.get<String>("color")

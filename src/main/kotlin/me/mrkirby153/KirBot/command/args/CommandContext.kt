@@ -3,11 +3,11 @@ package me.mrkirby153.KirBot.command.args
 @Suppress("UNCHECKED_CAST")
 class CommandContext {
 
-    private val arguments = mutableMapOf<String, Any>()
+    private val arguments = mutableMapOf<String, Any?>()
 
     fun <T> get(key: String): T? = arguments[key] as T?
 
-    fun put(key: String, `object`: Any) = arguments.put(key, `object`)
+    fun put(key: String, `object`: Any?) = arguments.put(key, `object`)
 
     fun has(key: String) = arguments.containsKey(key)
 

@@ -6,7 +6,7 @@ import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.kcutils.Time
 
-@Command("ping")
+@Command(name = "ping")
 class CommandPing : BaseCommand(false) {
 
     override fun execute(context: Context, cmdContext: CommandContext) {

@@ -1,8 +1,9 @@
 package me.mrkirby153.KirBot.command.executors.music
 
+import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandException
-import me.mrkirby153.KirBot.command.args.Arguments
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
@@ -15,12 +16,17 @@ import me.mrkirby153.KirBot.utils.mdEscape
 import java.awt.Color
 import java.util.concurrent.TimeUnit
 
-@Command("skip,next")
-class CommandSkip : MusicCommand(Arguments.string("option", false)) {
+@Command(name = "skip,next", arguments = ["[option:string]"])
+class CommandSkip : BaseCommand() {
 
     val skipCooldown = mutableMapOf<String, Long>()
 
-    override fun exec(context: Context, cmdContext: CommandContext) {
+    override fun execute(context: Context, cmdContext: CommandContext) {
+        if (context.kirbotGuild.musicManager.settings.enabled) {
+            return
+        } else {
+            Bot.LOG.debug("Music is disabled in ${context.guild.id}, ignoring")
+        }
         val musicManager = context.kirbotGuild.musicManager
         val musicSettings = musicManager.settings
 

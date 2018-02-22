@@ -1,18 +1,23 @@
 package me.mrkirby153.KirBot.command.executors.music
 
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandException
-import me.mrkirby153.KirBot.command.args.Arguments
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.models.guild.MusicSettings
 import me.mrkirby153.KirBot.google.YoutubeSearch
 import me.mrkirby153.KirBot.music.AudioTrackLoader
 import me.mrkirby153.KirBot.utils.Context
 
-@Command("play")
-class CommandPlay : MusicCommand(Arguments.restAsString("query/url")) {
-    override fun exec(context: Context, cmdContext: CommandContext) {
+@Command(name = "play", arguments = ["<query/url:string,rest>"])
+class CommandPlay : BaseCommand() {
+    override fun execute(context: Context, cmdContext: CommandContext) {
+        if (context.kirbotGuild.musicManager.settings.enabled) {
+            return
+        } else {
+            Bot.LOG.debug("Music is disabled in ${context.guild.id}, ignoring")
+        }
         val data = cmdContext.get<String>("query/url") ?: ""
 
         val queuePosition =  -1 // TODO 12/17/2017 Reimplement QueueAt

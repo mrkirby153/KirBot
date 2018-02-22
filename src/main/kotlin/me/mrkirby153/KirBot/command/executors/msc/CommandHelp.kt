@@ -5,8 +5,6 @@ import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.CommandExecutor
-import me.mrkirby153.KirBot.command.CommandSpec
-import me.mrkirby153.KirBot.command.args.Arguments
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
@@ -16,8 +14,8 @@ import me.mrkirby153.KirBot.utils.embed.u
 import me.mrkirby153.KirBot.utils.mdEscape
 import java.awt.Color
 
-@Command("help,?")
-class CommandHelp : BaseCommand(CommandCategory.MISCELLANEOUS, Arguments.string("command", false)) {
+@Command(name = "help,?", arguments = ["[command:string,rest]"])
+class CommandHelp : BaseCommand(CommandCategory.MISCELLANEOUS) {
 
     override fun execute(context: Context, cmdContext: CommandContext) {
         if (!cmdContext.has("command")) {
@@ -35,7 +33,7 @@ class CommandHelp : BaseCommand(CommandCategory.MISCELLANEOUS, Arguments.string(
             color = Color.BLUE
             val prefix = cmdPrefix.mdEscape()
             description {
-                +"The command prefix for this server is: `${context.kirbotGuild.settings.cmdDiscriminator ?: "!"}` \n\n"
+                +"The command prefix for this server is: `${context.kirbotGuild.settings.cmdDiscriminator}` \n\n"
                 +"Below is a list of all the commands available. \n Type `$cmdPrefix$aliasUsed <command>` for more info"
                 +"\n\nFor a full list of custom commands available on this server, "
                 +("Click Here" link (botUrl("${context.guild.id}/customCommands")))
@@ -76,32 +74,29 @@ class CommandHelp : BaseCommand(CommandCategory.MISCELLANEOUS, Arguments.string(
         }.rest().queue()
     }
 
-    private fun displayHelpForCommand(context: Context, spec: CommandSpec) {
+    private fun displayHelpForCommand(context: Context, command: BaseCommand) {
         val prefix = cmdPrefix.mdEscape()
-        val help = CommandExecutor.helpManager.get(spec.aliases.first())
-        context.send().embed("Help: ${spec.aliases.first().mdEscape()}") {
+        val help = CommandExecutor.helpManager.get(command.aliases.first())
+        context.send().embed("Help: ${command.aliases.first().mdEscape()}") {
             description {
                 appendln(u("Command Name"))
-                appendln("  $prefix${spec.aliases[0]}")
+                appendln("  $prefix${command.aliases[0]}")
                 +"\n"
                 appendln(u("Description"))
                 appendln("  ${help?.description ?: "No description provided"}")
-                if (spec.aliases.size > 1) {
+                if (command.aliases.size > 1) {
                     appendln("\n" + u("Aliases"))
-                    appendln("   - ${spec.aliases.drop(1).joinToString(", ").mdEscape()}")
+                    appendln("   - ${command.aliases.drop(1).joinToString(", ").mdEscape()}")
                     +"\n"
                 }
                 appendln(u("Usage"))
                 val params = buildString {
-                    spec.arguments.forEach {
-                        if (it.required)
-                            append("<${it.key}>")
-                        else
-                            append("[${it.key}]")
+                    command.argumentList.forEach {
+                        append(it.replace(Regex("(,[A-Za-z0-9/]*)+"), ""))
                         append(" ")
                     }
                 }.trim()
-                appendln("  $prefix${spec.aliases.first()} $params")
+                appendln("  $prefix${command.aliases.first()} $params")
                 if (help?.params?.isNotEmpty() == true) {
                     +"\n"
                     appendln(u("Arguments"))
@@ -110,8 +105,15 @@ class CommandHelp : BaseCommand(CommandCategory.MISCELLANEOUS, Arguments.string(
                     }
                 }
                 +"\n"
+                if (command.subCommands.isNotEmpty()) {
+                    appendln(u("Sub-Commands"))
+                    command.subCommands.forEach {
+                        +"   - $prefix${command.aliases[0]} $it\n"
+                    }
+                    +"\n"
+                }
                 appendln(u("Clearance"))
-                +spec.clearance.friendlyName
+                +command.clearance.friendlyName
                 +"\n"
                 if (help?.usage?.isNotEmpty() == true) {
                     +"\n"

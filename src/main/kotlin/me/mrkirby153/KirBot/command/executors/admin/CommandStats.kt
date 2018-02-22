@@ -4,15 +4,12 @@ import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
-import me.mrkirby153.KirBot.command.RequiresClearance
 import me.mrkirby153.KirBot.command.args.CommandContext
-import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.localizeTime
 import java.awt.Color
 
-@Command("stats")
-@RequiresClearance(Clearance.USER)
+@Command(name = "stats")
 class CommandStats : BaseCommand(CommandCategory.ADMIN) {
 
     override fun execute(context: Context, cmdContext: CommandContext) {

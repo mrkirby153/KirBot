@@ -5,7 +5,6 @@ import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
-import me.mrkirby153.KirBot.command.args.Arguments
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.scheduler.Schedulable
 import me.mrkirby153.KirBot.scheduler.Scheduler
@@ -15,9 +14,8 @@ import me.mrkirby153.KirBot.utils.deleteAfter
 import me.mrkirby153.kcutils.Time
 import java.util.concurrent.TimeUnit
 
-@Command("remindMe,remind")
-class CommandRemindMe : BaseCommand(false, CommandCategory.FUN, Arguments.string("time"),
-        Arguments.restAsString("query")) {
+@Command(name = "remindMe,remind", arguments = ["<time:string>", "<query:string,rest>"])
+class CommandRemindMe : BaseCommand(false, CommandCategory.FUN) {
 
     override fun execute(context: Context, cmdContext: CommandContext) {
         val time = Time.parse(cmdContext.get<String>("time")!!)

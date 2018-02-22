@@ -4,8 +4,6 @@ import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
-import me.mrkirby153.KirBot.command.RequiresClearance
-import me.mrkirby153.KirBot.command.args.Arguments
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.logger.ErrorLogger
 import me.mrkirby153.KirBot.user.Clearance
@@ -13,10 +11,9 @@ import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.deleteAfter
 import java.util.concurrent.TimeUnit
 
-@Command("etrace")
-@RequiresClearance(Clearance.BOT_OWNER)
+@Command(name = "etrace", clearance = Clearance.BOT_OWNER, arguments = ["<id:string>"])
 class CommandErrorTrace :
-        BaseCommand(false, CommandCategory.UNCATEGORIZED, Arguments.string("id")) {
+        BaseCommand(false, CommandCategory.UNCATEGORIZED) {
 
     override fun execute(context: Context, cmdContext: CommandContext) {
         val id = cmdContext.get<String>("id") ?: throw CommandException("Specify an ID")

@@ -1,22 +1,65 @@
 package me.mrkirby153.KirBot.command.args
 
+import me.mrkirby153.KirBot.Bot
+
 class ArgumentParser(val arguments: Array<String>) {
 
-    fun parse(args: Array<Argument>): CommandContext {
+    init {
+        Bot.LOG.debug(
+                "Constructing argument parser with arguments: ${arguments.joinToString(
+                        ", ") { "\'$it\'" }}")
+    }
+
+    fun parse(args: Array<String>): CommandContext {
+        Bot.LOG.debug("Beginning parse of arguments ${arguments.joinToString(",")}")
         val argList = ArgumentList(arguments)
         val context = CommandContext()
+        // "name:type,paramOne,paramTwo,param3"
 
         for (i in 0 until args.size) {
-            val argument = args[i]
-            if (argument.required && !argList.hasNext()) {
-                // Missing a required argument
-                throw ArgumentParseException("The argument \"${argument.key}\" is required!")
+            var argument = args[i]
+            Bot.LOG.debug("Beginning parse of \"$argument\"")
+            val argType = ArgType.determine(argument)
+            Bot.LOG.debug("\tArg type $argType")
+            argument = argument.replace(Regex("<|>|\\[|]"), "")
+            val parts = argument.split(":")
+            val name = parts[0]
+            val type = parts[1].split(",")[0]
+
+            val params = parts[1].split(",").drop(1)
+            Bot.LOG.debug("\tParams: $params")
+
+            if (argType == ArgType.REQUIRED && !argList.hasNext()) {
+                Bot.LOG.debug("Missing required argument")
+                throw ArgumentParseException("The argument `$name` is required!")
             }
-            if(argList.hasNext()) {
-                val parse = argument.element.parse(argList)!!
-                context.put(argument.key, parse)
+            if (argList.hasNext()) {
+                    val parse = ContextResolvers.getResolver(type)?.invoke(argList,
+                            params.toTypedArray())
+                    context.put(name, parse)
             }
         }
         return context
+    }
+
+
+    private enum class ArgType {
+        UNKNOWN,
+        REQUIRED,
+        OPTIONAL;
+
+        companion object {
+
+            fun determine(arg: String): ArgType {
+                val requiredPattern = Regex("^<.*>$")
+                val optionalPattern = Regex("^\\[.*]$")
+
+                return when {
+                    optionalPattern.matches(arg) -> OPTIONAL
+                    requiredPattern.matches(arg) -> REQUIRED
+                    else -> UNKNOWN
+                }
+            }
+        }
     }
 }

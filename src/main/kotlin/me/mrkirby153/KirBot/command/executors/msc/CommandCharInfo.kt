@@ -10,7 +10,7 @@ class CommandCharInfo : BaseCommand(false) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val text = cmdContext.get<String>("text") ?: return
 
-        context.channel.sendMessage(buildString {
+        val string = buildString {
             appendln("```fix")
             text.codePoints().forEach { point ->
                 appendCodePoint(point)
@@ -20,6 +20,11 @@ class CommandCharInfo : BaseCommand(false) {
                 append("\n")
             }
             appendln("```")
-        }).queue()
+        }
+        if (string.length > 2000) {
+            context.channel.sendFile(string.toByteArray(), "charinfo.txt").queue()
+        } else {
+            context.channel.sendMessage(string).queue()
+        }
     }
 }

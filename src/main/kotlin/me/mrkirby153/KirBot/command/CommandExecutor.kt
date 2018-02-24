@@ -13,6 +13,8 @@ import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.deleteAfter
 import me.mrkirby153.KirBot.utils.getClearance
 import me.mrkirby153.KirBot.utils.kirbotGuild
+import me.mrkirby153.KirBot.utils.mdEscape
+import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.core.entities.Channel
 import net.dv8tion.jda.core.entities.ChannelType
@@ -109,7 +111,8 @@ object CommandExecutor {
                 return@submit
             }
 
-            if (!isSubCommand && command.clearance.value > context.author.getClearance(guild).value) {
+            if (!isSubCommand && command.clearance.value > context.author.getClearance(
+                            guild).value) {
                 Bot.LOG.debug(
                         "${context.author.id} was denied access to $cmd due to lack of clearance. Required: ${command.clearance}, Found: ${context.author.getClearance(
                                 guild)}")
@@ -117,7 +120,8 @@ object CommandExecutor {
                 return@submit
             }
 
-            if(isSubCommand && command.getSubCommandClearance(subCommand).value > context.author.getClearance(guild).value){
+            if (isSubCommand && command.getSubCommandClearance(
+                            subCommand).value > context.author.getClearance(guild).value) {
                 context.send().error("You do not have permission to perform this command!").queue()
                 return@submit
             }
@@ -155,6 +159,12 @@ object CommandExecutor {
                 } else {
                     command.execute(context, cmdContext)
                 }
+                // Log the command in the modlogs
+                if (command.javaClass.getAnnotation(
+                                LogInModlogs::class.java) != null || (isSubCommand && command.getSubCommand(
+                                subCommand)?.getAnnotation(LogInModlogs::class.java) != null))
+                    guild.logManager.genericLog(":tools:",
+                            "${context.author.nameAndDiscrim} (`${context.author.id}`) Executed `${context.message.contentDisplay}` in **#${context.channel.name.mdEscape()}**")
             } catch (e: CommandException) {
                 context.send().error(e.message ?: "An unknown error has occurred!").queue()
             } catch (e: Exception) {

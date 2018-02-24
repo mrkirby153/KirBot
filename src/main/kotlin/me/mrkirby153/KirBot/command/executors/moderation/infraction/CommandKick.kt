@@ -4,6 +4,7 @@ import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
+import me.mrkirby153.KirBot.command.LogInModlogs
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.infraction.Infractions
 import me.mrkirby153.KirBot.user.Clearance
@@ -14,6 +15,7 @@ import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import net.dv8tion.jda.core.entities.User
 
 @Command(name = "kick", arguments = ["<user:user>", "<reason:string,rest>"], clearance = Clearance.BOT_MANAGER)
+@LogInModlogs
 class CommandKick : BaseCommand(false, CommandCategory.MODERATION) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val user = cmdContext.get<User>("user") ?: throw CommandException("Please specify a user")

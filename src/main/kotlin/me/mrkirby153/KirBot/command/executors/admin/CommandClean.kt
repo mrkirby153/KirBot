@@ -4,6 +4,7 @@ import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
+import me.mrkirby153.KirBot.command.LogInModlogs
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
@@ -13,6 +14,7 @@ import java.time.OffsetDateTime
 import java.util.concurrent.TimeUnit
 
 @Command(name = "clean", arguments = ["<amount:int,2,x>"], clearance = Clearance.BOT_MANAGER)
+@LogInModlogs
 class CommandClean :
         BaseCommand(false, CommandCategory.ADMIN) {
 

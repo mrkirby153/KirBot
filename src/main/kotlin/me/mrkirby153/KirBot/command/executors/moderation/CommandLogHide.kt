@@ -4,6 +4,7 @@ import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
+import me.mrkirby153.KirBot.command.LogInModlogs
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
@@ -11,6 +12,7 @@ import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import net.dv8tion.jda.core.entities.User
 
 @Command(name = "log-hide", arguments = ["<user:user>"], clearance = Clearance.SERVER_ADMINISTRATOR)
+@LogInModlogs
 class CommandLogHide : BaseCommand(false, CommandCategory.MODERATION) {
 
     override fun execute(context: Context, cmdContext: CommandContext) {
@@ -29,6 +31,7 @@ class CommandLogHide : BaseCommand(false, CommandCategory.MODERATION) {
 }
 
 @Command(name = "log-show", arguments = ["<user:user>"], clearance = Clearance.SERVER_ADMINISTRATOR)
+@LogInModlogs
 class CommandLogUnhide : BaseCommand(false, CommandCategory.MODERATION) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val userId = cmdContext.get<User>("user")?.id ?: return

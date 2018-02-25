@@ -1,8 +1,8 @@
 package me.mrkirby153.KirBot.utils.embed
 
 import me.mrkirby153.KirBot.utils.Context
-import me.mrkirby153.KirBot.utils.GREEN_CHECK
-import me.mrkirby153.KirBot.utils.NO_ENTRY
+import me.mrkirby153.KirBot.utils.GREEN_TICK
+import me.mrkirby153.KirBot.utils.RED_TICK
 import net.dv8tion.jda.core.entities.Message
 import net.dv8tion.jda.core.requests.RestAction
 import java.awt.Color
@@ -41,7 +41,7 @@ class ResponseBuilder(val context: Context) {
         return if (hand) {
             this.context.channel.sendMessage(":ok_hand: $msg")
         } else {
-            this.context.channel.sendMessage("$GREEN_CHECK $msg")
+            this.context.channel.sendMessage("$GREEN_TICK $msg")
         }
     }
 
@@ -52,7 +52,7 @@ class ResponseBuilder(val context: Context) {
      * @return The Message created by this function.
      */
     fun error(msg: String): RestAction<Message> {
-        return this.context.channel.sendMessage("$NO_ENTRY $msg")
+        return this.context.channel.sendMessage("$RED_TICK $msg")
     }
 
     /**

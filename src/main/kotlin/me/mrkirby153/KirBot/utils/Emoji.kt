@@ -12,4 +12,4 @@ val STATUS_DND = CustomEmoji("status_dnd", "414874407044120586")
 val STATUS_OFFLINE = CustomEmoji("status_offline", "414874407022886913")
 
 val RED_TICK = CustomEmoji("kbRedTick", "414875062336880640")
-val GREEN_TICK = CustomEmoji("kbGreenTick", "414875062336880640")
+val GREEN_TICK = CustomEmoji("kbGreenTick", "414875062001205249")

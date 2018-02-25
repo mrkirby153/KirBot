@@ -20,9 +20,9 @@ class Context(val shard: Shard, val message: Message) : Message by message {
 
     fun send() = ResponseBuilder(this)
 
-    fun success() = message.addReaction(GREEN_CHECK).queue()
+    fun success() = message.addReaction(GREEN_TICK.emote).queue()
 
-    fun fail() = message.addReaction(RED_CROSS).queue()
+    fun fail() = message.addReaction(RED_TICK.emote).queue()
 
     override fun getAuthor(): User {
         return customAuthor ?: message.author

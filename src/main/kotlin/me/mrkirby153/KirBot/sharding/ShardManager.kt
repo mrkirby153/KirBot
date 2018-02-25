@@ -11,7 +11,6 @@ import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.entities.User
 import net.dv8tion.jda.core.events.ReadyEvent
 import net.dv8tion.jda.core.hooks.ListenerAdapter
-import net.dv8tion.jda.core.requests.SessionReconnectQueue
 
 class ShardManager(val token: String, private val totalShards: Int) {
 
@@ -127,7 +126,6 @@ class ShardManager(val token: String, private val totalShards: Int) {
                 }
             }
         })
-        setReconnectQueue(SessionReconnectQueue())
         buildBlocking()
     }
 }

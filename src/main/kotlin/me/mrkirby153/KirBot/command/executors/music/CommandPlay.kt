@@ -13,7 +13,7 @@ import me.mrkirby153.KirBot.utils.Context
 @Command(name = "play", arguments = ["<query/url:string,rest>"])
 class CommandPlay : BaseCommand() {
     override fun execute(context: Context, cmdContext: CommandContext) {
-        if (context.kirbotGuild.musicManager.settings.enabled) {
+        if (!context.kirbotGuild.musicManager.settings.enabled) {
             return
         } else {
             Bot.LOG.debug("Music is disabled in ${context.guild.id}, ignoring")

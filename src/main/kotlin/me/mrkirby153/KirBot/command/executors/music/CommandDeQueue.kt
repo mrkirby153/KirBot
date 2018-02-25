@@ -14,7 +14,7 @@ import me.mrkirby153.KirBot.utils.mdEscape
 class CommandDeQueue : BaseCommand() {
 
     override fun execute(context: Context, cmdContext: CommandContext) {
-        if (context.kirbotGuild.musicManager.settings.enabled) {
+        if (!context.kirbotGuild.musicManager.settings.enabled) {
             return
         } else {
             Bot.LOG.debug("Music is disabled in ${context.guild.id}, ignoring")

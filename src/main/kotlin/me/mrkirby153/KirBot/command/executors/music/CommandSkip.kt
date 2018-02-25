@@ -22,7 +22,7 @@ class CommandSkip : BaseCommand() {
     val skipCooldown = mutableMapOf<String, Long>()
 
     override fun execute(context: Context, cmdContext: CommandContext) {
-        if (context.kirbotGuild.musicManager.settings.enabled) {
+        if (!context.kirbotGuild.musicManager.settings.enabled) {
             return
         } else {
             Bot.LOG.debug("Music is disabled in ${context.guild.id}, ignoring")
@@ -91,7 +91,7 @@ class CommandSkip : BaseCommand() {
                 var skip = 0
                 var stay = 0
                 it.reactions.forEach {
-                    when (it.emote.name) {
+                    when (it.reactionEmote.name) {
                         "\uD83D\uDC4D" -> skip = it.count - 1
                         "\uD83D\uDC4E" -> stay = it.count - 1
                     }

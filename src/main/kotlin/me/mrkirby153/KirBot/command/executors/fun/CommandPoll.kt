@@ -97,11 +97,11 @@ class CommandPoll : BaseCommand(false, CommandCategory.FUN) {
                             title = "Results"
                             description {
                                 it.reactions.forEach { reaction ->
-                                    val value = reaction.emote.name[0] - '\u0030'
+                                    val value = reaction.reactionEmote.name[0] - '\u0030'
                                     if (value !in 0 until options.size) return@forEach
 
                                     options[value].let {
-                                        appendln("${reaction.emote.name} **$it** — __${reaction.count - 1} Votes__")
+                                        appendln("${reaction.reactionEmote.name} **$it** — __${reaction.count - 1} Votes__")
 
                                         if (reaction.count - 1 > topVotes) {
                                             winners.clear()

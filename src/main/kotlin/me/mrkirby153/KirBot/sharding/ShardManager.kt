@@ -10,7 +10,6 @@ import net.dv8tion.jda.core.entities.Game
 import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.entities.User
 import net.dv8tion.jda.core.events.ReadyEvent
-import net.dv8tion.jda.core.hooks.EventListener
 import net.dv8tion.jda.core.hooks.ListenerAdapter
 import net.dv8tion.jda.core.requests.SessionReconnectQueue
 
@@ -54,11 +53,11 @@ class ShardManager(val token: String, private val totalShards: Int) {
             Thread.sleep(5000)
     }
 
-    fun addListener(eventListener: EventListener) {
+    fun addListener(eventListener: Any) {
         shards.forEach { it.addEventListener(eventListener) }
     }
 
-    fun removeListener(eventListener: EventListener) {
+    fun removeListener(eventListener: Any) {
         shards.forEach { it.removeEventListener(eventListener) }
     }
 

@@ -7,15 +7,17 @@ import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.utils.CustomEmoji
 import me.mrkirby153.KirBot.utils.escapeMentions
 import me.mrkirby153.KirBot.utils.kirbotGuild
-import me.mrkirby153.KirBot.utils.mdEscape
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import net.dv8tion.jda.core.entities.Message
 import net.dv8tion.jda.core.entities.TextChannel
 import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.LinkedList
 import java.util.TimeZone
 
 class LogManager(private val guild: KirBotGuild) {
+
+    private val logQueue = LinkedList<String>()
 
     val logChannel: TextChannel?
         get() {
@@ -36,7 +38,7 @@ class LogManager(private val guild: KirBotGuild) {
             return // The user is in the ignored log array
 
         this.genericLog(":wastebasket:",
-                "${author.nameAndDiscrim}(`${author.id}`) Message deleted in **#${chan.name}** \n ${msg.message.escapeMentions().mdEscape()}")
+                "${author.nameAndDiscrim}(`${author.id}`) Message deleted in **#${chan.name}** \n ${msg.message.escapeMentions()}")
     }
 
     fun logBulkDelete(chan: TextChannel, messages: List<String>) {
@@ -65,12 +67,26 @@ class LogManager(private val guild: KirBotGuild) {
     fun genericLog(emoji: String, message: String) {
         val timezone = TimeZone.getTimeZone(this.guild.settings.logTimezone)
         val calendar = Calendar.getInstance(timezone)
-        logChannel?.sendMessage(buildString {
+        val m = buildString {
             append("`[")
             append(SimpleDateFormat("HH:mm:ss").format(calendar.timeInMillis))
             append("]` ")
             append(emoji)
             append(" $message")
-        })?.queue()
+        }
+        logQueue.addLast(m)
+    }
+
+    fun processQueue() {
+        if (logQueue.isEmpty())
+            return
+        val string = buildString {
+            while(logQueue.isNotEmpty()) {
+                if (logQueue.peek().length + length > 2000)
+                    return@buildString
+                appendln(logQueue.pop())
+            }
+        }
+        logChannel?.sendMessage(string)?.queue()
     }
 }

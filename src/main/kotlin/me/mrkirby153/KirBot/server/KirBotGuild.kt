@@ -230,6 +230,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
             toRemove.forEach { it.delete() }
         }
         Infractions.importFromBanlist(this)
+        isSynced = true
     }
 
     fun saveData() {

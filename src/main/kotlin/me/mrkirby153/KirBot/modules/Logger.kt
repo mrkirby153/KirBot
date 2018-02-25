@@ -3,11 +3,13 @@ package me.mrkirby153.KirBot.modules
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.database.models.guild.GuildMessage
+import me.mrkirby153.KirBot.logger.LogPump
 import me.mrkirby153.KirBot.module.Module
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import me.mrkirby153.kcutils.Time
+import net.dv8tion.jda.core.events.ShutdownEvent
 import net.dv8tion.jda.core.events.guild.member.GuildMemberJoinEvent
 import net.dv8tion.jda.core.events.guild.member.GuildMemberLeaveEvent
 import net.dv8tion.jda.core.events.guild.member.GuildMemberNickChangeEvent
@@ -24,12 +26,22 @@ import net.dv8tion.jda.core.events.user.UserNameUpdateEvent
 
 class Logger : Module("logging") {
 
+    private val logDelay = 1000L
+
     init {
         dependencies.add(Database::class.java)
     }
 
+    private lateinit var logPump: LogPump
+
     override fun onLoad() {
         log("Starting logger....")
+        logPump = LogPump(logDelay)
+        logPump.start()
+    }
+
+    override fun onShutdown(event: ShutdownEvent?) {
+        logPump.shutdown()
     }
 
     override fun onGuildMessageDelete(event: GuildMessageDeleteEvent) {
@@ -112,6 +124,8 @@ class Logger : Module("logging") {
     }
 
     override fun onGuildMessageReceived(event: GuildMessageReceivedEvent) {
+        if (!event.guild.kirbotGuild.isReady)
+            return
         if (event.channel.id == event.guild.kirbotGuild.logManager.logChannel?.id) {
             return
         }

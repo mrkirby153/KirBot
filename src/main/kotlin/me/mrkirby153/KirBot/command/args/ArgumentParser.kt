@@ -31,7 +31,7 @@ class ArgumentParser(val arguments: Array<String>) {
 
             if (argType == ArgType.REQUIRED && !argList.hasNext()) {
                 Bot.LOG.debug("Missing required argument")
-                throw ArgumentParseException("The argument `$name` is required!")
+                throw ArgumentParseException("The argument `<$name:$type>` is required!")
             }
             if (argList.hasNext()) {
                     val parse = ContextResolvers.getResolver(type)?.invoke(argList,

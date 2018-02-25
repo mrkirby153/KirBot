@@ -15,7 +15,7 @@ import java.awt.Color
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 
-@Command(name = "poll", arguments = ["<duration:string>", "<question:string>", "<options:string,rest>"])
+@Command(name = "poll", arguments = ["<duration:string>", "<question:string>", "<options:string...>"])
 class CommandPoll : BaseCommand(false, CommandCategory.FUN) {
     val time = mutableMapOf<String, Int>()
 

@@ -11,7 +11,7 @@ import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.kcutils.utils.IdGenerator
 
-@Command(name = "createGroup,cg", arguments = ["<name:string,rest>"],
+@Command(name = "createGroup,cg", arguments = ["<name:string...>"],
         clearance = Clearance.SERVER_ADMINISTRATOR)
 class CommandCreateGroup : BaseCommand(CommandCategory.GROUPS) {
 

@@ -14,7 +14,7 @@ import me.mrkirby153.KirBot.utils.embed.u
 import me.mrkirby153.KirBot.utils.mdEscape
 import java.awt.Color
 
-@Command(name = "help,?", arguments = ["[command:string,rest]"])
+@Command(name = "help,?", arguments = ["[command:string...]"])
 class CommandHelp : BaseCommand(CommandCategory.MISCELLANEOUS) {
 
     override fun execute(context: Context, cmdContext: CommandContext) {

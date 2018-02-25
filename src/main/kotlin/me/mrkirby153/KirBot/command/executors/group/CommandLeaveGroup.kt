@@ -10,7 +10,7 @@ import me.mrkirby153.KirBot.database.models.group.Group
 import me.mrkirby153.KirBot.database.models.group.GroupMember
 import me.mrkirby153.KirBot.utils.Context
 
-@Command(name = "leaveGroup,lg", arguments = ["<name:string,rest>"])
+@Command(name = "leaveGroup,lg", arguments = ["<name:string...>"])
 class CommandLeaveGroup : BaseCommand(CommandCategory.GROUPS) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val name = cmdContext.get<String>("name") ?: throw CommandException("Please specify a name")

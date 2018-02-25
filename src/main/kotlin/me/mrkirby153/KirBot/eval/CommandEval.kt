@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit
 const val CHECKBOX = "\u2705"
 const val ARROWS = "\uD83D\uDD04"
 
-@Command(name = "eval,run", clearance = Clearance.BOT_OWNER, arguments = ["<eval:string,rest>"])
+@Command(name = "eval,run", clearance = Clearance.BOT_OWNER, arguments = ["<eval:string...>"])
 class CommandEval : BaseCommand(CommandCategory.MISCELLANEOUS){
     override fun execute(context: Context, cmdContext: CommandContext) {
         val toEval = cmdContext.get<String>("eval") ?: return

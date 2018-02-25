@@ -5,7 +5,7 @@ import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.utils.Context
 
-@Command("charinfo", ["<text:string,rest>"])
+@Command("charinfo", ["<text:string...>"])
 class CommandCharInfo : BaseCommand(false) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val text = cmdContext.get<String>("text") ?: return

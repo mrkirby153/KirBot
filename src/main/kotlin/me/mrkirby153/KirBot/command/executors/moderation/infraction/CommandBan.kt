@@ -13,7 +13,7 @@ import me.mrkirby153.KirBot.utils.getClearance
 import me.mrkirby153.KirBot.utils.getMember
 import net.dv8tion.jda.core.entities.User
 
-@Command(name = "ban", arguments = ["<user:user>", "<reason:string,rest>"], clearance = Clearance.BOT_MANAGER)
+@Command(name = "ban", arguments = ["<user:user>", "<reason:string...>"], clearance = Clearance.BOT_MANAGER)
 @LogInModlogs
 class CommandBan : BaseCommand(false, CommandCategory.MODERATION) {
     override fun execute(context: Context, cmdContext: CommandContext) {
@@ -36,7 +36,7 @@ class CommandBan : BaseCommand(false, CommandCategory.MODERATION) {
     }
 }
 
-@Command(name = "forceban", arguments = ["<user:snowflake>", "<reason:string,rest>"], clearance = Clearance.BOT_MANAGER)
+@Command(name = "forceban", arguments = ["<user:snowflake>", "<reason:string...>"], clearance = Clearance.BOT_MANAGER)
 @LogInModlogs
 class CommandForceBan : BaseCommand(false, CommandCategory.MODERATION) {
     override fun execute(context: Context, cmdContext: CommandContext) {

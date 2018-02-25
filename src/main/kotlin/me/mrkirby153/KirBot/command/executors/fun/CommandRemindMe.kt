@@ -18,7 +18,7 @@ import net.dv8tion.jda.core.entities.User
 import net.dv8tion.jda.core.events.message.guild.react.GuildMessageReactionAddEvent
 import java.util.concurrent.TimeUnit
 
-@Command(name = "remindMe,remind", arguments = ["<time:string>", "<query:string,rest>"])
+@Command(name = "remindMe,remind", arguments = ["<time:string>", "<query:string...>"])
 class CommandRemindMe : BaseCommand(false, CommandCategory.FUN) {
 
     override fun execute(context: Context, cmdContext: CommandContext) {

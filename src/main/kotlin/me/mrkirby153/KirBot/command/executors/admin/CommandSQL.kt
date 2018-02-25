@@ -14,7 +14,7 @@ import me.mrkirby153.kcutils.utils.TableBuilder
 import java.sql.SQLException
 import java.util.concurrent.TimeUnit
 
-@Command(name = "sql", arguments = ["<query:string,rest>"], clearance = Clearance.BOT_OWNER)
+@Command(name = "sql", arguments = ["<query:string...>"], clearance = Clearance.BOT_OWNER)
 class CommandSQL : BaseCommand(false, CommandCategory.ADMIN) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val query = cmdContext.get<String>("query") ?: throw CommandException(

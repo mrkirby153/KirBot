@@ -18,7 +18,7 @@ import me.mrkirby153.kcutils.Time
 import java.net.URL
 import java.util.concurrent.TimeUnit
 
-@Command(name = "rss", arguments = ["[action:string]", "[parameters:string,rest]"], clearance = Clearance.BOT_MANAGER)
+@Command(name = "rss", arguments = ["[action:string]", "[parameters:string...]"], clearance = Clearance.BOT_MANAGER)
 class CommandRss :
         BaseCommand(false, CommandCategory.MISCELLANEOUS) {
 

@@ -10,7 +10,7 @@ import me.mrkirby153.KirBot.database.models.group.Group
 import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
 
-@Command(name = "deleteGroup,dg", arguments = ["<name:string,rest>"], clearance = Clearance.SERVER_ADMINISTRATOR)
+@Command(name = "deleteGroup,dg", arguments = ["<name:string...>"], clearance = Clearance.SERVER_ADMINISTRATOR)
 class CommandDeleteGroup : BaseCommand(CommandCategory.GROUPS) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val name = cmdContext.get<String>("name") ?: throw CommandException(

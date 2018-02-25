@@ -14,7 +14,7 @@ import me.mrkirby153.KirBot.utils.getMember
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import net.dv8tion.jda.core.entities.User
 
-@Command(name = "kick", arguments = ["<user:user>", "<reason:string,rest>"], clearance = Clearance.BOT_MANAGER)
+@Command(name = "kick", arguments = ["<user:user>", "<reason:string...>"], clearance = Clearance.BOT_MANAGER)
 @LogInModlogs
 class CommandKick : BaseCommand(false, CommandCategory.MODERATION) {
     override fun execute(context: Context, cmdContext: CommandContext) {

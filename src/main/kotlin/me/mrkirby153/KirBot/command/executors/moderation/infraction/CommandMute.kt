@@ -17,15 +17,14 @@ import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.User
 
-@Command(name = "mute,shutup,quiet", arguments = ["<user:user>", "<reason:string,rest>"],
+@Command(name = "mute,shutup,quiet", arguments = ["<user:user>", "[reason:string...]"],
         clearance = Clearance.BOT_MANAGER)
 @LogInModlogs
 class CommandMute : BaseCommand(false, CommandCategory.MODERATION) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val user = cmdContext.get<User>("user") ?: throw CommandException(
                 "Please specify a user to mute")
-        val reason = cmdContext.get<String>("reason") ?: throw CommandException(
-                "Please specify a reason")
+        val reason = cmdContext.get<String>("reason") ?: "No reason specified"
         val member = user.getMember(context.guild) ?: throw CommandException(
                 "This user isn't a part of the guild!")
         if (context.channel !is TextChannel)

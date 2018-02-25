@@ -10,7 +10,7 @@ import me.mrkirby153.KirBot.google.YoutubeSearch
 import me.mrkirby153.KirBot.music.AudioTrackLoader
 import me.mrkirby153.KirBot.utils.Context
 
-@Command(name = "play", arguments = ["<query/url:string,rest>"])
+@Command(name = "play", arguments = ["<query/url:string...>"])
 class CommandPlay : BaseCommand() {
     override fun execute(context: Context, cmdContext: CommandContext) {
         if (!context.kirbotGuild.musicManager.settings.enabled) {

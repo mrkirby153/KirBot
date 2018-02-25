@@ -24,15 +24,8 @@ object ContextResolvers {
 
     private fun registerDefaultResolvers() {
         // String resolver
-        registerResolver("string") { args, params ->
-            if (params.size == 1 && params[0].equals("rest", true)) {
-                // Eating the rest of the string
-                return@registerResolver buildString {
-                    while (args.peek() != null) {
-                        append(args.popFirst() + " ")
-                    }
-                }.trim().replace(Regex("^(?<!\\\\)\\\""), "").replace(Regex("(?<!\\\\)\\\"\$"), "")
-            }
+        // TODO 2/24/18: Make "string..." as the thing that takes the rest
+        registerResolver("string") { args, _ ->
             // Return the string in quotes
             if (args.peek().matches(Regex("^(?<!\\\\)\\\".*"))) {
                 Bot.LOG.debug("Found beginning quote, starting parse")
@@ -53,6 +46,12 @@ object ContextResolvers {
             } else {
                 args.popFirst()
             }
+        }
+        registerResolver("string...") { args, _ ->
+            return@registerResolver buildString {
+                while(args.peek() != null)
+                    append(args.popFirst()+" ")
+            }.trim().replace(Regex("^(?<!\\\\)\\\""), "").replace(Regex("(?<!\\\\)\\\"\$"), "")
         }
 
         // Snowflake resolver

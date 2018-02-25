@@ -7,8 +7,9 @@ import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.listener.WaitUtils
+import me.mrkirby153.KirBot.module.ModuleManager
+import me.mrkirby153.KirBot.modules.Scheduler
 import me.mrkirby153.KirBot.scheduler.Schedulable
-import me.mrkirby153.KirBot.scheduler.Scheduler
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.RED_CROSS
 import me.mrkirby153.KirBot.utils.deleteAfter
@@ -29,7 +30,7 @@ class CommandRemindMe : BaseCommand(false, CommandCategory.FUN) {
             throw CommandException("I need something to remind you about!")
         }
 
-        Scheduler.submit(RemindAction(context.guild.id, context.channel.id, context.author.id,
+        ModuleManager[Scheduler::class].submit(RemindAction(context.guild.id, context.channel.id, context.author.id,
                 query), time, TimeUnit.MILLISECONDS)
         context.send().success("Ok, I will remind you in `${Time.format(1, time,
                 smallest = Time.TimeUnit.SECONDS)}` about `$query`", true).queue {

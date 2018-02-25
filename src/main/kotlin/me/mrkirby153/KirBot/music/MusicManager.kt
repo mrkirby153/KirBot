@@ -5,7 +5,8 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.database.models.guild.MusicSettings
-import me.mrkirby153.KirBot.redis.RedisConnector
+import me.mrkirby153.KirBot.module.ModuleManager
+import me.mrkirby153.KirBot.modules.Redis
 import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.entities.Message
 import net.dv8tion.jda.core.entities.TextChannel
@@ -72,7 +73,7 @@ class MusicManager(val guild: Guild) {
         this.queue.forEach {
             json.put(serializeQueuedSong(it))
         }
-        RedisConnector.get().use {
+        ModuleManager[Redis::class].redisConnection.get().use {
             it.set("music.queue:${this.guild.id}", json.toString())
             val playing = nowPlaying
             if (playing != null) {
@@ -122,7 +123,7 @@ class MusicManager(val guild: Guild) {
     data class QueuedSong(val track: AudioTrack, val queuedBy: User, val queuedIn: String)
 
     fun resetQueue() {
-        RedisConnector.get().use {
+        ModuleManager[Redis::class].redisConnection.get().use {
             it.del("music.queue:${this.guild.id}")
             it.del("music.playing:${this.guild.id}")
         }

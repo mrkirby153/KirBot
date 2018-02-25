@@ -9,15 +9,10 @@ import com.sedmelluq.discord.lavaplayer.source.soundcloud.SoundCloudAudioSourceM
 import com.sedmelluq.discord.lavaplayer.source.twitch.TwitchStreamAudioSourceManager
 import com.sedmelluq.discord.lavaplayer.source.vimeo.VimeoAudioSourceManager
 import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager
-import me.mrkirby153.KirBot.command.CommandExecutor
 import me.mrkirby153.KirBot.database.DatabaseConnection
-import me.mrkirby153.KirBot.database.models.ConnectionFactory
-import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.error.UncaughtErrorReporter
-import me.mrkirby153.KirBot.logger.LogListener
-import me.mrkirby153.KirBot.redis.RedisConnector
+import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.rss.FeedTask
-import me.mrkirby153.KirBot.scheduler.Scheduler
 import me.mrkirby153.KirBot.seen.SeenStore
 import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.sharding.ShardManager
@@ -32,8 +27,8 @@ import okhttp3.Request
 import org.json.JSONObject
 import org.json.JSONTokener
 import org.slf4j.LoggerFactory
-import java.sql.Connection
 import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 import kotlin.system.measureTimeMillis
 
@@ -45,7 +40,7 @@ object Bot {
     var initialized = false
 
     val startTime = System.currentTimeMillis()
-    val scheduler = Executors.newSingleThreadScheduledExecutor()
+    val scheduler: ScheduledExecutorService = Executors.newScheduledThreadPool(2)
 
     val files = BotFiles()
 
@@ -73,6 +68,7 @@ object Bot {
 
     lateinit var shardManager: ShardManager
 
+    @Deprecated("Deprecated")
     lateinit var database: DatabaseConnection
 
 
@@ -103,19 +99,6 @@ object Bot {
             properties.getProperty("shards").toInt()
         }
 
-        // Attempt database initialization
-        LOG.info("Initializing database connection")
-        database = DatabaseConnection(properties.getProperty("database-host"),
-                properties.getProperty("database-port").toInt(), properties.getProperty("database"),
-                properties.getProperty("database-username"),
-                properties.getProperty("database-password"))
-
-        Model.factory = object : ConnectionFactory {
-            override fun getConnection(): Connection {
-                return this@Bot.database.getConnection()
-            }
-        }
-
         LOG.info("Initializing Bot ($numShards shards)")
         val startTime = System.currentTimeMillis()
 
@@ -126,13 +109,13 @@ object Bot {
             shardManager.addShard(i)
         }
 
-        shardManager.addListener(LogListener())
-
         val endTime = System.currentTimeMillis()
         LOG.info("\n\n\nSHARDS INITIALIZED! (${localizeTime(
                 ((endTime - startTime) / 1000).toInt())})")
 
-        LOG.info("Bot is connecting to discord")
+        // Boot the modules
+        ModuleManager.loadModules(false)
+        ModuleManager.loadedModules.forEach { shardManager.addListener(it) }
 
         val guilds = shardManager.shards.flatMap { it.guilds }
         LOG.info("Started syncing of ${guilds.size} guilds")
@@ -144,22 +127,7 @@ object Bot {
         }
         LOG.info("Synced ${guilds.size} guilds in ${Time.format(1, syncTime)}")
 
-
-        val password = Bot.properties.getProperty("redis-password", "")
-        val host = Bot.properties.getProperty("redis-host", "localhost")
-        val port = Bot.properties.getProperty("redis-port", "6379").toInt()
-        val dbNumber = Bot.properties.getProperty("redis-db", "0").toInt()
-
-        this.redisConnection = RedisConnection(host, port,
-                if (password.isEmpty()) null else password, dbNumber)
-
-        RedisConnector.listen()
-
         HttpUtils.clearCache()
-
-        CommandExecutor.loadAll()
-
-        Scheduler.load()
 
         scheduler.scheduleAtFixedRate(FeedTask(), 0, 1, TimeUnit.HOURS)
 
@@ -169,8 +137,8 @@ object Bot {
     }
 
     fun stop() {
-        RedisConnector.running = false
         shardManager.shutdown()
+        ModuleManager.loadedModules.forEach { it.unload(true) }
         LOG.info("Bot is disconnecting from Discord")
         System.exit(0)
     }
@@ -182,8 +150,9 @@ object Bot {
             header("Authorization", "Bot $token")
         }.build()
         val response = HttpUtils.CLIENT.newCall(request).execute()
-        if(response.code() != 200)
-            throw RuntimeException("Received non-success code (${response.code()}) from Discord, aborting")
+        if (response.code() != 200)
+            throw RuntimeException(
+                    "Received non-success code (${response.code()}) from Discord, aborting")
         val body = response.body()?.string()
         if (body.isNullOrEmpty()) {
             throw RuntimeException(

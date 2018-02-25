@@ -1,6 +1,8 @@
 package me.mrkirby153.KirBot.realname
 
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.module.ModuleManager
+import me.mrkirby153.KirBot.modules.Database
 import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.utils.getMember
 import net.dv8tion.jda.core.entities.Member
@@ -34,7 +36,7 @@ class RealnameHandler(var guild: KirBotGuild) {
         val query = "SELECT `id`, `first_name`, `last_name`, CONCAT(`first_name`, ' ', `last_name`) AS 'combined' FROM `user_info` WHERE `id` IN (${guild.members.joinToString(
                 ", ") { "'${it.user.id}'" }})"
         val realname = mutableMapOf<String, Triple<String, String, String>>()
-        Bot.database.getConnection().use { connection ->
+        ModuleManager[Database::class].database.getConnection().use { connection ->
             connection.prepareStatement(query).use { ps ->
                 ps.executeQuery().use { rs ->
                     println(rs)

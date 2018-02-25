@@ -1,9 +1,12 @@
-package me.mrkirby153.KirBot.scheduler
+package me.mrkirby153.KirBot.modules
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.module.Module
+import me.mrkirby153.KirBot.scheduler.InterfaceAdapter
+import me.mrkirby153.KirBot.scheduler.Schedulable
 import me.mrkirby153.kcutils.Time
 import java.util.Random
 import java.util.SortedMap
@@ -11,24 +14,24 @@ import java.util.TreeMap
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
-@Deprecated("Deprecated")
-object Scheduler {
+class Scheduler : Module("scheduler") {
 
     var schedule: SortedMap<Long, ScheduledItem> = TreeMap()
 
-    val executor = Executors.newCachedThreadPool(
+    private val executor = Executors.newCachedThreadPool(
             ThreadFactoryBuilder().setDaemon(true).setNameFormat("schedule-executor-%d").build())
 
-    val timer = Executors.newScheduledThreadPool(1,
+    private val timer = Executors.newScheduledThreadPool(1,
             ThreadFactoryBuilder().setDaemon(true).setNameFormat("executor_timer-%d").build())
 
     private val gson = GsonBuilder().apply {
         registerTypeAdapter(Schedulable::class.java, InterfaceAdapter<Schedulable>())
     }.create()
+
     private val random = Random()
 
-    init {
-        timer.scheduleAtFixedRate({
+    override fun onLoad() {
+        this.timer.scheduleAtFixedRate({
             try {
                 this.process()
             } catch (ignored: Exception) {
@@ -37,12 +40,12 @@ object Scheduler {
     }
 
     fun submit(schedulable: Schedulable, time: Long, unit: TimeUnit): String {
-        val id = generateId()
+        val id = this.generateId()
         val convert = TimeUnit.MILLISECONDS.convert(time, unit)
         Bot.LOG.debug("Scheduling for ${Time.format(1, convert)}")
-        schedule.put(System.currentTimeMillis() + convert,
+        this.schedule.put(System.currentTimeMillis() + convert,
                 ScheduledItem(id, schedulable))
-        save()
+        this.save()
         return id
     }
 

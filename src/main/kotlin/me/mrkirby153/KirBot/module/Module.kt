@@ -1,8 +1,9 @@
 package me.mrkirby153.KirBot.module
 
 import me.mrkirby153.KirBot.Bot
+import net.dv8tion.jda.core.hooks.ListenerAdapter
 
-abstract class Module(val name: String) {
+abstract class Module(val name: String) : ListenerAdapter() {
 
     var loaded = false
 
@@ -13,7 +14,8 @@ abstract class Module(val name: String) {
 
     open fun onUnload() {}
 
-    fun load() {
+
+    fun load(registerListeners: Boolean = true) {
         log("Starting load")
         val unmetDeps = this.getUnmetDeps()
         if (unmetDeps.isNotEmpty()) {
@@ -23,12 +25,13 @@ abstract class Module(val name: String) {
         debug("Calling onLoad()")
         onLoad()
         debug("Registering listener")
-        Bot.shardManager.addListener(this)
+        if (registerListeners)
+            Bot.shardManager.addListener(this)
         debug("Load complete")
         loaded = true
     }
 
-    fun unload() {
+    fun unload(unregisterListener: Boolean = true) {
         log("Starting unload")
         if (!loaded) {
             throw IllegalStateException(
@@ -37,7 +40,8 @@ abstract class Module(val name: String) {
         debug("Calling onUnload()")
         onUnload()
         debug("Removing listener")
-        Bot.shardManager.removeListener(this)
+        if (unregisterListener)
+            Bot.shardManager.removeListener(this)
         log("Unloading complete")
         loaded = false
     }
@@ -57,6 +61,9 @@ abstract class Module(val name: String) {
     override fun toString(): String {
         return "Module(name='$name', loaded=$loaded)"
     }
+
+    fun getProp(string: String, default: String? = null): String? = Bot.properties.getProperty(
+            string) ?: default
 
 
 }

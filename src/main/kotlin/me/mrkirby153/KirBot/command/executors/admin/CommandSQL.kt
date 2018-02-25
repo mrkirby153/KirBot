@@ -7,6 +7,8 @@ import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.models.Model
+import me.mrkirby153.KirBot.module.ModuleManager
+import me.mrkirby153.KirBot.modules.Database
 import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.deleteAfter
@@ -21,7 +23,7 @@ class CommandSQL : BaseCommand(false, CommandCategory.ADMIN) {
                 "Please specify a query")
 
         Bot.scheduler.schedule({
-            Bot.database.getConnection().use { con ->
+            ModuleManager[Database::class].database.getConnection().use { con ->
                 con.createStatement().use { statement ->
                     try {
                         val r = statement.execute(query)

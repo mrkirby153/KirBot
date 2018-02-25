@@ -2,40 +2,28 @@ package me.mrkirby153.KirBot.redis
 
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.logger.ErrorLogger
+import me.mrkirby153.KirBot.utils.redis.RedisConnection
 import me.mrkirby153.kcutils.Time
-import org.json.JSONObject
 
 private const val MAX_RETRIES = 4
 
-object RedisConnector {
+class RedisConnector(val connector: RedisConnection) {
 
     var running = true
 
     var retries = 0
 
-    fun get() = Bot.redisConnection.get()
-
-    fun publish(channel: String, message: String) {
-        get().use {
-            it.publish(channel, message)
-        }
-    }
-
-    fun publish(channel: String, json: JSONObject) {
-        this.publish(channel, json.toString())
-    }
-
     fun listen() {
         val thread = Thread {
-            while(running) {
+            while (running) {
                 try {
-                    get().use {
+                    connector.get().use {
                         retries = 0
                         it.psubscribe(RedisHandler(), "kirbot:*")
                     }
                 } catch (e: Exception) {
                     ErrorLogger.logThrowable(e)
-                    if(retries > MAX_RETRIES){
+                    if (retries > MAX_RETRIES) {
                         running = false
                         Bot.LOG.error("Reached Max retry count, giving up.")
                     } else {

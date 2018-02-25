@@ -20,11 +20,12 @@ object ModuleManager {
         return availableModules.firstOrNull { it.javaClass == clazz } as? T
     }
 
-    operator fun <T : Module> get(clazz: Class<T>): T? = getLoadedModule(clazz)
+    operator fun <T : Module> get(clazz: Class<T>): T = getLoadedModule(clazz)
+            ?: throw IllegalArgumentException("The provided module wasn't loaded")
 
-    operator fun <T : Module> get(clazz: KClass<T>): T? = get(clazz.java)
+    operator fun <T : Module> get(clazz: KClass<T>): T = get(clazz.java)
 
-    fun loadModules() {
+    fun loadModules(registerListeners: Boolean = true) {
         val startTime = System.currentTimeMillis()
         Bot.LOG.info("Module Manager Starting Up...")
         // Populate the available modules
@@ -53,7 +54,7 @@ object ModuleManager {
         // Beginning load of module
         Bot.LOG.debug("Loading modules...")
         resolved.forEach {
-            it.load()
+            it.load(registerListeners)
             loadedModules.add(it)
         }
         Bot.LOG.info("Modules loaded in ${Time.format(1, System.currentTimeMillis() - startTime)}")

@@ -1,8 +1,10 @@
-package me.mrkirby153.KirBot.logger
+package me.mrkirby153.KirBot.modules
 
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.database.models.guild.GuildMessage
+import me.mrkirby153.KirBot.module.Module
+import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import me.mrkirby153.kcutils.Time
@@ -18,9 +20,16 @@ import net.dv8tion.jda.core.events.message.guild.GuildMessageUpdateEvent
 import net.dv8tion.jda.core.events.role.RoleCreateEvent
 import net.dv8tion.jda.core.events.role.RoleDeleteEvent
 import net.dv8tion.jda.core.events.user.UserNameUpdateEvent
-import net.dv8tion.jda.core.hooks.ListenerAdapter
 
-class LogListener : ListenerAdapter() {
+class Logger : Module("logging") {
+
+    init {
+        dependencies.add(Database::class.java)
+    }
+
+    override fun onLoad() {
+        log("Starting logger....")
+    }
 
     override fun onGuildMessageDelete(event: GuildMessageDeleteEvent) {
         event.guild.kirbotGuild.logManager.logMessageDelete(event.messageId)
@@ -31,7 +40,7 @@ class LogListener : ListenerAdapter() {
         event.guild.kirbotGuild.logManager.logBulkDelete(event.channel, event.messageIds)
         val query = "DELETE FROM `server_messages` WHERE `id` IN (${event.messageIds.joinToString(
                 ",") { "'$it'" }})"
-        Bot.database.getConnection().use { conn ->
+        ModuleManager[Database::class.java].database.getConnection().use { conn ->
             conn.prepareStatement(query).use { ps ->
                 ps.execute()
             }

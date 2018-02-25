@@ -1,7 +1,6 @@
 package me.mrkirby153.KirBot.listener
 
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.command.CommandExecutor
 import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.database.models.Quote
 import me.mrkirby153.KirBot.database.models.guild.GuildMember
@@ -10,7 +9,6 @@ import me.mrkirby153.KirBot.database.models.guild.Role
 import me.mrkirby153.KirBot.database.models.guild.ServerSettings
 import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.sharding.Shard
-import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.RED_CROSS
 import me.mrkirby153.KirBot.utils.embed.embed
 import me.mrkirby153.KirBot.utils.kirbotGuild
@@ -32,8 +30,6 @@ import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleRemoveEvent
 import net.dv8tion.jda.core.events.guild.voice.GuildVoiceJoinEvent
 import net.dv8tion.jda.core.events.guild.voice.GuildVoiceLeaveEvent
 import net.dv8tion.jda.core.events.guild.voice.GuildVoiceMoveEvent
-import net.dv8tion.jda.core.events.message.MessageReceivedEvent
-import net.dv8tion.jda.core.events.message.MessageUpdateEvent
 import net.dv8tion.jda.core.events.message.react.MessageReactionAddEvent
 import net.dv8tion.jda.core.events.role.RoleCreateEvent
 import net.dv8tion.jda.core.events.role.RoleDeleteEvent
@@ -44,30 +40,6 @@ import java.awt.Color
 import java.util.concurrent.TimeUnit
 
 class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
-
-    override fun onMessageReceived(event: MessageReceivedEvent) {
-        if (!event.author.isFake)
-            Bot.seenStore.update(event.author, event.guild)
-
-        if (event.author == shard.selfUser)
-            return
-
-        val context = Context(event)
-
-        CommandExecutor.execute(context)
-    }
-
-    override fun onMessageUpdate(event: MessageUpdateEvent) {
-        // If the message was edited
-       if(event.channel.latestMessageId == event.messageId){
-           // Only process if it's the last message
-           if(event.author == shard.selfUser){
-               return // Lets not update the message
-           }
-           val context = Context(shard, event.message)
-           CommandExecutor.execute(context)
-       }
-    }
 
     override fun onGuildMemberJoin(event: GuildMemberJoinEvent) {
         val member = Model.first(GuildMember::class.java, Pair("server_id", event.guild.id),
@@ -123,7 +95,6 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
             nick = event.newNick
             save()
         }
-        // TODO 1/20/18: Broadcast a log event
     }
 
     override fun onGuildLeave(event: GuildLeaveEvent) {

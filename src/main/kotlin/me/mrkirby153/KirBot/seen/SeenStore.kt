@@ -1,6 +1,7 @@
 package me.mrkirby153.KirBot.seen
 
-import me.mrkirby153.KirBot.redis.RedisConnector
+import me.mrkirby153.KirBot.module.ModuleManager
+import me.mrkirby153.KirBot.modules.Redis
 import me.mrkirby153.KirBot.utils.getMember
 import net.dv8tion.jda.core.OnlineStatus
 import net.dv8tion.jda.core.entities.Guild
@@ -22,7 +23,7 @@ class SeenStore {
             OnlineStatus.fromKey(data.getString("status")))
 
     fun get(user: User): SeenData? {
-        RedisConnector.get().use {
+        ModuleManager[Redis::class].redisConnection.get().use {
             if (it.get("seen.${user.id}") == null)
                 return null
             val json = JSONObject(JSONTokener(it.get("seen.${user.id}")))
@@ -39,7 +40,7 @@ class SeenStore {
     }
 
     private fun set(user: User, data: SeenData) {
-        RedisConnector.get().use {
+        ModuleManager[Redis::class].redisConnection.get().use {
             it.set("seen.${user.id}", serialize(data).toString())
         }
     }

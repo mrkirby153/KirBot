@@ -46,7 +46,6 @@ object CommandExecutor {
             commands.forEach(CommandExecutor::registerCommand)
         }
         Bot.LOG.info("Commands registered in ${Time.format(1, time, Time.TimeUnit.FIT)}")
-        helpManager.load()
     }
 
     fun execute(context: Context) {

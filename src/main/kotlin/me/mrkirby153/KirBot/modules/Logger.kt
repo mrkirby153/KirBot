@@ -19,6 +19,7 @@ import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent
 import net.dv8tion.jda.core.events.message.guild.GuildMessageUpdateEvent
 import net.dv8tion.jda.core.events.role.RoleCreateEvent
 import net.dv8tion.jda.core.events.role.RoleDeleteEvent
+import net.dv8tion.jda.core.events.role.update.RoleUpdateNameEvent
 import net.dv8tion.jda.core.events.user.UserNameUpdateEvent
 
 class Logger : Module("logging") {
@@ -71,13 +72,18 @@ class Logger : Module("logging") {
     }
 
     override fun onRoleCreate(event: RoleCreateEvent) {
-        event.guild.kirbotGuild.logManager.genericLog(":tools:",
-                "Role **${event.role.name}** created")
+        event.guild.kirbotGuild.logManager.genericLog(":hammer_pick:",
+                "Role **${event.role.name}** (`${event.role.id}`) created")
     }
 
     override fun onRoleDelete(event: RoleDeleteEvent) {
         event.guild.kirbotGuild.logManager.genericLog(":bomb:",
-                "Role **${event.role.name}** deleted")
+                "Role **${event.role.name}** (`${event.role.id}`) deleted")
+    }
+
+    override fun onRoleUpdateName(event: RoleUpdateNameEvent) {
+        event.guild.kirbotGuild.logManager.genericLog(":wrench:",
+                "Role **${event.oldName}** (`${event.role.id}`) renamed to **${event.role.name}**")
     }
 
     override fun onGuildMemberNickChange(event: GuildMemberNickChangeEvent) {

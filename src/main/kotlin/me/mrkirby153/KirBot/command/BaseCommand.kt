@@ -47,9 +47,7 @@ abstract class BaseCommand(val respectWhitelist: Boolean = true,
     fun isAlias(command: String) = command.toLowerCase() in aliases.map { it.toLowerCase() }
 
     fun getSubCommand(name: String): Method? {
-        Bot.LOG.debug("[SUBCMD] Looking up command $name")
         return this.javaClass.declaredMethods.firstOrNull {
-            Bot.LOG.debug("[SUBCMD] Checking candidate ${it.name}")
             it.getDeclaredAnnotation(
                     Command::class.java) != null && name.toLowerCase() in it.getDeclaredAnnotation(
                     Command::class.java).name.toLowerCase().split(",")

@@ -20,6 +20,7 @@ import net.dv8tion.jda.core.entities.Channel
 import net.dv8tion.jda.core.entities.ChannelType
 import net.dv8tion.jda.core.entities.Guild
 import org.reflections.Reflections
+import java.lang.reflect.InvocationTargetException
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import kotlin.system.measureTimeMillis
@@ -154,7 +155,11 @@ object CommandExecutor {
                 command.cmdPrefix = prefix
                 if (isSubCommand) {
                     Bot.LOG.debug("Executing sub-command $subCommand")
-                    command.getSubCommand(subCommand)?.invoke(command, context, cmdContext)
+                    try {
+                        command.getSubCommand(subCommand)?.invoke(command, context, cmdContext)
+                    } catch (e: InvocationTargetException) {
+                        throw e.targetException
+                    }
                 } else {
                     command.execute(context, cmdContext)
                 }

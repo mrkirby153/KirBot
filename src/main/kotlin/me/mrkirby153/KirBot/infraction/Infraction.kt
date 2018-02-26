@@ -42,4 +42,10 @@ class Infraction : Model() {
             this.typeRaw = type.internalName
             field = type
         }
+
+    fun revoke() {
+        this.revokedAt = Timestamp(System.currentTimeMillis())
+        this.active = false
+        save()
+    }
 }

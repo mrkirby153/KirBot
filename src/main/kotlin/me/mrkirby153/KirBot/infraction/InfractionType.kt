@@ -6,6 +6,7 @@ enum class InfractionType(val internalName: String) {
     KICK("kick"),
     BAN("ban"),
     MUTE("mute"),
+    TEMPMUTE("tempmute"),
     UNKNOWN("unknown");
 
     companion object {

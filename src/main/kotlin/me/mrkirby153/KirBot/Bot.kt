@@ -12,6 +12,7 @@ import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager
 import me.mrkirby153.KirBot.database.DatabaseConnection
 import me.mrkirby153.KirBot.error.UncaughtErrorReporter
 import me.mrkirby153.KirBot.module.ModuleManager
+import me.mrkirby153.KirBot.modules.Database
 import me.mrkirby153.KirBot.rss.FeedTask
 import me.mrkirby153.KirBot.seen.SeenStore
 import me.mrkirby153.KirBot.server.KirBotGuild
@@ -22,6 +23,7 @@ import me.mrkirby153.KirBot.utils.readProperties
 import me.mrkirby153.KirBot.utils.redis.RedisConnection
 import me.mrkirby153.kcutils.Time
 import me.mrkirby153.kcutils.readProperties
+import me.mrkirby153.kcutils.use
 import net.dv8tion.jda.core.OnlineStatus
 import okhttp3.Request
 import org.json.JSONObject
@@ -125,7 +127,19 @@ object Bot {
                 KirBotGuild[it].sync()
             }
         }
-        LOG.info("Synced ${guilds.size} guilds in ${Time.format(1, syncTime)}")
+        // Remove old guilds
+        Bot.LOG.info("Purging old guilds...")
+        val guildList = shardManager.shards.flatMap { it.guilds }
+        val sql = "DELETE FROM `server_settings` WHERE `id` NOT IN (${guildList.joinToString(
+                ",") { "'${it.id}'" }})"
+        var deleted = 0
+        ModuleManager[Database::class.java].database.getConnection().use { con ->
+            con.createStatement().use { st ->
+               deleted = st.executeUpdate(sql)
+            }
+        }
+
+        LOG.info("Synced ${guilds.size} guilds and removed $deleted guilds in ${Time.format(1, syncTime)}")
 
         HttpUtils.clearCache()
 

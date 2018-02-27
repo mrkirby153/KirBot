@@ -1,9 +1,12 @@
 package me.mrkirby153.KirBot.command.executors.msc
 
+import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.args.CommandContext
+import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
+import me.mrkirby153.KirBot.utils.getClearance
 import me.mrkirby153.kcutils.Time
 
 @Command(name = "ping")
@@ -11,10 +14,15 @@ class CommandPing : BaseCommand(false) {
 
     override fun execute(context: Context, cmdContext: CommandContext) {
         val start = System.currentTimeMillis()
-        context.channel.sendMessage("Testing ping...").queue {
+        context.channel.sendTyping().queue {
             val stop = System.currentTimeMillis()
-            it.editMessage(
-                    ":clock12: Ping: `${Time.format(1, stop - start, Time.TimeUnit.FIT)}`").queue()
+            val avgHeartbeat = Bot.shardManager.shards.map { it.ping }.sum() / Bot.shardManager.shards.size.toDouble()
+            val adminMsg = "Ping: `${Time.format(1, stop - start)}`\nHeartbeat: `${Time.format(1,
+                    context.shard.ping)}` \nAverage across all shards (${Bot.shardManager.shards.size}): `${Time.format(
+                    1, avgHeartbeat.toLong())}`"
+            val msg = "Pong! `${Time.format(1, stop - start)}`"
+            context.channel.sendMessage(if (context.author.getClearance(
+                            context.guild).value >= Clearance.BOT_OWNER.value) adminMsg else msg).queue()
         }
     }
 }

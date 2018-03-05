@@ -206,3 +206,18 @@ fun String.escapeMentions(): String {
 
 val User.nameAndDiscrim
     get() = this.name + "#" + this.discriminator
+
+fun Message.removeReaction(user: User, reaction: String) {
+    Bot.LOG.debug("Removing $reaction from $id")
+    this.reactions.filter {
+        Bot.LOG.debug("Reaction: ${it.reactionEmote.name}")
+        it.reactionEmote.name == reaction }.forEach {
+        it.removeReaction(user).queue()
+    }
+}
+
+fun Message.removeReactionById(user: User, reactionId: String) {
+    this.reactions.filter { it.reactionEmote.isEmote }.filter { it.reactionEmote.id == reactionId }.forEach {
+        it.removeReaction(user).queue()
+    }
+}

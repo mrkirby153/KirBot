@@ -2,15 +2,12 @@ package me.mrkirby153.KirBot.listener
 
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.models.Model
-import me.mrkirby153.KirBot.database.models.Quote
 import me.mrkirby153.KirBot.database.models.guild.GuildMember
 import me.mrkirby153.KirBot.database.models.guild.GuildMemberRole
 import me.mrkirby153.KirBot.database.models.guild.Role
 import me.mrkirby153.KirBot.database.models.guild.ServerSettings
 import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.sharding.Shard
-import me.mrkirby153.KirBot.utils.RED_CROSS
-import me.mrkirby153.KirBot.utils.embed.embed
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import net.dv8tion.jda.core.entities.Channel
 import net.dv8tion.jda.core.entities.Member
@@ -30,13 +27,11 @@ import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleRemoveEvent
 import net.dv8tion.jda.core.events.guild.voice.GuildVoiceJoinEvent
 import net.dv8tion.jda.core.events.guild.voice.GuildVoiceLeaveEvent
 import net.dv8tion.jda.core.events.guild.voice.GuildVoiceMoveEvent
-import net.dv8tion.jda.core.events.message.react.MessageReactionAddEvent
 import net.dv8tion.jda.core.events.role.RoleCreateEvent
 import net.dv8tion.jda.core.events.role.RoleDeleteEvent
 import net.dv8tion.jda.core.events.role.update.GenericRoleUpdateEvent
 import net.dv8tion.jda.core.events.user.UserOnlineStatusUpdateEvent
 import net.dv8tion.jda.core.hooks.ListenerAdapter
-import java.awt.Color
 import java.util.concurrent.TimeUnit
 
 class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
@@ -172,54 +167,6 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
 
     override fun onRoleDelete(event: RoleDeleteEvent) {
         Model.first(Role::class.java, Pair("id", event.role.id))?.delete()
-    }
-
-    override fun onMessageReactionAdd(event: MessageReactionAddEvent) {
-        // TODO 2017-09-07: Quoting should be a privilege, not a right
-        if (event.reaction.reactionEmote.name == "\uD83D\uDDE8" /* Left speech bubble */) {
-            event.channel.getMessageById(event.messageId).queue { message ->
-                if (message != null) {
-                    val q = Model.first(Quote::class.java, Pair("message_id", event.messageId))
-                    if (q != null)
-                        return@queue // The quote already exists
-                    val quote = Quote()
-                    quote.serverId = event.guild.id
-                    quote.messageId = event.messageId
-                    quote.user = message.author.name
-                    quote.content = message.contentDisplay
-                    quote.save()
-                    event.channel.sendMessage(embed("Quote") {
-                        color = Color.BLUE
-                        description {
-                            +"A new quote has been made by  `${event.member.user.name}#${event.member.user.discriminator}`"
-                        }
-                        fields {
-                            field {
-                                title = "ID"
-                                inline = true
-                                description = quote.id.toString()
-                            }
-                            field {
-                                title = "Message"
-                                inline = false
-                                description = quote.content
-                            }
-                        }
-                    }.build()).queue()
-                }
-            }
-        }
-        if (event.reaction.reactionEmote.name == RED_CROSS) {
-            event.channel.getMessageById(event.messageId).queue { msg ->
-                if (msg.author.id == event.guild.selfMember.user.id) {
-                    if (msg.contentRaw.startsWith("\u2063")) {
-                        if (msg.mentionedUsers.contains(event.user)) {
-                            msg.delete().queue()
-                        }
-                    }
-                }
-            }
-        }
     }
 
     override fun onGuildVoiceJoin(event: GuildVoiceJoinEvent) {

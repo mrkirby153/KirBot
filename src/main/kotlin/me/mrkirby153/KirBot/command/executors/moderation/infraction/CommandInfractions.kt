@@ -30,6 +30,11 @@ class CommandInfractions : BaseCommand(false, CommandCategory.MODERATION) {
                             it.active.toString(), it.createdAt.toString(), it.revokedAt.toString()))
         }
 
-        context.channel.sendMessage("```${table.buildTable()}```").queue()
+        val builtTable = table.buildTable()
+        if(builtTable.length < 2000) {
+            context.channel.sendMessage("```$builtTable```").queue()
+        } else {
+            context.channel.sendFile(builtTable.toByteArray(), "infractions-$user.txt").queue()
+        }
     }
 }

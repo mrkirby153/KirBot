@@ -70,7 +70,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         }
     }
 
-    fun sync() {
+    fun sync(forceReload: Boolean = false, waitFor: Boolean = false) {
         val keyGen = IdGenerator(IdGenerator.ALPHA + IdGenerator.NUMBERS)
         Bot.LOG.debug("Syncing guild ${this.id}")
         var guild = Model.first(ServerSettings::class.java, this.id)
@@ -89,146 +89,156 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
             return
         }
 
-        if (!settingsLoaded)
+        if (!settingsLoaded || forceReload)
             loadSettings()
 
+        // Load the rest of this stuff async
+       val future =  Bot.scheduler.submit({
 
-        if (this.selfMember.nickname != settings.botNick) {
-            Bot.LOG.debug("Updating nickname to \"${settings.botNick}\"")
-            this.controller.setNickname(this.selfMember,
-                    if (settings.botNick?.isEmpty() == true) null else settings.botNick).queue()
-        }
+            if (this.selfMember.nickname != settings.botNick) {
+                Bot.LOG.debug("Updating nickname to \"${settings.botNick}\"")
+                this.controller.setNickname(this.selfMember,
+                        if (settings.botNick?.isEmpty() == true) null else settings.botNick).queue()
+            }
 
-        if (settings.name != this.name) {
-            Bot.LOG.debug("Name has changed on ${this.name}, updating")
-            guild.name = this.name
-            guild.save()
-        }
+            if (settings.name != this.name) {
+                Bot.LOG.debug("Name has changed on ${this.name}, updating")
+                guild.name = this.name
+                guild.save()
+            }
 
-        updateChannels()
+            updateChannels()
 
-        val roles = Model.get(me.mrkirby153.KirBot.database.models.guild.Role::class.java,
-                Pair("server_id", this.id))
+            val roles = Model.get(me.mrkirby153.KirBot.database.models.guild.Role::class.java,
+                    Pair("server_id", this.id))
 
-        roles.forEach {
-            if (it.role != null) {
-                it.permissions = it.role!!.permissionsRaw
+            roles.forEach {
+                if (it.role != null) {
+                    it.permissions = it.role!!.permissionsRaw
+                    it.save()
+                }
+            }
+
+            val rolesToAdd = mutableListOf<Role>()
+            val rolesToRemove = mutableListOf<me.mrkirby153.KirBot.database.models.guild.Role>()
+
+            rolesToRemove.addAll(roles)
+            rolesToRemove.removeIf { role -> role.id in this.roles.map { it.id } }
+            rolesToAdd.addAll(this.roles.filter { it.id !in roles.map { it.id } })
+
+            Bot.LOG.debug("Adding roles ${rolesToAdd.map { it.id }}")
+            Bot.LOG.debug("Removing roles ${rolesToRemove.map { it.id }}")
+
+            rolesToAdd.forEach {
+                val role = me.mrkirby153.KirBot.database.models.guild.Role()
+                role.role = it
+                role.guild = this
+                role.permissions = it.permissionsRaw
+                role.save()
+            }
+
+            rolesToRemove.forEach(Model::delete)
+
+            RealnameHandler(this).update()
+
+            val groups = Model.get(Group::class.java, Pair("server_id", this.id))
+
+            groups.forEach { g ->
+                if (g.role != null) {
+                    g.members.mapNotNull {
+                        val u = it.user
+                        if (u == null)
+                            null
+                        else
+                            this.getMemberById(u.id)
+                    }.filter { g.role !in it.roles }.forEach { u ->
+                        this.controller.addRolesToMember(u, g.role).queue()
+                    }
+                } else {
+                    Bot.LOG.debug("Role was deleted. Removing from the database")
+                    g.members.forEach { it.delete() }
+                    g.delete()
+                    return@forEach
+                }
+                this.members.filter { g.role !in it.roles }.filter { it.user.id !in g.members.map { it.id } }.forEach {
+                    this.controller.removeRolesFromMember(it, g.role).queue()
+                }
+            }
+
+            var members = Model.get(GuildMember::class.java, Pair("server_id", this.id))
+
+            val toDelete = mutableListOf<GuildMember>()
+            val currentMembers = this.members.map { it.user.id }
+
+            toDelete.addAll(members.filter { it.user?.id !in currentMembers })
+
+            if (!guild.persistence) {
+                Bot.LOG.debug("Deleting ${toDelete.map { it.user?.id }}")
+                toDelete.forEach {
+                    it.delete()
+                }
+            }
+
+            val newMembers = this.members.filter { it.user.id !in members.map { it.user?.id } }
+
+            Bot.LOG.debug("Adding ${newMembers.map { it.user.id }}")
+            newMembers.forEach {
+                val member = GuildMember()
+                member.id = Model.randomId()
+                member.user = it.user
+                member.serverId = this.id
+                member.nick = it.nickname
+                member.save()
+            }
+
+            members.forEach {
+                it.user = Bot.shardManager.getUser(it.userId)
+                it.nick = it.user?.getMember(this)?.nickname
                 it.save()
             }
-        }
 
-        val rolesToAdd = mutableListOf<Role>()
-        val rolesToRemove = mutableListOf<me.mrkirby153.KirBot.database.models.guild.Role>()
+            members = Model.get(GuildMember::class.java, Pair("server_id", this.id))
 
-        rolesToRemove.addAll(roles)
-        rolesToRemove.removeIf { role -> role.id in this.roles.map { it.id } }
-        rolesToAdd.addAll(this.roles.filter { it.id !in roles.map { it.id } })
-
-        Bot.LOG.debug("Adding roles ${rolesToAdd.map { it.id }}")
-        Bot.LOG.debug("Removing roles ${rolesToRemove.map { it.id }}")
-
-        rolesToAdd.forEach {
-            val role = me.mrkirby153.KirBot.database.models.guild.Role()
-            role.role = it
-            role.guild = this
-            role.permissions = it.permissionsRaw
-            role.save()
-        }
-
-        rolesToRemove.forEach(Model::delete)
-
-        RealnameHandler(this).update()
-
-        val groups = Model.get(Group::class.java, Pair("server_id", this.id))
-
-        groups.forEach { g ->
-            if (g.role != null) {
-                g.members.mapNotNull {
-                    val u = it.user
-                    if (u == null)
-                        null
-                    else
-                        this.getMemberById(u.id)
-                }.filter { g.role !in it.roles }.forEach { u ->
-                    this.controller.addRolesToMember(u, g.role).queue()
+            members.forEach { m ->
+                val toRemove = mutableListOf<GuildMemberRole>()
+                val toAdd = mutableListOf<Role>()
+                if (m.user == null) {
+                    Bot.LOG.debug("Removing ${m.userId} as they no longer exist")
+                    m.delete()
+                    return@forEach
                 }
-            } else {
-                Bot.LOG.debug("Role was deleted. Removing from the database")
-                g.members.forEach { it.delete() }
-                g.delete()
-                return@forEach
+
+                val member = getMemberById(m.user!!.id) ?: return@forEach
+                val current = member.roles
+
+                toRemove.addAll(m.roles.filter { it.role?.id !in current.map { it.id } })
+                toAdd.addAll(current.filter { it.id !in m.roles.map { it.role?.id } })
+
+                if (toAdd.isNotEmpty()) {
+                    Bot.LOG.debug("Adding roles $toAdd to ${member.user}")
+                }
+                if (toRemove.isNotEmpty())
+                    Bot.LOG.debug(
+                            "Removing roles ${toRemove.map { it.role?.id }} from ${member.user}")
+
+                toAdd.forEach {
+                    val memberRole = GuildMemberRole()
+                    memberRole.id = keyGen.generate()
+                    memberRole.server = this
+                    memberRole.user = m.user
+                    memberRole.role = it
+                    memberRole.save()
+                }
+                toRemove.forEach { it.delete() }
             }
-            this.members.filter { g.role !in it.roles }.filter { it.user.id !in g.members.map { it.id } }.forEach {
-                this.controller.removeRolesFromMember(it, g.role).queue()
-            }
+            Infractions.importFromBanlist(this)
+        })
+
+        if(waitFor) {
+            Bot.LOG.debug("Waiting for sync to complete")
+            future.get()
+            Bot.LOG.debug("Sync complete!")
         }
-
-        var members = Model.get(GuildMember::class.java, Pair("server_id", this.id))
-
-        val toDelete = mutableListOf<GuildMember>()
-        val currentMembers = this.members.map { it.user.id }
-
-        toDelete.addAll(members.filter { it.user?.id !in currentMembers })
-
-        if (!guild.persistence) {
-            Bot.LOG.debug("Deleting ${toDelete.map { it.user?.id }}")
-            toDelete.forEach {
-                it.delete()
-            }
-        }
-
-        val newMembers = this.members.filter { it.user.id !in members.map { it.user?.id } }
-
-        Bot.LOG.debug("Adding ${newMembers.map { it.user.id }}")
-        newMembers.forEach {
-            val member = GuildMember()
-            member.id = Model.randomId()
-            member.user = it.user
-            member.serverId = this.id
-            member.nick = it.nickname
-            member.save()
-        }
-
-        members.forEach {
-            it.user = Bot.shardManager.getUser(it.userId)
-            it.nick = it.user?.getMember(this)?.nickname
-            it.save()
-        }
-
-        members = Model.get(GuildMember::class.java, Pair("server_id", this.id))
-
-        members.forEach { m ->
-            val toRemove = mutableListOf<GuildMemberRole>()
-            val toAdd = mutableListOf<Role>()
-            if (m.user == null) {
-                Bot.LOG.debug("Removing ${m.userId} as they no longer exist")
-                m.delete()
-                return@forEach
-            }
-
-            val member = getMemberById(m.user!!.id) ?: return@forEach
-            val current = member.roles
-
-            toRemove.addAll(m.roles.filter { it.role?.id !in current.map { it.id } })
-            toAdd.addAll(current.filter { it.id !in m.roles.map { it.role?.id } })
-
-            if (toAdd.isNotEmpty()) {
-                Bot.LOG.debug("Adding roles $toAdd to ${member.user}")
-            }
-            if (toRemove.isNotEmpty())
-                Bot.LOG.debug("Removing roles ${toRemove.map { it.role?.id }} from ${member.user}")
-
-            toAdd.forEach {
-                val memberRole = GuildMemberRole()
-                memberRole.id = keyGen.generate()
-                memberRole.server = this
-                memberRole.user = m.user
-                memberRole.role = it
-                memberRole.save()
-            }
-            toRemove.forEach { it.delete() }
-        }
-        Infractions.importFromBanlist(this)
         isSynced = true
     }
 
@@ -242,7 +252,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
 
     fun loadData() {
         Bot.LOG.debug("Loading data for $guild")
-        if(dataFile.exists()){
+        if (dataFile.exists()) {
             Bot.LOG.debug("Data file exists, migrating to redis")
             dataFile.inputStream().use {
                 this.extraData = JSONObject(JSONTokener(it))
@@ -251,7 +261,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
                 }
             }
             Bot.LOG.debug("Migration complete, deleting old file")
-            if(!dataFile.delete())
+            if (!dataFile.delete())
                 dataFile.deleteOnExit()
         } else {
             ModuleManager[Redis::class.java].getConnection().use {

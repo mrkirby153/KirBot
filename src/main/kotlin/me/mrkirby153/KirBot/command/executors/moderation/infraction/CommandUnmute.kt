@@ -8,12 +8,11 @@ import me.mrkirby153.KirBot.command.LogInModlogs
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.infraction.Infraction
+import me.mrkirby153.KirBot.infraction.Infractions
 import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
-import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.KirBot.utils.getMember
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
-import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.User
 import java.sql.Timestamp
@@ -30,19 +29,6 @@ class CommandUnmute : BaseCommand(false, CommandCategory.MODERATION) {
         if (context.channel !is TextChannel) {
             throw CommandException("This command doesn't work in PMs")
         }
-        if (!context.channel.checkPermissions(Permission.MANAGE_CHANNEL))
-            throw CommandException("Missing the required permission: `Manage Channel`")
-        val override = (context.channel as TextChannel).getPermissionOverride(member)
-        if (override == null || !override.denied.contains(Permission.MESSAGE_WRITE)) {
-            throw CommandException("That user isn't muted!")
-            return
-        }
-        if (override.denied.size > 1) {
-            if (override.denied.contains(Permission.MESSAGE_WRITE))
-                override.manager.clear(Permission.MESSAGE_WRITE).queue()
-        } else {
-            override.delete().queue()
-        }
         // Remove the infraction
         Model.get(Infraction::class.java, Pair("user_id", user.id), Pair("guild", context.guild.id),
                 Pair("type", "mute"), Pair("active", true)).forEach {
@@ -50,6 +36,7 @@ class CommandUnmute : BaseCommand(false, CommandCategory.MODERATION) {
             it.revokedAt = Timestamp(System.currentTimeMillis())
             it.save()
         }
+        Infractions.removeMutedRole(user, context.guild)
         context.send().success("Unmuted **${user.name}#${user.discriminator}**", true).queue()
         context.kirbotGuild.logManager.genericLog(":open_mouth:",
                 "${member.user.nameAndDiscrim} (`${member.user.id}`) Unmuted by ${context.author.nameAndDiscrim}")

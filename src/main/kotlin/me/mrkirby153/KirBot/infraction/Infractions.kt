@@ -1,9 +1,13 @@
 package me.mrkirby153.KirBot.infraction
 
+import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.database.models.QueryBuilder
 import me.mrkirby153.KirBot.server.KirBotGuild
+import me.mrkirby153.KirBot.utils.getMember
+import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.Guild
+import net.dv8tion.jda.core.entities.Role
 import net.dv8tion.jda.core.entities.User
 import java.sql.Timestamp
 
@@ -41,7 +45,7 @@ object Infractions {
     }
 
     fun createInfraction(user: String, guild: Guild, issuer: User, reason: String?,
-                                 type: InfractionType): Infraction {
+                         type: InfractionType): Infraction {
         val infraction = Infraction()
         infraction.userId = user
         infraction.guild = guild.id
@@ -88,6 +92,45 @@ object Infractions {
                         infraction.createdAt = Timestamp(System.currentTimeMillis())
                         infraction.save()
                     }
+        }
+    }
+
+    fun addMutedRole(user: User, guild: Guild) {
+        guild.controller.addSingleRoleToMember(user.getMember(guild),
+                getOrCreateMutedRole(guild)).queue()
+    }
+
+    fun removeMutedRole(user: User, guild: Guild) {
+        val r = user.getMember(guild).roles.map { it.id }
+        val mutedRole = getOrCreateMutedRole(guild)
+        if (mutedRole.id in r) {
+            guild.controller.removeSingleRoleFromMember(user.getMember(guild), mutedRole).queue()
+        }
+    }
+
+    private fun getOrCreateMutedRole(guild: Guild): Role {
+        val role = guild.roles.firstOrNull { it.name.equals("muted", true) }
+        if (role == null) {
+            Bot.LOG.debug("Muted role does not exist on $guild")
+            val r = guild.controller.createRole().complete()
+            val kbRoles = guild.selfMember.roles
+            var highest = kbRoles.first().position
+            kbRoles.forEach {
+                if (it.position > highest)
+                    highest = it.position
+            }
+            r.manager.setName("Muted").queue {
+                guild.controller.modifyRolePositions().selectPosition(r).moveTo(highest - 1).queue()
+                guild.textChannels.forEach { chan ->
+                    val o = chan.getPermissionOverride(r)
+                    if (o == null) {
+                        chan.createPermissionOverride(r).setDeny(Permission.MESSAGE_WRITE).queue()
+                    }
+                }
+            }
+            return r
+        } else {
+            return role
         }
     }
 }

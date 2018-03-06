@@ -19,7 +19,6 @@ import me.mrkirby153.KirBot.utils.getMember
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import me.mrkirby153.kcutils.Time
-import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.User
 import java.util.concurrent.TimeUnit
@@ -38,17 +37,14 @@ class TempMute : BaseCommand(false, CommandCategory.MODERATION) {
 
         val timeParsed = Time.parse(time)
 
-        if (timeParsed < 0) {
+        if (timeParsed <= 0) {
             throw CommandException("Please provide a time greater than 0")
         }
 
         if (context.channel !is TextChannel)
             throw CommandException("This command won't work in PMs")
 
-        val channel = context.channel as TextChannel
-        val override = channel.getPermissionOverride(member) ?: channel.createPermissionOverride(
-                member).complete()
-        override.manager.deny(Permission.MESSAGE_WRITE).queue()
+        Infractions.addMutedRole(user, context.guild)
 
         val inf = Infractions.createInfraction(user.id, context.guild, context.author, reason,
                 InfractionType.TEMPMUTE)
@@ -78,19 +74,10 @@ class TempMute : BaseCommand(false, CommandCategory.MODERATION) {
             val user = Bot.shardManager.getUser(userId) ?: return
             val guild = Bot.shardManager.getGuild(guild) ?: return
             val member = guild.getMember(user) ?: return
-            val c = guild.getTextChannelById(channel) ?: return
 
-            val override = c.getPermissionOverride(member) ?: return
-            if (override.denied.size > 1) {
-                if (override.denied.contains(Permission.MESSAGE_WRITE))
-                    override.manager.clear(Permission.MESSAGE_WRITE).queue()
-                else
-                    return
-            } else {
-                override.delete().queue()
-            }
+            Infractions.removeMutedRole(user, guild)
             guild.kirbotGuild.logManager.genericLog(":open_mouth:",
-                    "Timed mute for ${user.nameAndDiscrim} on #${c.name} expired.")
+                    "Timed mute for ${user.nameAndDiscrim} expired.")
         }
 
     }

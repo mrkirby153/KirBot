@@ -10,10 +10,8 @@ import me.mrkirby153.KirBot.infraction.InfractionType
 import me.mrkirby153.KirBot.infraction.Infractions
 import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.KirBot.utils.Context
-import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.KirBot.utils.getMember
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
-import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.User
 
@@ -30,12 +28,7 @@ class CommandMute : BaseCommand(false, CommandCategory.MODERATION) {
         if (context.channel !is TextChannel)
             throw CommandException("This command won't work in PMs")
 
-        if (!context.channel.checkPermissions(Permission.MANAGE_CHANNEL))
-            throw CommandException("Missing the required permission: `Manage Channel`")
-        val channel = context.channel as TextChannel
-        val override = channel.getPermissionOverride(member) ?: channel.createPermissionOverride(
-                member).complete()
-        override.manager.deny(Permission.MESSAGE_WRITE).queue()
+        Infractions.addMutedRole(user, context.guild)
         context.send().success("Muted **${user.name}#${user.discriminator}** (`$reason`)",
                 true).queue()
         Infractions.createInfraction(user.id, context.guild, context.author, reason,

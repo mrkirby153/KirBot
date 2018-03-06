@@ -46,7 +46,8 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
     val logManager = LogManager(this)
 
     var extraData = JSONObject()
-    private val dataFile = Bot.files.data.child("servers").mkdirIfNotExist().child("${this.id}.json")
+    private val dataFile = Bot.files.data.child("servers").mkdirIfNotExist().child(
+            "${this.id}.json")
 
     fun loadSettings() {
         Bot.LOG.debug("Loading settings for ${this}")
@@ -93,7 +94,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
             loadSettings()
 
         // Load the rest of this stuff async
-       val future =  Bot.scheduler.submit({
+        val future = Bot.scheduler.submit({
 
             if (this.selfMember.nickname != settings.botNick) {
                 Bot.LOG.debug("Updating nickname to \"${settings.botNick}\"")
@@ -110,24 +111,25 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
             updateChannels()
 
             val roles = Model.get(me.mrkirby153.KirBot.database.models.guild.Role::class.java,
-                    Pair("server_id", this.id))
+                    Pair("server_id", this.id)).toMutableList()
 
+            // Update the existing roles
+            val removedRoles = mutableListOf<String>()
             roles.forEach {
                 if (it.role != null) {
-                    it.permissions = it.role!!.permissionsRaw
-                    it.save()
+                    it.updateRole()
+                } else {
+                    it.delete()
                 }
             }
 
-            val rolesToAdd = mutableListOf<Role>()
-            val rolesToRemove = mutableListOf<me.mrkirby153.KirBot.database.models.guild.Role>()
 
-            rolesToRemove.addAll(roles)
-            rolesToRemove.removeIf { role -> role.id in this.roles.map { it.id } }
+            val rolesToAdd = mutableListOf<Role>()
             rolesToAdd.addAll(this.roles.filter { it.id !in roles.map { it.id } })
 
             Bot.LOG.debug("Adding roles ${rolesToAdd.map { it.id }}")
-            Bot.LOG.debug("Removing roles ${rolesToRemove.map { it.id }}")
+            Bot.LOG.debug("Removing roles $removedRoles")
+            roles.removeIf { it.id in removedRoles }
 
             rolesToAdd.forEach {
                 val role = me.mrkirby153.KirBot.database.models.guild.Role()
@@ -136,8 +138,6 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
                 role.permissions = it.permissionsRaw
                 role.save()
             }
-
-            rolesToRemove.forEach(Model::delete)
 
             RealnameHandler(this).update()
 
@@ -234,7 +234,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
             Infractions.importFromBanlist(this)
         })
 
-        if(waitFor) {
+        if (waitFor) {
             Bot.LOG.debug("Waiting for sync to complete")
             future.get()
             Bot.LOG.debug("Sync complete!")

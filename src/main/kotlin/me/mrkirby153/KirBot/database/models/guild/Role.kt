@@ -23,6 +23,8 @@ class Role : Model() {
 
     var permissions = 0L
 
+    var order = 0
+
     @Transient
     var guild: Guild? = null
         get() = Bot.shardManager.getGuild(serverId)
@@ -38,6 +40,17 @@ class Role : Model() {
             this.id = role!!.id
             this.name = role.name
             this.permissions = role.permissionsRaw
+            this.order = role.position
             field = role
         }
+
+    fun updateRole() {
+        val role = this.role ?: return
+
+        this.name = role.name
+        this.permissions = role.permissionsRaw
+        this.order = role.position
+
+        save()
+    }
 }

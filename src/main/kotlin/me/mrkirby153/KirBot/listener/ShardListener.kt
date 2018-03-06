@@ -161,7 +161,7 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
 
     override fun onGenericRoleUpdate(event: GenericRoleUpdateEvent) {
         val role = Model.first(Role::class.java, Pair("id", event.role.id)) ?: return
-        role.role = event.role
+        role.updateRole()
         role.save()
     }
 

@@ -11,6 +11,8 @@ import me.mrkirby153.KirBot.database.models.guild.MusicSettings
 import me.mrkirby153.KirBot.database.models.guild.ServerSettings
 import me.mrkirby153.KirBot.infraction.Infractions
 import me.mrkirby153.KirBot.logger.LogManager
+import me.mrkirby153.KirBot.module.ModuleManager
+import me.mrkirby153.KirBot.modules.Redis
 import me.mrkirby153.KirBot.music.MusicManager
 import me.mrkirby153.KirBot.realname.RealnameHandler
 import me.mrkirby153.KirBot.realname.RealnameSetting
@@ -44,13 +46,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
     val logManager = LogManager(this)
 
     var extraData = JSONObject()
-    private val dataFile = Bot.files.data.child("servers").mkdirIfNotExist().child("${this.id}.json").apply {
-        if(!exists()) {
-            Bot.LOG.debug("Data file doesn't exist for ${guild} creating...")
-            createNewFile()
-            writeText("{}")
-        }
-    }
+    private val dataFile = Bot.files.data.child("servers").mkdirIfNotExist().child("${this.id}.json")
 
     fun loadSettings() {
         Bot.LOG.debug("Loading settings for ${this}")
@@ -69,6 +65,9 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
 
     fun onPart() {
         dataFile.delete()
+        ModuleManager[Redis::class.java].getConnection().use {
+            it.del("data:${this.id}")
+        }
     }
 
     fun sync() {
@@ -236,13 +235,28 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
     fun saveData() {
         Bot.LOG.debug("Saving data for $guild")
         val json = this.extraData.toString()
-        dataFile.writeText(json)
+        ModuleManager[Redis::class.java].getConnection().use {
+            it.set("data:${this.id}", json)
+        }
     }
 
     fun loadData() {
         Bot.LOG.debug("Loading data for $guild")
-        dataFile.inputStream().use {
-            this.extraData = JSONObject(JSONTokener(it))
+        if(dataFile.exists()){
+            Bot.LOG.debug("Data file exists, migrating to redis")
+            dataFile.inputStream().use {
+                this.extraData = JSONObject(JSONTokener(it))
+                ModuleManager[Redis::class.java].getConnection().use {
+                    it.set("data:${this.id}", this.extraData.toString())
+                }
+            }
+            Bot.LOG.debug("Migration complete, deleting old file")
+            if(!dataFile.delete())
+                dataFile.deleteOnExit()
+        } else {
+            ModuleManager[Redis::class.java].getConnection().use {
+                this.extraData = JSONObject(JSONTokener(it.get("data:${this.id}") ?: "{}"))
+            }
         }
     }
 

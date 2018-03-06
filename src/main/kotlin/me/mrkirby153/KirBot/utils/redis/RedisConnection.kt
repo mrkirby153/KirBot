@@ -11,7 +11,7 @@ class RedisConnection(host: String, port: Int, password: String?,
 
     init {
         val prevLoader = Thread.currentThread().contextClassLoader
-        Thread.currentThread().contextClassLoader = RedisDataStore::class.java.classLoader
+        Thread.currentThread().contextClassLoader = RedisConnection::class.java.classLoader
 
         val config = JedisPoolConfig().apply {
             maxWaitMillis = 1000

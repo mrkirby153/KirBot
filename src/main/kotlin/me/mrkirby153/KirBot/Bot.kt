@@ -66,8 +66,6 @@ object Bot {
 
     val debug = properties.getProperty("debug", "false").toBoolean()
 
-    lateinit var redisConnection: RedisConnection
-
     lateinit var shardManager: ShardManager
 
     @Deprecated("Deprecated")

@@ -27,4 +27,6 @@ class Redis : Module("redis") {
     override fun onUnload() {
         connector.running = false
     }
+
+    fun getConnection() = redisConnection.get()
 }

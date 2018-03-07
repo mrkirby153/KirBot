@@ -13,10 +13,10 @@ import net.dv8tion.jda.core.entities.Channel
 import net.dv8tion.jda.core.entities.Member
 import net.dv8tion.jda.core.events.channel.text.TextChannelCreateEvent
 import net.dv8tion.jda.core.events.channel.text.TextChannelDeleteEvent
-import net.dv8tion.jda.core.events.channel.text.update.TextChannelUpdateNameEvent
+import net.dv8tion.jda.core.events.channel.text.update.GenericTextChannelUpdateEvent
 import net.dv8tion.jda.core.events.channel.voice.VoiceChannelCreateEvent
 import net.dv8tion.jda.core.events.channel.voice.VoiceChannelDeleteEvent
-import net.dv8tion.jda.core.events.channel.voice.update.VoiceChannelUpdateNameEvent
+import net.dv8tion.jda.core.events.channel.voice.update.GenericVoiceChannelUpdateEvent
 import net.dv8tion.jda.core.events.guild.GuildJoinEvent
 import net.dv8tion.jda.core.events.guild.GuildLeaveEvent
 import net.dv8tion.jda.core.events.guild.member.GuildMemberJoinEvent
@@ -138,18 +138,12 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
         channel.create()
     }
 
-    override fun onTextChannelUpdateName(event: TextChannelUpdateNameEvent) {
-        val chan = Model.first(me.mrkirby153.KirBot.database.models.Channel::class.java,
-                event.channel.id) ?: return
-        chan.name = event.channel.name
-        chan.save()
+    override fun onGenericTextChannelUpdate(event: GenericTextChannelUpdateEvent) {
+        Model.first(me.mrkirby153.KirBot.database.models.Channel::class.java, event.channel.id)?.updateChannel()
     }
 
-    override fun onVoiceChannelUpdateName(event: VoiceChannelUpdateNameEvent) {
-        val chan = Model.first(me.mrkirby153.KirBot.database.models.Channel::class.java,
-                event.channel.id) ?: return
-        chan.name = event.channel.name
-        chan.save()
+    override fun onGenericVoiceChannelUpdate(event: GenericVoiceChannelUpdateEvent) {
+        Model.first(me.mrkirby153.KirBot.database.models.Channel::class.java, event.channel.id)?.updateChannel()
     }
 
     override fun onRoleCreate(event: RoleCreateEvent) {

@@ -22,8 +22,6 @@ import me.mrkirby153.kcutils.mkdirIfNotExist
 import me.mrkirby153.kcutils.utils.IdGenerator
 import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.entities.Role
-import net.dv8tion.jda.core.entities.TextChannel
-import net.dv8tion.jda.core.entities.VoiceChannel
 import org.json.JSONObject
 import org.json.JSONTokener
 
@@ -273,32 +271,37 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
     private fun updateChannels() {
         Bot.LOG.debug(
                 "Updating channels on ${this.name} (${this.id})") // TODO 1/16/18: Update the name of the channel
-        val channels = Model.get(Channel::class.java, Pair("server", this.id))
+        val channels = Model.get(Channel::class.java, Pair("server", this.id)).toMutableList()
 
-        val registering = mutableListOf<net.dv8tion.jda.core.entities.Channel>()
-        val unregistering = mutableListOf<Channel>()
-
-        unregistering.addAll(channels)
-        unregistering.removeIf { chan -> chan.id in guild.textChannels.map { it.id } }
-        unregistering.removeIf { chan -> chan.id in guild.voiceChannels.map { it.id } }
-
-        registering.addAll(guild.textChannels.filter { it.id !in channels.map { it.id } })
-        registering.addAll(guild.voiceChannels.filter { it.id !in channels.map { it.id } })
-
-        Bot.LOG.debug("Registering channels $registering")
-        Bot.LOG.debug("Removing channels $unregistering")
-
-        registering.forEach {
-            val channel = Channel()
-            channel.id = it.id
-            channel.type = if (it is TextChannel) Channel.Type.TEXT else if (it is VoiceChannel) Channel.Type.VOICE else Channel.Type.UNKNOWN
-            channel.name = it.name
-            channel.guild = this
-            channel.hidden = false
-            channel.save()
+        val removedChannels = mutableListOf<Channel>()
+        channels.forEach {
+            if (it.channel != null) {
+                Bot.LOG.debug("Updating ${it.id} (${it.name})")
+                it.updateChannel()
+            } else {
+                Bot.LOG.debug("Channel ${it.id} has been removed!")
+                removedChannels.add(it)
+            }
         }
 
-        unregistering.forEach(Model::delete)
+        Bot.LOG.debug("Removing channels $removedChannels")
+
+        removedChannels.forEach(Model::delete)
+        channels.removeIf { it.id in removedChannels.map { it.id } }
+
+        val registering = mutableListOf<net.dv8tion.jda.core.entities.Channel>()
+        registering.addAll(
+                guild.textChannels.map { it as net.dv8tion.jda.core.entities.Channel }.filter { it.id !in channels.map { it.id } })
+        registering.addAll(
+                guild.voiceChannels.map { it as net.dv8tion.jda.core.entities.Channel }.filter { it.id !in channels.map { it.id } })
+
+        Bot.LOG.debug("Adding channels: $registering")
+        registering.forEach {
+            val channel = Channel()
+            channel.channel = it
+            channel.guild = this
+            channel.updateChannel()
+        }
     }
 
     override fun toString(): String {

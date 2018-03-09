@@ -46,7 +46,7 @@ class CommandRemindMe : BaseCommand(false, CommandCategory.FUN) {
             Bot.shardManager.getUser(user)?.let { user ->
                 Bot.shardManager.getGuild(guild)?.let {
                     it.getTextChannelById(channel)?.sendMessage(
-                            "<@$user> You asked me to remind you about `$query`. React with $RED_CROSS to delete this message")?.queue {
+                            "<@${this.user}> You asked me to remind you about `$query`. React with $RED_CROSS to delete this message")?.queue {
                         it.addReaction(RED_CROSS).queue()
                         queueDelete(it, user)
                     }

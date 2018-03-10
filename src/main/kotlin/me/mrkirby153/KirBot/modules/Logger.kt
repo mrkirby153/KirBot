@@ -108,8 +108,9 @@ class Logger : Module("logging") {
     override fun onUserNameUpdate(event: UserNameUpdateEvent) {
         Bot.shardManager.shards.forEach { shard ->
             shard.guilds.forEach { guild ->
-                guild.kirbotGuild.logManager.genericLog(":briefcase:",
-                        "${event.oldName}#${event.oldDiscriminator} (`${event.user.id}`) changed username to **${event.user.nameAndDiscrim}**")
+                if (event.user.id in guild.members.map { it.user.id })
+                    guild.kirbotGuild.logManager.genericLog(":briefcase:",
+                            "${event.oldName}#${event.oldDiscriminator} (`${event.user.id}`) changed username to **${event.user.nameAndDiscrim}**")
             }
         }
     }

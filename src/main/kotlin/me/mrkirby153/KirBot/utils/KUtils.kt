@@ -2,9 +2,12 @@ package me.mrkirby153.KirBot.utils
 
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.models.Model
+import me.mrkirby153.KirBot.module.ModuleManager
+import me.mrkirby153.KirBot.modules.Redis
 import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.sharding.Shard
 import me.mrkirby153.KirBot.user.Clearance
+import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.core.EmbedBuilder
 import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.Channel
@@ -15,17 +18,15 @@ import net.dv8tion.jda.core.entities.MessageChannel
 import net.dv8tion.jda.core.entities.MessageEmbed
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.User
-import org.json.JSONObject
-import org.json.JSONTokener
 import java.awt.Color
-import java.io.DataOutputStream
 import java.io.InputStream
-import java.net.HttpURLConnection
-import java.net.URL
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
+import java.util.Calendar
+import java.util.Date
 import java.util.Locale
 import java.util.Properties
+import java.util.UUID
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 
@@ -61,28 +62,22 @@ fun Guild.shard(): Shard? {
     return Bot.shardManager.getShard(this)
 }
 
-fun uploadToHastebin(text: String, callback: (String) -> Unit) {
-    Bot.scheduler.schedule({
-        callback.invoke(syncUploadToHastebin(text))
-    }, 0, TimeUnit.MILLISECONDS)
+fun uploadToArchive(text: String, ttl: Int = 604800): String {
+    ModuleManager[Redis::class.java].getConnection().use {
+        val key = UUID.randomUUID().toString()
+        Bot.LOG.debug("Archive created $key (Expires in ${Time.formatLong(ttl * 1000L, Time.TimeUnit.SECONDS).toLowerCase()})")
+        it.set("archive:$key", text)
+        it.expire("archive:$key", ttl)
+        return String.format(Bot.properties.getProperty("archive-base"), key)
+    }
 }
 
-fun syncUploadToHastebin(text: String): String {
-    val url = URL("https://paste.mrkirby153.com/documents")
-    val con = url.openConnection() as HttpURLConnection
-    con.requestMethod = "POST"
-    con.doInput = true
-    con.doOutput = true
-    con.setRequestProperty("User-Agent", "KirBot/${Bot.constants.getProperty("bot-version")}")
-
-    val os = DataOutputStream(con.outputStream)
-    os.write(text.toByteArray())
-    os.flush()
-    os.close()
-
-    val json = JSONObject(JSONTokener(con.inputStream))
-    con.disconnect()
-    return "https://paste.mrkirby153.com/raw/${json["key"]}"
+fun convertSnowflake(snowflake: String): Date {
+    val s = snowflake.toLong()
+    val time = s.shr(22)
+    val calendar = Calendar.getInstance()
+    calendar.timeInMillis = time + 1420070400000
+    return calendar.time
 }
 
 @JvmOverloads
@@ -211,9 +206,10 @@ fun Message.removeReaction(user: User, reaction: String) {
     Bot.LOG.debug("Removing $reaction from $id")
     this.reactions.filter {
         Bot.LOG.debug("Reaction: ${it.reactionEmote.name}")
-        it.reactionEmote.name == reaction }.forEach {
-        it.removeReaction(user).queue()
-    }
+        it.reactionEmote.name == reaction
+    }.forEach {
+                it.removeReaction(user).queue()
+            }
 }
 
 fun Message.removeReactionById(user: User, reactionId: String) {

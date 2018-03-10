@@ -74,7 +74,7 @@ class Logger : Module("logging") {
 
     override fun onGuildMemberJoin(event: GuildMemberJoinEvent) {
         event.guild.kirbotGuild.logManager.genericLog(":inbox_tray:",
-                "${event.user.nameAndDiscrim} (`${event.user.id}`) Joined (Created ${Time.format(1,
+                "${event.user.nameAndDiscrim} (`${event.user.id}`) Joined (Created ${Time.formatLong(
                         System.currentTimeMillis() - (event.user.creationTime.toEpochSecond() * 1000))} ago)")
     }
 

@@ -147,10 +147,14 @@ object Bot {
         shardManager.onlineStatus = OnlineStatus.ONLINE
         shardManager.playing = properties.getOrDefault("playing-message", "!help").toString()
         LOG.info("Startup completed in ${Time.format(0, System.currentTimeMillis() - startupTime)}")
-        val members = shardManager.shards.flatMap { it.guilds }.flatMap { it.members }.count()
+        val memberSet = mutableSetOf<String>()
+        Bot.shardManager.shards.flatMap { it.guilds }.flatMap { it.members }.forEach {
+            if(it.user.id !in memberSet)
+                memberSet.add(it.user.id)
+        }
         val guildCount = shardManager.shards.flatMap { it.guilds }.count()
         AdminControl.log("Bot startup complete in ${Time.formatLong(
-                System.currentTimeMillis() - startTime).toLowerCase()}. On $guildCount guilds with $members members")
+                System.currentTimeMillis() - startTime).toLowerCase()}. On $guildCount guilds with ${memberSet.size} users")
     }
 
     fun stop() {

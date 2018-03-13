@@ -8,6 +8,8 @@ import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.command.help.HelpManager
 import me.mrkirby153.KirBot.database.models.CustomCommand
 import me.mrkirby153.KirBot.logger.ErrorLogger
+import me.mrkirby153.KirBot.module.ModuleManager
+import me.mrkirby153.KirBot.modules.AdminControl
 import me.mrkirby153.KirBot.sharding.Shard
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.deleteAfter
@@ -236,6 +238,8 @@ object CommandExecutor {
             if (data.cmdWhitelist.isEmpty())
                 return true
             data.cmdWhitelist.any { it == channel.id }
+        } else if(command.controlCommand && channel.id != ModuleManager[AdminControl::class.java].logChannel?.id){
+            return false
         } else {
             true
         }

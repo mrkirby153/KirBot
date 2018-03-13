@@ -49,7 +49,7 @@ class CommandHelp : BaseCommand(CommandCategory.MISCELLANEOUS) {
                         inline = true
                         description {
                             commands.forEach {
-                                if (it.clearance == Clearance.BOT_OWNER)
+                                if (it.clearance == Clearance.BOT_OWNER || it.controlCommand)
                                     return@forEach
                                 +("$prefix${it.aliases.first().mdEscape()}" link ".")
                                 +"\n"

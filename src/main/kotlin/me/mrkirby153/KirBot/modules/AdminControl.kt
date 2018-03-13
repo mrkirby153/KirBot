@@ -25,7 +25,7 @@ class AdminControl : Module("admin") {
     fun log(message: String) {
         val msg = buildString {
             append("[`")
-            append(SimpleDateFormat("HH:MM:ss").format(System.currentTimeMillis()))
+            append(SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis()))
             append("`] $message")
         }
         logChannel?.sendMessage(msg)?.queue()

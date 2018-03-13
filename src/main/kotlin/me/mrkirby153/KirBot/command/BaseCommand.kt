@@ -28,6 +28,9 @@ abstract class BaseCommand(val respectWhitelist: Boolean = true,
             return list.toTypedArray()
         }
 
+    val controlCommand: Boolean
+        get() = this.javaClass.getAnnotation(Command::class.java)?.control ?: false
+
     init {
         val annotation = this.javaClass.getAnnotation(Command::class.java)
                 ?: throw RuntimeException("${this.javaClass} is missing the @Command annotation")

@@ -6,6 +6,7 @@ import me.mrkirby153.KirBot.database.models.guild.GuildMember
 import me.mrkirby153.KirBot.database.models.guild.GuildMemberRole
 import me.mrkirby153.KirBot.database.models.guild.Role
 import me.mrkirby153.KirBot.database.models.guild.ServerSettings
+import me.mrkirby153.KirBot.modules.AdminControl
 import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.sharding.Shard
 import me.mrkirby153.KirBot.utils.kirbotGuild
@@ -93,12 +94,15 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
     }
 
     override fun onGuildLeave(event: GuildLeaveEvent) {
+        val guild = event.guild
+        AdminControl.log("Left guild ${guild.name} (`${guild.id}`)")
         Model.first(ServerSettings::class.java, event.guild.id)?.delete()
         // TODO 1/20/18: Delete the relations as well
         event.guild.kirbotGuild.onPart()
     }
 
     override fun onGuildJoin(event: GuildJoinEvent) {
+        AdminControl.log("Joined guild ${event.guild.name} (`${event.guild.id}`) [${event.guild.members.size} members]")
         Bot.scheduler.schedule({
             event.guild.kirbotGuild.sync()
         }, 0, TimeUnit.MILLISECONDS)

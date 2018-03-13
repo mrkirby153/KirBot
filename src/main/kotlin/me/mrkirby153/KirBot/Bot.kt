@@ -12,6 +12,7 @@ import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager
 import me.mrkirby153.KirBot.database.DatabaseConnection
 import me.mrkirby153.KirBot.error.UncaughtErrorReporter
 import me.mrkirby153.KirBot.module.ModuleManager
+import me.mrkirby153.KirBot.modules.AdminControl
 import me.mrkirby153.KirBot.modules.Database
 import me.mrkirby153.KirBot.rss.FeedTask
 import me.mrkirby153.KirBot.seen.SeenStore
@@ -20,7 +21,6 @@ import me.mrkirby153.KirBot.sharding.ShardManager
 import me.mrkirby153.KirBot.utils.HttpUtils
 import me.mrkirby153.KirBot.utils.localizeTime
 import me.mrkirby153.KirBot.utils.readProperties
-import me.mrkirby153.KirBot.utils.redis.RedisConnection
 import me.mrkirby153.kcutils.Time
 import me.mrkirby153.kcutils.readProperties
 import me.mrkirby153.kcutils.use
@@ -92,7 +92,7 @@ object Bot {
 
         // Get the number of shards to start with
         numShards = if (properties.getProperty("shards") == null || properties.getProperty(
-                        "shards") == "auto") {
+                "shards") == "auto") {
             LOG.info("Automatically determining the number of shards to use")
             getNumShards(token)
         } else {
@@ -133,11 +133,12 @@ object Bot {
         var deleted = 0
         ModuleManager[Database::class.java].database.getConnection().use { con ->
             con.createStatement().use { st ->
-               deleted = st.executeUpdate(sql)
+                deleted = st.executeUpdate(sql)
             }
         }
 
-        LOG.info("Synced ${guilds.size} guilds and removed $deleted guilds in ${Time.format(1, syncTime)}")
+        LOG.info("Synced ${guilds.size} guilds and removed $deleted guilds in ${Time.format(1,
+                syncTime)}")
 
         HttpUtils.clearCache()
 
@@ -146,9 +147,14 @@ object Bot {
         shardManager.onlineStatus = OnlineStatus.ONLINE
         shardManager.playing = properties.getOrDefault("playing-message", "!help").toString()
         LOG.info("Startup completed in ${Time.format(0, System.currentTimeMillis() - startupTime)}")
+        val members = shardManager.shards.flatMap { it.guilds }.flatMap { it.members }.count()
+        val guildCount = shardManager.shards.flatMap { it.guilds }.count()
+        AdminControl.log("Bot startup complete in ${Time.formatLong(
+                System.currentTimeMillis() - startTime).toLowerCase()}. On $guildCount guilds with $members members")
     }
 
     fun stop() {
+        AdminControl.log("Bot shutting down...")
         shardManager.shutdown()
         ModuleManager.loadedModules.forEach { it.unload(true) }
         LOG.info("Bot is disconnecting from Discord")

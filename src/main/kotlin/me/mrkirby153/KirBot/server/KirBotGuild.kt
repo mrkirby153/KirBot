@@ -12,6 +12,7 @@ import me.mrkirby153.KirBot.database.models.guild.ServerSettings
 import me.mrkirby153.KirBot.infraction.Infractions
 import me.mrkirby153.KirBot.logger.LogManager
 import me.mrkirby153.KirBot.module.ModuleManager
+import me.mrkirby153.KirBot.modules.AdminControl
 import me.mrkirby153.KirBot.modules.Redis
 import me.mrkirby153.KirBot.music.MusicManager
 import me.mrkirby153.KirBot.realname.RealnameHandler

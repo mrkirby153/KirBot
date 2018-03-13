@@ -3,6 +3,8 @@ package me.mrkirby153.KirBot.logger
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.module.ModuleManager
+import me.mrkirby153.KirBot.modules.AdminControl
 import me.mrkirby153.KirBot.utils.deleteAfter
 import me.mrkirby153.KirBot.utils.embed.b
 import me.mrkirby153.kcutils.child
@@ -25,13 +27,7 @@ object ErrorLogger {
     private val gson = Gson()
 
     private val channel: TextChannel? by lazy {
-        if (chanId == "0")
-            return@lazy null
-        Bot.shardManager.shards.forEach {
-            if (it.getTextChannelById(chanId) != null)
-                return@lazy it.getTextChannelById(chanId)
-        }
-        return@lazy null
+         ModuleManager[AdminControl::class.java].logChannel
     }
 
     init {

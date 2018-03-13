@@ -46,12 +46,14 @@ class Logger : Module("logging") {
 
     override fun onGuildMessageDelete(event: GuildMessageDeleteEvent) {
         event.guild.kirbotGuild.logManager.logMessageDelete(event.messageId)
-        Model.first(GuildMessage::class.java, Pair("id", event.messageId))?.delete()
+        val msg = Model.first(GuildMessage::class.java, Pair("id", event.messageId)) ?: return
+        msg.deleted = true
+        msg.save()
     }
 
     override fun onMessageBulkDelete(event: MessageBulkDeleteEvent) {
         event.guild.kirbotGuild.logManager.logBulkDelete(event.channel, event.messageIds)
-        val query = "DELETE FROM `server_messages` WHERE `id` IN (${event.messageIds.joinToString(
+        val query = "UPDATE `server_messages` SET `deleted` = TRUE WHERE `id` IN (${event.messageIds.joinToString(
                 ",") { "'$it'" }})"
         ModuleManager[Database::class.java].database.getConnection().use { conn ->
             conn.prepareStatement(query).use { ps ->
@@ -121,6 +123,7 @@ class Logger : Module("logging") {
         event.guild.kirbotGuild.logManager.logEdit(event.message)
         val msg = Model.first(GuildMessage::class.java, Pair("id", event.messageId)) ?: return
         msg.message = event.message.contentDisplay
+        msg.editCount++
         msg.save()
     }
 

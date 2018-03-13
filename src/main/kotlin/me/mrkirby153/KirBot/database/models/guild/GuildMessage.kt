@@ -19,4 +19,9 @@ class GuildMessage : Model() {
     var channel = ""
 
     var message = ""
+
+    var deleted: Boolean = false
+
+    @Column("edit_count")
+    var editCount = 0
 }

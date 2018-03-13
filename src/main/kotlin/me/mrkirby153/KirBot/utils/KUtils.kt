@@ -182,6 +182,10 @@ fun String.mdEscape(): String {
     }
 }
 
+fun String.urlEscape(): String {
+    return this.replace(Regex("(<)(https?://\\S+)(>)"), "$2").replace(Regex("https?://\\S+"), "<$0>")
+}
+
 fun Message.deleteAfter(time: Long, unit: TimeUnit) {
     if (this.channel.checkPermissions(Permission.MESSAGE_MANAGE))
         this.delete().queueAfter(time, unit)

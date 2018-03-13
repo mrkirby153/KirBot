@@ -71,7 +71,8 @@ class LogManager(private val guild: KirBotGuild) {
             }
         }
 
-        val archiveUrl = if (msgs.isNotEmpty()) uploadToArchive(msgs.joinToString("\n")) else ""
+        val archiveUrl = if (msgs.isNotEmpty() && logChannel != null) uploadToArchive(
+                msgs.joinToString("\n")) else ""
         this.genericLog(":wastebasket:",
                 "${messages.size} messages deleted in **#${chan.name}**" + if (archiveUrl.isNotEmpty()) " ($archiveUrl)" else "")
     }
@@ -104,6 +105,8 @@ class LogManager(private val guild: KirBotGuild) {
             append(emoji)
             append(" $message")
         }
+        if (m.length > 2000)
+            return
         logQueue.addLast(m)
     }
 
@@ -117,6 +120,7 @@ class LogManager(private val guild: KirBotGuild) {
                 appendln(logQueue.pop())
             }
         }
-        logChannel?.sendMessage(string)?.queue()
+        if (string.isNotBlank())
+            logChannel?.sendMessage(string)?.queue()
     }
 }

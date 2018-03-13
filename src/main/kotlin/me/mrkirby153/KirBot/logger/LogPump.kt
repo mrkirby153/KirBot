@@ -26,8 +26,10 @@ class LogPump(private val delay: Long) : Thread() {
             try {
                 if (running)
                     sleep(delay)
-            } catch (e: InterruptedException) {
-                // Ignore
+            } catch (e: Exception) {
+                if(e !is InterruptedException)
+                    e.printStackTrace()
+                // Ignore all exceptions and continue running
             }
             shuttingDown = false
         }

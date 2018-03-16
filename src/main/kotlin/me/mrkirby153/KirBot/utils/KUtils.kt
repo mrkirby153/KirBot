@@ -2,6 +2,7 @@ package me.mrkirby153.KirBot.utils
 
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.models.Model
+import me.mrkirby153.KirBot.listener.WaitUtils
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.Redis
 import me.mrkirby153.KirBot.server.KirBotGuild
@@ -18,6 +19,7 @@ import net.dv8tion.jda.core.entities.MessageChannel
 import net.dv8tion.jda.core.entities.MessageEmbed
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.User
+import net.dv8tion.jda.core.events.message.react.MessageReactionAddEvent
 import java.awt.Color
 import java.io.InputStream
 import java.text.DecimalFormat
@@ -65,10 +67,39 @@ fun Guild.shard(): Shard? {
 fun uploadToArchive(text: String, ttl: Int = 604800): String {
     ModuleManager[Redis::class.java].getConnection().use {
         val key = UUID.randomUUID().toString()
-        Bot.LOG.debug("Archive created $key (Expires in ${Time.formatLong(ttl * 1000L, Time.TimeUnit.SECONDS).toLowerCase()})")
+        Bot.LOG.debug("Archive created $key (Expires in ${Time.formatLong(ttl * 1000L,
+                Time.TimeUnit.SECONDS).toLowerCase()})")
         it.set("archive:$key", text)
         it.expire("archive:$key", ttl)
         return String.format(Bot.properties.getProperty("archive-base"), key)
+    }
+}
+
+fun promptForConfirmation(context: Context, msg: String, onConfirm: (() -> Boolean)? = null,
+                          onDeny: (() -> Boolean)? = null) {
+    context.channel.sendMessage(msg).queue { m ->
+        m.addReaction(GREEN_TICK.emote).queue()
+        m.addReaction(RED_TICK.emote).queue()
+        WaitUtils.waitFor(MessageReactionAddEvent::class.java, {
+            if (it.user.id != context.author.id)
+                return@waitFor
+            if(it.messageId != m.id)
+                return@waitFor
+            if (it.reactionEmote.isEmote) {
+                when (it.reactionEmote.id) {
+                    GREEN_TICK.id -> {
+                        if (onConfirm == null || onConfirm.invoke())
+                            m.delete().queue()
+                        cancel()
+                    }
+                    RED_TICK.id -> {
+                        if (onDeny == null || onDeny.invoke())
+                            m.delete().queue()
+                        cancel()
+                    }
+                }
+            }
+        })
     }
 }
 
@@ -183,7 +214,8 @@ fun String.mdEscape(): String {
 }
 
 fun String.urlEscape(): String {
-    return this.replace(Regex("(<)(https?://\\S+)(>)"), "$2").replace(Regex("https?://\\S+"), "<$0>")
+    return this.replace(Regex("(<)(https?://\\S+)(>)"), "$2").replace(Regex("https?://\\S+"),
+            "<$0>")
 }
 
 fun Message.deleteAfter(time: Long, unit: TimeUnit) {
@@ -212,8 +244,8 @@ fun Message.removeReaction(user: User, reaction: String) {
         Bot.LOG.debug("Reaction: ${it.reactionEmote.name}")
         it.reactionEmote.name == reaction
     }.forEach {
-                it.removeReaction(user).queue()
-            }
+        it.removeReaction(user).queue()
+    }
 }
 
 fun Message.removeReactionById(user: User, reactionId: String) {

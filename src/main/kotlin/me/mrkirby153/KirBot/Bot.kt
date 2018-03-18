@@ -123,6 +123,7 @@ object Bot {
             guilds.forEach {
                 LOG.info("Syncing guild ${it.id} (${it.name})")
                 KirBotGuild[it].sync()
+                KirBotGuild[it].syncSeenUsers(true)
             }
         }
         // Remove old guilds

@@ -3,6 +3,7 @@ package me.mrkirby153.KirBot.server
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.models.Channel
 import me.mrkirby153.KirBot.database.models.CustomCommand
+import me.mrkirby153.KirBot.database.models.DiscordUser
 import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.database.models.RoleClearance
 import me.mrkirby153.KirBot.database.models.group.Group
@@ -21,6 +22,7 @@ import me.mrkirby153.KirBot.user.CLEARANCE_GLOBAL_ADMIN
 import me.mrkirby153.KirBot.utils.getMember
 import me.mrkirby153.kcutils.child
 import me.mrkirby153.kcutils.mkdirIfNotExist
+import me.mrkirby153.kcutils.use
 import me.mrkirby153.kcutils.utils.IdGenerator
 import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.entities.Member
@@ -327,6 +329,49 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
             channel.channel = it
             channel.guild = this
             channel.updateChannel()
+        }
+    }
+
+    fun syncSeenUsers(await: Boolean = false) {
+        Model.factory.getConnection().use { con ->
+            val users = mutableListOf<String>()
+            con.createStatement().executeQuery("SELECT id FROM seen_users").use { rs ->
+                while (rs.next()) {
+                    users.add(rs.getString("id"))
+                }
+            }
+
+            val newMembers = this.members.filter { it.user.id !in users }
+            Bot.LOG.debug("Found ${newMembers.size} new members!")
+            val future = Bot.scheduler.submit({
+                newMembers.map { it.user }.forEach { user ->
+                    val m = DiscordUser()
+                    m.id = user.id
+                    m.username = user.name
+                    m.discriminator = user.discriminator.toInt()
+                    m.create()
+                }
+            })
+            // Update the usernames
+            con.createStatement().executeQuery(
+                    "SELECT id, username, discriminator FROM seen_users").use { rs ->
+                while (rs.next()) {
+                    val member = this.members.firstOrNull { it.user.id == rs.getString("id") }
+                            ?: continue
+                    if (member.user.name != rs.getString(
+                                    "username") || member.user.discriminator != rs.getString(
+                                    "discriminator"))
+                        con.prepareStatement(
+                                "UPDATE `seen_users` SET `username` = ?, `discriminator` = ? WHERE id = ?").use { statement ->
+                            statement.setString(1, member.user.name)
+                            statement.setInt(2, member.user.discriminator.toInt())
+                            statement.setString(3, member.user.id)
+                            statement.execute()
+                        }
+                }
+            }
+            if (await)
+                future.get()
         }
     }
 

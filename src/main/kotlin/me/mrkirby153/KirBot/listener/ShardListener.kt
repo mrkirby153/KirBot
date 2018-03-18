@@ -1,6 +1,7 @@
 package me.mrkirby153.KirBot.listener
 
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.database.models.DiscordUser
 import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.database.models.guild.GuildMember
 import me.mrkirby153.KirBot.database.models.guild.GuildMemberRole
@@ -31,6 +32,7 @@ import net.dv8tion.jda.core.events.guild.voice.GuildVoiceMoveEvent
 import net.dv8tion.jda.core.events.role.RoleCreateEvent
 import net.dv8tion.jda.core.events.role.RoleDeleteEvent
 import net.dv8tion.jda.core.events.role.update.GenericRoleUpdateEvent
+import net.dv8tion.jda.core.events.user.UserNameUpdateEvent
 import net.dv8tion.jda.core.events.user.UserOnlineStatusUpdateEvent
 import net.dv8tion.jda.core.hooks.ListenerAdapter
 import java.util.concurrent.TimeUnit
@@ -56,6 +58,20 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
                         member.roles.map { it.role }.filter { it != null }).queue()
             }
         }
+        val user = Model.first(DiscordUser::class.java, event.user.id)
+        if (user == null) {
+            val u = DiscordUser()
+            u.username = event.user.name
+            u.discriminator = event.user.discriminator.toInt()
+            u.create()
+        }
+    }
+
+    override fun onUserNameUpdate(event: UserNameUpdateEvent) {
+        val user = Model.first(DiscordUser::class.java, event.user.id) ?: return
+        user.username = event.user.name
+        user.discriminator = event.user.discriminator.toInt()
+        user.save()
     }
 
     override fun onGuildMemberLeave(event: GuildMemberLeaveEvent) {
@@ -102,7 +118,8 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
     }
 
     override fun onGuildJoin(event: GuildJoinEvent) {
-        AdminControl.log("Joined guild ${event.guild.name} (`${event.guild.id}`) [${event.guild.members.size} members]")
+        AdminControl.log(
+                "Joined guild ${event.guild.name} (`${event.guild.id}`) [${event.guild.members.size} members]")
         Bot.scheduler.schedule({
             event.guild.kirbotGuild.sync()
         }, 0, TimeUnit.MILLISECONDS)
@@ -143,11 +160,13 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
     }
 
     override fun onGenericTextChannelUpdate(event: GenericTextChannelUpdateEvent) {
-        Model.first(me.mrkirby153.KirBot.database.models.Channel::class.java, event.channel.id)?.updateChannel()
+        Model.first(me.mrkirby153.KirBot.database.models.Channel::class.java,
+                event.channel.id)?.updateChannel()
     }
 
     override fun onGenericVoiceChannelUpdate(event: GenericVoiceChannelUpdateEvent) {
-        Model.first(me.mrkirby153.KirBot.database.models.Channel::class.java, event.channel.id)?.updateChannel()
+        Model.first(me.mrkirby153.KirBot.database.models.Channel::class.java,
+                event.channel.id)?.updateChannel()
     }
 
     override fun onRoleCreate(event: RoleCreateEvent) {
@@ -186,7 +205,7 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
     override fun onGuildVoiceMove(event: GuildVoiceMoveEvent) {
         val guild = event.guild.kirbotGuild
         if (inChannel(event.channelJoined,
-                event.guild.selfMember) && !guild.musicManager.manualPause) {
+                        event.guild.selfMember) && !guild.musicManager.manualPause) {
             Bot.LOG.debug("Resuming in ${guild.id} as someone joined!")
             guild.musicManager.audioPlayer.isPaused = false
         } else {

@@ -3,6 +3,8 @@ package me.mrkirby153.KirBot.infraction
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.database.models.QueryBuilder
+import me.mrkirby153.KirBot.module.ModuleManager
+import me.mrkirby153.KirBot.modules.InfractionModule
 import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.utils.getMember
 import net.dv8tion.jda.core.Permission
@@ -19,7 +21,8 @@ object Infractions {
         createInfraction(user.id, guild, issuer, reason, InfractionType.KICK)
     }
 
-    fun ban(user: String, guild: Guild, issuer: User, reason: String? = null, purgeDays: Int = 7) {
+    fun ban(user: String, guild: Guild, issuer: User, reason: String? = null, purgeDays: Int = 0) {
+        ModuleManager[InfractionModule::class.java].ignoreBans.add(user)
         guild.controller.ban(user, purgeDays, reason).queue()
 
         createInfraction(user, guild, issuer, reason, InfractionType.BAN)

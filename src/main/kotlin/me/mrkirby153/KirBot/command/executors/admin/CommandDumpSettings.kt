@@ -3,10 +3,10 @@ package me.mrkirby153.KirBot.command.executors.admin
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.args.CommandContext
-import me.mrkirby153.KirBot.user.Clearance
+import me.mrkirby153.KirBot.user.CLEARANCE_ADMIN
 import me.mrkirby153.KirBot.utils.Context
 
-@Command(name = "dumpSettings", clearance = Clearance.SERVER_ADMINISTRATOR)
+@Command(name = "dumpSettings", clearance = CLEARANCE_ADMIN)
 class CommandDumpSettings : BaseCommand() {
 
     override fun execute(context: Context, cmdContext: CommandContext) {

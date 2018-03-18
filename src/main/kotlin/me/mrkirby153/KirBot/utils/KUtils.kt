@@ -7,13 +7,11 @@ import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.Redis
 import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.sharding.Shard
-import me.mrkirby153.KirBot.user.Clearance
 import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.core.EmbedBuilder
 import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.Channel
 import net.dv8tion.jda.core.entities.Guild
-import net.dv8tion.jda.core.entities.Member
 import net.dv8tion.jda.core.entities.Message
 import net.dv8tion.jda.core.entities.MessageChannel
 import net.dv8tion.jda.core.entities.MessageEmbed
@@ -36,29 +34,11 @@ fun InputStream.readProperties(): Properties {
     return Properties().apply { load(this@readProperties) }
 }
 
-fun User.getClearance(server: Guild): Clearance {
-    if (Bot.admins.contains(this.id))
-        return Clearance.BOT_OWNER
-    if (server.getMember(this).isOwner)
-        return Clearance.SERVER_OWNER
-    if (server.getMember(this).permissions.contains(Permission.ADMINISTRATOR))
-        return Clearance.SERVER_ADMINISTRATOR
-    val shard = Bot.shardManager.getShard(server)
-    if (shard != null) {
-        val managerRoles = server.kirbotGuild.settings.botManagerRoles
-        server.getMember(this).roles.map { it.id }.forEach { role ->
-            if (role in managerRoles) {
-                return Clearance.BOT_MANAGER
-            }
-        }
-    }
-    return Clearance.USER
-}
-
-fun Member.getClearance(server: Guild): Clearance = this.user.getClearance(server)
-fun Member.getClearance() = this.user.getClearance(this.guild)
+fun User.getClearance(server: Guild) = server.kirbotGuild.getClearance(this)
 
 fun User.getMember(server: Guild) = server.getMember(this)
+
+fun User.canInteractWith(guild: Guild, user: User): Boolean = this.getClearance(guild) > user.getClearance(guild)
 
 fun Guild.shard(): Shard? {
     return Bot.shardManager.getShard(this)

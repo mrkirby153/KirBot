@@ -3,6 +3,7 @@ package me.mrkirby153.KirBot.command.executors.music
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
+import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.models.guild.MusicSettings
@@ -11,7 +12,7 @@ import me.mrkirby153.KirBot.music.AudioTrackLoader
 import me.mrkirby153.KirBot.utils.Context
 
 @Command(name = "play", arguments = ["<query/url:string...>"])
-class CommandPlay : BaseCommand() {
+class CommandPlay : BaseCommand(CommandCategory.MUSIC) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         if (!context.kirbotGuild.musicManager.settings.enabled) {
             return

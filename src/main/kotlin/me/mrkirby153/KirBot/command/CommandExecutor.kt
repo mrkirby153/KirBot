@@ -113,8 +113,7 @@ object CommandExecutor {
                 return@submit
             }
 
-            if (!isSubCommand && command.clearance.value > context.author.getClearance(
-                            guild).value) {
+            if (!isSubCommand && command.clearance > context.author.getClearance(guild)) {
                 Bot.LOG.debug(
                         "${context.author.id} was denied access to $cmd due to lack of clearance. Required: ${command.clearance}, Found: ${context.author.getClearance(
                                 guild)}")
@@ -123,7 +122,7 @@ object CommandExecutor {
             }
 
             if (isSubCommand && command.getSubCommandClearance(
-                            subCommand).value > context.author.getClearance(guild).value) {
+                    subCommand) > context.author.getClearance(guild)) {
                 context.send().error("You do not have permission to perform this command!").queue()
                 return@submit
             }
@@ -167,8 +166,8 @@ object CommandExecutor {
                 }
                 // Log the command in the modlogs
                 if (command.javaClass.getAnnotation(
-                                LogInModlogs::class.java) != null || (isSubCommand && command.getSubCommand(
-                                subCommand)?.getAnnotation(LogInModlogs::class.java) != null))
+                        LogInModlogs::class.java) != null || (isSubCommand && command.getSubCommand(
+                        subCommand)?.getAnnotation(LogInModlogs::class.java) != null))
                     guild.logManager.genericLog(":tools:",
                             "${context.author.nameAndDiscrim} (`${context.author.id}`) Executed `${context.message.contentDisplay}` in **#${context.channel.name.mdEscape()}**")
             } catch (e: CommandException) {
@@ -188,7 +187,7 @@ object CommandExecutor {
         val customCommand = context.kirbotGuild.customCommands.firstOrNull {
             it.name.equals(command, true)
         } ?: return
-        if (customCommand.clearance.value > context.author.getClearance(guild).value) {
+        if (customCommand.clearance > context.author.getClearance(guild)) {
             context.send().error("You do not have permission to perform that command").queue {
                 context.deleteAfter(10, TimeUnit.SECONDS)
                 it.deleteAfter(10, TimeUnit.SECONDS)
@@ -238,7 +237,7 @@ object CommandExecutor {
             if (data.cmdWhitelist.isEmpty())
                 return true
             data.cmdWhitelist.any { it == channel.id }
-        } else if(command.controlCommand && channel.id != ModuleManager[AdminControl::class.java].logChannel?.id){
+        } else if (command.controlCommand && channel.id != ModuleManager[AdminControl::class.java].logChannel?.id) {
             return false
         } else {
             true

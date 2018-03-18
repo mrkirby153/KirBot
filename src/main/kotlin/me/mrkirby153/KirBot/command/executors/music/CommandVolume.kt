@@ -3,12 +3,13 @@ package me.mrkirby153.KirBot.command.executors.music
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
+import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.args.CommandContext
-import me.mrkirby153.KirBot.user.Clearance
+import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
 
-@Command(name = "volume", clearance = Clearance.BOT_MANAGER, arguments = ["[volume:number]"])
-class CommandVolume : BaseCommand() {
+@Command(name = "volume", clearance = CLEARANCE_MOD, arguments = ["[volume:string]"])
+class CommandVolume : BaseCommand(CommandCategory.MUSIC) {
 
     override fun execute(context: Context, cmdContext: CommandContext) {
         if (!context.kirbotGuild.musicManager.settings.enabled) {

@@ -8,7 +8,7 @@ import me.mrkirby153.KirBot.command.LogInModlogs
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.infraction.InfractionType
 import me.mrkirby153.KirBot.infraction.Infractions
-import me.mrkirby153.KirBot.user.Clearance
+import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.getMember
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
@@ -16,7 +16,7 @@ import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.User
 
 @Command(name = "mute,shutup,quiet", arguments = ["<user:user>", "[reason:string...]"],
-        clearance = Clearance.BOT_MANAGER)
+        clearance = CLEARANCE_MOD)
 @LogInModlogs
 class CommandMute : BaseCommand(false, CommandCategory.MODERATION) {
     override fun execute(context: Context, cmdContext: CommandContext) {

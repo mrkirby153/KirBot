@@ -2,13 +2,14 @@ package me.mrkirby153.KirBot.command.executors.music
 
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
+import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.embed.embed
 import java.awt.Color
 
 @Command(name = "disconnect,dc")
-class CommandDisconnect : BaseCommand() {
+class CommandDisconnect : BaseCommand(CommandCategory.MUSIC) {
 
     override fun execute(context: Context, cmdContext: CommandContext) {
         context.kirbotGuild.musicManager.disconnect()

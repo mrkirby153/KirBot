@@ -3,6 +3,7 @@ package me.mrkirby153.KirBot.command.executors.music
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
+import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.music.MusicManager
 import me.mrkirby153.KirBot.utils.Context
@@ -12,7 +13,7 @@ import me.mrkirby153.KirBot.utils.mdEscape
 import java.util.Random
 
 @Command(name = "queue,np,nowplaying", arguments = ["[option:string]"])
-class CommandQueue : BaseCommand() {
+class CommandQueue : BaseCommand(CommandCategory.MUSIC) {
 
     override fun execute(context: Context, cmdContext: CommandContext) {
         if (!context.kirbotGuild.musicManager.settings.enabled) {

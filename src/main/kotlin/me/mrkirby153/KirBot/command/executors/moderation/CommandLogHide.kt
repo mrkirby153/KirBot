@@ -6,12 +6,12 @@ import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.LogInModlogs
 import me.mrkirby153.KirBot.command.args.CommandContext
-import me.mrkirby153.KirBot.user.Clearance
+import me.mrkirby153.KirBot.user.CLEARANCE_ADMIN
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import net.dv8tion.jda.core.entities.User
 
-@Command(name = "log-hide", arguments = ["<user:user>"], clearance = Clearance.SERVER_ADMINISTRATOR)
+@Command(name = "log-hide", arguments = ["<user:user>"], clearance = CLEARANCE_ADMIN)
 @LogInModlogs
 class CommandLogHide : BaseCommand(false, CommandCategory.MODERATION) {
 
@@ -30,7 +30,7 @@ class CommandLogHide : BaseCommand(false, CommandCategory.MODERATION) {
     }
 }
 
-@Command(name = "log-show", arguments = ["<user:user>"], clearance = Clearance.SERVER_ADMINISTRATOR)
+@Command(name = "log-show", arguments = ["<user:user>"], clearance = CLEARANCE_ADMIN)
 @LogInModlogs
 class CommandLogUnhide : BaseCommand(false, CommandCategory.MODERATION) {
     override fun execute(context: Context, cmdContext: CommandContext) {
@@ -48,7 +48,7 @@ class CommandLogUnhide : BaseCommand(false, CommandCategory.MODERATION) {
     }
 }
 
-@Command(name = "log-hidden", clearance = Clearance.SERVER_ADMINISTRATOR)
+@Command(name = "log-hidden", clearance = CLEARANCE_ADMIN)
 class CommandLogHidden : BaseCommand(false, CommandCategory.MODERATION) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val currentlyHidden = context.kirbotGuild.extraData.optJSONArray(

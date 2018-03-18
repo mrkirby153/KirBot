@@ -7,11 +7,11 @@ import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.infraction.Infraction
-import me.mrkirby153.KirBot.user.Clearance
+import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.kcutils.utils.TableBuilder
 
-@Command(name = "infractions", arguments = ["[user:snowflake]"], clearance = Clearance.BOT_MANAGER)
+@Command(name = "infractions", arguments = ["[user:snowflake]"], clearance = CLEARANCE_MOD)
 class CommandInfractions : BaseCommand(false, CommandCategory.MODERATION) {
 
     override fun execute(context: Context, cmdContext: CommandContext) {

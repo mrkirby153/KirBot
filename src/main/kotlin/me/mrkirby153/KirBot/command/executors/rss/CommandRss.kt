@@ -12,7 +12,7 @@ import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.database.models.rss.FeedItem
 import me.mrkirby153.KirBot.database.models.rss.RssFeed
 import me.mrkirby153.KirBot.rss.FeedTask
-import me.mrkirby153.KirBot.user.Clearance
+import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.HttpUtils
 import me.mrkirby153.kcutils.Time
@@ -20,14 +20,14 @@ import okhttp3.Request
 import java.net.URL
 import java.util.concurrent.TimeUnit
 
-@Command(name = "rss", clearance = Clearance.BOT_MANAGER)
+@Command(name = "rss", clearance = CLEARANCE_MOD)
 class CommandRss : BaseCommand(false, CommandCategory.MISCELLANEOUS) {
 
     override fun execute(context: Context, cmdContext: CommandContext) {
         listFeeds(context, cmdContext)
     }
 
-    @Command(name = "list", clearance = Clearance.BOT_MANAGER)
+    @Command(name = "list", clearance = CLEARANCE_MOD)
     fun listFeeds(context: Context, cmdContext: CommandContext) {
         val feeds = Model.get(RssFeed::class.java, Pair("server_id", context.guild.id))
 
@@ -60,7 +60,7 @@ class CommandRss : BaseCommand(false, CommandCategory.MISCELLANEOUS) {
         }.rest().queue()
     }
 
-    @Command(name = "add", arguments = ["<url:string>"], clearance = Clearance.BOT_MANAGER)
+    @Command(name = "add", arguments = ["<url:string>"], clearance = CLEARANCE_MOD)
     fun addFeed(context: Context, cmdContext: CommandContext) {
         val url = cmdContext.get<String>("url") ?: throw CommandException("Please provide a URL")
 
@@ -104,7 +104,7 @@ class CommandRss : BaseCommand(false, CommandCategory.MISCELLANEOUS) {
         context.send().success("Feed has been registered, new posts will appear here").queue()
     }
 
-    @Command(name = "remove", arguments = ["<id:string>"], clearance = Clearance.BOT_MANAGER)
+    @Command(name = "remove", arguments = ["<id:string>"], clearance = CLEARANCE_MOD)
     fun removeFeed(context: Context, cmdContext: CommandContext) {
         val id = cmdContext.get<String>("id") ?: throw CommandException("Please provide a feed Id")
 
@@ -115,7 +115,7 @@ class CommandRss : BaseCommand(false, CommandCategory.MISCELLANEOUS) {
         context.send().success("Deleted RSS Feed!").queue()
     }
 
-    @Command(name = "refresh", arguments = ["[id:string]"], clearance = Clearance.BOT_MANAGER)
+    @Command(name = "refresh", arguments = ["[id:string]"], clearance = CLEARANCE_MOD)
     fun refreshFeed(context: Context, cmdContext: CommandContext) {
         if (!cmdContext.has("id")) {
             FeedTask.checkFeeds(context.guild)

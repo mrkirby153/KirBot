@@ -8,7 +8,7 @@ import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.database.models.group.Group
 import me.mrkirby153.KirBot.database.models.group.GroupMember
-import me.mrkirby153.KirBot.user.Clearance
+import me.mrkirby153.KirBot.user.CLEARANCE_ADMIN
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.kcutils.utils.IdGenerator
 
@@ -78,8 +78,7 @@ class CommandGroup : BaseCommand(CommandCategory.GROUPS) {
         context.send().success("You left group `$name`").queue()
     }
 
-    @Command(name = "create", clearance = Clearance.SERVER_ADMINISTRATOR,
-            arguments = ["<name:string...>"])
+    @Command(name = "create", clearance = CLEARANCE_ADMIN, arguments = ["<name:string...>"])
     fun createGroup(context: Context, cmdContext: CommandContext) {
         val name = cmdContext.get<String>("name") ?: throw CommandException("Please specify a name")
 
@@ -103,8 +102,7 @@ class CommandGroup : BaseCommand(CommandCategory.GROUPS) {
         context.send().success("Created group `$name`").queue()
     }
 
-    @Command(name = "delete", clearance = Clearance.SERVER_ADMINISTRATOR,
-            arguments = ["<name:string...>"])
+    @Command(name = "delete", clearance = CLEARANCE_ADMIN, arguments = ["<name:string...>"])
     fun deleteGroup(context: Context, cmdContext: CommandContext) {
         val name = cmdContext.get<String>("name") ?: throw CommandException(
                 "Please specify a group name")

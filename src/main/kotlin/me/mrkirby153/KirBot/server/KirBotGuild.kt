@@ -4,6 +4,7 @@ import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.models.Channel
 import me.mrkirby153.KirBot.database.models.CustomCommand
 import me.mrkirby153.KirBot.database.models.Model
+import me.mrkirby153.KirBot.database.models.RoleClearance
 import me.mrkirby153.KirBot.database.models.group.Group
 import me.mrkirby153.KirBot.database.models.guild.GuildMember
 import me.mrkirby153.KirBot.database.models.guild.GuildMemberRole
@@ -12,17 +13,19 @@ import me.mrkirby153.KirBot.database.models.guild.ServerSettings
 import me.mrkirby153.KirBot.infraction.Infractions
 import me.mrkirby153.KirBot.logger.LogManager
 import me.mrkirby153.KirBot.module.ModuleManager
-import me.mrkirby153.KirBot.modules.AdminControl
 import me.mrkirby153.KirBot.modules.Redis
 import me.mrkirby153.KirBot.music.MusicManager
 import me.mrkirby153.KirBot.realname.RealnameHandler
 import me.mrkirby153.KirBot.realname.RealnameSetting
+import me.mrkirby153.KirBot.user.CLEARANCE_GLOBAL_ADMIN
 import me.mrkirby153.KirBot.utils.getMember
 import me.mrkirby153.kcutils.child
 import me.mrkirby153.kcutils.mkdirIfNotExist
 import me.mrkirby153.kcutils.utils.IdGenerator
 import net.dv8tion.jda.core.entities.Guild
+import net.dv8tion.jda.core.entities.Member
 import net.dv8tion.jda.core.entities.Role
+import net.dv8tion.jda.core.entities.User
 import org.json.JSONObject
 import org.json.JSONTokener
 
@@ -34,6 +37,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
 
     lateinit var settings: ServerSettings
     lateinit var customCommands: MutableList<CustomCommand>
+    val clearances: MutableMap<String, Int> = mutableMapOf()
 
     val isReady: Boolean
         get() = isSynced && settingsLoaded
@@ -91,6 +95,12 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
 
         if (!settingsLoaded || forceReload)
             loadSettings()
+
+        // Load role clearance sync
+        clearances.clear()
+        Model.get(RoleClearance::class.java, Pair("server_id", this.id)).forEach {
+            clearances[it.roleId] = it.permission
+        }
 
         // Load the rest of this stuff async
         val future = Bot.scheduler.submit({
@@ -267,6 +277,21 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
                 this.extraData = JSONObject(JSONTokener(it.get("data:${this.id}") ?: "{}"))
             }
         }
+    }
+
+    fun getClearance(user: User) = getClearance(
+            guild.getMember(user) ?: throw IllegalArgumentException("That user isn't in the guild"))
+
+    fun getClearance(member: Member): Int {
+        if (member.user.id in Bot.admins)
+            return CLEARANCE_GLOBAL_ADMIN
+        var clearance = 0
+        member.roles.forEach { role ->
+            val roleClearance = this.clearances[role.id] ?: return@forEach
+            if (clearance < roleClearance)
+                clearance = roleClearance
+        }
+        return clearance
     }
 
     private fun updateChannels() {

@@ -7,19 +7,19 @@ import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.LogInModlogs
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.infraction.Infractions
-import me.mrkirby153.KirBot.user.Clearance
+import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
-import me.mrkirby153.KirBot.utils.getClearance
+import me.mrkirby153.KirBot.utils.canInteractWith
 import me.mrkirby153.KirBot.utils.getMember
 import net.dv8tion.jda.core.entities.User
 
-@Command(name = "ban", arguments = ["<user:user>", "<reason:string...>"], clearance = Clearance.BOT_MANAGER)
+@Command(name = "ban", arguments = ["<user:user>", "<reason:string...>"], clearance = CLEARANCE_MOD)
 @LogInModlogs
 class CommandBan : BaseCommand(false, CommandCategory.MODERATION) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val user = cmdContext.get<User>("user") ?: throw CommandException("Please specify a user")
 
-        if(user.getMember(context.guild) == null)
+        if (user.getMember(context.guild) == null)
             throw CommandException("That user could not be found")
 
         val reason = cmdContext.get<String>("reason") ?: throw CommandException(
@@ -27,16 +27,17 @@ class CommandBan : BaseCommand(false, CommandCategory.MODERATION) {
 
         if (!context.guild.selfMember.canInteract(user.getMember(context.guild)))
             throw CommandException("I cannot kick this user")
-        if (user.getClearance(context.guild).value > context.author.getClearance(
-                        context.guild).value)
-            throw CommandException("You cannot kick this user")
+        if (!context.author.canInteractWith(context.guild, user))
+            throw CommandException("You cannot ban this user")
 
         Infractions.ban(user.id, context.guild, context.author, reason, 7)
-        context.send().success("Banned **${user.name}#${user.discriminator}** (`${user.id}`) (`$reason`)", true).queue()
+        context.send().success(
+                "Banned **${user.name}#${user.discriminator}** (`${user.id}`) (`$reason`)",
+                true).queue()
     }
 }
 
-@Command(name = "forceban", arguments = ["<user:snowflake>", "<reason:string...>"], clearance = Clearance.BOT_MANAGER)
+@Command(name = "forceban", arguments = ["<user:snowflake>", "<reason:string...>"], clearance = CLEARANCE_MOD)
 @LogInModlogs
 class CommandForceBan : BaseCommand(false, CommandCategory.MODERATION) {
     override fun execute(context: Context, cmdContext: CommandContext) {
@@ -49,7 +50,7 @@ class CommandForceBan : BaseCommand(false, CommandCategory.MODERATION) {
     }
 }
 
-@Command(name = "unban", arguments = ["<user:snowflake>"], clearance = Clearance.BOT_MANAGER)
+@Command(name = "unban", arguments = ["<user:snowflake>"], clearance = CLEARANCE_MOD)
 @LogInModlogs
 class CommandUnban : BaseCommand(false, CommandCategory.MODERATION) {
     override fun execute(context: Context, cmdContext: CommandContext) {

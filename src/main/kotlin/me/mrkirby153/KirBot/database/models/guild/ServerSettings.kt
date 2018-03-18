@@ -33,10 +33,6 @@ class ServerSettings : Model() {
     @JsonArray
     var cmdWhitelist = mutableListOf<String>()
 
-    @Column("bot_manager")
-    @JsonArray
-    var botManagerRoles = mutableListOf<String>()
-
     @Column("bot_nick")
     var botNick: String? = null
 

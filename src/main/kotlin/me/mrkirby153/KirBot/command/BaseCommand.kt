@@ -2,7 +2,7 @@ package me.mrkirby153.KirBot.command
 
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.args.CommandContext
-import me.mrkirby153.KirBot.user.Clearance
+import me.mrkirby153.KirBot.user.CLEARANCE_DEFAULT
 import me.mrkirby153.KirBot.utils.Context
 import java.lang.reflect.Method
 
@@ -15,7 +15,7 @@ abstract class BaseCommand(val respectWhitelist: Boolean = true,
     var aliasUsed = ""
 
     val aliases = mutableListOf<String>()
-    val clearance: Clearance
+    val clearance: Int
     val argumentList: Array<String>
 
     val subCommands: Array<String>
@@ -57,8 +57,8 @@ abstract class BaseCommand(val respectWhitelist: Boolean = true,
         }
     }
 
-    fun getSubCommandClearance(name: String): Clearance {
-        return getSubCommand(name)?.getAnnotation(Command::class.java)?.clearance ?: Clearance.USER
+    fun getSubCommandClearance(name: String): Int {
+        return getSubCommand(name)?.getAnnotation(Command::class.java)?.clearance ?: CLEARANCE_DEFAULT
     }
 
     fun invokeSubCommand(name: String, context: Context, cmdContext: CommandContext) {

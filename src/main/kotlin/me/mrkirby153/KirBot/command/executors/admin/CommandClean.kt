@@ -7,7 +7,7 @@ import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.LogInModlogs
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.listener.WaitUtils
-import me.mrkirby153.KirBot.user.Clearance
+import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.GREEN_TICK
 import me.mrkirby153.KirBot.utils.RED_TICK
@@ -17,7 +17,7 @@ import net.dv8tion.jda.core.events.message.guild.react.GuildMessageReactionAddEv
 import java.time.OffsetDateTime
 import java.util.concurrent.TimeUnit
 
-@Command(name = "clean", arguments = ["<amount:int,2,x>"], clearance = Clearance.BOT_MANAGER)
+@Command(name = "clean", arguments = ["<amount:int,2,x>"], clearance = CLEARANCE_MOD)
 @LogInModlogs
 class CommandClean :
         BaseCommand(false, CommandCategory.ADMIN) {

@@ -4,7 +4,7 @@ import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.args.CommandContext
-import me.mrkirby153.KirBot.user.Clearance
+import me.mrkirby153.KirBot.user.CLEARANCE_GLOBAL_ADMIN
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.getClearance
 import me.mrkirby153.kcutils.Time
@@ -22,7 +22,7 @@ class CommandPing : BaseCommand(false) {
                     1, avgHeartbeat.toLong())}`"
             val msg = "Pong! `${Time.format(1, stop - start)}`"
             context.channel.sendMessage(if (context.author.getClearance(
-                            context.guild).value >= Clearance.BOT_OWNER.value) adminMsg else msg).queue()
+                    context.guild) >= CLEARANCE_GLOBAL_ADMIN) adminMsg else msg).queue()
         }
     }
 }

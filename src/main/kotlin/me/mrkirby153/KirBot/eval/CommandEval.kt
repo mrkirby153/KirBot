@@ -5,7 +5,7 @@ import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.args.CommandContext
-import me.mrkirby153.KirBot.user.Clearance
+import me.mrkirby153.KirBot.user.CLEARANCE_GLOBAL_ADMIN
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.embed.embed
 import me.mrkirby153.KirBot.utils.embed.u
@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit
 const val CHECKBOX = "\u2705"
 const val ARROWS = "\uD83D\uDD04"
 
-@Command(name = "eval,run", clearance = Clearance.BOT_OWNER, arguments = ["<eval:string...>"])
+@Command(name = "eval,run", clearance = CLEARANCE_GLOBAL_ADMIN, arguments = ["<eval:string...>"])
 class CommandEval : BaseCommand(CommandCategory.MISCELLANEOUS){
     override fun execute(context: Context, cmdContext: CommandContext) {
         val toEval = cmdContext.get<String>("eval") ?: return

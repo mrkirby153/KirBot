@@ -9,7 +9,7 @@ import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.infraction.Infraction
 import me.mrkirby153.KirBot.infraction.Infractions
-import me.mrkirby153.KirBot.user.Clearance
+import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.getMember
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
@@ -17,7 +17,7 @@ import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.User
 import java.sql.Timestamp
 
-@Command(name = "unmute,unquiet", arguments = ["<user:user>"], clearance = Clearance.BOT_MANAGER)
+@Command(name = "unmute,unquiet", arguments = ["<user:user>"], clearance = CLEARANCE_MOD)
 @LogInModlogs
 class CommandUnmute : BaseCommand(false, CommandCategory.MODERATION) {
     override fun execute(context: Context, cmdContext: CommandContext) {

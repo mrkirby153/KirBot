@@ -10,7 +10,7 @@ import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.Scheduler
 import me.mrkirby153.KirBot.scheduler.Schedulable
-import me.mrkirby153.KirBot.user.Clearance
+import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
@@ -19,7 +19,7 @@ import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.TextChannel
 import java.util.concurrent.TimeUnit
 
-@Command(name = "chamnute,cmute", arguments = ["<user:snowflake>", "<time:string>"], clearance = Clearance.BOT_MANAGER)
+@Command(name = "chamnute,cmute", arguments = ["<user:snowflake>", "<time:string>"], clearance = CLEARANCE_MOD)
 @LogInModlogs
 class CommandChannelMute : BaseCommand(false, CommandCategory.MODERATION) {
     override fun execute(context: Context, cmdContext: CommandContext) {
@@ -56,7 +56,7 @@ class CommandChannelMute : BaseCommand(false, CommandCategory.MODERATION) {
     }
 }
 
-@Command(name = "chanunmute,cunmute", arguments = ["<user:snowflake>"], clearance = Clearance.BOT_MANAGER)
+@Command(name = "chanunmute,cunmute", arguments = ["<user:snowflake>"], clearance = CLEARANCE_MOD)
 @LogInModlogs
 class CommandChanUnmute : BaseCommand() {
     override fun execute(context: Context, cmdContext: CommandContext) {

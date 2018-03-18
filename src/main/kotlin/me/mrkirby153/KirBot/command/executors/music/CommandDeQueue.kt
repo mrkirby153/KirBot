@@ -3,15 +3,16 @@ package me.mrkirby153.KirBot.command.executors.music
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
+import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
-import me.mrkirby153.KirBot.user.Clearance
+import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.embed.link
 import me.mrkirby153.KirBot.utils.mdEscape
 
-@Command(name = "dequeue", clearance = Clearance.BOT_MANAGER, arguments = ["<position:int,1,x>"])
-class CommandDeQueue : BaseCommand() {
+@Command(name = "dequeue", clearance = CLEARANCE_MOD, arguments = ["<position:int,1,x>"])
+class CommandDeQueue : BaseCommand(CommandCategory.MUSIC) {
 
     override fun execute(context: Context, cmdContext: CommandContext) {
         if (!context.kirbotGuild.musicManager.settings.enabled) {

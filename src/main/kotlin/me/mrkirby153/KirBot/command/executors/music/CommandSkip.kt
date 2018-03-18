@@ -3,23 +3,28 @@ package me.mrkirby153.KirBot.command.executors.music
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
+import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
-import me.mrkirby153.KirBot.user.Clearance
+import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.embed.b
 import me.mrkirby153.KirBot.utils.embed.embed
 import me.mrkirby153.KirBot.utils.embed.link
-import me.mrkirby153.KirBot.utils.getClearance
 import me.mrkirby153.KirBot.utils.localizeTime
 import me.mrkirby153.KirBot.utils.mdEscape
 import java.awt.Color
 import java.util.concurrent.TimeUnit
 
-@Command(name = "skip,next", arguments = ["[option:string]"])
-class CommandSkip : BaseCommand() {
+@Command(name = "skip,next")
+class CommandSkip : BaseCommand(CommandCategory.MUSIC) {
 
     val skipCooldown = mutableMapOf<String, Long>()
+
+    @Command(name = "force", clearance = CLEARANCE_MOD)
+    fun forceSkip(context: Context, cmdContext: CommandContext){
+        forceSkip(context)
+    }
 
     override fun execute(context: Context, cmdContext: CommandContext) {
         if (!context.kirbotGuild.musicManager.settings.enabled) {
@@ -33,16 +38,7 @@ class CommandSkip : BaseCommand() {
         if (!musicManager.playing) {
             throw CommandException("I am not playing anything right now")
         }
-        var shouldHalt = false
-        cmdContext.ifPresent<String>("option") { action ->
-            if (action.equals("force", true) && context.author.getClearance(
-                    context.guild).value >= Clearance.BOT_MANAGER.value) {
-                forceSkip(context)
-                shouldHalt = true
-            }
-        }
-        if (shouldHalt)
-            return
+
         val skipIn = skipCooldown[context.author.id] ?: 0
         if (System.currentTimeMillis() < skipIn || skipIn == -1L) {
             throw CommandException(buildString {

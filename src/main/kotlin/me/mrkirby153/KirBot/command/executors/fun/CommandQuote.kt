@@ -10,7 +10,7 @@ import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.database.models.Quote
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.Quotes
-import me.mrkirby153.KirBot.user.Clearance
+import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.botUrl
 import me.mrkirby153.KirBot.utils.escapeMentions
@@ -44,7 +44,7 @@ class CommandQuotes : BaseCommand(false, CommandCategory.FUN) {
                         "${context.guild.id}/quotes")).queue()
     }
 
-    @Command(name = "block", arguments = ["<user:snowflake>"], clearance = Clearance.BOT_MANAGER)
+    @Command(name = "block", arguments = ["<user:snowflake>"], clearance = CLEARANCE_MOD)
     fun block(context: Context, cmdContext: CommandContext) {
         ModuleManager[Quotes::class.java].blockUser(context.kirbotGuild,
                 cmdContext.get<String>("user")!!)
@@ -52,7 +52,7 @@ class CommandQuotes : BaseCommand(false, CommandCategory.FUN) {
                 cmdContext.get<String>("user")!!)?.nameAndDiscrim ?: cmdContext.get(
                 "user")!!} from quoting").queue()
     }
-    @Command(name = "unblock", arguments = ["<user:snowflake>"], clearance = Clearance.BOT_MANAGER)
+    @Command(name = "unblock", arguments = ["<user:snowflake>"], clearance = CLEARANCE_MOD)
     fun unblock(context: Context, cmdContext: CommandContext) {
         ModuleManager[Quotes::class.java].unblockUser(context.kirbotGuild,
                 cmdContext.get<String>("user")!!)

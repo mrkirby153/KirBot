@@ -4,10 +4,11 @@ import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
-import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.database.models.guild.GuildMember
+import me.mrkirby153.KirBot.module.ModuleManager
+import me.mrkirby153.KirBot.modules.Database
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.CustomEmoji
 import me.mrkirby153.KirBot.utils.STATUS_AWAY
@@ -16,6 +17,7 @@ import me.mrkirby153.KirBot.utils.STATUS_OFFLINE
 import me.mrkirby153.KirBot.utils.STATUS_ONLINE
 import me.mrkirby153.KirBot.utils.getMember
 import me.mrkirby153.kcutils.Time
+import me.mrkirby153.kcutils.use
 import net.dv8tion.jda.core.OnlineStatus
 import net.dv8tion.jda.core.entities.Game
 import net.dv8tion.jda.core.entities.Member
@@ -27,15 +29,36 @@ class CommandInfo : BaseCommand(CommandCategory.FUN) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val user = cmdContext.get<User>("user") ?: context.author
 
-        val data = Bot.seenStore.get(user) ?: throw CommandException("No data recorded for user")
+        val seenData = Bot.seenStore.get(user)
         val member = Model.first(GuildMember::class.java, Pair("user_id", user.id),
-                Pair("server_id", context.guild.id)) ?: throw CommandException(
-                "The user isn't in this guild")
+                Pair("server_id", context.guild.id))
 
-        val joinDate = member.created_at
+        var sentMessages = 0
+        var editedMessages = 0
+        var deletedMessages = 0
+
+        ModuleManager[Database::class.java].database.getConnection().use { con ->
+            con.createStatement().executeQuery(
+                    "SELECT COUNT(*) FROM server_messages WHERE `author` = ${user.id}").use { rs ->
+                if (rs.next())
+                    sentMessages = rs.getInt(1)
+            }
+            con.createStatement().executeQuery(
+                    "SELECT COUNT(*) FROM server_messages WHERE `author` = ${user.id} AND edit_count > 0").use { rs ->
+                if (rs.next())
+                    editedMessages = rs.getInt(1)
+            }
+            con.createStatement().executeQuery(
+                    "SELECT COUNT(*) FROM server_messages WHERE `author` = ${user.id} AND deleted = 1").use { rs ->
+                if (rs.next())
+                    deletedMessages = rs.getInt(1)
+            }
+        }
+
         context.send().embed {
             thumbnail = user.effectiveAvatarUrl
-            color = user.getMember(context.guild).color
+            if (user.getMember(context.guild) != null)
+                color = user.getMember(context.guild).color
             author {
                 name = "${user.name}#${user.discriminator}"
                 iconUrl = user.effectiveAvatarUrl
@@ -43,22 +66,31 @@ class CommandInfo : BaseCommand(CommandCategory.FUN) {
             description {
                 appendln("**> User Information**")
                 appendln("ID: ${user.id}")
-                appendln("Status: ${data.status.name} ${getOnlineEmoji(data.status)}")
+                if (seenData != null)
+                    appendln("Status: ${seenData.status.name} ${getOnlineEmoji(seenData.status)}")
+                else
+                    appendln("Status: Unknown")
                 appendln("Profile: ${user.asMention}")
                 if (user.getMember(context.guild).game != null)
-                    appendln("Status: " + getPlayingStatus(user.getMember(context.guild)))
+                    appendln(getPlayingStatus(user.getMember(context.guild)))
                 appendln("")
-                appendln("**> Member Information**")
-                if (joinDate != null)
-                    appendln("Joined: ${Time.format(0,
-                            System.currentTimeMillis() - joinDate.time)} ago (${SimpleDateFormat(
-                            Time.DATE_FORMAT_NOW).format(joinDate)})")
-                appendln("")
-                appendln("**> Activity**")
-                appendln("Last Message: ${Time.format(1,
-                        System.currentTimeMillis() - data.lastMessage, Time.TimeUnit.FIT,
-                        Time.TimeUnit.SECONDS)} ago (${SimpleDateFormat(
-                        Time.DATE_FORMAT_NOW).format(data.lastMessage)})")
+                if (member != null) {
+                    appendln("**> Member Information**")
+                    if (member.created_at != null) {
+                        appendln("Joined: ${Time.formatLong(
+                                System.currentTimeMillis() - member.created_at!!.time,
+                                Time.TimeUnit.MINUTES).toLowerCase()} ago (${SimpleDateFormat(
+                                Time.DATE_FORMAT_NOW).format(member.created_at)})")
+                    }
+                    appendln("")
+                    appendln("**> Activity**")
+                    if (seenData != null)
+                        appendln("Last Message: ${Time.format(1,
+                                System.currentTimeMillis() - seenData.lastMessage)} ago")
+                    appendln("Sent Messages: $sentMessages")
+                    appendln("Edited Messages: $editedMessages")
+                    appendln("Deleted Messages: $deletedMessages")
+                }
             }
         }.rest().queue()
     }

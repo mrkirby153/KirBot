@@ -18,6 +18,7 @@ import me.mrkirby153.KirBot.modules.Redis
 import me.mrkirby153.KirBot.music.MusicManager
 import me.mrkirby153.KirBot.realname.RealnameHandler
 import me.mrkirby153.KirBot.realname.RealnameSetting
+import me.mrkirby153.KirBot.user.CLEARANCE_ADMIN
 import me.mrkirby153.KirBot.user.CLEARANCE_GLOBAL_ADMIN
 import me.mrkirby153.KirBot.utils.getMember
 import me.mrkirby153.kcutils.child
@@ -287,6 +288,8 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
     fun getClearance(member: Member): Int {
         if (member.user.id in Bot.admins)
             return CLEARANCE_GLOBAL_ADMIN
+        if(member.isOwner)
+            return CLEARANCE_ADMIN
         var clearance = 0
         member.roles.forEach { role ->
             val roleClearance = this.clearances[role.id] ?: return@forEach

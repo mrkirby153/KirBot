@@ -20,7 +20,7 @@ class CommandDeQueue : BaseCommand(CommandCategory.MUSIC) {
         } else {
             Bot.LOG.debug("Music is disabled in ${context.guild.id}, ignoring")
         }
-        val index = (cmdContext.get<Double>("position")?.toInt() ?: 1) - 1
+        val index = (cmdContext.get<Int>("position")?.toInt() ?: 1) - 1
 
         try {
             val song = context.kirbotGuild.musicManager.queue.removeAt(index)

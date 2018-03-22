@@ -45,11 +45,13 @@ class LogManager(private val guild: KirBotGuild) {
     }
 
     fun logBulkDelete(chan: TextChannel, messages: List<String>) {
+        if(logChannel == null)
+            return // Don't bother creating an archive if logging is disabled
         val selector = "?, ".repeat(messages.size)
         val realString = selector.substring(
                 0, selector.lastIndexOf(","))
         val results = DB.getResults(
-                "SELECT `server_messages`.`id` as `message_id`, `server_messages`.`server_id`, `author` as 'author_id', `channel`, `message`, `username`, `discriminator` FROM `server_messages` LEFT JOIN `seen_users` ON `server_messages`.`author` = `seen_users`.`id` IN ($realString)", *(messages.toTypedArray()))
+                "SELECT `server_messages`.`id` as `message_id`, `server_messages`.`server_id`, `author` as 'author_id', `channel`, `message`, `username`, `discriminator` FROM `server_messages` LEFT JOIN `seen_users` ON `server_messages`.`author` = `seen_users`.`id` WHERE `server_messages`.`id` IN ($realString)", *(messages.toTypedArray()))
         val msgs = mutableListOf<String>()
         results.forEach { result ->
             val msgId = result.getString("message_id")
@@ -57,7 +59,8 @@ class LogManager(private val guild: KirBotGuild) {
             val authorId = result.getString("author_id")
             val channel = result.getString("channel")
             val msg = result.getString("message")
-            val username = result.getString("username") + "#" + result.getString("discriminator")
+            val username = result.getString("username") + "#" + result.getInt(
+                    "discriminator")
             val timeFormatted = SimpleDateFormat("YYYY-MM-DD HH:MM:ss").format(
                     convertSnowflake(msgId))
 

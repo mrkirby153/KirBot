@@ -1,11 +1,11 @@
 package me.mrkirby153.KirBot.modules
 
+import co.aikar.idb.DB
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.database.models.guild.GuildMessage
 import me.mrkirby153.KirBot.logger.LogPump
 import me.mrkirby153.KirBot.module.Module
-import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import me.mrkirby153.kcutils.Time
@@ -53,13 +53,8 @@ class Logger : Module("logging") {
 
     override fun onMessageBulkDelete(event: MessageBulkDeleteEvent) {
         event.guild.kirbotGuild.logManager.logBulkDelete(event.channel, event.messageIds)
-        val query = "UPDATE `server_messages` SET `deleted` = TRUE WHERE `id` IN (${event.messageIds.joinToString(
-                ",") { "'$it'" }})"
-        ModuleManager[Database::class.java].database.getConnection().use { conn ->
-            conn.prepareStatement(query).use { ps ->
-                ps.execute()
-            }
-        }
+        val selector = "?, ".repeat(event.messageIds.size)
+        DB.executeUpdate("UPDATE `server_messages` SET `deleted` = TRUE WHERE `id` IN (${selector.substring(0, selector.lastIndexOf(","))})", *(event.messageIds.toTypedArray()))
     }
 
     override fun onGuildMemberRoleAdd(event: GuildMemberRoleAddEvent) {

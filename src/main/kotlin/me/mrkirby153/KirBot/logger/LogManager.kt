@@ -1,10 +1,9 @@
 package me.mrkirby153.KirBot.logger
 
+import co.aikar.idb.DB
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.database.models.guild.GuildMessage
-import me.mrkirby153.KirBot.module.ModuleManager
-import me.mrkirby153.KirBot.modules.Database
 import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.utils.CustomEmoji
 import me.mrkirby153.KirBot.utils.convertSnowflake
@@ -12,7 +11,6 @@ import me.mrkirby153.KirBot.utils.escapeMentions
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import me.mrkirby153.KirBot.utils.uploadToArchive
-import me.mrkirby153.kcutils.use
 import net.dv8tion.jda.core.entities.Message
 import net.dv8tion.jda.core.entities.TextChannel
 import java.text.SimpleDateFormat
@@ -47,30 +45,25 @@ class LogManager(private val guild: KirBotGuild) {
     }
 
     fun logBulkDelete(chan: TextChannel, messages: List<String>) {
-        val selector = "in (${messages.joinToString(",") { "'$it'" }})"
-        val query = "SELECT `server_messages`.`id` as 'message_id', `server_messages`.`server_id`, `author` as 'author_id', `channel`, `message`, `user_name`, `user_discrim` FROM `server_messages` LEFT JOIN `guild_members` ON `server_messages`.`author` = `guild_members`.`user_id` AND `guild_members`.`server_id` = ${guild.id} WHERE `server_messages`.`id` $selector"
+        val selector = "?, ".repeat(messages.size)
+        val realString = selector.substring(
+                0, selector.lastIndexOf(","))
+        val results = DB.getResults(
+                "SELECT `server_messages`.`id` as `message_id`, `server_messages`.`server_id`, `author` as 'author_id', `channel`, `message`, `username`, `discriminator` FROM `server_messages` LEFT JOIN `seen_users` ON `server_messages`.`author` = `seen_users`.`id` IN ($realString)", *(messages.toTypedArray()))
         val msgs = mutableListOf<String>()
-        ModuleManager[Database::class.java].database.getConnection().use {
-            it.createStatement().use { st ->
-                st.executeQuery(query).use { rs ->
-                    while (rs.next()) {
-                        val msgId = rs.getString("message_id")
-                        val serverId = rs.getString("server_id")
-                        val authorId = rs.getString("author_id")
-                        val channel = rs.getString("channel")
-                        val msg = rs.getString("message")
-                        val username = rs.getString("user_name") + "#" + rs.getString(
-                                "user_discrim")
+        results.forEach { result ->
+            val msgId = result.getString("message_id")
+            val serverId = result.getString("server_id")
+            val authorId = result.getString("author_id")
+            val channel = result.getString("channel")
+            val msg = result.getString("message")
+            val username = result.getString("username") + "#" + result.getString("discriminator")
+            val timeFormatted = SimpleDateFormat("YYYY-MM-DD HH:MM:ss").format(
+                    convertSnowflake(msgId))
 
-                        val timeFormatted = SimpleDateFormat("YYYY-MM-DD HH:MM:ss").format(
-                                convertSnowflake(msgId))
-                        msgs.add(String.format("%s (%s / %s / %s) %s: %s", timeFormatted, serverId,
-                                channel, authorId, username, msg))
-                    }
-                }
-            }
+            msgs.add(String.format("%s (%s / %s / %s) %s: %s", timeFormatted, serverId, channel,
+                    authorId, username, msg))
         }
-
         val archiveUrl = if (msgs.isNotEmpty() && logChannel != null) uploadToArchive(
                 msgs.joinToString("\n")) else ""
         this.genericLog(":wastebasket:",

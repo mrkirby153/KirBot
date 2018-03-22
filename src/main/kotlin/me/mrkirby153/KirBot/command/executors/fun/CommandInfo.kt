@@ -1,5 +1,6 @@
 package me.mrkirby153.KirBot.command.executors.`fun`
 
+import co.aikar.idb.DB
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
@@ -7,8 +8,6 @@ import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.database.models.guild.GuildMember
-import me.mrkirby153.KirBot.module.ModuleManager
-import me.mrkirby153.KirBot.modules.Database
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.CustomEmoji
 import me.mrkirby153.KirBot.utils.STATUS_AWAY
@@ -17,7 +16,6 @@ import me.mrkirby153.KirBot.utils.STATUS_OFFLINE
 import me.mrkirby153.KirBot.utils.STATUS_ONLINE
 import me.mrkirby153.KirBot.utils.getMember
 import me.mrkirby153.kcutils.Time
-import me.mrkirby153.kcutils.use
 import net.dv8tion.jda.core.OnlineStatus
 import net.dv8tion.jda.core.entities.Game
 import net.dv8tion.jda.core.entities.Member
@@ -33,27 +31,9 @@ class CommandInfo : BaseCommand(CommandCategory.FUN) {
         val member = Model.first(GuildMember::class.java, Pair("user_id", user.id),
                 Pair("server_id", context.guild.id))
 
-        var sentMessages = 0
-        var editedMessages = 0
-        var deletedMessages = 0
-
-        ModuleManager[Database::class.java].database.getConnection().use { con ->
-            con.createStatement().executeQuery(
-                    "SELECT COUNT(*) FROM server_messages WHERE `author` = ${user.id}").use { rs ->
-                if (rs.next())
-                    sentMessages = rs.getInt(1)
-            }
-            con.createStatement().executeQuery(
-                    "SELECT COUNT(*) FROM server_messages WHERE `author` = ${user.id} AND edit_count > 0").use { rs ->
-                if (rs.next())
-                    editedMessages = rs.getInt(1)
-            }
-            con.createStatement().executeQuery(
-                    "SELECT COUNT(*) FROM server_messages WHERE `author` = ${user.id} AND deleted = 1").use { rs ->
-                if (rs.next())
-                    deletedMessages = rs.getInt(1)
-            }
-        }
+        val sentMessages = DB.getFirstColumn<Long>("SELECT COUNT(*) FROM server_messages WHERE `author` = ?", user.id)
+        val editedMessages = DB.getFirstColumn<Long>("SELECT COUNT(*) FROM server_messages WHERE `author` = ? AND edit_count > 0", user.id)
+        val deletedMessages = DB.getFirstColumn<Long>("SELECT COUNT(*) FROM server_messages WHERE `author` = ? and deleted = 1", user.id)
 
         context.send().embed {
             thumbnail = user.effectiveAvatarUrl

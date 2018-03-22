@@ -23,7 +23,7 @@ class CommandSQL : BaseCommand(false, CommandCategory.ADMIN) {
                 "Please specify a query")
 
         Bot.scheduler.schedule({
-            ModuleManager[Database::class].database.getConnection().use { con ->
+            ModuleManager[Database::class].db.connection.use { con ->
                 con.createStatement().use { statement ->
                     try {
                         val r = statement.execute(query)

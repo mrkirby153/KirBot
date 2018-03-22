@@ -1,5 +1,8 @@
 package me.mrkirby153.KirBot.database.models
 
+import me.mrkirby153.KirBot.module.ModuleManager
+import me.mrkirby153.KirBot.modules.Database
+import me.mrkirby153.kcutils.use
 import java.sql.Statement
 import kotlin.reflect.KClass
 
@@ -46,7 +49,7 @@ class QueryBuilder<T : Model>(private val model: Class<T>, val instance: T? = nu
                 model)}` ${buildSelectorStatement()}"
 
         val list = mutableListOf<T>()
-        Model.factory.getConnection().use {
+        ModuleManager[Database::class.java].db.connection.use {
             it.prepareStatement(query).use { ps ->
                 var index = 1
                 selectors.forEach { s ->

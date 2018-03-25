@@ -31,9 +31,13 @@ class CommandInfo : BaseCommand(CommandCategory.FUN) {
         val member = Model.first(GuildMember::class.java, Pair("user_id", user.id),
                 Pair("server_id", context.guild.id))
 
-        val sentMessages = DB.getFirstColumn<Long>("SELECT COUNT(*) FROM server_messages WHERE `author` = ?", user.id)
-        val editedMessages = DB.getFirstColumn<Long>("SELECT COUNT(*) FROM server_messages WHERE `author` = ? AND edit_count > 0", user.id)
-        val deletedMessages = DB.getFirstColumn<Long>("SELECT COUNT(*) FROM server_messages WHERE `author` = ? and deleted = 1", user.id)
+        val sentMessages = DB.getFirstColumn<Long>(
+                "SELECT COUNT(*) FROM server_messages WHERE `author` = ?", user.id)
+        val editedMessages = DB.getFirstColumn<Long>(
+                "SELECT COUNT(*) FROM server_messages WHERE `author` = ? AND edit_count > 0",
+                user.id)
+        val deletedMessages = DB.getFirstColumn<Long>(
+                "SELECT COUNT(*) FROM server_messages WHERE `author` = ? AND deleted = 1", user.id)
 
         context.send().embed {
             thumbnail = user.effectiveAvatarUrl
@@ -54,23 +58,23 @@ class CommandInfo : BaseCommand(CommandCategory.FUN) {
                 if (user.getMember(context.guild).game != null)
                     appendln(getPlayingStatus(user.getMember(context.guild)))
                 appendln("")
+                appendln("**> Member Information**")
+                if (user.getMember(context.guild) != null) {
+                    val joinTime = user.getMember(context.guild).joinDate.toEpochSecond() * 1000
+                    appendln("Joined: ${Time.formatLong(
+                            System.currentTimeMillis() - joinTime, Time.TimeUnit.MINUTES).toLowerCase()} ago (${SimpleDateFormat(
+                            Time.DATE_FORMAT_NOW).format(joinTime)})")
+                }
                 if (member != null) {
-                    appendln("**> Member Information**")
-                    if (member.created_at != null) {
-                        appendln("Joined: ${Time.formatLong(
-                                System.currentTimeMillis() - member.created_at!!.time,
-                                Time.TimeUnit.MINUTES).toLowerCase()} ago (${SimpleDateFormat(
-                                Time.DATE_FORMAT_NOW).format(member.created_at)})")
-                    }
                     appendln("")
                     appendln("**> Activity**")
                     if (seenData != null)
                         appendln("Last Message: ${Time.format(1,
                                 System.currentTimeMillis() - seenData.lastMessage)} ago")
-                    appendln("Sent Messages: $sentMessages")
-                    appendln("Edited Messages: $editedMessages")
-                    appendln("Deleted Messages: $deletedMessages")
                 }
+                appendln("Sent Messages: $sentMessages")
+                appendln("Edited Messages: $editedMessages")
+                appendln("Deleted Messages: $deletedMessages")
             }
         }.rest().queue()
     }

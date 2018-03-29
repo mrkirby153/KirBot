@@ -63,6 +63,8 @@ class CommandClean :
             WaitUtils.waitFor(GuildMessageReactionAddEvent::class.java, {
                 if (it.user.id != context.author.id)
                     return@waitFor
+                if(it.messageId != msg.id)
+                    return@waitFor
                 if (it.reactionEmote.isEmote) {
                     when (it.reactionEmote.id) {
                         GREEN_TICK.id -> {

@@ -47,17 +47,21 @@ object Infractions {
         }
     }
 
-    fun createInfraction(user: String, guild: Guild, issuer: User, reason: String?,
+    fun createInfraction(user: String, guild: Guild, issuer: String, reason: String?,
                          type: InfractionType): Infraction {
         val infraction = Infraction()
         infraction.userId = user
         infraction.guild = guild.id
-        infraction.issuerId = issuer.id
+        infraction.issuerId = issuer
         infraction.reason = reason
         infraction.type = type
         infraction.createdAt = Timestamp(System.currentTimeMillis())
         infraction.save()
         return infraction
+    }
+
+    fun createInfraction(user: String, guild: Guild, issuer: User, reason: String?, type: InfractionType): Infraction {
+        return createInfraction(user, guild, issuer.id, reason, type)
     }
 
     fun getActiveInfractions(user: String, guild: Guild? = null): List<Infraction> {

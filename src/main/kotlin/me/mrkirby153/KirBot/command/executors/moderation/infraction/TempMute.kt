@@ -60,12 +60,11 @@ class TempMute : BaseCommand(false, CommandCategory.MODERATION) {
                 }, true).queue()
 
         ModuleManager[Scheduler::class.java].submit(
-                UnmuteScheduler(inf.id.toString(), user.id, context.guild.id, context.channel.id),
+                UnmuteScheduler(inf.id.toString(), user.id, context.guild.id),
                 timeParsed, TimeUnit.MILLISECONDS)
     }
 
-    class UnmuteScheduler(val infId: String, val userId: String, val guild: String,
-                          val channel: String) : Schedulable {
+    class UnmuteScheduler(val infId: String, val userId: String, val guild: String) : Schedulable {
 
         override fun run() {
             val infraction = Model.first(Infraction::class.java, infId)

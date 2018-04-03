@@ -11,7 +11,6 @@ import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.canInteractWith
 import me.mrkirby153.KirBot.utils.getMember
-import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import net.dv8tion.jda.core.entities.User
 
 @Command(name = "kick", arguments = ["<user:user>", "<reason:string...>"], clearance = CLEARANCE_MOD)
@@ -27,9 +26,7 @@ class CommandKick : BaseCommand(false, CommandCategory.MODERATION) {
             throw CommandException("I cannot kick this user")
         if (!context.author.canInteractWith(context.guild, user))
             throw CommandException("You cannot kick this user")
-        Infractions.kick(user, context.guild, context.author, reason)
-        context.kirbotGuild.logManager.genericLog(":boot:",
-                "${user.name}#${user.discriminator} (`${user.id}`) was kicked by ${context.author.nameAndDiscrim} (`$reason`)")
+        Infractions.kick(user.id, context.guild, context.author.id, reason)
         context.send().success("Kicked **${user.name}#${user.discriminator}** (`$reason`)",
                 true).queue()
     }

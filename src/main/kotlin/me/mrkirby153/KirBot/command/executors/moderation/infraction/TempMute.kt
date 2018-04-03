@@ -9,10 +9,7 @@ import me.mrkirby153.KirBot.command.LogInModlogs
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.infraction.Infraction
-import me.mrkirby153.KirBot.infraction.InfractionType
 import me.mrkirby153.KirBot.infraction.Infractions
-import me.mrkirby153.KirBot.module.ModuleManager
-import me.mrkirby153.KirBot.modules.Scheduler
 import me.mrkirby153.KirBot.scheduler.Schedulable
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.getMember
@@ -44,24 +41,14 @@ class TempMute : BaseCommand(false, CommandCategory.MODERATION) {
         if (context.channel !is TextChannel)
             throw CommandException("This command won't work in PMs")
 
-        Infractions.addMutedRole(user, context.guild)
-
-        val inf = Infractions.createInfraction(user.id, context.guild, context.author, reason,
-                InfractionType.TEMPMUTE)
-        context.kirbotGuild.logManager.genericLog(":zipper_mouth:",
-                "${user.nameAndDiscrim} (`${user.id}`) Temp muted for ${Time.format(1,
-                        timeParsed)} by ${context.author.nameAndDiscrim}")
-
         context.send().success(
                 "Muted ${user.nameAndDiscrim} for ${Time.format(1, timeParsed)}" + buildString {
                     if (reason != null) {
                         append(" (`$reason`)")
                     }
                 }, true).queue()
-
-        ModuleManager[Scheduler::class.java].submit(
-                UnmuteScheduler(inf.id.toString(), user.id, context.guild.id),
-                timeParsed, TimeUnit.MILLISECONDS)
+        Infractions.tempMute(user.id, context.guild, context.author.id, timeParsed,
+                TimeUnit.MILLISECONDS, reason)
     }
 
     class UnmuteScheduler(val infId: String, val userId: String, val guild: String) : Schedulable {
@@ -76,7 +63,7 @@ class TempMute : BaseCommand(false, CommandCategory.MODERATION) {
 
             Infractions.removeMutedRole(user, guild)
             guild.kirbotGuild.logManager.genericLog(":open_mouth:",
-                    "Timed mute for ${user.nameAndDiscrim} expired.")
+                    "Timed mute (`$infId`) ${user.nameAndDiscrim} expired.")
         }
 
     }

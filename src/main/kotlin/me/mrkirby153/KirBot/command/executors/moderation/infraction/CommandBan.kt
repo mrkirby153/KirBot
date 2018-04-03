@@ -26,11 +26,11 @@ class CommandBan : BaseCommand(false, CommandCategory.MODERATION) {
                 "Please specify a reason")
 
         if (!context.guild.selfMember.canInteract(user.getMember(context.guild)))
-            throw CommandException("I cannot kick this user")
+            throw CommandException("I cannot ban this user")
         if (!context.author.canInteractWith(context.guild, user))
             throw CommandException("You cannot ban this user")
 
-        Infractions.ban(user.id, context.guild, context.author, reason, 7)
+        Infractions.ban(user.id, context.guild, context.author.id, reason, 0)
         context.send().success(
                 "Banned **${user.name}#${user.discriminator}** (`${user.id}`) (`$reason`)",
                 true).queue()
@@ -45,7 +45,7 @@ class CommandForceBan : BaseCommand(false, CommandCategory.MODERATION) {
         val reason = cmdContext.get<String>("reason") ?: throw CommandException(
                 "Please specify a reason")
 
-        Infractions.ban(user, context.guild, context.author, reason, 7)
+        Infractions.ban(user, context.guild, context.author.id, reason, 7)
         context.send().success("Banned `$user` (`$reason`)", true).queue()
     }
 }
@@ -56,7 +56,7 @@ class CommandUnban : BaseCommand(false, CommandCategory.MODERATION) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val user = cmdContext.get<String>("user") ?: throw CommandException("Please specify a user")
 
-        Infractions.unban(user, context.guild, context.author)
+        Infractions.unban(user, context.guild, context.author.id)
         context.send().success("Unbanned `$user`", true).queue()
     }
 }

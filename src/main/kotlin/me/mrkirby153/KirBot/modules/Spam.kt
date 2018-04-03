@@ -3,7 +3,6 @@ package me.mrkirby153.KirBot.modules
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.command.executors.moderation.infraction.TempMute
 import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.database.models.guild.SpamSettings
 import me.mrkirby153.KirBot.infraction.InfractionType
@@ -14,7 +13,6 @@ import me.mrkirby153.KirBot.utils.Bucket
 import me.mrkirby153.KirBot.utils.getClearance
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
-import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.entities.User
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent
@@ -81,26 +79,15 @@ class Spam : Module("spam") {
                 guild.kirbotGuild.logManager.genericLog(":helmet_with_cross:",
                         "${user.nameAndDiscrim} (`${user.id}`) Has violated `$violation`")
 
-                val inf = Infractions.createInfraction(user.id, guild, "1", "Spam Detected",
-                        punishment.type)
                 when (punishment.type) {
                     InfractionType.MUTE -> {
-                        Infractions.addMutedRole(user, guild)
-                        guild.kirbotGuild.logManager.genericLog(":zipper_mouth:",
-                                "${user.nameAndDiscrim} (`${user.id}`) Muted by Automatic (`Spam Detected`)")
-
+                        Infractions.mute(user.id, guild, "1", "Spam Detected")
                     }
-                    InfractionType.KICK -> guild.controller.kick(user.id, "Spam Detected").queue()
-                    InfractionType.BAN -> guild.controller.ban(user.id, 0).queue()
+                    InfractionType.KICK -> Infractions.kick(user.id, guild, "1", "Spam Detected")
+                    InfractionType.BAN -> Infractions.ban(user.id, guild, "1", "Spam Detected")
                     InfractionType.TEMPMUTE -> {
-                        Infractions.addMutedRole(user, guild)
-                        ModuleManager[Scheduler::class.java].submit(
-                                TempMute.UnmuteScheduler(inf.id.toString(), user.id, guild.id),
-                                punishment.duration.toLong(), TimeUnit.SECONDS)
-                        guild.kirbotGuild.logManager.genericLog(":zipper_mouth:",
-                                "${user.nameAndDiscrim} (`${user.id}`) Temp muted for ${Time.format(
-                                        1,
-                                        punishment.duration * 1000L)} by `Automatic`")
+                        Infractions.tempMute(user.id, guild, "1", punishment.duration.toLong(),
+                                TimeUnit.SECONDS, "Spam Detected")
                     }
                     else -> {
                         Bot.LOG.warn("Unknown punishment ${punishment.type}")

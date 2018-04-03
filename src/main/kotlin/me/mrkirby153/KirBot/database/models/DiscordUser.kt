@@ -15,4 +15,7 @@ class DiscordUser : Model() {
     @Transient
     var user: User? = null
         get() = Bot.shardManager.getUser(this.id)
+
+    val nameAndDiscrim: String
+        get() = "$username#$discriminator"
 }

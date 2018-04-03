@@ -76,7 +76,7 @@ class Spam : Module("spam") {
                 // VIOLATION
                 // TODO 4/2/18: Show amount and time
                 guild.kirbotGuild.logManager.genericLog(":helmet_with_cross:",
-                        "${user.nameAndDiscrim} (`${user.id}`) Has violated `$violation` (${bucket.count(
+                        "${user.nameAndDiscrim} (`${user.id}`) Has violated `$violation`: ${violation.friendlyType} (${bucket.count(
                                 "")} / ${bucket.size("")}s)")
 
                 when (punishment.type) {
@@ -166,10 +166,10 @@ class Spam : Module("spam") {
     // TODO 4/2/18: Add clean duration to clean the past X messages
     private data class Punishment(val type: InfractionType, val duration: Int)
 
-    private enum class Rule(val jsonType: String) {
-        MAX_MESSAGES("max_messages"),
-        MAX_NEWLINES("max_newlines"),
-        MAX_MENTIONS("max_mentions"),
-        MAX_LINKS("max_links")
+    private enum class Rule(val jsonType: String, val friendlyType: String) {
+        MAX_MESSAGES("max_messages", "Too many messages"),
+        MAX_NEWLINES("max_newlines", "Too many lines"),
+        MAX_MENTIONS("max_mentions", "Too many mentions"),
+        MAX_LINKS("max_links", "Too many links")
     }
 }

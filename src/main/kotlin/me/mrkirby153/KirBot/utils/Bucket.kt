@@ -24,9 +24,19 @@ class Bucket(val keyFormat: String, val maxActions: Int, val timePeriod: Int) {
         return count >= maxActions
     }
 
-    fun size(key: String): Int {
+    fun count(key: String): Int {
         ModuleManager[Redis::class.java].getConnection().use { con ->
             return con.zcount(keyFormat.format(key), "-inf", "inf").toInt()
+        }
+    }
+
+    fun size(key: String): Double {
+        ModuleManager[Redis::class.java].getConnection().use { con ->
+            val d = con.zrangeByScore(keyFormat.format(key), "-inf", "inf")
+            if (d.size <= 1)
+                return 0.0
+            return (con.zscore(keyFormat.format(key), d.last()) - con.zscore(keyFormat.format(key),
+                    d.first())) / 1000.0
         }
     }
 

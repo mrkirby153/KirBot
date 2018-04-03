@@ -53,11 +53,9 @@ class Spam : Module("spam") {
             val count = getViolations(rule.rule, event.message.contentRaw)
             if (bucket.check(event.messageId, count)) {
                 Bot.LOG.debug("${event.author} has violated ${rule.rule}!")
-                violate(event.author, event.guild, rule.rule, rule.punishment)
+                violate(event.author, event.guild, rule.rule, rule.punishment, bucket)
             }
         }
-
-        // TODO 3/25/18: If the user has recently violated a check, ignore it to prevent duplicates caused by async
 
         // Unlock the guild
         getLock(event.guild.id).release()
@@ -66,7 +64,8 @@ class Spam : Module("spam") {
     private fun getLock(guild: String) = this.locks.getOrPut(guild, { Semaphore(1) })
 
 
-    private fun violate(user: User, guild: Guild, violation: Rule, punishment: Punishment) {
+    private fun violate(user: User, guild: Guild, violation: Rule, punishment: Punishment,
+                        bucket: Bucket) {
         ModuleManager[Redis::class.java].getConnection().use { con ->
             val key = "lv:${guild.id}:${user.id}"
             val last = (con.get(key) ?: "0").toLong()
@@ -77,7 +76,8 @@ class Spam : Module("spam") {
                 // VIOLATION
                 // TODO 4/2/18: Show amount and time
                 guild.kirbotGuild.logManager.genericLog(":helmet_with_cross:",
-                        "${user.nameAndDiscrim} (`${user.id}`) Has violated `$violation`")
+                        "${user.nameAndDiscrim} (`${user.id}`) Has violated `$violation` (${bucket.count(
+                                "")} / ${bucket.size("")}s)")
 
                 when (punishment.type) {
                     InfractionType.MUTE -> {

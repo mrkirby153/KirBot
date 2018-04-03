@@ -250,6 +250,13 @@ object Infractions {
             }
             return r
         } else {
+            // Check the permissions
+            guild.textChannels.forEach { chan ->
+                val o = chan.getPermissionOverride(role)
+                if (o == null) {
+                    chan.createPermissionOverride(role).setDeny(Permission.MESSAGE_WRITE).queue()
+                }
+            }
             return role
         }
     }

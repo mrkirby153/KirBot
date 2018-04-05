@@ -11,6 +11,7 @@ import me.mrkirby153.KirBot.utils.escapeMentions
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import me.mrkirby153.KirBot.utils.uploadToArchive
+import me.mrkirby153.KirBot.utils.urlEscape
 import net.dv8tion.jda.core.entities.Message
 import net.dv8tion.jda.core.entities.TextChannel
 import java.text.SimpleDateFormat
@@ -41,7 +42,7 @@ class LogManager(private val guild: KirBotGuild) {
             return // The user is in the ignored log array
 
         this.genericLog(":wastebasket:",
-                "${author.nameAndDiscrim}(`${author.id}`) Message deleted in **#${chan.name}** \n ${msg.message.escapeMentions()}")
+                "${author.nameAndDiscrim}(`${author.id}`) Message deleted in **#${chan.name}** \n ${msg.message.escapeMentions().urlEscape()}")
     }
 
     fun logBulkDelete(chan: TextChannel, messages: List<String>) {
@@ -84,7 +85,7 @@ class LogManager(private val guild: KirBotGuild) {
         }
 
         this.genericLog(":pencil:",
-                "${user.nameAndDiscrim} Message edited in **#${message.textChannel.name}** \n **B:** ${old.message} \n **A:** ${message.contentRaw.escapeMentions()}")
+                "${user.nameAndDiscrim} Message edited in **#${message.textChannel.name}** \n **B:** ${old.message.escapeMentions().urlEscape()} \n **A:** ${message.contentRaw.escapeMentions().urlEscape()}")
     }
 
     fun genericLog(emoj: CustomEmoji, message: String) {

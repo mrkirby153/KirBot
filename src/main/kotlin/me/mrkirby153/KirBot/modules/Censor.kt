@@ -52,9 +52,10 @@ class Censor : Module("censor") {
         if (matches.isNotEmpty()) {
             // Delete and log in the modlogs
             val firstMatch = matches.entries.first()
+            val matches = if (firstMatch.value.isNotEmpty()) "`${firstMatch.value.joinToString(
+                    ", ")}`" else ""
             message.guild.kirbotGuild.logManager.genericLog(":no_entry_sign:",
-                    "Message censored by **${message.author.nameAndDiscrim}** (`${message.author.id}`) in #${message.channel.name}: ${firstMatch.key.friendlyName} `${firstMatch.value.joinToString(
-                            ",")}` ```${message.contentRaw}```")
+                    "Message censored by **${message.author.nameAndDiscrim}** (`${message.author.id}`) in #${message.channel.name}: ${firstMatch.key.friendlyName} $matches ```${message.contentRaw}```")
             message.delete().queue()
         }
     }
@@ -101,9 +102,13 @@ class Censor : Module("censor") {
                     if (whitelist) {
                         if (invite in s.inviteSettings.whitelist)
                             break
-                        val resolved = Invite.resolve(message.jda, invite).complete()
-                        if (resolved.guild.id in s.inviteSettings.guildWhitelist || resolved.guild.id == message.guild.id)
-                            break
+                        try {
+                            val resolved = Invite.resolve(message.jda, invite).complete()
+                            if (resolved.guild.id in s.inviteSettings.guildWhitelist || resolved.guild.id == message.guild.id)
+                                break
+                        } catch (e: Exception) {
+                            // Ignore
+                        }
                         matchedInvites.add(invite)
                     } else {
                         if (invite in s.inviteSettings.blacklist)

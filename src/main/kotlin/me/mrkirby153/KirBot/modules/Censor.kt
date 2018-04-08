@@ -185,7 +185,7 @@ class Censor : Module("censor") {
         }
 
         var parsedDomains: DomainSettings? = null
-        val domainSettings = obj.getJSONObject("domains")
+        val domainSettings = obj.optJSONObject("domains")
         if (domainSettings != null) {
             parsedDomains = DomainSettings(domainSettings.optBoolean("enabled", false),
                     domainSettings.optJSONArray("whitelist")?.map { it.toString() }?.toTypedArray()

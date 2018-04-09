@@ -25,26 +25,22 @@ class CommandDumpDatabase : BaseCommand(false) {
         try {
             val dumpCommand = "mysqldump ${Bot.properties.getProperty(
                     "database")} -h ${Bot.properties.getProperty(
-                    "database-host")} -u ${Bot.properties.getProperty("database-username")}"
-            val runtime = Runtime.getRuntime()
+                    "database-host")} --user=${Bot.properties.getProperty("database-username")} --password=${Bot.properties.getProperty("database-password")}"
 
             val s = "mysqldump-${SimpleDateFormat(Time.DATE_FORMAT_NOW).format(
                     System.currentTimeMillis())}"
             val out = File.createTempFile(s, ".sql")
 
-            val proc = runtime.exec(dumpCommand)
+            val proc = ProcessBuilder(dumpCommand.split(" ")).apply { redirectErrorStream(true) }.start()
             val ps = PrintStream(out)
             val inputStream = proc.inputStream
-            val os = proc.outputStream
 
-            os.write("${Bot.properties.getProperty("database-password")}\n".toByteArray())
-            os.flush()
+            Bot.LOG.debug("Executing: $dumpCommand")
             while (true) {
                 val read = inputStream.read()
                 if (read == -1)
                     break
                 ps.write(read)
-                System.out.write(read)
             }
 
             ps.flush()

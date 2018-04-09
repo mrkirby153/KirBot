@@ -49,9 +49,9 @@ class CommandDumpDatabase : BaseCommand(false) {
 
             ps.flush()
 
-            out.delete()
-
-            ModuleManager[AdminControl::class.java].logChannel?.sendFile(out, "$s.sql")?.queue()
+            ModuleManager[AdminControl::class.java].logChannel?.sendFile(out, "$s.sql")?.queue{
+                out.delete() // Delete the file after we've sent it
+            }
         } catch (e: Exception) {
            ModuleManager[AdminControl::class.java].logChannel?.sendMessage(":rotating_light: Database backup failed! `${e.message}`")?.queue()
         }

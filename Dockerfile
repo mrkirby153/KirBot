@@ -4,7 +4,8 @@ MAINTAINER mrkirby153 <mrkirby153@mrkirby153.com>
 
 # Add the files to the container
 ADD . /build
-
+# Add MySQL Client for DB backups
+RUN apk update && apk add --no-cache mysql-client
 # Perform the build
 RUN cd /build && \
     mvn clean install && \

@@ -11,7 +11,7 @@ import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.entities.Role
 
 @Command(name = "role,r", clearance = CLEARANCE_MOD)
-class RoleCommands : BaseCommand() {
+class RoleCommands : BaseCommand(false) {
 
     override fun execute(context: Context, cmdContext: CommandContext) {
         context.channel.sendMessage(buildString {

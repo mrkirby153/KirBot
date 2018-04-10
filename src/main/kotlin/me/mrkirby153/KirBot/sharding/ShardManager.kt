@@ -53,6 +53,7 @@ class ShardManager(val token: String, private val totalShards: Int) {
     }
 
     fun addListener(eventListener: Any) {
+        Bot.LOG.debug("Adding event listener ${eventListener.javaClass}")
         shards.forEach { it.addEventListener(eventListener) }
     }
 

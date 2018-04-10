@@ -113,8 +113,7 @@ object Bot {
                 ((endTime - startTime) / 1000).toInt())})")
 
         // Boot the modules
-        ModuleManager.loadModules(false)
-        ModuleManager.loadedModules.forEach { shardManager.addListener(it) }
+        ModuleManager.loadModules(true)
 
         val guilds = shardManager.shards.flatMap { it.guilds }
         LOG.info("Started syncing of ${guilds.size} guilds")

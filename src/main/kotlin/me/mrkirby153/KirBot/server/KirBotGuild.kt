@@ -42,11 +42,6 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
     lateinit var customCommands: MutableList<CustomCommand>
     val clearances: MutableMap<String, Int> = mutableMapOf()
 
-    val isReady: Boolean
-        get() = isSynced && settingsLoaded
-
-    var isSynced = false
-    var settingsLoaded = false
 
     val musicManager = MusicManager(this)
     val logManager = LogManager(this)
@@ -66,8 +61,6 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
                 Pair("server", this.id)).toMutableList()
 
         loadData()
-
-        settingsLoaded = true
     }
 
     fun onPart() {
@@ -77,7 +70,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         }
     }
 
-    fun sync(forceReload: Boolean = false, waitFor: Boolean = false) {
+    fun sync(waitFor: Boolean = false) {
         val keyGen = IdGenerator(IdGenerator.ALPHA + IdGenerator.NUMBERS)
         Bot.LOG.debug("Syncing guild ${this.id}")
         var guild = Model.first(ServerSettings::class.java, this.id)
@@ -95,11 +88,9 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
             sync()
             return
         }
+        loadSettings()
 
-        if (!settingsLoaded || forceReload)
-            loadSettings()
-
-        // Load role clearance sync
+        // Load role clearance sync because those are important
         clearances.clear()
         Model.get(RoleClearance::class.java, Pair("server_id", this.id)).forEach {
             clearances[it.roleId] = it.permission
@@ -251,7 +242,6 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
             future.get()
             Bot.LOG.debug("Sync complete!")
         }
-        isSynced = true
     }
 
     fun saveData() {
@@ -288,7 +278,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
     fun getClearance(member: Member): Int {
         if (member.user.id in Bot.admins)
             return CLEARANCE_GLOBAL_ADMIN
-        if(member.isOwner)
+        if (member.isOwner)
             return CLEARANCE_ADMIN
         var clearance = 0
         member.roles.forEach { role ->

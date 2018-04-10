@@ -123,8 +123,6 @@ class Logger : Module("logging") {
     }
 
     override fun onGuildMessageReceived(event: GuildMessageReceivedEvent) {
-        if (!event.guild.kirbotGuild.isReady)
-            return
         if (event.channel.id == event.guild.kirbotGuild.logManager.logChannel?.id) {
             return
         }

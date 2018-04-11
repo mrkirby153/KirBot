@@ -6,12 +6,14 @@ import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.database.models.guild.GuildMessage
 import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.utils.CustomEmoji
+import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.KirBot.utils.convertSnowflake
 import me.mrkirby153.KirBot.utils.escapeMentions
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import me.mrkirby153.KirBot.utils.uploadToArchive
 import me.mrkirby153.KirBot.utils.urlEscape
+import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.Message
 import net.dv8tion.jda.core.entities.TextChannel
 import java.text.SimpleDateFormat
@@ -46,13 +48,14 @@ class LogManager(private val guild: KirBotGuild) {
     }
 
     fun logBulkDelete(chan: TextChannel, messages: List<String>) {
-        if(logChannel == null)
+        if (logChannel == null)
             return // Don't bother creating an archive if logging is disabled
         val selector = "?, ".repeat(messages.size)
         val realString = selector.substring(
                 0, selector.lastIndexOf(","))
         val results = DB.getResults(
-                "SELECT `server_messages`.`id` as `message_id`, `server_messages`.`server_id`, `author` as 'author_id', `channel`, `message`, `username`, `discriminator` FROM `server_messages` LEFT JOIN `seen_users` ON `server_messages`.`author` = `seen_users`.`id` WHERE `server_messages`.`id` IN ($realString)", *(messages.toTypedArray()))
+                "SELECT `server_messages`.`id` as `message_id`, `server_messages`.`server_id`, `author` as 'author_id', `channel`, `message`, `username`, `discriminator` FROM `server_messages` LEFT JOIN `seen_users` ON `server_messages`.`author` = `seen_users`.`id` WHERE `server_messages`.`id` IN ($realString)",
+                *(messages.toTypedArray()))
         val msgs = mutableListOf<String>()
         results.forEach { result ->
             val msgId = result.getString("message_id")
@@ -117,7 +120,10 @@ class LogManager(private val guild: KirBotGuild) {
                 appendln(logQueue.pop())
             }
         }
-        if (string.isNotBlank())
-            logChannel?.sendMessage(string)?.queue()
+        if (string.isNotBlank()) {
+            val channel = logChannel ?: return
+            if (channel.checkPermissions(Permission.MESSAGE_READ, Permission.MESSAGE_WRITE))
+                channel.sendMessage(string).queue()
+        }
     }
 }

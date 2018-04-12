@@ -55,7 +55,7 @@ class Censor : Module("censor") {
             val matches = if (firstMatch.value.isNotEmpty()) "`${firstMatch.value.joinToString(
                     ", ")}`" else ""
             message.guild.kirbotGuild.logManager.genericLog(":no_entry_sign:",
-                    "Message censored by **${message.author.nameAndDiscrim}** (`${message.author.id}`) in #${message.channel.name}: ${firstMatch.key.friendlyName} $matches ```${message.contentRaw}```")
+                    "Message by **${message.author.nameAndDiscrim}** (`${message.author.id}`) censored in #${message.channel.name}: ${firstMatch.key.friendlyName} $matches ```${message.contentRaw}```")
             message.delete().queue()
         }
     }

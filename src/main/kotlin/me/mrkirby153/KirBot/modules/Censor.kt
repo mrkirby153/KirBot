@@ -84,7 +84,7 @@ class Censor : Module("censor") {
             val matchedWords = mutableListOf<String>()
             s.blockedWords.forEach { w ->
                 val r = Regex("\\s$w\\s")
-                if (r.containsMatchIn(message.contentRaw))
+                if (r.containsMatchIn(message.contentRaw.toLowerCase()))
                     matchedWords.add(w)
             }
             if (matchedWords.isNotEmpty())

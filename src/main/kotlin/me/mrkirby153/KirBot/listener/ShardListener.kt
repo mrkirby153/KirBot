@@ -61,6 +61,7 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
         val user = Model.first(DiscordUser::class.java, event.user.id)
         if (user == null) {
             val u = DiscordUser()
+            u.id = event.user.id
             u.username = event.user.name
             u.discriminator = event.user.discriminator.toInt()
             u.create()

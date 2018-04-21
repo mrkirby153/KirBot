@@ -74,6 +74,7 @@ object ErrorLogger {
             } while (i in errorRepository.keys)
             append(i)
         }
+        throwable.printStackTrace()
         Bot.LOG.error("Logged error $id!")
         channel?.sendMessage(buildReport(throwable, guild, user, id))?.queue {
             errorRepository[id] = ReportedError(id, throwable.javaClass.canonicalName,

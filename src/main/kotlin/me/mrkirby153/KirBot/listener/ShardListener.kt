@@ -7,7 +7,9 @@ import me.mrkirby153.KirBot.database.models.guild.GuildMember
 import me.mrkirby153.KirBot.database.models.guild.GuildMemberRole
 import me.mrkirby153.KirBot.database.models.guild.Role
 import me.mrkirby153.KirBot.database.models.guild.ServerSettings
+import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.AdminControl
+import me.mrkirby153.KirBot.modules.Redis
 import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.sharding.Shard
 import me.mrkirby153.KirBot.utils.kirbotGuild
@@ -119,6 +121,21 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
     }
 
     override fun onGuildJoin(event: GuildJoinEvent) {
+        // Check the guild whitelist
+        if(Bot.properties.getOrDefault("guild-whitelist", "false").toString().toBoolean()) {
+            ModuleManager[Redis::class.java].getConnection().use { con ->
+                val status = (con.get("whitelist:${event.guild.id}") ?: "false").toBoolean()
+                if (!status) {
+                    Bot.LOG.debug(
+                            "Left guild ${event.guild.id} because it was not on the whitelist!")
+                    event.guild.leave().queue()
+                    return
+                } else {
+                    con.del("whitelist:${event.guild.id}")
+                    Bot.LOG.debug("Joined whitelisted guild ${event.guild.id}")
+                }
+            }
+        }
         AdminControl.log(
                 "Joined guild ${event.guild.name} (`${event.guild.id}`) [${event.guild.members.size} members]")
         Bot.scheduler.schedule({

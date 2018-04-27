@@ -79,7 +79,6 @@ object AesCrypto {
 
     fun decrypt(encData: String): String {
         val rawJson = Base64.decodeBase64(encData).toString(Charset.defaultCharset())
-        println(rawJson)
         val json = JSONObject(JSONTokener(rawJson))
 
         return decrypt(json.getString("iv"), json.getString("value"), json.getString("mac"))

@@ -29,8 +29,8 @@ object Infractions {
         createInfraction(user, guild, issuer, reason, InfractionType.KICK)
 
         guild.kirbotGuild.logManager.genericLog(LogEvent.USER_KICK, ":boot:", buildString {
-            lookupUser(user, true)
-            append(" Kicked by **${lookupUser(issuer)}")
+            append(lookupUser(user, true))
+            append(" Kicked by **${lookupUser(issuer)}**")
             if (reason != null) {
                 append(": `$reason`")
             }

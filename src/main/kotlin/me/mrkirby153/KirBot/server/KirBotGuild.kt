@@ -272,8 +272,10 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         }
     }
 
-    fun getClearance(user: User) = getClearance(
-            guild.getMember(user) ?: throw IllegalArgumentException("That user isn't in the guild"))
+    fun getClearance(user: User): Int{
+        val member = guild.getMember(user) ?: return 0
+        return getClearance(member)
+    }
 
     fun getClearance(member: Member): Int {
         if (member.user.id in Bot.admins)

@@ -4,6 +4,7 @@ import com.google.common.cache.CacheBuilder
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.database.models.guild.CensorSettings
+import me.mrkirby153.KirBot.logger.LogEvent
 import me.mrkirby153.KirBot.module.Module
 import me.mrkirby153.KirBot.utils.getClearance
 import me.mrkirby153.KirBot.utils.kirbotGuild
@@ -54,7 +55,7 @@ class Censor : Module("censor") {
             val firstMatch = matches.entries.first()
             val matches = if (firstMatch.value.isNotEmpty()) "`${firstMatch.value.joinToString(
                     ", ")}`" else ""
-            message.guild.kirbotGuild.logManager.genericLog(":no_entry_sign:",
+            message.guild.kirbotGuild.logManager.genericLog(LogEvent.MESSAGE_CENSOR, ":no_entry_sign:",
                     "Message by **${message.author.nameAndDiscrim}** (`${message.author.id}`) censored in #${message.channel.name}: ${firstMatch.key.friendlyName} $matches ```${message.contentRaw}```")
             message.delete().queue()
         }

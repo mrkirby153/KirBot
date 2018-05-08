@@ -4,6 +4,7 @@ import co.aikar.idb.DB
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.database.models.guild.GuildMessage
+import me.mrkirby153.KirBot.logger.LogEvent
 import me.mrkirby153.KirBot.logger.LogPump
 import me.mrkirby153.KirBot.module.Module
 import me.mrkirby153.KirBot.utils.kirbotGuild
@@ -58,47 +59,47 @@ class Logger : Module("logging") {
     }
 
     override fun onGuildMemberRoleAdd(event: GuildMemberRoleAddEvent) {
-        event.guild.kirbotGuild.logManager.genericLog(":key:",
+        event.guild.kirbotGuild.logManager.genericLog(LogEvent.ROLE_ADD, ":key:",
                 "Assigned **${event.roles.joinToString(
                         ", ") { it.name }}** to ${event.user.nameAndDiscrim}")
     }
 
     override fun onGuildMemberRoleRemove(event: GuildMemberRoleRemoveEvent) {
-        event.guild.kirbotGuild.logManager.genericLog(":key:",
+        event.guild.kirbotGuild.logManager.genericLog(LogEvent.ROLE_REMOVE, ":key:",
                 "Removed **${event.roles.joinToString(
                         ", ") { it.name }}** from ${event.user.nameAndDiscrim}")
     }
 
     override fun onGuildMemberJoin(event: GuildMemberJoinEvent) {
-        event.guild.kirbotGuild.logManager.genericLog(":inbox_tray:",
+        event.guild.kirbotGuild.logManager.genericLog(LogEvent.USER_JOIN, ":inbox_tray:",
                 "${event.user.nameAndDiscrim} (`${event.user.id}`) Joined (Created ${Time.formatLong(
                         System.currentTimeMillis() - (event.user.creationTime.toEpochSecond() * 1000))} ago)")
     }
 
     override fun onGuildMemberLeave(event: GuildMemberLeaveEvent) {
-        event.guild.kirbotGuild.logManager.genericLog(":outbox_tray:",
+        event.guild.kirbotGuild.logManager.genericLog(LogEvent.USER_LEAVE,":outbox_tray:",
                 "${event.user.nameAndDiscrim} (`${event.user.id}`) left")
     }
 
     override fun onRoleCreate(event: RoleCreateEvent) {
-        event.guild.kirbotGuild.logManager.genericLog(":hammer_pick:",
+        event.guild.kirbotGuild.logManager.genericLog(LogEvent.ROLE_CREATE, ":hammer_pick:",
                 "Role **${event.role.name}** (`${event.role.id}`) created")
     }
 
     override fun onRoleDelete(event: RoleDeleteEvent) {
-        event.guild.kirbotGuild.logManager.genericLog(":bomb:",
+        event.guild.kirbotGuild.logManager.genericLog(LogEvent.ROLE_DELETE, ":bomb:",
                 "Role **${event.role.name}** (`${event.role.id}`) deleted")
     }
 
     override fun onRoleUpdateName(event: RoleUpdateNameEvent) {
-        event.guild.kirbotGuild.logManager.genericLog(":wrench:",
+        event.guild.kirbotGuild.logManager.genericLog(LogEvent.ROLE_UPDATE, ":wrench:",
                 "Role **${event.oldName}** (`${event.role.id}`) renamed to **${event.role.name}**")
     }
 
     override fun onGuildMemberNickChange(event: GuildMemberNickChangeEvent) {
         val prev = if (event.prevNick.isNullOrBlank()) "None" else event.prevNick
         val new = if (event.newNick.isNullOrBlank()) "None" else event.newNick
-        event.guild.kirbotGuild.logManager.genericLog(":floppy_disk:",
+        event.guild.kirbotGuild.logManager.genericLog(LogEvent.USER_NICKNAME_CHANGE, ":floppy_disk:",
                 "${event.user.nameAndDiscrim} (`${event.user.id}`) changed nick from `$prev` to `$new`")
     }
 
@@ -106,7 +107,7 @@ class Logger : Module("logging") {
         Bot.shardManager.shards.forEach { shard ->
             shard.guilds.forEach { guild ->
                 if (event.user.id in guild.members.map { it.user.id })
-                    guild.kirbotGuild.logManager.genericLog(":briefcase:",
+                    guild.kirbotGuild.logManager.genericLog(LogEvent.USER_NAME_CHANGE, ":briefcase:",
                             "${event.oldName}#${event.oldDiscriminator} (`${event.user.id}`) changed username to **${event.user.nameAndDiscrim}**")
             }
         }
@@ -123,9 +124,6 @@ class Logger : Module("logging") {
     }
 
     override fun onGuildMessageReceived(event: GuildMessageReceivedEvent) {
-        if (event.channel.id == event.guild.kirbotGuild.logManager.logChannel?.id) {
-            return
-        }
         if (event.message.contentDisplay.isNotEmpty()) {
             val msg = GuildMessage()
             msg.id = event.message.id

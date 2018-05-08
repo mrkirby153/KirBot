@@ -8,6 +8,7 @@ import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.command.help.HelpManager
 import me.mrkirby153.KirBot.database.models.CustomCommand
 import me.mrkirby153.KirBot.logger.ErrorLogger
+import me.mrkirby153.KirBot.logger.LogEvent
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.AdminControl
 import me.mrkirby153.KirBot.sharding.Shard
@@ -168,7 +169,7 @@ object CommandExecutor {
                 if (command.javaClass.getAnnotation(
                         LogInModlogs::class.java) != null || (isSubCommand && command.getSubCommand(
                         subCommand)?.getAnnotation(LogInModlogs::class.java) != null))
-                    guild.logManager.genericLog(":tools:",
+                    guild.logManager.genericLog(LogEvent.ADMIN_COMMAND, ":tools:",
                             "${context.author.nameAndDiscrim} (`${context.author.id}`) Executed `${context.message.contentDisplay}` in **#${context.channel.name.mdEscape()}**")
             } catch (e: CommandException) {
                 context.send().error(e.message ?: "An unknown error has occurred!").queue()

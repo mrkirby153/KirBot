@@ -7,6 +7,7 @@ import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.database.models.guild.SpamSettings
 import me.mrkirby153.KirBot.infraction.InfractionType
 import me.mrkirby153.KirBot.infraction.Infractions
+import me.mrkirby153.KirBot.logger.LogEvent
 import me.mrkirby153.KirBot.module.Module
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.utils.Bucket
@@ -75,7 +76,7 @@ class Spam : Module("spam") {
             if (last + (10 * 1000) < System.currentTimeMillis()) {
                 // VIOLATION
                 // TODO 4/2/18: Show amount and time
-                guild.kirbotGuild.logManager.genericLog(":helmet_with_cross:",
+                guild.kirbotGuild.logManager.genericLog(LogEvent.SPAM_VIOLATE, ":helmet_with_cross:",
                         "${user.nameAndDiscrim} (`${user.id}`) Has violated `$violation`: ${violation.friendlyType} (${bucket.count(
                                 "")} / ${bucket.size("")}s)")
 

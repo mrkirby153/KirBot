@@ -10,6 +10,7 @@ import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.infraction.Infraction
 import me.mrkirby153.KirBot.infraction.Infractions
+import me.mrkirby153.KirBot.logger.LogEvent
 import me.mrkirby153.KirBot.scheduler.Schedulable
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.getMember
@@ -62,7 +63,7 @@ class TempMute : BaseCommand(false, CommandCategory.MODERATION) {
             val member = guild.getMember(user) ?: return
 
             Infractions.removeMutedRole(user, guild)
-            guild.kirbotGuild.logManager.genericLog(":open_mouth:",
+            guild.kirbotGuild.logManager.genericLog(LogEvent.USER_UNMUTE, ":open_mouth:",
                     "Timed mute (`$infId`) ${user.nameAndDiscrim} expired.")
         }
 

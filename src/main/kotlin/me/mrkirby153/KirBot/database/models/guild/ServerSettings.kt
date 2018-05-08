@@ -26,9 +26,6 @@ class ServerSettings : Model() {
     @Column("command_discriminator")
     var cmdDiscriminator = "!"
 
-    @Column("log_channel")
-    var logChannel: String? = null
-
     @Column("cmd_whitelist")
     @JsonArray
     var cmdWhitelist = mutableListOf<String>()

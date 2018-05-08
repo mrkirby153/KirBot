@@ -59,7 +59,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
 
         customCommands = Model.get(CustomCommand::class.java,
                 Pair("server", this.id)).toMutableList()
-
+        logManager.reloadLogChannels()
         loadData()
     }
 

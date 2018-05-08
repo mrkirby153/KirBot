@@ -4,12 +4,12 @@ import co.aikar.idb.DB
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.database.models.guild.GuildMessage
+import me.mrkirby153.KirBot.database.models.guild.LogSettings
 import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.utils.CustomEmoji
 import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.KirBot.utils.convertSnowflake
 import me.mrkirby153.KirBot.utils.escapeMentions
-import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import me.mrkirby153.KirBot.utils.uploadToArchive
 import me.mrkirby153.KirBot.utils.urlEscape
@@ -23,15 +23,13 @@ import java.util.TimeZone
 
 class LogManager(private val guild: KirBotGuild) {
 
-    private val logQueue = LinkedList<String>()
+    private val logQueue = LinkedList<LogMessage>()
 
-    val logChannel: TextChannel?
-        get() {
-            val chanId = guild.kirbotGuild.settings.logChannel ?: return null
-            if (chanId.isEmpty())
-                return null
-            return guild.getTextChannelById(chanId)
-        }
+    private var logChannels = Model.get(LogSettings::class.java, Pair("server_id", guild.id))
+
+    fun reloadLogChannels() {
+        this.logChannels = Model.get(LogSettings::class.java, Pair("server_id", guild.id))
+    }
 
     fun logMessageDelete(id: String) {
         val msg = Model.first(GuildMessage::class.java, Pair("id", id)) ?: return
@@ -43,12 +41,12 @@ class LogManager(private val guild: KirBotGuild) {
         if (ignored != null && author.id in ignored)
             return // The user is in the ignored log array
 
-        this.genericLog(":wastebasket:",
+        this.genericLog(LogEvent.MESSAGE_DELETE,":wastebasket:",
                 "${author.nameAndDiscrim}(`${author.id}`) Message deleted in **#${chan.name}** \n ${msg.message.escapeMentions().urlEscape()}")
     }
 
     fun logBulkDelete(chan: TextChannel, messages: List<String>) {
-        if (logChannel == null)
+        if (logChannels.firstOrNull { LogEvent.has(it.events, LogEvent.MESSAGE_BULKDELETE) } == null)
             return // Don't bother creating an archive if logging is disabled
         val selector = "?, ".repeat(messages.size)
         val realString = selector.substring(
@@ -71,9 +69,9 @@ class LogManager(private val guild: KirBotGuild) {
             msgs.add(String.format("%s (%s / %s / %s) %s: %s", timeFormatted, serverId, channel,
                     authorId, username, msg))
         }
-        val archiveUrl = if (msgs.isNotEmpty() && logChannel != null) uploadToArchive(
+        val archiveUrl = if (msgs.isNotEmpty()) uploadToArchive(
                 msgs.joinToString("\n")) else ""
-        this.genericLog(":wastebasket:",
+        this.genericLog(LogEvent.MESSAGE_BULKDELETE, ":wastebasket:",
                 "${messages.size} messages deleted in **#${chan.name}**" + if (archiveUrl.isNotEmpty()) " ($archiveUrl)" else "")
     }
 
@@ -87,15 +85,16 @@ class LogManager(private val guild: KirBotGuild) {
             return
         }
 
-        this.genericLog(":pencil:",
+        this.genericLog(LogEvent.MESSAGE_EDIT,":pencil:",
                 "${user.nameAndDiscrim} Message edited in **#${message.textChannel.name}** \n **B:** ${old.message.escapeMentions().urlEscape()} \n **A:** ${message.contentRaw.escapeMentions().urlEscape()}")
     }
 
-    fun genericLog(emoj: CustomEmoji, message: String) {
-        genericLog(emoj.toString(), message)
+    fun genericLog(logEvent: LogEvent, emoji: CustomEmoji,
+                   message: String) {
+        genericLog(logEvent, emoji.toString(), message)
     }
 
-    fun genericLog(emoji: String, message: String) {
+    fun genericLog(logEvent: LogEvent, emoji: String, message: String) {
         val timezone = TimeZone.getTimeZone(this.guild.settings.logTimezone)
         val calendar = Calendar.getInstance(timezone)
         val m = buildString {
@@ -107,23 +106,40 @@ class LogManager(private val guild: KirBotGuild) {
         }
         if (m.length > 2000)
             return
-        logQueue.addLast(m)
+        logQueue.addLast(LogMessage(logEvent, m))
     }
 
     fun processQueue() {
         if (logQueue.isEmpty())
             return
-        val string = buildString {
-            while (logQueue.isNotEmpty()) {
-                if (logQueue.peek().length + length > 2000)
-                    return@buildString
-                appendln(logQueue.pop())
+        val toRemove = mutableSetOf<LogMessage>()
+        logChannels.forEach { s ->
+            // Find events
+
+            val events = LinkedList<LogMessage>()
+
+            logQueue.filter { m ->
+                LogEvent.has(s.events, m.event)
+            }.toCollection(events)
+
+            val string = buildString {
+                while (events.isNotEmpty()) {
+                    if(events.peek().message.length + length > 2000)
+                        return@buildString
+                    val evt = events.pop()
+                    appendln(evt.message)
+
+                   toRemove.add(evt)
+                }
+            }
+            if(string.isNotBlank()){
+                val channel = guild.getTextChannelById(s.channelId) ?: return@forEach
+                if(channel.checkPermissions(Permission.MESSAGE_READ, Permission.MESSAGE_WRITE))
+                    channel.sendMessage(string).queue()
             }
         }
-        if (string.isNotBlank()) {
-            val channel = logChannel ?: return
-            if (channel.checkPermissions(Permission.MESSAGE_READ, Permission.MESSAGE_WRITE))
-                channel.sendMessage(string).queue()
-        }
+        logQueue.removeAll(toRemove)
     }
+
+    data class LogMessage(val event: LogEvent, val message: String)
 }

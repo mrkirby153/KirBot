@@ -7,6 +7,7 @@ import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.LogInModlogs
 import me.mrkirby153.KirBot.command.args.CommandContext
+import me.mrkirby153.KirBot.logger.LogEvent
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.Scheduler
 import me.mrkirby153.KirBot.scheduler.Schedulable
@@ -49,7 +50,7 @@ class CommandChannelMute : BaseCommand(false, CommandCategory.MODERATION) {
                 UnmuteScheduler(context.guild.id, channel.id, user.id), timeParsed,
                 TimeUnit.MILLISECONDS)
         Bot.LOG.debug("Submitted unmuter as  $id")
-        context.kirbotGuild.logManager.genericLog(":zipper_mouth:", "${user.nameAndDiscrim} (`${user.id}`) is now muted for ${Time.formatLong(timeParsed)}")
+        context.kirbotGuild.logManager.genericLog(LogEvent.USER_MUTE, ":zipper_mouth:", "${user.nameAndDiscrim} (`${user.id}`) is now muted for ${Time.formatLong(timeParsed)}")
         context.send().success(
                 "${user.nameAndDiscrim} (`${user.id}`) is now muted in this channel for ${Time.formatLong(
                         timeParsed)}", hand = true).queue()
@@ -77,7 +78,7 @@ class CommandChanUnmute : BaseCommand() {
             override.delete().queue()
         else
             manager.update().queue()
-        context.kirbotGuild.logManager.genericLog(":open_mouth:",
+        context.kirbotGuild.logManager.genericLog(LogEvent.USER_UNMUTE, ":open_mouth:",
                 "${user.nameAndDiscrim} was unmuted in *${context.channel.name}* by ${context.author.nameAndDiscrim}")
         context.send().success("Unmuted ${context.author.nameAndDiscrim}").queue()
     }
@@ -93,7 +94,7 @@ class UnmuteScheduler(val guildId: String, val channelId: String, val userId: St
         val member = guild.getMember(user) ?: return
         val override = channel.getPermissionOverride(member) ?: return
 
-        guild.kirbotGuild.logManager.genericLog(":open_mouth:",
+        guild.kirbotGuild.logManager.genericLog(LogEvent.USER_UNMUTE, ":open_mouth:",
                 "Timed mute in *${channel.name}* expired for ${user.nameAndDiscrim}")
 
         val manager = override.managerUpdatable

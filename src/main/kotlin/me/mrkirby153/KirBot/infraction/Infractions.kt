@@ -5,6 +5,7 @@ import me.mrkirby153.KirBot.command.executors.moderation.infraction.TempMute
 import me.mrkirby153.KirBot.database.models.DiscordUser
 import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.database.models.QueryBuilder
+import me.mrkirby153.KirBot.logger.LogEvent
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.InfractionModule
 import me.mrkirby153.KirBot.modules.Scheduler
@@ -27,7 +28,7 @@ object Infractions {
 
         createInfraction(user, guild, issuer, reason, InfractionType.KICK)
 
-        guild.kirbotGuild.logManager.genericLog(":boot:", buildString {
+        guild.kirbotGuild.logManager.genericLog(LogEvent.USER_KICK, ":boot:", buildString {
             lookupUser(user, true)
             append(" Kicked by **${lookupUser(issuer)}")
             if (reason != null) {
@@ -43,7 +44,7 @@ object Infractions {
 
         createInfraction(user, guild, issuer, reason, InfractionType.BAN)
 
-        guild.kirbotGuild.logManager.genericLog(":rotating_light:", buildString {
+        guild.kirbotGuild.logManager.genericLog(LogEvent.USER_BAN, ":rotating_light:", buildString {
             append(lookupUser(user, true))
             append(" Banned by **${lookupUser(issuer)}**")
             if (reason != null)
@@ -58,7 +59,7 @@ object Infractions {
 
         createInfraction(user, guild, issuer, reason, InfractionType.KICK)
 
-        guild.kirbotGuild.logManager.genericLog(":boot:", buildString {
+        guild.kirbotGuild.logManager.genericLog(LogEvent.USER_KICK, ":boot:", buildString {
             append(lookupUser(user, true))
             append(" Soft-Banned by **${lookupUser(issuer)}**")
             if (reason != null)
@@ -76,7 +77,7 @@ object Infractions {
             ban.save()
         }
 
-        guild.kirbotGuild.logManager.genericLog(":hammer:", buildString {
+        guild.kirbotGuild.logManager.genericLog(LogEvent.USER_UNBAN, ":hammer:", buildString {
             append(lookupUser(user, true))
             append(" Unbanned by **${lookupUser(issuer)}**")
         })
@@ -86,7 +87,7 @@ object Infractions {
         addMutedRole(guild.getMemberById(user).user, guild)
         createInfraction(user, guild, issuer, reason, InfractionType.MUTE)
 
-        guild.kirbotGuild.logManager.genericLog(":zipper_mouth:", buildString {
+        guild.kirbotGuild.logManager.genericLog(LogEvent.USER_MUTE, ":zipper_mouth:", buildString {
             append(lookupUser(user, true))
             append(" Muted by **${lookupUser(issuer)}**")
             if (reason != null) {
@@ -105,7 +106,7 @@ object Infractions {
             it.save()
         }
 
-        guild.kirbotGuild.logManager.genericLog(":open_mouth:", buildString {
+        guild.kirbotGuild.logManager.genericLog(LogEvent.USER_UNMUTE, ":open_mouth:", buildString {
             append(lookupUser(user, true))
             append(" Unmuted by **${lookupUser(issuer)}**")
             if (reason != null) {
@@ -124,7 +125,7 @@ object Infractions {
                 duration, units)
         val m = guild.getMemberById(user)
 
-        guild.kirbotGuild.logManager.genericLog(":zipper_mouth:", buildString {
+        guild.kirbotGuild.logManager.genericLog(LogEvent.USER_MUTE, ":zipper_mouth:", buildString {
             append(lookupUser(user, true))
             append(" Temp muted by **${lookupUser(issuer)}** for ${Time.formatLong(
                     TimeUnit.MILLISECONDS.convert(duration, units), Time.TimeUnit.SECONDS)}")

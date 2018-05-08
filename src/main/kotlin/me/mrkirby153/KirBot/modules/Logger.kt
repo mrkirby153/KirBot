@@ -55,7 +55,9 @@ class Logger : Module("logging") {
     override fun onMessageBulkDelete(event: MessageBulkDeleteEvent) {
         event.guild.kirbotGuild.logManager.logBulkDelete(event.channel, event.messageIds)
         val selector = "?, ".repeat(event.messageIds.size)
-        DB.executeUpdate("UPDATE `server_messages` SET `deleted` = TRUE WHERE `id` IN (${selector.substring(0, selector.lastIndexOf(","))})", *(event.messageIds.toTypedArray()))
+        DB.executeUpdate(
+                "UPDATE `server_messages` SET `deleted` = TRUE WHERE `id` IN (${selector.substring(
+                        0, selector.lastIndexOf(","))})", *(event.messageIds.toTypedArray()))
     }
 
     override fun onGuildMemberRoleAdd(event: GuildMemberRoleAddEvent) {
@@ -77,7 +79,7 @@ class Logger : Module("logging") {
     }
 
     override fun onGuildMemberLeave(event: GuildMemberLeaveEvent) {
-        event.guild.kirbotGuild.logManager.genericLog(LogEvent.USER_LEAVE,":outbox_tray:",
+        event.guild.kirbotGuild.logManager.genericLog(LogEvent.USER_LEAVE, ":outbox_tray:",
                 "${event.user.nameAndDiscrim} (`${event.user.id}`) left")
     }
 
@@ -97,17 +99,28 @@ class Logger : Module("logging") {
     }
 
     override fun onGuildMemberNickChange(event: GuildMemberNickChangeEvent) {
-        val prev = if (event.prevNick.isNullOrBlank()) "None" else event.prevNick
-        val new = if (event.newNick.isNullOrBlank()) "None" else event.newNick
-        event.guild.kirbotGuild.logManager.genericLog(LogEvent.USER_NICKNAME_CHANGE, ":floppy_disk:",
-                "${event.user.nameAndDiscrim} (`${event.user.id}`) changed nick from `$prev` to `$new`")
+        when {
+            event.prevNick == null -> {
+                event.guild.kirbotGuild.logManager.genericLog(LogEvent.USER_NICKNAME_CHANGE,
+                        ":floppy_disk:",
+                        "${event.user.nameAndDiscrim} (`${event.user.id}`) Set nickname `${event.newNick}`")
+                return
+            }
+            event.newNick == null -> event.guild.kirbotGuild.logManager.genericLog(LogEvent.USER_NICKNAME_CHANGE,
+                    ":floppy_disk:",
+                    "${event.user.nameAndDiscrim} (`${event.user.id}`) Removed nickname `${event.prevNick}`")
+            else -> event.guild.kirbotGuild.logManager.genericLog(LogEvent.USER_NICKNAME_CHANGE,
+                    ":floppy_disk:",
+                    "${event.user.nameAndDiscrim} (`${event.user.id}`) changed nick from `${event.prevNick}` to `${event.newNick}`")
+        }
     }
 
     override fun onUserNameUpdate(event: UserNameUpdateEvent) {
         Bot.shardManager.shards.forEach { shard ->
             shard.guilds.forEach { guild ->
                 if (event.user.id in guild.members.map { it.user.id })
-                    guild.kirbotGuild.logManager.genericLog(LogEvent.USER_NAME_CHANGE, ":briefcase:",
+                    guild.kirbotGuild.logManager.genericLog(LogEvent.USER_NAME_CHANGE,
+                            ":briefcase:",
                             "${event.oldName}#${event.oldDiscriminator} (`${event.user.id}`) changed username to **${event.user.nameAndDiscrim}**")
             }
         }

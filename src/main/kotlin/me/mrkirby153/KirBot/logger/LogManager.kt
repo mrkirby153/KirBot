@@ -9,6 +9,7 @@ import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.utils.CustomEmoji
 import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.KirBot.utils.convertSnowflake
+import me.mrkirby153.KirBot.utils.crypto.AesCrypto
 import me.mrkirby153.KirBot.utils.escapeMentions
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import me.mrkirby153.KirBot.utils.uploadToArchive
@@ -42,16 +43,16 @@ class LogManager(private val guild: KirBotGuild) {
             return // The user is in the ignored log array
 
         this.genericLog(LogEvent.MESSAGE_DELETE, ":wastebasket:",
-                "${author.nameAndDiscrim}(`${author.id}`) Message deleted in **#${chan.name}** \n ${msg.message.escapeMentions().urlEscape()}")
+                "${author.nameAndDiscrim}(`${author.id}`) Message deleted in **#${chan.name}** \n ${LogManager.decrypt(msg.message).escapeMentions().urlEscape()}")
     }
 
     fun logBulkDelete(chan: TextChannel, messages: List<String>) {
         var shouldLog = false
         logChannels.forEach { c ->
-            if(shouldLog(LogEvent.MESSAGE_BULKDELETE, c.included, c.excluded))
+            if (shouldLog(LogEvent.MESSAGE_BULKDELETE, c.included, c.excluded))
                 shouldLog = true
         }
-        if(!shouldLog)
+        if (!shouldLog)
             return
         val selector = "?, ".repeat(messages.size)
         val realString = selector.substring(
@@ -65,7 +66,7 @@ class LogManager(private val guild: KirBotGuild) {
             val serverId = result.getString("server_id")
             val authorId = result.getString("author_id")
             val channel = result.getString("channel")
-            val msg = result.getString("message")
+            val msg = LogManager.decrypt(result.getString("message"))
             val username = result.getString("username") + "#" + result.getInt(
                     "discriminator")
             val timeFormatted = SimpleDateFormat("YYYY-MM-DD HH:MM:ss").format(
@@ -75,7 +76,7 @@ class LogManager(private val guild: KirBotGuild) {
                     authorId, username, msg))
         }
         val archiveUrl = if (msgs.isNotEmpty()) uploadToArchive(
-                msgs.joinToString("\n")) else ""
+                LogManager.encrypt(msgs.joinToString("\n"))) else ""
         this.genericLog(LogEvent.MESSAGE_BULKDELETE, ":wastebasket:",
                 "${messages.size} messages deleted in **#${chan.name}**" + if (archiveUrl.isNotEmpty()) " ($archiveUrl)" else "")
     }
@@ -86,12 +87,13 @@ class LogManager(private val guild: KirBotGuild) {
         val ignored = guild.extraData.optJSONArray("log-ignored")?.map { it.toString() }
         if (ignored != null && user.id in ignored)
             return // The user is in the ignored log array
-        if (old.message.equals(message.contentDisplay, true)) {
+        val oldMessage = LogManager.decrypt(old.message)
+        if (oldMessage.equals(message.contentRaw, true)) {
             return
         }
 
         this.genericLog(LogEvent.MESSAGE_EDIT, ":pencil:",
-                "${user.nameAndDiscrim} Message edited in **#${message.textChannel.name}** \n **B:** ${old.message.escapeMentions().urlEscape()} \n **A:** ${message.contentRaw.escapeMentions().urlEscape()}")
+                "${user.nameAndDiscrim} Message edited in **#${message.textChannel.name}** \n **B:** ${oldMessage.escapeMentions().urlEscape()} \n **A:** ${message.contentRaw.escapeMentions().urlEscape()}")
     }
 
     fun genericLog(logEvent: LogEvent, emoji: CustomEmoji,
@@ -155,12 +157,13 @@ class LogManager(private val guild: KirBotGuild) {
             // Remove all events that don't have loggings
             var hasLogChannel = false
             logChannels.forEach { chan ->
-                if (shouldLog(it.event, chan.included, chan.excluded)){
+                if (shouldLog(it.event, chan.included, chan.excluded)) {
                     hasLogChannel = true
                 }
             }
-            if(!hasLogChannel)
-                Bot.LOG.debug("[${this.guild.id}] Event ${it.event} has no logging channel, removing")
+            if (!hasLogChannel)
+                Bot.LOG.debug(
+                        "[${this.guild.id}] Event ${it.event} has no logging channel, removing")
             !hasLogChannel
         }
         logQueue.removeAll(toRemove)
@@ -174,4 +177,18 @@ class LogManager(private val guild: KirBotGuild) {
     }
 
     data class LogMessage(val event: LogEvent, val message: String)
+
+    companion object {
+        fun encrypt(message: String): String {
+            if (message.startsWith("e:"))
+                return message // Pass through
+            return "e:${AesCrypto.encrypt(message)}"
+        }
+
+        fun decrypt(message: String): String {
+            if (message.startsWith("e:"))
+                return AesCrypto.decrypt(message.substring(2))
+            return message
+        }
+    }
 }

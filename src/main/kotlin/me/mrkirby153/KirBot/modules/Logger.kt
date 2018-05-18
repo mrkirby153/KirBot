@@ -5,6 +5,7 @@ import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.database.models.guild.GuildMessage
 import me.mrkirby153.KirBot.logger.LogEvent
+import me.mrkirby153.KirBot.logger.LogManager
 import me.mrkirby153.KirBot.logger.LogPump
 import me.mrkirby153.KirBot.module.Module
 import me.mrkirby153.KirBot.utils.kirbotGuild
@@ -131,7 +132,7 @@ class Logger : Module("logging") {
             return
         event.guild.kirbotGuild.logManager.logEdit(event.message)
         val msg = Model.first(GuildMessage::class.java, Pair("id", event.messageId)) ?: return
-        msg.message = event.message.contentDisplay
+        msg.message = LogManager.encrypt(event.message.contentRaw)
         msg.editCount++
         msg.save()
     }
@@ -143,7 +144,7 @@ class Logger : Module("logging") {
             msg.serverId = event.guild.id
             msg.author = event.author.id
             msg.channel = event.channel.id
-            msg.message = event.message.contentDisplay
+            msg.message = LogManager.encrypt(event.message.contentRaw)
             msg.save()
         }
     }

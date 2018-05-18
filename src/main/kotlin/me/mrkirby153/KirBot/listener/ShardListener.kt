@@ -42,6 +42,7 @@ import java.util.concurrent.TimeUnit
 class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
 
     override fun onGuildMemberJoin(event: GuildMemberJoinEvent) {
+        event.guild.kirbotGuild.lock()
         val member = Model.first(GuildMember::class.java, Pair("server_id", event.guild.id),
                 Pair("user_id", event.user.id))
         if (member == null) {
@@ -68,6 +69,7 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
             u.discriminator = event.user.discriminator.toInt()
             u.create()
         }
+        event.guild.kirbotGuild.unlock()
     }
 
     override fun onUserNameUpdate(event: UserNameUpdateEvent) {
@@ -78,12 +80,14 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
     }
 
     override fun onGuildMemberLeave(event: GuildMemberLeaveEvent) {
+        event.guild.kirbotGuild.lock()
         if (!event.guild.kirbotGuild.settings.persistence) { // Delete the user if persistence is disabled
             val member = Model.first(GuildMember::class.java, Pair("server_id", event.guild.id),
                     Pair("user_id", event.user.id))
             member?.roles?.forEach { it.delete() }
             member?.delete()
         }
+        event.guild.kirbotGuild.unlock()
     }
 
     override fun onGuildMemberRoleAdd(event: GuildMemberRoleAddEvent) {
@@ -206,22 +210,26 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
 
     override fun onGuildVoiceJoin(event: GuildVoiceJoinEvent) {
         val guild = event.guild.kirbotGuild
-
+        guild.lock()
         if (!guild.musicManager.manualPause && guild.musicManager.audioPlayer.isPaused) {
             if (event.guild.selfMember.voiceState.inVoiceChannel() && event.guild.selfMember.voiceState.channel.id == event.channelJoined.id)
                 Bot.LOG.debug("Resuming music in ${event.guild.id}:${event.channelJoined.id}")
             guild.musicManager.audioPlayer.isPaused = false
         }
+        guild.unlock()
     }
 
     override fun onGuildVoiceLeave(event: GuildVoiceLeaveEvent) {
         val guild = event.guild.kirbotGuild
+        guild.lock()
         if (inChannel(event.channelLeft, event.guild.selfMember))
             pauseIfEmpty(event.channelLeft, guild)
+        guild.unlock()
     }
 
     override fun onGuildVoiceMove(event: GuildVoiceMoveEvent) {
         val guild = event.guild.kirbotGuild
+        guild.lock()
         if (inChannel(event.channelJoined,
                         event.guild.selfMember) && !guild.musicManager.manualPause) {
             Bot.LOG.debug("Resuming in ${guild.id} as someone joined!")
@@ -230,6 +238,7 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
             if (inChannel(event.channelLeft, event.guild.selfMember))
                 pauseIfEmpty(event.channelLeft, guild)
         }
+        guild.unlock()
     }
 
     private fun pauseIfEmpty(channel: Channel, guild: KirBotGuild) {

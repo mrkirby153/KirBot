@@ -75,7 +75,6 @@ class Spam : Module("spam") {
 
             if (last + (10 * 1000) < System.currentTimeMillis()) {
                 // VIOLATION
-                // TODO 4/2/18: Show amount and time
                 guild.kirbotGuild.logManager.genericLog(LogEvent.SPAM_VIOLATE, ":helmet_with_cross:",
                         "${user.nameAndDiscrim} (`${user.id}`) Has violated `$violation`: ${violation.friendlyType} (${bucket.count(
                                 "")} / ${bucket.size("")}s)")

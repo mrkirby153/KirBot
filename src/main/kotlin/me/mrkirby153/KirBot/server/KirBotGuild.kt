@@ -31,6 +31,7 @@ import net.dv8tion.jda.core.entities.Role
 import net.dv8tion.jda.core.entities.User
 import org.json.JSONObject
 import org.json.JSONTokener
+import java.util.concurrent.Semaphore
 
 class KirBotGuild(val guild: Guild) : Guild by guild {
 
@@ -50,6 +51,45 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
     private val dataFile = Bot.files.data.child("servers").mkdirIfNotExist().child(
             "${this.id}.json")
 
+    private val lock = Semaphore(1, true)
+    private var lockedAt: Long = -1
+    private var lockedThread: Thread? = null
+    private var lockDump: Array<StackTraceElement> = arrayOf()
+    private var lockDumped = false
+
+    var ready = false
+
+    fun lock() {
+        Bot.LOG.debug("[LOCK] Lock on ${this.id} aquired by ${Thread.currentThread().name}")
+        lock.acquire()
+        lockedAt = System.currentTimeMillis()
+        lockedThread = Thread.currentThread()
+        lockDumped = false
+        val stack = Thread.currentThread().stackTrace.toMutableList()
+        stack.drop(2)
+        lockDump = stack.toTypedArray()
+    }
+
+    fun unlock() {
+        Bot.LOG.debug(
+                "[LOCK] Lock on ${this.id} released after ${System.currentTimeMillis() - lockedAt} ms")
+        lockedAt = -1
+        lockedThread = null
+        lock.release()
+    }
+
+    fun checkLeak() {
+        if (lockedAt + leakThreshold < System.currentTimeMillis() && !lockDumped && lockedThread != null) {
+            Bot.LOG.debug(
+                    "[LEAK] Access to guild [${this.id}] may have leaked! (Locked $leakThreshold ms ago by \"${lockedThread?.name}\")")
+            Bot.LOG.debug("Trace:")
+            lockDump.forEach {
+                Bot.LOG.debug("\t$it")
+            }
+            lockDumped = true
+        }
+    }
+
     fun loadSettings() {
         Bot.LOG.debug("Loading settings for ${this}")
 
@@ -61,18 +101,24 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
                 Pair("server", this.id)).toMutableList()
         logManager.reloadLogChannels()
         loadData()
+        println("Loaded $settings")
+        println("Commands $customCommands")
     }
 
     fun onPart() {
+        lock()
         dataFile.delete()
         ModuleManager[Redis::class.java].getConnection().use {
             it.del("data:${this.id}")
         }
+        unlock()
+        KirBotGuild.remove(this)
     }
 
     fun sync(waitFor: Boolean = false) {
         val keyGen = IdGenerator(IdGenerator.ALPHA + IdGenerator.NUMBERS)
         Bot.LOG.debug("Syncing guild ${this.id}")
+        lock()
         var guild = Model.first(ServerSettings::class.java, this.id)
 
         if (guild == null) {
@@ -142,7 +188,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
                 role.save()
             }
 
-            RealnameHandler(this).update()
+            RealnameHandler(this).update(false)
 
             val groups = Model.get(Group::class.java, Pair("server_id", this.id))
 
@@ -235,6 +281,8 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
                 toRemove.forEach { it.delete() }
             }
             Infractions.importFromBanlist(this)
+            unlock()
+            ready = true
         })
 
         if (waitFor) {
@@ -272,22 +320,28 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         }
     }
 
-    fun getClearance(user: User): Int{
+    fun getClearance(user: User): Int {
         val member = guild.getMember(user) ?: return 0
         return getClearance(member)
     }
 
     fun getClearance(member: Member): Int {
-        if (member.user.id in Bot.admins)
+        lock()
+        if (member.user.id in Bot.admins) {
+            unlock()
             return CLEARANCE_GLOBAL_ADMIN
-        if (member.isOwner)
+        }
+        if (member.isOwner) {
+            unlock()
             return CLEARANCE_ADMIN
+        }
         var clearance = 0
         member.roles.forEach { role ->
             val roleClearance = this.clearances[role.id] ?: return@forEach
             if (clearance < roleClearance)
                 clearance = roleClearance
         }
+        unlock()
         return clearance
     }
 
@@ -327,7 +381,8 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         }
     }
 
-    fun syncSeenUsers(await: Boolean = false) {
+    fun syncSeenUsers() {
+        lock()
         Model.factory.getConnection().use { con ->
             val users = mutableListOf<String>()
             con.createStatement().executeQuery("SELECT id FROM seen_users").use { rs ->
@@ -338,15 +393,14 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
 
             val newMembers = this.members.filter { it.user.id !in users }
             Bot.LOG.debug("Found ${newMembers.size} new members!")
-            val future = Bot.scheduler.submit({
-                newMembers.map { it.user }.forEach { user ->
-                    val m = DiscordUser()
-                    m.id = user.id
-                    m.username = user.name
-                    m.discriminator = user.discriminator.toInt()
-                    m.create()
-                }
-            })
+
+            newMembers.map { it.user }.forEach { user ->
+                val m = DiscordUser()
+                m.id = user.id
+                m.username = user.name
+                m.discriminator = user.discriminator.toInt()
+                m.create()
+            }
             // Update the usernames
             con.createStatement().executeQuery(
                     "SELECT id, username, discriminator FROM seen_users").use { rs ->
@@ -365,9 +419,8 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
                         }
                 }
             }
-            if (await)
-                future.get()
         }
+        unlock()
     }
 
     override fun toString(): String {
@@ -376,17 +429,40 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
 
     companion object {
         private val guilds = mutableMapOf<String, KirBotGuild>()
+        private lateinit var leakDetectorThread: Thread
+
+        var leakThreshold = 1000
 
         operator fun get(guild: Guild): KirBotGuild {
-            return guilds.computeIfAbsent(guild.id, { KirBotGuild(guild) })
+            synchronized(guilds, {
+                return guilds.computeIfAbsent(guild.id, { KirBotGuild(guild) })
+            })
         }
 
         fun remove(guild: Guild) {
-            remove(guild.id)
+            synchronized(guilds, {
+                remove(guild.id)
+            })
         }
 
         fun remove(id: String) {
-            guilds.remove(id)
+            synchronized(guilds, {
+                guilds.remove(id)
+            })
+        }
+
+        fun startLeakMonitor() {
+            leakDetectorThread = Thread({
+                Bot.LOG.debug("Starting Guild lock leak monitor")
+                while (true) {
+                    guilds.values.forEach { it.checkLeak() }
+                    Thread.sleep(10)
+                }
+            }).apply {
+                name = "LeakDetector"
+                isDaemon = true
+            }
+            leakDetectorThread.start()
         }
     }
 }

@@ -11,7 +11,9 @@ import net.dv8tion.jda.core.entities.Role
 
 class RealnameHandler(var guild: KirBotGuild) {
 
-    fun update() {
+    fun update(lock: Boolean = true) {
+        if (lock)
+            guild.lock()
         Bot.LOG.debug("Updating nicknames on ${guild.id}")
         val settings = guild.settings
         if (!settings.requireRealname) {
@@ -88,6 +90,8 @@ class RealnameHandler(var guild: KirBotGuild) {
                 setNickname(user.getMember(guild), nickName)
             }
         }
+        if (lock)
+            guild.unlock()
     }
 
     private fun setNickname(member: Member, name: String?) {

@@ -77,6 +77,7 @@ object Bot {
             (LOG as? Logger)?.let { logger ->
                 logger.level = Level.DEBUG
             }
+            KirBotGuild.startLeakMonitor()
         }
         (LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME) as? Logger)?.level = Level.valueOf(
                 System.getProperty("kirbot.global_log", "INFO"))
@@ -121,7 +122,7 @@ object Bot {
             guilds.forEach {
                 LOG.info("Syncing guild ${it.id} (${it.name})")
                 KirBotGuild[it].sync()
-                KirBotGuild[it].syncSeenUsers(true)
+                KirBotGuild[it].syncSeenUsers()
             }
         }
         // Remove old guilds

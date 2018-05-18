@@ -51,6 +51,7 @@ class Quotes : Module("quote") {
     override fun onMessageReactionAdd(event: MessageReactionAddEvent) {
         if (event.reactionEmote.name != quoteReaction)
             return
+        event.guild.kirbotGuild.lock()
         debug("Beginning quote sequence")
         event.channel.getMessageById(event.messageId).queue { msg ->
             if (msg == null)
@@ -110,6 +111,7 @@ class Quotes : Module("quote") {
                     timestamp = msg.creationTime.toInstant()
                 }
             }.build()).queue()
+            event.guild.kirbotGuild.unlock()
         }
     }
 }

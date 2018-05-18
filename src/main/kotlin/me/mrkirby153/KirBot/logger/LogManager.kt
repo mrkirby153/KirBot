@@ -102,6 +102,8 @@ class LogManager(private val guild: KirBotGuild) {
     }
 
     fun genericLog(logEvent: LogEvent, emoji: String, message: String) {
+        if(!guild.ready)
+            return
         val timezone = TimeZone.getTimeZone(this.guild.settings.logTimezone)
         val calendar = Calendar.getInstance(timezone)
         val m = buildString {

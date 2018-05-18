@@ -41,13 +41,18 @@ class LogManager(private val guild: KirBotGuild) {
         if (ignored != null && author.id in ignored)
             return // The user is in the ignored log array
 
-        this.genericLog(LogEvent.MESSAGE_DELETE,":wastebasket:",
+        this.genericLog(LogEvent.MESSAGE_DELETE, ":wastebasket:",
                 "${author.nameAndDiscrim}(`${author.id}`) Message deleted in **#${chan.name}** \n ${msg.message.escapeMentions().urlEscape()}")
     }
 
     fun logBulkDelete(chan: TextChannel, messages: List<String>) {
-        if (logChannels.firstOrNull { LogEvent.has(it.events, LogEvent.MESSAGE_BULKDELETE) } == null)
-            return // Don't bother creating an archive if logging is disabled
+        var shouldLog = false
+        logChannels.forEach { c ->
+            if(shouldLog(LogEvent.MESSAGE_BULKDELETE, c.included, c.excluded))
+                shouldLog = true
+        }
+        if(!shouldLog)
+            return
         val selector = "?, ".repeat(messages.size)
         val realString = selector.substring(
                 0, selector.lastIndexOf(","))
@@ -85,7 +90,7 @@ class LogManager(private val guild: KirBotGuild) {
             return
         }
 
-        this.genericLog(LogEvent.MESSAGE_EDIT,":pencil:",
+        this.genericLog(LogEvent.MESSAGE_EDIT, ":pencil:",
                 "${user.nameAndDiscrim} Message edited in **#${message.textChannel.name}** \n **B:** ${old.message.escapeMentions().urlEscape()} \n **A:** ${message.contentRaw.escapeMentions().urlEscape()}")
     }
 
@@ -119,26 +124,53 @@ class LogManager(private val guild: KirBotGuild) {
             val events = LinkedList<LogMessage>()
 
             logQueue.filter { m ->
-                LogEvent.has(s.events, m.event)
+                if (s.included == 0L) {
+                    // All events are included, check exclusions
+                    !LogEvent.has(s.excluded, m.event)
+                } else {
+                    // We have whitelisted events, use those instead
+                    LogEvent.has(s.included, m.event)
+                }
             }.toCollection(events)
 
             val string = buildString {
                 while (events.isNotEmpty()) {
-                    if(events.peek().message.length + length > 2000)
+                    if (events.peek().message.length + length > 2000)
                         return@buildString
                     val evt = events.pop()
                     appendln(evt.message)
 
-                   toRemove.add(evt)
+                    toRemove.add(evt)
                 }
             }
-            if(string.isNotBlank()){
+            if (string.isNotBlank()) {
                 val channel = guild.getTextChannelById(s.channelId) ?: return@forEach
-                if(channel.checkPermissions(Permission.MESSAGE_READ, Permission.MESSAGE_WRITE))
+                if (channel.checkPermissions(Permission.MESSAGE_READ, Permission.MESSAGE_WRITE))
                     channel.sendMessage(string).queue()
             }
         }
+        logQueue.removeIf {
+            if (it in toRemove)
+                return@removeIf true
+            // Remove all events that don't have loggings
+            var hasLogChannel = false
+            logChannels.forEach { chan ->
+                if (shouldLog(it.event, chan.included, chan.excluded)){
+                    hasLogChannel = true
+                }
+            }
+            if(!hasLogChannel)
+                Bot.LOG.debug("[${this.guild.id}] Event ${it.event} has no logging channel, removing")
+            !hasLogChannel
+        }
         logQueue.removeAll(toRemove)
+    }
+
+    private fun shouldLog(event: LogEvent, include: Long, exclude: Long): Boolean {
+        return if (include == 0L)
+            !LogEvent.has(exclude, event)
+        else
+            LogEvent.has(include, event)
     }
 
     data class LogMessage(val event: LogEvent, val message: String)

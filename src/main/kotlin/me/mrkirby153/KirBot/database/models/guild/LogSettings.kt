@@ -15,5 +15,7 @@ class LogSettings : Model(){
     @Column("channel_id")
     var channelId: String = ""
 
-    var events: Long = 0L
+    var included: Long = 0L
+
+    var excluded: Long = 0L
 }

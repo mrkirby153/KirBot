@@ -28,13 +28,14 @@ class Commands : Module("commands") {
 
     override fun onMessageUpdate(event: MessageUpdateEvent) {
         // If the message was edited
-        if (event.channel.latestMessageId == event.messageId) {
-            // Only process if it's the last message
-            if (event.author == Bot.shardManager.getShard(event.guild)!!.selfUser)
-                return
+        if (event.channel.hasLatestMessage())
+            if (event.channel.latestMessageId == event.messageId) {
+                // Only process if it's the last message
+                if (event.author == Bot.shardManager.getShard(event.guild)!!.selfUser)
+                    return
 
-            val context = Context(Bot.shardManager.getShard(event.guild)!!, event.message)
-            CommandExecutor.execute(context)
-        }
+                val context = Context(Bot.shardManager.getShard(event.guild)!!, event.message)
+                CommandExecutor.execute(context)
+            }
     }
 }

@@ -69,7 +69,7 @@ class LogManager(private val guild: KirBotGuild) {
             val msg = LogManager.decrypt(result.getString("message"))
             val username = result.getString("username") + "#" + result.getInt(
                     "discriminator")
-            val timeFormatted = SimpleDateFormat("YYYY-MM-DD HH:MM:ss").format(
+            val timeFormatted = SimpleDateFormat("YYYY-MM-dd HH:MM:ss").format(
                     convertSnowflake(msgId))
 
             msgs.add(String.format("%s (%s / %s / %s) %s: %s", timeFormatted, serverId, channel,

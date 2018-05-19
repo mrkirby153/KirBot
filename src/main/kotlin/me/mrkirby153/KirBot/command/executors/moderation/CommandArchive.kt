@@ -57,7 +57,7 @@ class CommandArchive : BaseCommand(false) {
             }
         }
         messages.forEach {
-            val timeFormatted = SimpleDateFormat("YYY-MM-DD HH:MM:ss").format(
+            val timeFormatted = SimpleDateFormat("YYY-MM-dd HH:MM:ss").format(
                     convertSnowflake(it.id))
             msgs.add(String.format("%s (%s / %s / %s) %s: %s", timeFormatted, it.serverId,
                     it.channel, it.author, userMap[it.author] ?: it.author, it.message))

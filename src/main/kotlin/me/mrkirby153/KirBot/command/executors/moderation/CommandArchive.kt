@@ -4,6 +4,7 @@ import co.aikar.idb.DB
 import co.aikar.idb.DbRow
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
+import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.models.guild.GuildMessage
 import me.mrkirby153.KirBot.logger.LogManager
@@ -24,8 +25,8 @@ class CommandArchive : BaseCommand(false) {
         val amount = cmdContext.get<Int>("amount") ?: 50
         val user = cmdContext.get<String>("user")!!
         val messages = DB.getResults(
-                "SELECT * FROM server_messages WHERE author = ? ORDER BY id DESC LIMIT ?", user,
-                amount).map { decode(it) }.reversed()
+                "SELECT * FROM server_messages WHERE author = ? AND server_id = ? ORDER BY id DESC LIMIT ?", user,
+                context.guild.id, amount).map { decode(it) }.reversed()
         val archiveUrl = createArchive(messages)
         context.channel.sendMessage("Archived ${messages.count()} messages at $archiveUrl").queue()
     }
@@ -35,6 +36,8 @@ class CommandArchive : BaseCommand(false) {
     fun archiveChannel(context: Context, cmdContext: CommandContext) {
         val amount = cmdContext.get<Int>("amount") ?: 50
         val chan = cmdContext.get<String>("channel")!!
+        if(context.guild.getTextChannelById(chan) == null)
+            throw CommandException("That channel doesn't exist")
         val messages = DB.getResults(
                 "SELECT * FROM server_messages WHERE channel = ? ORDER BY id DESC LIMIT ?", chan,
                 amount).map { decode(it) }.reversed()

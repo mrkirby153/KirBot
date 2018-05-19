@@ -4,7 +4,6 @@ import co.aikar.idb.DB
 import co.aikar.idb.DbRow
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
-import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.models.guild.GuildMessage
 import me.mrkirby153.KirBot.logger.LogManager
@@ -15,7 +14,7 @@ import me.mrkirby153.KirBot.utils.uploadToArchive
 import java.text.SimpleDateFormat
 
 @Command(name = "archive", clearance = CLEARANCE_MOD)
-class CommandArchive : BaseCommand() {
+class CommandArchive : BaseCommand(false) {
     override fun execute(context: Context, cmdContext: CommandContext) {
     }
 

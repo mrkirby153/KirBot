@@ -1,5 +1,7 @@
 package me.mrkirby153.KirBot.utils
 
+import java.util.regex.Pattern
+
 const val RED_CROSS = "\u274C"
 const val GREEN_CHECK = "\u2705"
 const val NO_ENTRY = ":no_entry_sign:"
@@ -13,3 +15,5 @@ val STATUS_OFFLINE = CustomEmoji("status_offline", "414874407022886913")
 
 val RED_TICK = CustomEmoji("kbRedTick", "414875062336880640")
 val GREEN_TICK = CustomEmoji("kbGreenTick", "414875062001205249")
+
+val EMOJI_RE = Pattern.compile("<a?:(.*):(\\d{17,18})>")

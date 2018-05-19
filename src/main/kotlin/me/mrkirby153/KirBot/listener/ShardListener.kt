@@ -42,6 +42,8 @@ import java.util.concurrent.TimeUnit
 class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
 
     override fun onGuildMemberJoin(event: GuildMemberJoinEvent) {
+        if(!event.guild.kirbotGuild.ready)
+            return
         event.guild.kirbotGuild.lock()
         val member = Model.first(GuildMember::class.java, Pair("server_id", event.guild.id),
                 Pair("user_id", event.user.id))
@@ -80,6 +82,8 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
     }
 
     override fun onGuildMemberLeave(event: GuildMemberLeaveEvent) {
+        if(!event.guild.kirbotGuild.ready)
+            return
         event.guild.kirbotGuild.lock()
         if (!event.guild.kirbotGuild.settings.persistence) { // Delete the user if persistence is disabled
             val member = Model.first(GuildMember::class.java, Pair("server_id", event.guild.id),
@@ -91,6 +95,8 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
     }
 
     override fun onGuildMemberRoleAdd(event: GuildMemberRoleAddEvent) {
+        if(!event.guild.kirbotGuild.ready)
+            return
         event.roles.forEach {
             Bot.LOG.debug("Adding role ${it.name}(${it.id}) to ${event.user} ")
             val role = GuildMemberRole()
@@ -102,6 +108,8 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
     }
 
     override fun onGuildMemberRoleRemove(event: GuildMemberRoleRemoveEvent) {
+        if(!event.guild.kirbotGuild.ready)
+            return
         event.roles.forEach {
             Model.get(GuildMemberRole::class.java, Pair("server_id", event.guild.id),
                     Pair("user_id", event.user.id), Pair("role_id", it.id)).forEach { it.delete() }
@@ -109,6 +117,8 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
     }
 
     override fun onGuildMemberNickChange(event: GuildMemberNickChangeEvent) {
+        if(!event.guild.kirbotGuild.ready)
+            return
         Model.first(GuildMember::class.java, Pair("server_id", event.guild.id),
                 Pair("user_id", event.user.id))?.run {
             nick = event.newNick
@@ -117,6 +127,8 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
     }
 
     override fun onGuildLeave(event: GuildLeaveEvent) {
+        if(!event.guild.kirbotGuild.ready)
+            return
         val guild = event.guild
         AdminControl.log("Left guild ${guild.name} (`${guild.id}`)")
         Model.first(ServerSettings::class.java, event.guild.id)?.delete()
@@ -152,16 +164,22 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
     }
 
     override fun onTextChannelDelete(event: TextChannelDeleteEvent) {
+        if(!event.guild.kirbotGuild.ready)
+            return
         Model.first(me.mrkirby153.KirBot.database.models.Channel::class.java,
                 event.channel.id)?.delete()
     }
 
     override fun onVoiceChannelDelete(event: VoiceChannelDeleteEvent) {
+        if(!event.guild.kirbotGuild.ready)
+            return
         Model.first(me.mrkirby153.KirBot.database.models.Channel::class.java,
                 event.channel.id)?.delete()
     }
 
     override fun onTextChannelCreate(event: TextChannelCreateEvent) {
+        if(!event.guild.kirbotGuild.ready)
+            return
         val channel = me.mrkirby153.KirBot.database.models.Channel()
         channel.id = event.channel.id
         channel.guild = event.guild
@@ -172,6 +190,8 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
     }
 
     override fun onVoiceChannelCreate(event: VoiceChannelCreateEvent) {
+        if(!event.guild.kirbotGuild.ready)
+            return
         val channel = me.mrkirby153.KirBot.database.models.Channel()
         channel.id = event.channel.id
         channel.guild = event.guild
@@ -182,16 +202,22 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
     }
 
     override fun onGenericTextChannelUpdate(event: GenericTextChannelUpdateEvent) {
+        if(!event.guild.kirbotGuild.ready)
+            return
         Model.first(me.mrkirby153.KirBot.database.models.Channel::class.java,
                 event.channel.id)?.updateChannel()
     }
 
     override fun onGenericVoiceChannelUpdate(event: GenericVoiceChannelUpdateEvent) {
+        if(!event.guild.kirbotGuild.ready)
+            return
         Model.first(me.mrkirby153.KirBot.database.models.Channel::class.java,
                 event.channel.id)?.updateChannel()
     }
 
     override fun onRoleCreate(event: RoleCreateEvent) {
+        if(!event.guild.kirbotGuild.ready)
+            return
         val role = Role()
         role.role = event.role
         role.guild = event.guild
@@ -199,6 +225,8 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
     }
 
     override fun onGenericRoleUpdate(event: GenericRoleUpdateEvent) {
+        if(!event.guild.kirbotGuild.ready)
+            return
         val role = Model.first(Role::class.java, Pair("id", event.role.id)) ?: return
         role.updateRole()
         role.save()

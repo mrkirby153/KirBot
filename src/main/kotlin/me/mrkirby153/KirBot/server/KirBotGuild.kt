@@ -101,8 +101,6 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
                 Pair("server", this.id)).toMutableList()
         logManager.reloadLogChannels()
         loadData()
-        println("Loaded $settings")
-        println("Commands $customCommands")
     }
 
     fun onPart() {
@@ -131,6 +129,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
             val musicSettings = MusicSettings()
             musicSettings.id = this.id
             musicSettings.save()
+            unlock()
             sync()
             return
         }
@@ -282,6 +281,8 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
             }
             Infractions.importFromBanlist(this)
             unlock()
+            if(!ready)
+                Bot.LOG.debug("Guild ${this} is ready!")
             ready = true
         })
 

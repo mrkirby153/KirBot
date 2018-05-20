@@ -68,7 +68,7 @@ object Infractions {
         })
     }
 
-    fun unban(user: String, guild: Guild, issuer: String) {
+    fun unban(user: String, guild: Guild, issuer: String, reason: String = "") {
         guild.controller.unban(user).queue()
 
         // Deactivate all the users active bans (should only be one)
@@ -77,10 +77,12 @@ object Infractions {
             ban.revokedAt = Timestamp(System.currentTimeMillis())
             ban.save()
         }
-
+        createInfraction(user, guild, issuer, reason, InfractionType.UNBAN)
         guild.kirbotGuild.logManager.genericLog(LogEvent.USER_UNBAN, ":hammer:", buildString {
             append(lookupUser(user, true))
             append(" Unbanned by **${lookupUser(issuer)}**")
+            if(reason.isNotBlank())
+                append("(`$reason`)")
         })
     }
 

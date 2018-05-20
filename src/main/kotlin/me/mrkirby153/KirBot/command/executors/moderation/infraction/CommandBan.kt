@@ -45,18 +45,18 @@ class CommandForceBan : BaseCommand(false, CommandCategory.MODERATION) {
         val reason = cmdContext.get<String>("reason") ?: throw CommandException(
                 "Please specify a reason")
 
-        Infractions.ban(user, context.guild, context.author.id, reason, 7)
+        Infractions.ban(user, context.guild, context.author.id, reason, 0)
         context.send().success("Banned `$user` (`$reason`)", true).queue()
     }
 }
 
-@Command(name = "unban", arguments = ["<user:snowflake>"], clearance = CLEARANCE_MOD)
+@Command(name = "unban", arguments = ["<user:snowflake>", "[reason:string...]"], clearance = CLEARANCE_MOD)
 @LogInModlogs
 class CommandUnban : BaseCommand(false, CommandCategory.MODERATION) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val user = cmdContext.get<String>("user") ?: throw CommandException("Please specify a user")
-
-        Infractions.unban(user, context.guild, context.author.id)
+        val reason = cmdContext.get<String>("reason") ?: ""
+        Infractions.unban(user, context.guild, context.author.id, reason)
         context.send().success("Unbanned `$user`", true).queue()
     }
 }

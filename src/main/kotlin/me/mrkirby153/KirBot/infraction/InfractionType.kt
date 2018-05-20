@@ -5,6 +5,7 @@ enum class InfractionType(val internalName: String) {
     WARNING("warning"),
     KICK("kick"),
     BAN("ban"),
+    UNBAN("unban"),
     MUTE("mute"),
     TEMPMUTE("tempmute"),
     UNKNOWN("unknown");

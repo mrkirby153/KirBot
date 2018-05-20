@@ -155,6 +155,12 @@ object CommandExecutor {
             try {
                 command.aliasUsed = cmd
                 command.cmdPrefix = prefix
+                // Log the command in the modlogs
+                if (command.javaClass.getAnnotation(
+                                LogInModlogs::class.java) != null || (isSubCommand && command.getSubCommand(
+                                subCommand)?.getAnnotation(LogInModlogs::class.java) != null))
+                    guild.logManager.genericLog(LogEvent.ADMIN_COMMAND, ":tools:",
+                            "${context.author.nameAndDiscrim} (`${context.author.id}`) Executed `${context.message.contentRaw}` in **#${context.channel.name.mdEscape()}**")
                 if (isSubCommand) {
                     Bot.LOG.debug("Executing sub-command $subCommand")
                     try {
@@ -165,12 +171,6 @@ object CommandExecutor {
                 } else {
                     command.execute(context, cmdContext)
                 }
-                // Log the command in the modlogs
-                if (command.javaClass.getAnnotation(
-                        LogInModlogs::class.java) != null || (isSubCommand && command.getSubCommand(
-                        subCommand)?.getAnnotation(LogInModlogs::class.java) != null))
-                    guild.logManager.genericLog(LogEvent.ADMIN_COMMAND, ":tools:",
-                            "${context.author.nameAndDiscrim} (`${context.author.id}`) Executed `${context.message.contentDisplay}` in **#${context.channel.name.mdEscape()}**")
             } catch (e: CommandException) {
                 context.send().error(e.message ?: "An unknown error has occurred!").queue()
             } catch (e: Exception) {

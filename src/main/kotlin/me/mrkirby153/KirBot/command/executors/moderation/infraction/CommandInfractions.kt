@@ -4,7 +4,9 @@ import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
+import me.mrkirby153.KirBot.command.LogInModlogs
 import me.mrkirby153.KirBot.command.args.CommandContext
+import me.mrkirby153.KirBot.database.models.DiscordUser
 import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.infraction.Infraction
 import me.mrkirby153.KirBot.logger.LogEvent
@@ -19,6 +21,7 @@ import me.mrkirby153.kcutils.utils.TableBuilder
 
 @Command(name = "infractions,infraction,inf", arguments = ["[user:snowflake]"],
         clearance = CLEARANCE_MOD)
+@LogInModlogs
 class CommandInfractions : BaseCommand(false, CommandCategory.MODERATION) {
 
     override fun execute(context: Context, cmdContext: CommandContext) {
@@ -31,14 +34,22 @@ class CommandInfractions : BaseCommand(false, CommandCategory.MODERATION) {
         val infractions = Model.get(Infraction::class.java, Pair("user_id", user),
                 Pair("guild", context.guild.id))
 
-        val header = arrayOf("ID", "User ID", "Issuer", "Type", "Reason", "Active", "Created At")
+        val header = arrayOf("ID", "Created", "Type", "User", "Moderator", "Reason", "Active")
 
 
         val table = TableBuilder(header)
+        val users = mutableMapOf<String, String>()
         infractions.forEach {
+            val moderator = if (it.issuerId == null) "Unknown" else users.computeIfAbsent(
+                    it.issuerId!!, {
+                Model.first(DiscordUser::class.java, it)?.nameAndDiscrim ?: it
+            })
+            val username = users.computeIfAbsent(it.userId, {
+                Model.first(DiscordUser::class.java, it)?.nameAndDiscrim ?: it
+            })
             table.addRow(
-                    arrayOf(it.id.toString(), it.userId, it.issuerId, it.type.toString(), it.reason,
-                            if (it.active) "yes" else "no", it.createdAt.toString()))
+                    arrayOf(it.id.toString(), it.createdAt.toString(), it.type.toString(), username,
+                            moderator, it.reason, if (it.active) "yes" else "no"))
         }
 
         val builtTable = table.buildTable()
@@ -60,7 +71,8 @@ class CommandInfractions : BaseCommand(false, CommandCategory.MODERATION) {
             if (context.author.getClearance(context.guild) < CLEARANCE_ADMIN)
                 throw CommandException("You do not have permission to clear this infraction")
         }
-        promptForConfirmation(context, "Are you sure you want to delete this infraction? This cannot be undone", {
+        promptForConfirmation(context,
+                "Are you sure you want to delete this infraction? This cannot be undone", {
             infraction.delete()
             context.send().success("Infraction `$id` cleared!", true).queue()
             context.guild.kirbotGuild.logManager.genericLog(LogEvent.ADMIN_COMMAND, ":warning:",

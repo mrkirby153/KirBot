@@ -7,8 +7,14 @@ import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.infraction.Infraction
+import me.mrkirby153.KirBot.logger.LogEvent
+import me.mrkirby153.KirBot.user.CLEARANCE_ADMIN
 import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
+import me.mrkirby153.KirBot.utils.getClearance
+import me.mrkirby153.KirBot.utils.kirbotGuild
+import me.mrkirby153.KirBot.utils.nameAndDiscrim
+import me.mrkirby153.KirBot.utils.promptForConfirmation
 import me.mrkirby153.kcutils.utils.TableBuilder
 
 @Command(name = "infractions,infraction,inf", arguments = ["[user:snowflake]"],
@@ -41,6 +47,26 @@ class CommandInfractions : BaseCommand(false, CommandCategory.MODERATION) {
         } else {
             context.channel.sendFile(builtTable.toByteArray(), "infractions-$user.txt").queue()
         }
+    }
+
+    @Command(name = "clear", clearance = CLEARANCE_MOD, arguments = ["<id:int>"])
+    fun clearInfraction(context: Context, cmdContext: CommandContext) {
+        val id = cmdContext.get<Int>("id")!!
+
+        val infraction = Model.first(Infraction::class.java, id) ?: throw CommandException(
+                "Infraction not found")
+
+        if (infraction.issuerId == null || infraction.issuerId != context.author.id) {
+            if (context.author.getClearance(context.guild) < CLEARANCE_ADMIN)
+                throw CommandException("You do not have permission to clear this infraction")
+        }
+        promptForConfirmation(context, "Are you sure you want to delete this infraction? This cannot be undone", {
+            infraction.delete()
+            context.send().success("Infraction `$id` cleared!", true).queue()
+            context.guild.kirbotGuild.logManager.genericLog(LogEvent.ADMIN_COMMAND, ":warning:",
+                    "Infraction `$id` deleted by ${context.author.nameAndDiscrim} (`${context.author.id}`)")
+            true
+        })
     }
 
     @Command(name = "reason", clearance = CLEARANCE_MOD,

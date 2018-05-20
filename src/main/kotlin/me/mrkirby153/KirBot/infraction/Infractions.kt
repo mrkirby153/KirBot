@@ -10,6 +10,7 @@ import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.InfractionModule
 import me.mrkirby153.KirBot.modules.Scheduler
 import me.mrkirby153.KirBot.server.KirBotGuild
+import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.KirBot.utils.getMember
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
@@ -254,7 +255,7 @@ object Infractions {
             // Check the permissions
             guild.textChannels.forEach { chan ->
                 val o = chan.getPermissionOverride(role)
-                if (o == null) {
+                if (o == null && chan.checkPermissions(Permission.MANAGE_PERMISSIONS)) {
                     chan.createPermissionOverride(role).setDeny(Permission.MESSAGE_WRITE).queue()
                 }
             }

@@ -27,7 +27,7 @@ object Infractions {
     fun kick(user: String, guild: Guild, issuer: String, reason: String? = null) {
         guild.controller.kick(guild.getMemberById(user), reason ?: "").queue()
 
-        createInfraction(user, guild, issuer, reason, InfractionType.KICK)
+        createInfraction(user, guild, if(issuer == "1") user else issuer, reason, InfractionType.KICK)
 
         guild.kirbotGuild.logManager.genericLog(LogEvent.USER_KICK, ":boot:", buildString {
             append(lookupUser(user, true))
@@ -43,7 +43,7 @@ object Infractions {
         ModuleManager[InfractionModule::class.java].ignoreBans.add(user)
         guild.controller.ban(user, purgeDays, reason).queue()
 
-        createInfraction(user, guild, issuer, reason, InfractionType.BAN)
+        createInfraction(user, guild, if(issuer == "1") user else issuer, reason, InfractionType.BAN)
 
         guild.kirbotGuild.logManager.genericLog(LogEvent.USER_BAN, ":rotating_light:", buildString {
             append(lookupUser(user, true))
@@ -58,7 +58,7 @@ object Infractions {
             guild.controller.unban(user).queue()
         }
 
-        createInfraction(user, guild, issuer, reason, InfractionType.KICK)
+        createInfraction(user, guild, if(issuer == "1") user else issuer, reason, InfractionType.KICK)
 
         guild.kirbotGuild.logManager.genericLog(LogEvent.USER_KICK, ":boot:", buildString {
             append(lookupUser(user, true))
@@ -77,18 +77,18 @@ object Infractions {
             ban.revokedAt = Timestamp(System.currentTimeMillis())
             ban.save()
         }
-        createInfraction(user, guild, issuer, reason, InfractionType.UNBAN)
+        createInfraction(user, guild, if(issuer == "1") user else issuer, reason, InfractionType.UNBAN)
         guild.kirbotGuild.logManager.genericLog(LogEvent.USER_UNBAN, ":hammer:", buildString {
             append(lookupUser(user, true))
             append(" Unbanned by **${lookupUser(issuer)}**")
-            if(reason.isNotBlank())
+            if (reason.isNotBlank())
                 append("(`$reason`)")
         })
     }
 
     fun mute(user: String, guild: Guild, issuer: String, reason: String? = null) {
         addMutedRole(guild.getMemberById(user).user, guild)
-        createInfraction(user, guild, issuer, reason, InfractionType.MUTE)
+        createInfraction(user, guild, if(issuer == "1") user else issuer, reason, InfractionType.MUTE)
 
         guild.kirbotGuild.logManager.genericLog(LogEvent.USER_MUTE, ":zipper_mouth:", buildString {
             append(lookupUser(user, true))
@@ -121,7 +121,7 @@ object Infractions {
     fun tempMute(user: String, guild: Guild, issuer: String, duration: Long, units: TimeUnit,
                  reason: String? = null) {
         addMutedRole(guild.getMemberById(user).user, guild)
-        val inf = createInfraction(user, guild, issuer, reason, InfractionType.TEMPMUTE)
+        val inf = createInfraction(user, guild, if(issuer == "1") user else issuer, reason, InfractionType.TEMPMUTE)
 
         ModuleManager[Scheduler::class.java].submit(
                 TempMute.UnmuteScheduler(inf.id.toString(), user, guild.id),

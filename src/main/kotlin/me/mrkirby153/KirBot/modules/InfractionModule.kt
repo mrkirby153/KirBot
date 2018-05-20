@@ -3,6 +3,7 @@ package me.mrkirby153.KirBot.modules
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.infraction.Infraction
 import me.mrkirby153.KirBot.infraction.InfractionType
+import me.mrkirby153.KirBot.infraction.Infractions
 import me.mrkirby153.KirBot.logger.LogEvent
 import me.mrkirby153.KirBot.module.Module
 import me.mrkirby153.KirBot.utils.kirbotGuild
@@ -11,11 +12,13 @@ import net.dv8tion.jda.core.audit.ActionType
 import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.entities.User
 import net.dv8tion.jda.core.events.guild.GuildBanEvent
+import net.dv8tion.jda.core.events.guild.GuildUnbanEvent
 import java.sql.Timestamp
 
 class InfractionModule : Module("infractions") {
 
     val ignoreBans = mutableListOf<String>()
+    val ignoreUnbans = mutableListOf<String>()
 
     override fun onLoad() {
 
@@ -46,6 +49,23 @@ class InfractionModule : Module("infractions") {
         }
     }
 
+    override fun onGuildUnban(event: GuildUnbanEvent) {
+        if (event.user.id in ignoreUnbans) {
+            ignoreUnbans.remove(event.user.id)
+            return
+        }
+        Infractions.getActiveInfractions(event.user.id,
+                event.guild).filter { it.type == InfractionType.BAN }.forEach { ban ->
+            ban.revoke()
+        }
+        val responsibleMember = findUnbannedUser(event.guild, event.user.id)
+        Infractions.createInfraction(event.user.id, event.guild, responsibleMember?.id ?: "1",
+                "Manually Revoked", InfractionType.UNBAN)
+        event.guild.kirbotGuild.logManager.genericLog(LogEvent.USER_UNBAN, ":hammer:",
+                "${event.user.nameAndDiscrim} (`${event.user.id}`) Was unbanned by **${responsibleMember?.nameAndDiscrim
+                        ?: "Unknown"}**")
+    }
+
     private fun findBannedUser(guild: Guild, user: String): User? {
         Bot.LOG.debug("Looking up ban for $user in $guild audit logs")
         var foundUser: User? = null
@@ -58,5 +78,16 @@ class InfractionModule : Module("infractions") {
         }
         Bot.LOG.debug("Found responsible person: $foundUser")
         return foundUser
+    }
+
+    private fun findUnbannedUser(guild: Guild, user: String): User? {
+        Bot.LOG.debug("Looking up unban for $user in $guild audit logs")
+        var found: User? = null
+        val entries = guild.auditLogs.type(ActionType.UNBAN).complete()
+        entries.forEach {
+            if (it.targetId == user && found == null)
+                found = it.user
+        }
+        return found
     }
 }

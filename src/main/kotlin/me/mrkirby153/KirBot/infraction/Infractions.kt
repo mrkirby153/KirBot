@@ -69,6 +69,7 @@ object Infractions {
     }
 
     fun unban(user: String, guild: Guild, issuer: String, reason: String = "") {
+        ModuleManager[InfractionModule::class.java].ignoreUnbans.add(user)
         guild.controller.unban(user).queue()
 
         // Deactivate all the users active bans (should only be one)

@@ -43,7 +43,14 @@ class LogManager(private val guild: KirBotGuild) {
             return // The user is in the ignored log array
 
         this.genericLog(LogEvent.MESSAGE_DELETE, ":wastebasket:",
-                "${author.nameAndDiscrim}(`${author.id}`) Message deleted in **#${chan.name}** \n ${LogManager.decrypt(msg.message).escapeMentions().urlEscape()}")
+                "${author.nameAndDiscrim}(`${author.id}`) Message deleted in **#${chan.name}** \n ${LogManager.decrypt(
+                        msg.message).escapeMentions().urlEscape()}" + buildString {
+                    if (msg.attachments != null) {
+                        append(" (")
+                        msg.attachments!!.split(",").joinToString(", ") { "<${it.trim()}>" }
+                        append(")")
+                    }
+                })
     }
 
     fun logBulkDelete(chan: TextChannel, messages: List<String>) {
@@ -58,7 +65,7 @@ class LogManager(private val guild: KirBotGuild) {
         val realString = selector.substring(
                 0, selector.lastIndexOf(","))
         val results = DB.getResults(
-                "SELECT `server_messages`.`id` as `message_id`, `server_messages`.`server_id`, `author` as 'author_id', `channel`, `message`, `username`, `discriminator` FROM `server_messages` LEFT JOIN `seen_users` ON `server_messages`.`author` = `seen_users`.`id` WHERE `server_messages`.`id` IN ($realString)",
+                "SELECT `server_messages`.`id` as `message_id`, `server_messages`.`server_id`, `author` as 'author_id', `channel`, `message`, `username`, `discriminator`, `attachments` FROM `server_messages` LEFT JOIN `seen_users` ON `server_messages`.`author` = `seen_users`.`id` WHERE `server_messages`.`id` IN ($realString)",
                 *(messages.toTypedArray()))
         val msgs = mutableListOf<String>()
         results.forEach { result ->
@@ -72,8 +79,9 @@ class LogManager(private val guild: KirBotGuild) {
             val timeFormatted = SimpleDateFormat("YYYY-MM-dd HH:MM:ss").format(
                     convertSnowflake(msgId))
 
-            msgs.add(String.format("%s (%s / %s / %s) %s: %s", timeFormatted, serverId, channel,
-                    authorId, username, msg))
+            msgs.add(
+                    String.format("%s (%s / %s / %s) %s: %s (%s)", timeFormatted, serverId, channel,
+                            authorId, username, msg, result.getString("attachments") ?: ""))
         }
         val archiveUrl = if (msgs.isNotEmpty()) uploadToArchive(
                 LogManager.encrypt(msgs.joinToString("\n"))) else ""
@@ -102,7 +110,7 @@ class LogManager(private val guild: KirBotGuild) {
     }
 
     fun genericLog(logEvent: LogEvent, emoji: String, message: String) {
-        if(!guild.ready)
+        if (!guild.ready)
             return
         val timezone = TimeZone.getTimeZone(this.guild.settings.logTimezone)
         val calendar = Calendar.getInstance(timezone)

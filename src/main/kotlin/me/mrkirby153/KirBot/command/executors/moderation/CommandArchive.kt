@@ -62,8 +62,8 @@ class CommandArchive : BaseCommand(false) {
         messages.forEach {
             val timeFormatted = SimpleDateFormat("YYY-MM-dd HH:MM:ss").format(
                     convertSnowflake(it.id))
-            msgs.add(String.format("%s (%s / %s / %s) %s: %s", timeFormatted, it.serverId,
-                    it.channel, it.author, userMap[it.author] ?: it.author, it.message))
+            msgs.add(String.format("%s (%s / %s / %s) %s: %s (%s)", timeFormatted, it.serverId,
+                    it.channel, it.author, userMap[it.author] ?: it.author, it.message, it.attachments ?: ""))
         }
 
         return uploadToArchive(LogManager.encrypt(msgs.joinToString("\n")))
@@ -80,6 +80,7 @@ class CommandArchive : BaseCommand(false) {
         msg.updated_at = row.get("updated_at")
         msg.editCount = row.get("edit_count")
         msg.deleted = row.get("deleted")
+        msg.attachments = row.get("attachments")
         return msg
     }
 }

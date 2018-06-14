@@ -24,4 +24,6 @@ class GuildMessage : Model() {
 
     @Column("edit_count")
     var editCount = 0
+
+    var attachments : String? = null
 }

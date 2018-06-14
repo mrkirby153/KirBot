@@ -18,6 +18,7 @@ import net.dv8tion.jda.core.entities.MessageEmbed
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.User
 import net.dv8tion.jda.core.events.message.react.MessageReactionAddEvent
+import org.json.JSONArray
 import java.awt.Color
 import java.io.InputStream
 import java.text.DecimalFormat
@@ -232,4 +233,7 @@ fun Message.removeReactionById(user: User, reactionId: String) {
     this.reactions.filter { it.reactionEmote.isEmote }.filter { it.reactionEmote.id == reactionId }.forEach {
         it.removeReaction(user).queue()
     }
+}
+fun <T> JSONArray.toTypedArray(clazz: Class<T>): List<T> {
+    return this.map { it as T }
 }

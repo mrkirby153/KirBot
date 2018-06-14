@@ -45,7 +45,9 @@ enum class LogEvent(val permission: Long) {
     USER_KICK(262144),
 
     // A message by a user was censored
-    MESSAGE_CENSOR(524288);
+    MESSAGE_CENSOR(524288),
+
+    VOICE_ACTION(1048576);
 
     companion object {
 

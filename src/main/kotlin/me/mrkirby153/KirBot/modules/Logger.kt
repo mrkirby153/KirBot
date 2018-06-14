@@ -17,6 +17,9 @@ import net.dv8tion.jda.core.events.guild.member.GuildMemberLeaveEvent
 import net.dv8tion.jda.core.events.guild.member.GuildMemberNickChangeEvent
 import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleAddEvent
 import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleRemoveEvent
+import net.dv8tion.jda.core.events.guild.voice.GuildVoiceJoinEvent
+import net.dv8tion.jda.core.events.guild.voice.GuildVoiceLeaveEvent
+import net.dv8tion.jda.core.events.guild.voice.GuildVoiceMoveEvent
 import net.dv8tion.jda.core.events.message.MessageBulkDeleteEvent
 import net.dv8tion.jda.core.events.message.guild.GuildMessageDeleteEvent
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent
@@ -171,5 +174,20 @@ class Logger : Module("logging") {
                 msg.attachments = event.message.attachments.joinToString(", ") { it.url }
             msg.save()
         }
+    }
+
+    override fun onGuildVoiceJoin(event: GuildVoiceJoinEvent) {
+        event.guild.kirbotGuild.logManager.genericLog(LogEvent.VOICE_ACTION, ":telephone:",
+                "${event.member.user.nameAndDiscrim} (`${event.member.user.id}`) joined **${event.channelJoined.name}**")
+    }
+
+    override fun onGuildVoiceLeave(event: GuildVoiceLeaveEvent) {
+        event.guild.kirbotGuild.logManager.genericLog(LogEvent.VOICE_ACTION, ":telephone:",
+                "${event.member.user.nameAndDiscrim} (`${event.member.user.id}`) left **${event.channelLeft.name}**")
+    }
+
+    override fun onGuildVoiceMove(event: GuildVoiceMoveEvent) {
+        event.guild.kirbotGuild.logManager.genericLog(LogEvent.VOICE_ACTION, ":telephone:",
+                "${event.member.user.nameAndDiscrim} (`${event.member.user.id}`) moved from **${event.channelLeft.name}** to **${event.channelJoined.name}**")
     }
 }

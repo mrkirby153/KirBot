@@ -11,7 +11,7 @@
 
     <properties>
         <maven.build.timestamp.format>yyy-MM-dd_HHmmss</maven.build.timestamp.format>
-        <kotlin.version>1.2.0</kotlin.version>
+        <kotlin.version>1.2.41</kotlin.version>
         <pippo.version>1.4.0</pippo.version>
         <jda.version>3.5.1_339</jda.version>
         <buildNumber>${maven.build.timestamp}</buildNumber>

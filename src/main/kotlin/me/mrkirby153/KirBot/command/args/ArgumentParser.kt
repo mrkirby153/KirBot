@@ -25,17 +25,12 @@ class ArgumentParser(val arguments: Array<String>) {
             val parts = argument.split(":")
             val name = parts[0]
             val type = parts[1].split(",")[0]
-
-            val params = parts[1].split(",").drop(1)
-            Bot.LOG.debug("\tParams: $params")
-
             if (argType == ArgType.REQUIRED && !argList.hasNext()) {
                 Bot.LOG.debug("Missing required argument")
                 throw ArgumentParseException("The argument `<$name:$type>` is required!")
             }
             if (argList.hasNext()) {
-                    val parse = ContextResolvers.getResolver(type)?.invoke(argList,
-                            params.toTypedArray())
+                    val parse = ContextResolvers.getResolver(type)?.invoke(argList)
                     context.put(name, parse)
             }
         }

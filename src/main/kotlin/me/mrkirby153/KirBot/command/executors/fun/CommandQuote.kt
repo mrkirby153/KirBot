@@ -16,7 +16,7 @@ import me.mrkirby153.KirBot.utils.botUrl
 import me.mrkirby153.KirBot.utils.escapeMentions
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 
-@Command(name = "quote", arguments = ["[id:int,0,x]"])
+@Command(name = "quote", arguments = ["[id:int]"])
 class CommandQuote : BaseCommand(false, CommandCategory.FUN) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         if (!cmdContext.has("id")) {
@@ -25,7 +25,9 @@ class CommandQuote : BaseCommand(false, CommandCategory.FUN) {
                             "to quote it. You can retrieve a quote by its id by typing `${cmdPrefix}quote <id>`. To view a full list of quotes, type `${cmdPrefix}quotes`").queue()
             return
         }
-        val quote = cmdContext.get<Int>("id")
+        val quote = cmdContext.get<Int>("id")!!
+        if(quote <= 0)
+            throw CommandException("Specify a number greater than 0")
         val q = Model.first(Quote::class.java,
                 quote.toString()) ?: throw CommandException("That quote doesn't exist")
         if (q.serverId != context.guild.id) {

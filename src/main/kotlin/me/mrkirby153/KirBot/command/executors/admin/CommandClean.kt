@@ -4,6 +4,7 @@ import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
+import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.LogInModlogs
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.listener.WaitUtils
@@ -17,7 +18,7 @@ import net.dv8tion.jda.core.events.message.guild.react.GuildMessageReactionAddEv
 import java.time.OffsetDateTime
 import java.util.concurrent.TimeUnit
 
-@Command(name = "clean", arguments = ["[amount:int,2,x]"], clearance = CLEARANCE_MOD)
+@Command(name = "clean", arguments = ["[amount:int]"], clearance = CLEARANCE_MOD)
 @LogInModlogs
 class CommandClean :
         BaseCommand(false, CommandCategory.ADMIN) {
@@ -33,7 +34,7 @@ class CommandClean :
         }
     }
 
-    @Command(name = "bots", arguments = ["[amount:int,2,x]"])
+    @Command(name = "bots", arguments = ["[amount:int]"])
     fun botClean(context: Context, cmdContext: CommandContext) {
         val amount = cmdContext.get<Int>("amount") ?: 50
         if (amount > confirmAmount) {
@@ -43,7 +44,7 @@ class CommandClean :
         doClean(context.channel as TextChannel, amount, bots = true)
     }
 
-    @Command(name = "user", arguments = ["<user:snowflake>", "[amount:int,2,x]"])
+    @Command(name = "user", arguments = ["<user:snowflake>", "[amount:int]"])
     fun userClean(context: Context, cmdContext: CommandContext) {
         val user = cmdContext.get<String>("user")!!
         val amount = cmdContext.get<Int>("amount") ?: 50
@@ -85,6 +86,8 @@ class CommandClean :
 
     fun doClean(channel: TextChannel, amount: Int, user: String? = null,
                 bots: Boolean = false) {
+        if(amount <=1)
+            throw CommandException("Specify a number greater than 1")
         var amountLeft = amount // The amount of messages we need to delete
         if (user != null) {
             Bot.LOG.debug("Performing user clean $user")

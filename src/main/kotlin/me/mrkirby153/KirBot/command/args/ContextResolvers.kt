@@ -5,19 +5,19 @@ import java.util.regex.Pattern
 
 object ContextResolvers {
 
-    private val resolvers = mutableMapOf<String, (ArgumentList, Array<String>) -> Any?>()
+    private val resolvers = mutableMapOf<String, (ArgumentList) -> Any?>()
 
     init {
         registerDefaultResolvers()
     }
 
-    fun registerResolver(name: String, function: (ArgumentList, Array<String>) -> Any?) {
+    fun registerResolver(name: String, function: (ArgumentList) -> Any?) {
         Bot.LOG.debug("Registered resolver ")
         resolvers[name] = function
     }
 
 
-    fun getResolver(name: String): ((ArgumentList, Array<String>) -> Any?)? {
+    fun getResolver(name: String): ((ArgumentList) -> Any?)? {
         return resolvers[name]
     }
 
@@ -25,7 +25,7 @@ object ContextResolvers {
     private fun registerDefaultResolvers() {
         // String resolver
         // TODO 2/24/18: Make "string..." as the thing that takes the rest
-        registerResolver("string") { args, _ ->
+        registerResolver("string") { args ->
             // Return the string in quotes
             if (args.peek().matches(Regex("^(?<!\\\\)\\\".*"))) {
                 Bot.LOG.debug("Found beginning quote, starting parse")
@@ -47,7 +47,7 @@ object ContextResolvers {
                 args.popFirst()
             }
         }
-        registerResolver("string...") { args, _ ->
+        registerResolver("string...") { args ->
             return@registerResolver buildString {
                 while(args.peek() != null)
                     append(args.popFirst()+" ")
@@ -55,7 +55,7 @@ object ContextResolvers {
         }
 
         // Snowflake resolver
-        registerResolver("snowflake") { args, _ ->
+        registerResolver("snowflake") { args ->
             val first = args.popFirst()
             if (first.matches(Regex("<@!?\\d+>"))) {
                 Bot.LOG.debug("Matching via mention")
@@ -73,8 +73,8 @@ object ContextResolvers {
         }
 
         // User resolver
-        registerResolver("user") { args, params ->
-            val id = getResolver("snowflake")?.invoke(args, params) as? String
+        registerResolver("user") { args ->
+            val id = getResolver("snowflake")?.invoke(args) as? String
                     ?: throw ArgumentParseException(
                             "Could not find user")
 
@@ -87,27 +87,11 @@ object ContextResolvers {
         }
 
         // Number resolver
-        registerResolver("number") { args, params ->
+        registerResolver("number") { args ->
             val num = args.popFirst()
-
-            val min = if (params.isNotEmpty()) {
-                if (params[0] == "x") Double.MIN_VALUE else params[0].toDouble()
-            } else Double.MIN_VALUE
-            val max = if (params.size == 2) {
-                if (params[1] == "x")
-                    Double.MAX_VALUE else params[1].toDouble()
-            } else Double.MAX_VALUE
             try {
                 val number = num.toDouble()
 
-                if (number < min) {
-                    throw ArgumentParseException(
-                            "Specify a number greater than " + String.format("%.2f", min))
-                }
-                if (number > max) {
-                    throw ArgumentParseException(
-                            "Specify a number less than " + String.format("%.2f", max))
-                }
                 return@registerResolver number
             } catch (e: NumberFormatException) {
                 throw ArgumentParseException("`$num` is not a number!")
@@ -115,8 +99,8 @@ object ContextResolvers {
         }
 
         // Int resolver
-        registerResolver("int") { args, params ->
-            (getResolver("number")?.invoke(args, params) as? Double)?.toInt()
+        registerResolver("int") { args ->
+            (getResolver("number")?.invoke(args) as? Double)?.toInt()
                     ?: throw ArgumentParseException("Could not parse")
         }
     }

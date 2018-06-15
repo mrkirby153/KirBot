@@ -4,24 +4,26 @@ import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
+import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
+import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
-import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.entities.Role
 
-@Command(name = "role,r", clearance = CLEARANCE_MOD)
+@Command(name = "role,r,roles", clearance = CLEARANCE_MOD)
 class RoleCommands : BaseCommand(false) {
 
     override fun execute(context: Context, cmdContext: CommandContext) {
-        context.channel.sendMessage(buildString {
-            append("```\n")
-            context.guild.roles.forEach {
-                append(it.name)
-                append(" (${it.id})\n")
+        var msg = "```"
+        context.guild.roles.forEach {
+            if(msg.length >= 1900){
+                context.channel.sendMessage("$msg```").queue()
+                msg = "```"
             }
-            append("```")
-        }).queue()
+            msg += "\n${it.id} - ${it.name}"
+        }
+        context.channel.sendMessage("$msg```").queue()
     }
 
     @Command(name = "add", clearance = CLEARANCE_MOD,
@@ -29,27 +31,22 @@ class RoleCommands : BaseCommand(false) {
     fun addRole(context: Context, cmdContext: CommandContext) {
         val roleString = cmdContext.get<String>("role")!!
 
-        val roles = findRoles(roleString, context.guild)
-
-        val member = context.guild.getMemberById(cmdContext.get<String>("user"))
-                ?: throw CommandException(
-                        "that user is not in the guild")
-
-        if (roles.size > 1) {
-            throw CommandException("mutiple matches for `$roleString`, perhaps try the ID?")
+        val role : Role?
+        try {
+            role = context.guild.kirbotGuild.matchRole(roleString) ?: throw CommandException("No roles found for that query")
+        } catch (e: KirBotGuild.TooManyRolesException) {
+            throw CommandException("Multiple matches for that query. Try a more specific query or the role id")
         }
 
-        if (roles.isEmpty()) {
-            throw CommandException("no results found")
-        }
 
-        val r = roles.first()
+        val member = context.guild.getMemberById(cmdContext.get<String>("user")) ?: throw CommandException("That user is not in the guild")
 
-        val highestRole = context.member.roles.map { it.position }.max()!!
+        val m = context.member
+        val highestRole = m.roles.map { it.position }.max() ?: 0
 
-        val targetHighest = member.roles.map { it.position }.max()!!
+        val targetHighest = member.roles.map { it.position }.max() ?: 0
 
-        if (r.position >= highestRole)
+        if (role.position >= highestRole)
             throw CommandException("you cannot add roles above yourself")
 
         if (targetHighest >= highestRole)
@@ -58,8 +55,8 @@ class RoleCommands : BaseCommand(false) {
         if (member.user.id == context.author.id)
             throw CommandException("you cannot execute this on yourself!")
 
-        context.guild.controller.addSingleRoleToMember(member, r).queue()
-        context.send().success("Added role **${r.name}** to ${member.user.nameAndDiscrim}",
+        context.guild.controller.addSingleRoleToMember(member, role).queue()
+        context.send().success("Added role **${role.name}** to ${member.user.nameAndDiscrim}",
                 true).queue()
     }
 
@@ -68,21 +65,16 @@ class RoleCommands : BaseCommand(false) {
     fun removeRole(context: Context, cmdContext: CommandContext) {
         val roleString = cmdContext.get<String>("role")!!
 
-        val roles = findRoles(roleString, context.guild)
+        val role : Role?
+        try {
+            role = context.guild.kirbotGuild.matchRole(roleString) ?: throw CommandException("No roles found for that query")
+        } catch (e: KirBotGuild.TooManyRolesException) {
+            throw CommandException("Multiple matches for that query. Try a more specific query or the role id")
+        }
 
         val member = context.guild.getMemberById(cmdContext.get<String>("user"))
                 ?: throw CommandException(
                         "that user is not in the guild")
-
-        if (roles.size > 1) {
-            throw CommandException("mutiple matches for `$roleString`, perhaps try the ID?")
-        }
-
-        if (roles.isEmpty()) {
-            throw CommandException("no results found")
-        }
-
-        val r = roles.first()
 
         val highestRole = context.member.roles.map { it.position }.max()!!
 
@@ -91,38 +83,13 @@ class RoleCommands : BaseCommand(false) {
         if (targetHighest >= highestRole)
             throw CommandException("you cannot execute that on this user")
 
-        if (r.position >= highestRole)
+        if (role.position >= highestRole)
             throw CommandException("you cannot remove roles above yourself")
 
         if (member.user.id == context.author.id)
             throw CommandException("you cannot execute this on yourself!")
-        context.guild.controller.removeSingleRoleFromMember(member, r).queue()
-        context.send().success("Removed role **${r.name}** to ${member.user.nameAndDiscrim}",
+        context.guild.controller.removeSingleRoleFromMember(member, role).queue()
+        context.send().success("Removed role **${role.name}** to ${member.user.nameAndDiscrim}",
                 true).queue()
-    }
-
-    private fun findRoles(string: String, guild: Guild): Array<Role> {
-        val roles = mutableSetOf<Role>()
-
-        guild.roles.forEach {
-            // Match the ID
-            if (it.id == string) {
-                roles.add(it)
-                return@forEach
-            }
-
-            // Match the role name exactly
-            if (it.name.equals(string, true)) {
-                roles.add(it)
-                return@forEach
-            }
-
-            // match the start of the role
-            if (it.name.startsWith(string, true)) {
-                roles.add(it)
-                return@forEach
-            }
-        }
-        return roles.toTypedArray()
     }
 }

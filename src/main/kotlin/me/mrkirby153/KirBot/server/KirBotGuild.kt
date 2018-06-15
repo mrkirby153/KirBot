@@ -21,10 +21,12 @@ import me.mrkirby153.KirBot.realname.RealnameSetting
 import me.mrkirby153.KirBot.user.CLEARANCE_ADMIN
 import me.mrkirby153.KirBot.user.CLEARANCE_GLOBAL_ADMIN
 import me.mrkirby153.KirBot.utils.getMember
+import me.mrkirby153.KirBot.utils.toTypedArray
 import me.mrkirby153.kcutils.child
 import me.mrkirby153.kcutils.mkdirIfNotExist
 import me.mrkirby153.kcutils.use
 import me.mrkirby153.kcutils.utils.IdGenerator
+import me.xdrop.fuzzywuzzy.FuzzySearch
 import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.entities.Member
 import net.dv8tion.jda.core.entities.Role
@@ -281,7 +283,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
             }
             Infractions.importFromBanlist(this)
             unlock()
-            if(!ready)
+            if (!ready)
                 Bot.LOG.debug("Guild ${this} is ready!")
             ready = true
         })
@@ -424,9 +426,60 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         unlock()
     }
 
+    fun createSelfrole(id: String) {
+        if (id !in getSelfroles()) {
+            this.extraData.append("selfroles", id)
+            saveData()
+        }
+    }
+
+    fun removeSelfrole(id: String) {
+        this.extraData.put("selfroles", getSelfroles().toMutableList().apply { remove(id) })
+        saveData()
+    }
+
+    fun getSelfroles(): List<String> {
+        return this.extraData.optJSONArray("selfroles")?.toTypedArray(String::class.java)
+                ?: listOf()
+    }
+
+    fun matchRole(query: String): Role? {
+        // Check ID
+        if (query.matches(Regex("\\d{17,18}"))) {
+            return getRoleById(query) ?: null
+        }
+        // Try exact matches
+        val exactMatches = roles.filter {
+            it.name.toLowerCase().replace(" ", "") == query.replace(" ", "").toLowerCase()
+        }
+        if (exactMatches.isNotEmpty()) {
+            if (exactMatches.size > 1)
+                throw TooManyRolesException()
+            return exactMatches.first()
+        } else {
+            val fuzzyRated = mutableMapOf<Role, Int>()
+            roles.forEach { role ->
+                fuzzyRated[role] = FuzzySearch.partialRatio(query.toLowerCase(),
+                        role.name.toLowerCase().replace(" ", ""))
+
+            }
+            if (fuzzyRated.isEmpty())
+                return null
+            val entries = fuzzyRated.entries.sortedBy { it.value }.reversed().filter { it.value > 40 }
+            val first = entries.first()
+            return when {
+                entries.size == 1 -> first.key
+                first.value - entries[1].value > 20 -> first.key
+                else -> throw TooManyRolesException()
+            }
+        }
+    }
+
     override fun toString(): String {
         return "KirBotGuild(${this.name} - ${this.id})"
     }
+
+    class TooManyRolesException : Exception()
 
     companion object {
         private val guilds = mutableMapOf<String, KirBotGuild>()

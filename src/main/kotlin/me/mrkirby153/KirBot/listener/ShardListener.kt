@@ -233,6 +233,9 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
     }
 
     override fun onRoleDelete(event: RoleDeleteEvent) {
+        // Delete the selfrole entry if the role is deleted
+        if(event.role.id in event.guild.kirbotGuild.getSelfroles())
+            event.guild.kirbotGuild.removeSelfrole(event.role.id)
         Model.first(Role::class.java, Pair("id", event.role.id))?.delete()
     }
 
@@ -268,6 +271,8 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
         }
         guild.unlock()
     }
+
+
 
     private fun pauseIfEmpty(channel: Channel, guild: KirBotGuild) {
         if (channel.members.none { m -> m.user.id != channel.guild.selfMember.user.id }) {

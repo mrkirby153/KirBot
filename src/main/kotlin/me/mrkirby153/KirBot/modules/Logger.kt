@@ -9,6 +9,7 @@ import me.mrkirby153.KirBot.logger.LogManager
 import me.mrkirby153.KirBot.logger.LogPump
 import me.mrkirby153.KirBot.module.Module
 import me.mrkirby153.KirBot.utils.kirbotGuild
+import me.mrkirby153.KirBot.utils.logName
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.core.events.ShutdownEvent
@@ -71,7 +72,7 @@ class Logger : Module("logging") {
             return
         event.guild.kirbotGuild.logManager.genericLog(LogEvent.ROLE_ADD, ":key:",
                 "Assigned **${event.roles.joinToString(
-                        ", ") { it.name }}** to ${event.user.nameAndDiscrim}")
+                        ", ") { it.name }}** to ${event.user.logName}")
     }
 
     override fun onGuildMemberRoleRemove(event: GuildMemberRoleRemoveEvent) {
@@ -79,14 +80,14 @@ class Logger : Module("logging") {
             return
         event.guild.kirbotGuild.logManager.genericLog(LogEvent.ROLE_REMOVE, ":key:",
                 "Removed **${event.roles.joinToString(
-                        ", ") { it.name }}** from ${event.user.nameAndDiscrim}")
+                        ", ") { it.name }}** from ${event.user.logName}")
     }
 
     override fun onGuildMemberJoin(event: GuildMemberJoinEvent) {
         if (!event.guild.kirbotGuild.ready)
             return
         event.guild.kirbotGuild.logManager.genericLog(LogEvent.USER_JOIN, ":inbox_tray:",
-                "${event.user.nameAndDiscrim} (`${event.user.id}`) Joined (Created ${Time.formatLong(
+                "${event.user.logName} Joined (Created ${Time.formatLong(
                         System.currentTimeMillis() - (event.user.creationTime.toEpochSecond() * 1000))} ago)")
     }
 
@@ -94,7 +95,7 @@ class Logger : Module("logging") {
         if (!event.guild.kirbotGuild.ready)
             return
         event.guild.kirbotGuild.logManager.genericLog(LogEvent.USER_LEAVE, ":outbox_tray:",
-                "${event.user.nameAndDiscrim} (`${event.user.id}`) left")
+                "${event.user.logName} left")
     }
 
     override fun onRoleCreate(event: RoleCreateEvent) {
@@ -124,16 +125,16 @@ class Logger : Module("logging") {
         when {
             event.prevNick == null -> {
                 event.guild.kirbotGuild.logManager.genericLog(LogEvent.USER_NICKNAME_CHANGE,
-                        ":floppy_disk:",
-                        "${event.user.nameAndDiscrim} (`${event.user.id}`) Set nickname `${event.newNick}`")
+                        ":name_badge:",
+                        "${event.user.logName} Set nickname `${event.newNick}`")
                 return
             }
             event.newNick == null -> event.guild.kirbotGuild.logManager.genericLog(
-                    LogEvent.USER_NICKNAME_CHANGE, ":floppy_disk:",
-                    "${event.user.nameAndDiscrim} (`${event.user.id}`) Removed nickname `${event.prevNick}`")
+                    LogEvent.USER_NICKNAME_CHANGE, ":name_badge:",
+                    "${event.user.logName} Removed nickname `${event.prevNick}`")
             else -> event.guild.kirbotGuild.logManager.genericLog(LogEvent.USER_NICKNAME_CHANGE,
-                    ":floppy_disk:",
-                    "${event.user.nameAndDiscrim} (`${event.user.id}`) changed nick from `${event.prevNick}` to `${event.newNick}`")
+                    ":name_badge:",
+                    "${event.user.logName} changed nick from `${event.prevNick}` to `${event.newNick}`")
         }
     }
 
@@ -142,7 +143,7 @@ class Logger : Module("logging") {
             shard.guilds.forEach { guild ->
                 if (event.user.id in guild.members.map { it.user.id } && guild.kirbotGuild.ready)
                     guild.kirbotGuild.logManager.genericLog(LogEvent.USER_NAME_CHANGE,
-                            ":briefcase:",
+                            ":name_badge:",
                             "${event.oldName}#${event.oldDiscriminator} (`${event.user.id}`) changed username to **${event.user.nameAndDiscrim}**")
             }
         }
@@ -178,16 +179,16 @@ class Logger : Module("logging") {
 
     override fun onGuildVoiceJoin(event: GuildVoiceJoinEvent) {
         event.guild.kirbotGuild.logManager.genericLog(LogEvent.VOICE_ACTION, ":telephone:",
-                "${event.member.user.nameAndDiscrim} (`${event.member.user.id}`) joined **${event.channelJoined.name}**")
+                "${event.member.user.logName} joined **${event.channelJoined.name}**")
     }
 
     override fun onGuildVoiceLeave(event: GuildVoiceLeaveEvent) {
         event.guild.kirbotGuild.logManager.genericLog(LogEvent.VOICE_ACTION, ":telephone:",
-                "${event.member.user.nameAndDiscrim} (`${event.member.user.id}`) left **${event.channelLeft.name}**")
+                "${event.member.user.logName} left **${event.channelLeft.name}**")
     }
 
     override fun onGuildVoiceMove(event: GuildVoiceMoveEvent) {
         event.guild.kirbotGuild.logManager.genericLog(LogEvent.VOICE_ACTION, ":telephone:",
-                "${event.member.user.nameAndDiscrim} (`${event.member.user.id}`) moved from **${event.channelLeft.name}** to **${event.channelJoined.name}**")
+                "${event.member.user.logName}moved from **${event.channelLeft.name}** to **${event.channelJoined.name}**")
     }
 }

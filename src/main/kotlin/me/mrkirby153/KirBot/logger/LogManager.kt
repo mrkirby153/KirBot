@@ -1,8 +1,9 @@
 package me.mrkirby153.KirBot.logger
 
-import co.aikar.idb.DB
+import com.mrkirby153.bfs.Tuple
+import com.mrkirby153.bfs.model.Model
+import com.mrkirby153.bfs.sql.DB
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.database.models.guild.GuildMessage
 import me.mrkirby153.KirBot.database.models.guild.LogSettings
 import me.mrkirby153.KirBot.server.KirBotGuild
@@ -26,14 +27,14 @@ class LogManager(private val guild: KirBotGuild) {
 
     private val logQueue = LinkedList<LogMessage>()
 
-    private var logChannels = Model.get(LogSettings::class.java, Pair("server_id", guild.id))
+    private var logChannels = Model.get(LogSettings::class.java, Tuple("server_id", guild.id))
 
     fun reloadLogChannels() {
-        this.logChannels = Model.get(LogSettings::class.java, Pair("server_id", guild.id))
+        this.logChannels = Model.get(LogSettings::class.java, Tuple("server_id", guild.id))
     }
 
     fun logMessageDelete(id: String) {
-        val msg = Model.first(GuildMessage::class.java, Pair("id", id)) ?: return
+        val msg = Model.first(GuildMessage::class.java, Tuple("id", id)) ?: return
 
         val author = Bot.shardManager.getUser(msg.author) ?: return
         val chan = guild.getTextChannelById(msg.channel) ?: return
@@ -65,9 +66,9 @@ class LogManager(private val guild: KirBotGuild) {
         val selector = "?, ".repeat(messages.size)
         val realString = selector.substring(
                 0, selector.lastIndexOf(","))
-        val results = DB.getResults(
-                "SELECT `server_messages`.`id` as `message_id`, `server_messages`.`server_id`, `author` as 'author_id', `channel`, `message`, `username`, `discriminator`, `attachments` FROM `server_messages` LEFT JOIN `seen_users` ON `server_messages`.`author` = `seen_users`.`id` WHERE `server_messages`.`id` IN ($realString)",
-                *(messages.toTypedArray()))
+        val query = "SELECT `server_messages`.`id` as `message_id`, `server_messages`.`server_id`, `author` as 'author_id', `channel`, `message`, `username`, `discriminator`, `attachments` FROM `server_messages` LEFT JOIN `seen_users` ON `server_messages`.`author` = `seen_users`.`id` WHERE `server_messages`.`id` IN ($realString)"
+        println("Executing $query")
+        val results = DB.getResults(query, *(messages.toTypedArray()))
         val msgs = mutableListOf<String>()
         results.forEach { result ->
             val msgId = result.getString("message_id")
@@ -91,7 +92,7 @@ class LogManager(private val guild: KirBotGuild) {
     }
 
     fun logEdit(message: Message) {
-        val old = Model.first(GuildMessage::class.java, Pair("id", message.id)) ?: return
+        val old = Model.first(GuildMessage::class.java, Tuple("id", message.id)) ?: return
         val user = message.author
         val ignored = guild.extraData.optJSONArray("log-ignored")?.map { it.toString() }
         if (ignored != null && user.id in ignored)

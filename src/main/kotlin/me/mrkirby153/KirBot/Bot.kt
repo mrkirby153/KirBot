@@ -2,7 +2,8 @@ package me.mrkirby153.KirBot
 
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
-import co.aikar.idb.DB
+import com.mrkirby153.bfs.sql.DB
+import com.mrkirby153.bfs.sql.QueryBuilder
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.source.beam.BeamAudioSourceManager
@@ -78,6 +79,10 @@ object Bot {
                 logger.level = Level.DEBUG
             }
             KirBotGuild.startLeakMonitor()
+            QueryBuilder.logQueries = System.getProperty("kirbot.logQueries", "false")?.toBoolean() ?: false
+            if(QueryBuilder.logQueries){
+                LOG.warn("Query logging is enabled. This will generate a lot of console output!")
+            }
         }
         (LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME) as? Logger)?.level = Level.valueOf(
                 System.getProperty("kirbot.global_log", "INFO"))

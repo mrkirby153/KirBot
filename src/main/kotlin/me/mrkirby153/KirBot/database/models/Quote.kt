@@ -1,5 +1,9 @@
 package me.mrkirby153.KirBot.database.models
 
+import com.mrkirby153.bfs.annotations.Column
+import com.mrkirby153.bfs.annotations.Table
+import com.mrkirby153.bfs.model.Model
+
 @Table("quotes")
 class Quote : Model() {
 

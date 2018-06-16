@@ -1,18 +1,20 @@
 package me.mrkirby153.KirBot.database.models.guild
 
+import com.mrkirby153.bfs.annotations.Column
+import com.mrkirby153.bfs.annotations.PrimaryKey
+import com.mrkirby153.bfs.annotations.Table
+import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.database.models.AutoIncrementing
-import me.mrkirby153.KirBot.database.models.Column
-import me.mrkirby153.KirBot.database.models.Model
-import me.mrkirby153.KirBot.database.models.PrimaryKey
-import me.mrkirby153.KirBot.database.models.Table
 import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.entities.Role
 import net.dv8tion.jda.core.entities.User
 
 @Table("guild_member_roles")
-@AutoIncrementing(false)
 class GuildMemberRole : Model() {
+
+    init {
+        this.incrementing = false
+    }
 
     @PrimaryKey
     var id = ""

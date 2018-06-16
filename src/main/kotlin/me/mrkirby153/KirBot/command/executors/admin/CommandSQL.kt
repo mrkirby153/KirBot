@@ -6,15 +6,15 @@ import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
-import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.Database
 import me.mrkirby153.KirBot.user.CLEARANCE_GLOBAL_ADMIN
 import me.mrkirby153.KirBot.utils.Context
-import me.mrkirby153.KirBot.utils.deleteAfter
+import me.mrkirby153.kcutils.use
 import me.mrkirby153.kcutils.utils.TableBuilder
 import java.sql.SQLException
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 @Command(name = "sql", arguments = ["<query:string...>"], clearance = CLEARANCE_GLOBAL_ADMIN)
 class CommandSQL : BaseCommand(false, CommandCategory.ADMIN) {
@@ -22,10 +22,10 @@ class CommandSQL : BaseCommand(false, CommandCategory.ADMIN) {
         val query = cmdContext.get<String>("query") ?: throw CommandException(
                 "Please specify a query")
 
-        Bot.scheduler.schedule({
-            ModuleManager[Database::class].db.connection.use { con ->
+        val future = Bot.scheduler.submit({
+            ModuleManager[Database::class].database.getConnection().use { con ->
                 con.createStatement().use { statement ->
-                    try {
+                    try{
                         val r = statement.execute(query)
                         if (r) {
                             val rs = statement.resultSet
@@ -45,7 +45,7 @@ class CommandSQL : BaseCommand(false, CommandCategory.ADMIN) {
                             val table = builder.buildTable()
                             if (table.length > 1900) {
                                 context.channel.sendFile(table.toByteArray(),
-                                        "query-${Model.randomId()}.txt").queue()
+                                        "query.txt").queue()
                             } else {
                                 context.channel.sendMessage("```$table```").queue()
                             }
@@ -53,15 +53,17 @@ class CommandSQL : BaseCommand(false, CommandCategory.ADMIN) {
                             context.channel.sendMessage(
                                     ":ballot_box_with_check: ${statement.updateCount} row(s) updated").queue()
                         }
-                    } catch (ex: SQLException) {
-                        context.channel.sendMessage(":x: Error: ```${ex.message}```").queue { msg ->
-                            msg.deleteAfter(10, TimeUnit.SECONDS)
-                            context.deleteAfter(10, TimeUnit.SECONDS)
-                        }
+                    } catch (ex: SQLException){
+                        context.channel.sendMessage(":x: Error: ```${ex.message}```").queue()
                     }
                 }
             }
-        }, 0, TimeUnit.MILLISECONDS)
+        })
+        try {
+            future.get(5, TimeUnit.SECONDS)
+        } catch (e: TimeoutException) {
+            throw CommandException("Query took too long!")
+        }
     }
 
 }

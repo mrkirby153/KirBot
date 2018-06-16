@@ -1,17 +1,19 @@
 package me.mrkirby153.KirBot.database.models.guild
 
+import com.mrkirby153.bfs.annotations.Column
+import com.mrkirby153.bfs.annotations.PrimaryKey
+import com.mrkirby153.bfs.annotations.Table
+import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.database.models.AutoIncrementing
-import me.mrkirby153.KirBot.database.models.Column
-import me.mrkirby153.KirBot.database.models.Model
-import me.mrkirby153.KirBot.database.models.PrimaryKey
-import me.mrkirby153.KirBot.database.models.Table
 import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.entities.Role
 
 @Table("roles")
-@AutoIncrementing(false)
 class Role : Model() {
+
+    init {
+        this.incrementing = false
+    }
 
     @PrimaryKey
     var id = ""
@@ -29,7 +31,11 @@ class Role : Model() {
     var guild: Guild? = null
         get() = Bot.shardManager.getGuild(serverId)
         set(guild) {
-            this.serverId = guild!!.id
+            if (guild == null) {
+                field = null
+                return
+            }
+            this.serverId = guild.id
             field = guild
         }
 
@@ -37,7 +43,11 @@ class Role : Model() {
     var role: Role? = null
         get() = guild?.getRoleById(this.id)
         set(role) {
-            this.id = role!!.id
+            if (role == null) {
+                field = null
+                return
+            }
+            this.id = role.id
             this.name = role.name
             this.permissions = role.permissionsRaw
             this.order = role.position

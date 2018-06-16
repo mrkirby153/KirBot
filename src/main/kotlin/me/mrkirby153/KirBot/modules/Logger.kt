@@ -1,8 +1,9 @@
 package me.mrkirby153.KirBot.modules
 
-import co.aikar.idb.DB
+import com.mrkirby153.bfs.Tuple
+import com.mrkirby153.bfs.model.Model
+import com.mrkirby153.bfs.sql.DB
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.database.models.guild.GuildMessage
 import me.mrkirby153.KirBot.logger.LogEvent
 import me.mrkirby153.KirBot.logger.LogManager
@@ -52,7 +53,7 @@ class Logger : Module("logging") {
 
     override fun onGuildMessageDelete(event: GuildMessageDeleteEvent) {
         event.guild.kirbotGuild.logManager.logMessageDelete(event.messageId)
-        val msg = Model.first(GuildMessage::class.java, Pair("id", event.messageId)) ?: return
+        val msg = Model.first(GuildMessage::class.java, Tuple("id", event.messageId)) ?: return
         msg.deleted = true
         msg.save()
     }
@@ -155,7 +156,7 @@ class Logger : Module("logging") {
         if (event.message.contentDisplay.isEmpty())
             return
         event.guild.kirbotGuild.logManager.logEdit(event.message)
-        val msg = Model.first(GuildMessage::class.java, Pair("id", event.messageId)) ?: return
+        val msg = Model.first(GuildMessage::class.java, Tuple("id", event.messageId)) ?: return
         msg.message = LogManager.encrypt(event.message.contentRaw)
         msg.editCount++
         msg.save()

@@ -1,5 +1,7 @@
 package me.mrkirby153.KirBot.database.models
 
+import com.mrkirby153.bfs.annotations.Table
+import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.Bot
 import net.dv8tion.jda.core.entities.User
 

@@ -1,10 +1,10 @@
 package me.mrkirby153.KirBot.infraction
 
+import com.mrkirby153.bfs.Tuple
+import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.executors.moderation.infraction.TempMute
 import me.mrkirby153.KirBot.database.models.DiscordUser
-import me.mrkirby153.KirBot.database.models.Model
-import me.mrkirby153.KirBot.database.models.QueryBuilder
 import me.mrkirby153.KirBot.logger.LogEvent
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.InfractionModule
@@ -27,7 +27,8 @@ object Infractions {
     fun kick(user: String, guild: Guild, issuer: String, reason: String? = null) {
         guild.controller.kick(guild.getMemberById(user), reason ?: "").queue()
 
-        createInfraction(user, guild, if(issuer == "1") user else issuer, reason, InfractionType.KICK)
+        createInfraction(user, guild, if (issuer == "1") user else issuer, reason,
+                InfractionType.KICK)
 
         guild.kirbotGuild.logManager.genericLog(LogEvent.USER_KICK, ":boot:", buildString {
             append(lookupUser(user, true))
@@ -43,7 +44,8 @@ object Infractions {
         ModuleManager[InfractionModule::class.java].ignoreBans.add(user)
         guild.controller.ban(user, purgeDays, reason).queue()
 
-        createInfraction(user, guild, if(issuer == "1") user else issuer, reason, InfractionType.BAN)
+        createInfraction(user, guild, if (issuer == "1") user else issuer, reason,
+                InfractionType.BAN)
 
         guild.kirbotGuild.logManager.genericLog(LogEvent.USER_BAN, ":rotating_light:", buildString {
             append(lookupUser(user, true))
@@ -58,7 +60,8 @@ object Infractions {
             guild.controller.unban(user).queue()
         }
 
-        createInfraction(user, guild, if(issuer == "1") user else issuer, reason, InfractionType.KICK)
+        createInfraction(user, guild, if (issuer == "1") user else issuer, reason,
+                InfractionType.KICK)
 
         guild.kirbotGuild.logManager.genericLog(LogEvent.USER_KICK, ":boot:", buildString {
             append(lookupUser(user, true))
@@ -78,7 +81,8 @@ object Infractions {
             ban.revokedAt = Timestamp(System.currentTimeMillis())
             ban.save()
         }
-        createInfraction(user, guild, if(issuer == "1") user else issuer, reason, InfractionType.UNBAN)
+        createInfraction(user, guild, if (issuer == "1") user else issuer, reason,
+                InfractionType.UNBAN)
         guild.kirbotGuild.logManager.genericLog(LogEvent.USER_UNBAN, ":hammer:", buildString {
             append(lookupUser(user, true))
             append(" Unbanned by **${lookupUser(issuer)}**")
@@ -89,7 +93,8 @@ object Infractions {
 
     fun mute(user: String, guild: Guild, issuer: String, reason: String? = null) {
         addMutedRole(guild.getMemberById(user).user, guild)
-        createInfraction(user, guild, if(issuer == "1") user else issuer, reason, InfractionType.MUTE)
+        createInfraction(user, guild, if (issuer == "1") user else issuer, reason,
+                InfractionType.MUTE)
 
         guild.kirbotGuild.logManager.genericLog(LogEvent.USER_MUTE, ":zipper_mouth:", buildString {
             append(lookupUser(user, true))
@@ -103,11 +108,9 @@ object Infractions {
     fun unmute(user: String, guild: Guild, issuer: String, reason: String? = null) {
         removeMutedRole(guild.getMemberById(user).user, guild)
 
-        Model.get(Infraction::class.java, Pair("user_id", user), Pair("guild", guild.id),
-                Pair("type", "mute"), Pair("active", true)).forEach {
-            it.active = false
-            it.revokedAt = Timestamp(System.currentTimeMillis())
-            it.save()
+        Model.get(Infraction::class.java, Tuple("user_id", user), Tuple("guild", guild.id),
+                Tuple("type", "mute"), Tuple("active", true)).forEach {
+            it.revoke()
         }
 
         guild.kirbotGuild.logManager.genericLog(LogEvent.USER_UNMUTE, ":open_mouth:", buildString {
@@ -122,7 +125,8 @@ object Infractions {
     fun tempMute(user: String, guild: Guild, issuer: String, duration: Long, units: TimeUnit,
                  reason: String? = null) {
         addMutedRole(guild.getMemberById(user).user, guild)
-        val inf = createInfraction(user, guild, if(issuer == "1") user else issuer, reason, InfractionType.TEMPMUTE)
+        val inf = createInfraction(user, guild, if (issuer == "1") user else issuer, reason,
+                InfractionType.TEMPMUTE)
 
         ModuleManager[Scheduler::class.java].submit(
                 TempMute.UnmuteScheduler(inf.id.toString(), user, guild.id),
@@ -158,31 +162,28 @@ object Infractions {
     }
 
     fun getActiveInfractions(user: String, guild: Guild? = null): List<Infraction> {
-        return Model.get(Infraction::class.java,
-                Pair("user_id", user)).filter { it.active }.filter {
-            if (guild != null)
-                guild.id == it.guild
-            else
-                true
-        }
+        return if (guild == null)
+            Model.get(Infraction::class.java, Tuple("user_id", user), Tuple("active", true))
+        else
+            Model.get(Infraction::class.java, Tuple("user_id", user), Tuple("guild", guild),
+                    Tuple("active", true))
     }
 
     fun getAllInfractions(user: User, guild: Guild? = null): List<Infraction> {
-        return Model.get(Infraction::class.java, Pair("user_id", user.id)).filter {
-            if (guild != null)
-                guild.id == it.guild
-            else
-                true
-        }
+        return if (guild == null)
+            Model.get(Infraction::class.java, "user_id", user.id)
+        else
+            Model.get(Infraction::class.java, Tuple("user_id", user.id), Tuple("guild", guild))
     }
 
 
     fun importFromBanlist(guild: KirBotGuild) {
         guild.banList.queue { bans ->
             bans.filter {
-                !QueryBuilder(Infraction::class).where("user_id", it.user.id).where(
-                        "type", "ban").exists()
+                Model.first(Infraction::class.java, Tuple("user_id", it.user.id),
+                        Tuple("guild", guild.id), Tuple("active", true)) != null
             }.forEach {
+                Bot.LOG.debug("Found missing infraction for ${it.user.id} on $guild")
                 val infraction = Infraction()
                 infraction.type = InfractionType.BAN
                 infraction.issuerId = null
@@ -213,7 +214,7 @@ object Infractions {
             return "Automatic"
         } else {
             val user = Bot.shardManager.getUser(id)?.nameAndDiscrim
-            val model = Model.first(DiscordUser::class.java, id)
+            val model = Model.first(DiscordUser::class.java, "id", id)
 
             if (user != null) {
                 return buildString {

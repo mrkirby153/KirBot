@@ -1,15 +1,19 @@
 package me.mrkirby153.KirBot.database.models.guild
 
-import me.mrkirby153.KirBot.database.models.AutoIncrementing
-import me.mrkirby153.KirBot.database.models.Column
-import me.mrkirby153.KirBot.database.models.JsonArray
-import me.mrkirby153.KirBot.database.models.Model
-import me.mrkirby153.KirBot.database.models.PrimaryKey
-import me.mrkirby153.KirBot.database.models.Table
+import com.mrkirby153.bfs.annotations.Column
+import com.mrkirby153.bfs.annotations.PrimaryKey
+import com.mrkirby153.bfs.annotations.Table
+import com.mrkirby153.bfs.model.Model
+import me.mrkirby153.KirBot.utils.toTypedArray
+import org.json.JSONArray
+import org.json.JSONTokener
 
 @Table("music_settings")
-@AutoIncrementing(false)
 class MusicSettings : Model() {
+
+    init {
+        this.incrementing = false
+    }
 
     @PrimaryKey
     var id = ""
@@ -20,8 +24,14 @@ class MusicSettings : Model() {
     private var modeRaw = "OFF"
 
     @Column("channels")
-    @JsonArray
-    var channels: List<String> = emptyList()
+    var channelsRaw: String = ""
+
+    var channels: List<String>
+        get() = JSONArray(JSONTokener(this.channelsRaw)).toTypedArray(String::class.java)
+        set(value) {
+            channelsRaw = value.toString()
+        }
+
 
     @Column("max_queue_length")
     var maxQueueLength = -1

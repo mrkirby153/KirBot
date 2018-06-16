@@ -1,12 +1,13 @@
 package me.mrkirby153.KirBot.command.executors.`fun`
 
-import co.aikar.idb.DB
+import com.mrkirby153.bfs.Tuple
+import com.mrkirby153.bfs.model.Model
+import com.mrkirby153.bfs.sql.DB
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.args.CommandContext
-import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.database.models.guild.GuildMember
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.CustomEmoji
@@ -28,8 +29,8 @@ class CommandInfo : BaseCommand(CommandCategory.FUN) {
         val user = cmdContext.get<User>("user") ?: context.author
 
         val seenData = Bot.seenStore.get(user)
-        val member = Model.first(GuildMember::class.java, Pair("user_id", user.id),
-                Pair("server_id", context.guild.id))
+        val member = Model.first(GuildMember::class.java, Tuple("user_id", user.id),
+                Tuple("server_id", context.guild.id))
 
         val sentMessages = DB.getFirstColumn<Long>(
                 "SELECT COUNT(*) FROM server_messages WHERE `author` = ?", user.id)

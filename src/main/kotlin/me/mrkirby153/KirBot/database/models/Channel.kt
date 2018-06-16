@@ -1,5 +1,9 @@
 package me.mrkirby153.KirBot.database.models
 
+import com.mrkirby153.bfs.annotations.Column
+import com.mrkirby153.bfs.annotations.PrimaryKey
+import com.mrkirby153.bfs.annotations.Table
+import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.Bot
 import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.Channel
@@ -8,8 +12,11 @@ import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.VoiceChannel
 
 @Table("channels")
-@AutoIncrementing(false)
 class Channel : Model() {
+
+    init {
+        this.incrementing = false
+    }
 
     @PrimaryKey
     var id = ""

@@ -1,15 +1,17 @@
 package me.mrkirby153.KirBot.infraction
 
-import me.mrkirby153.KirBot.database.models.Column
-import me.mrkirby153.KirBot.database.models.Model
-import me.mrkirby153.KirBot.database.models.PrimaryKey
-import me.mrkirby153.KirBot.database.models.Table
-import me.mrkirby153.KirBot.database.models.Timestamps
+import com.mrkirby153.bfs.annotations.Column
+import com.mrkirby153.bfs.annotations.PrimaryKey
+import com.mrkirby153.bfs.annotations.Table
+import com.mrkirby153.bfs.model.Model
 import java.sql.Timestamp
 
-@Timestamps(false)
 @Table("infractions")
 class Infraction : Model() {
+
+    init {
+        this.timestamps = false
+    }
 
     @PrimaryKey
     var id: Long? = null

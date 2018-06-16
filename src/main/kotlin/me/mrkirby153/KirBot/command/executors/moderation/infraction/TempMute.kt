@@ -1,5 +1,6 @@
 package me.mrkirby153.KirBot.command.executors.moderation.infraction
 
+import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
@@ -7,7 +8,6 @@ import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.LogInModlogs
 import me.mrkirby153.KirBot.command.args.CommandContext
-import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.infraction.Infraction
 import me.mrkirby153.KirBot.infraction.Infractions
 import me.mrkirby153.KirBot.logger.LogEvent
@@ -55,7 +55,8 @@ class TempMute : BaseCommand(false, CommandCategory.MODERATION) {
     class UnmuteScheduler(val infId: String, val userId: String, val guild: String) : Schedulable {
 
         override fun run() {
-            val infraction = Model.first(Infraction::class.java, infId)
+            Bot.LOG.debug("Timed mute for $infId expired!")
+            val infraction = Model.first(Infraction::class.java, "id", infId)
             infraction?.revoke()
 
             val user = Bot.shardManager.getUser(userId) ?: return

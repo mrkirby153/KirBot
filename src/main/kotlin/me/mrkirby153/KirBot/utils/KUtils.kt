@@ -1,7 +1,7 @@
 package me.mrkirby153.KirBot.utils
 
+import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.listener.WaitUtils
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.Redis
@@ -150,7 +150,7 @@ fun TextChannel.hide() {
     val public = this.getPermissionOverride(guild.publicRole) ?: this.createPermissionOverride(
             guild.publicRole).complete()
     public.manager.deny(Permission.MESSAGE_READ).queue()
-    Model.first(me.mrkirby153.KirBot.database.models.Channel::class.java, this.id)?.run {
+    Model.first(me.mrkirby153.KirBot.database.models.Channel::class.java, "id", this.id)?.run {
         this.hidden = this@hide.getPermissionOverride(this@hide.guild.publicRole)?.denied?.contains(
                 Permission.MESSAGE_READ) ?: false
         this.save()
@@ -160,7 +160,7 @@ fun TextChannel.hide() {
 fun TextChannel.unhide() {
     val public = this.getPermissionOverride(guild.publicRole) ?: return
     public.manager.clear(Permission.MESSAGE_READ).queue()
-    Model.first(me.mrkirby153.KirBot.database.models.Channel::class.java, this.id)?.run {
+    Model.first(me.mrkirby153.KirBot.database.models.Channel::class.java, "id", this.id)?.run {
         this.hidden = this@unhide.getPermissionOverride(
                 this@unhide.guild.publicRole)?.denied?.contains(Permission.MESSAGE_READ) ?: false
         this.save()

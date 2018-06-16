@@ -1,5 +1,7 @@
 package me.mrkirby153.KirBot.command.executors.rss
 
+import com.mrkirby153.bfs.Tuple
+import com.mrkirby153.bfs.model.Model
 import com.rometools.rome.io.SyndFeedInput
 import com.rometools.rome.io.XmlReader
 import me.mrkirby153.KirBot.Bot
@@ -8,7 +10,6 @@ import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
-import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.database.models.rss.FeedItem
 import me.mrkirby153.KirBot.database.models.rss.RssFeed
 import me.mrkirby153.KirBot.rss.FeedTask
@@ -16,12 +17,16 @@ import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.HttpUtils
 import me.mrkirby153.kcutils.Time
+import me.mrkirby153.kcutils.utils.IdGenerator
 import okhttp3.Request
 import java.net.URL
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 @Command(name = "rss", clearance = CLEARANCE_MOD)
 class CommandRss : BaseCommand(false, CommandCategory.MISCELLANEOUS) {
+
+    private val idGenerator = IdGenerator(IdGenerator.ALPHA + IdGenerator.NUMBERS)
 
     override fun execute(context: Context, cmdContext: CommandContext) {
         listFeeds(context, cmdContext)
@@ -29,7 +34,7 @@ class CommandRss : BaseCommand(false, CommandCategory.MISCELLANEOUS) {
 
     @Command(name = "list", clearance = CLEARANCE_MOD)
     fun listFeeds(context: Context, cmdContext: CommandContext) {
-        val feeds = Model.get(RssFeed::class.java, Pair("server_id", context.guild.id))
+        val feeds = Model.get(RssFeed::class.java, Tuple("server_id", context.guild.id))
 
         context.send().embed("RSS Feeds") {
             description {
@@ -78,13 +83,13 @@ class CommandRss : BaseCommand(false, CommandCategory.MISCELLANEOUS) {
 
         // Create the feed
         val feed = RssFeed()
-        feed.id = Model.randomId()
+        feed.id = idGenerator.generate(10)
         feed.channelId = context.channel.id
         feed.serverId = context.guild.id
         feed.url = url
         feed.save()
         // Load all the posts so we don't spam with new posts
-        Bot.scheduler.schedule({
+        val future = Bot.scheduler.submit({
             try {
                 val feedUrl = URL(url)
 
@@ -92,7 +97,7 @@ class CommandRss : BaseCommand(false, CommandCategory.MISCELLANEOUS) {
                 val f = input.build(XmlReader(feedUrl))
                 f.entries.forEach {
                     val item = FeedItem()
-                    item.id = Model.randomId()
+                    item.id = idGenerator.generate(10)
                     item.feedId = feed.id
                     item.guid = it.uri
                     item.save()
@@ -100,7 +105,13 @@ class CommandRss : BaseCommand(false, CommandCategory.MISCELLANEOUS) {
             } catch (e: Exception) {
                 // Ignore
             }
-        }, 0, TimeUnit.MILLISECONDS)
+        })
+        try {
+            future.get(10, TimeUnit.SECONDS)
+        } catch (e: TimeoutException) {
+            context.channel.sendMessage(
+                    ":warning: Took longer than 10 seconds to retrieve previous feed entries. Some feed values may be duplicated").queue()
+        }
         context.send().success("Feed has been registered, new posts will appear here").queue()
     }
 
@@ -108,7 +119,7 @@ class CommandRss : BaseCommand(false, CommandCategory.MISCELLANEOUS) {
     fun removeFeed(context: Context, cmdContext: CommandContext) {
         val id = cmdContext.get<String>("id") ?: throw CommandException("Please provide a feed Id")
 
-        val feed = Model.first(RssFeed::class.java, id)
+        val feed = Model.first(RssFeed::class.java, "id", id)
         if (feed == null || feed.serverId != context.guild.id)
             throw CommandException("That feed does not exist")
         feed.delete()
@@ -123,7 +134,7 @@ class CommandRss : BaseCommand(false, CommandCategory.MISCELLANEOUS) {
         } else {
             val id = cmdContext.get<String>("id")!!
 
-            val feed = Model.first(RssFeed::class.java, id)
+            val feed = Model.first(RssFeed::class.java, "id", id)
 
             if (feed == null || feed.serverId != context.guild.id)
                 throw CommandException("That feed does not exist")

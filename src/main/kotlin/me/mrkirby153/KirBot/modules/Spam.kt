@@ -2,8 +2,8 @@ package me.mrkirby153.KirBot.modules
 
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
+import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.database.models.guild.SpamSettings
 import me.mrkirby153.KirBot.infraction.InfractionType
 import me.mrkirby153.KirBot.infraction.Infractions
@@ -127,7 +127,7 @@ class Spam : Module("spam") {
     private fun getSettings(guild: Guild): SpamSettings {
         val settings = settingsCache.getIfPresent(guild.id)
         return if (settings == null) {
-            val s = Model.first(SpamSettings::class.java, guild.id)
+            val s = Model.first(SpamSettings::class.java, "id", guild.id)
                     ?: SpamSettings().apply { this.id = guild.id }
             settingsCache.put(guild.id, s)
             s

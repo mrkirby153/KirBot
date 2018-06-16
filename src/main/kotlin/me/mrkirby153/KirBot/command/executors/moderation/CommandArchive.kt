@@ -1,7 +1,7 @@
 package me.mrkirby153.KirBot.command.executors.moderation
 
-import co.aikar.idb.DB
-import co.aikar.idb.DbRow
+import com.mrkirby153.bfs.sql.DB
+import com.mrkirby153.bfs.sql.DbRow
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandException
@@ -76,8 +76,8 @@ class CommandArchive : BaseCommand(false) {
         msg.author = row.get("author")
         msg.channel = row.get("channel")
         msg.message = LogManager.decrypt(row.get("message"))
-        msg.created_at = row.get("created_at")
-        msg.updated_at = row.get("updated_at")
+        msg._created_at = row.get("created_at")
+        msg._updated_at = row.get("updated_at")
         msg.editCount = row.get("edit_count")
         msg.deleted = row.get("deleted")
         msg.attachments = row.get("attachments")

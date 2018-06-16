@@ -1,7 +1,7 @@
 package me.mrkirby153.KirBot.modules.censor
 
 import com.google.common.cache.CacheBuilder
-import me.mrkirby153.KirBot.database.models.Model
+import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.database.models.guild.CensorSettings
 import me.mrkirby153.KirBot.logger.LogEvent
 import me.mrkirby153.KirBot.module.Module
@@ -73,7 +73,7 @@ class Censor : Module("censor") {
     private fun getSettings(guild: Guild): CensorSettings {
         val settings = cache.getIfPresent(guild.id)
         return if (settings == null) {
-            val s = Model.first(CensorSettings::class.java, guild.id)
+            val s = Model.first(CensorSettings::class.java, "id", guild.id)
                     ?: CensorSettings().apply { this.id = guild.id }
             s
         } else {

@@ -1,9 +1,10 @@
 package me.mrkirby153.KirBot.music
 
+import com.mrkirby153.bfs.Tuple
+import com.mrkirby153.bfs.model.Model
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.database.models.guild.MusicSettings
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.Redis
@@ -38,7 +39,7 @@ class MusicManager(val guild: Guild) {
     var nowPlayingMessage: Message? = null
 
     val settings: MusicSettings
-        get() = Model.first(MusicSettings::class.java, Pair("id", this.guild.id))!!
+        get() = Model.first(MusicSettings::class.java, Tuple("id", this.guild.id))!!
 
     init {
         guild.audioManager.sendingHandler = sender

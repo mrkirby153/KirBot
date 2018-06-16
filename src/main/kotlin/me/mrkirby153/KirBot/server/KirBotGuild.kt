@@ -1,10 +1,12 @@
 package me.mrkirby153.KirBot.server
 
+import com.mrkirby153.bfs.Tuple
+import com.mrkirby153.bfs.model.Model
+import com.mrkirby153.bfs.sql.DB
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.models.Channel
 import me.mrkirby153.KirBot.database.models.CustomCommand
 import me.mrkirby153.KirBot.database.models.DiscordUser
-import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.database.models.RoleClearance
 import me.mrkirby153.KirBot.database.models.group.Group
 import me.mrkirby153.KirBot.database.models.guild.GuildMember
@@ -96,11 +98,11 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         Bot.LOG.debug("Loading settings for ${this}")
 
         settings = Model.first(ServerSettings::class.java,
-                Pair("id", this.id)) ?: throw IllegalStateException(
+                Tuple("id", this.id)) ?: throw IllegalStateException(
                 "Attempting to load settings for a guild that doesn't exist")
 
         customCommands = Model.get(CustomCommand::class.java,
-                Pair("server", this.id)).toMutableList()
+                Tuple("server", this.id)).toMutableList()
         logManager.reloadLogChannels()
         loadData()
     }
@@ -119,7 +121,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         val keyGen = IdGenerator(IdGenerator.ALPHA + IdGenerator.NUMBERS)
         Bot.LOG.debug("Syncing guild ${this.id}")
         lock()
-        var guild = Model.first(ServerSettings::class.java, this.id)
+        var guild = Model.first(ServerSettings::class.java, "id", this.id)
 
         if (guild == null) {
             Bot.LOG.debug("Guild does not exist... Creating")
@@ -139,7 +141,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
 
         // Load role clearance sync because those are important
         clearances.clear()
-        Model.get(RoleClearance::class.java, Pair("server_id", this.id)).forEach {
+        Model.get(RoleClearance::class.java, Tuple("server_id", this.id)).forEach {
             clearances[it.roleId] = it.permission
         }
 
@@ -161,7 +163,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
             updateChannels()
 
             val roles = Model.get(me.mrkirby153.KirBot.database.models.guild.Role::class.java,
-                    Pair("server_id", this.id)).toMutableList()
+                    Tuple("server_id", this.id)).toMutableList()
 
             // Update the existing roles
             val removedRoles = mutableListOf<String>()
@@ -191,7 +193,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
 
             RealnameHandler(this).update(false)
 
-            val groups = Model.get(Group::class.java, Pair("server_id", this.id))
+            val groups = Model.get(Group::class.java, Tuple("server_id", this.id))
 
             groups.forEach { g ->
                 if (g.role != null) {
@@ -215,7 +217,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
                 }
             }
 
-            var members = Model.get(GuildMember::class.java, Pair("server_id", this.id))
+            var members = Model.get(GuildMember::class.java, Tuple("server_id", this.id))
 
             val toDelete = mutableListOf<GuildMember>()
             val currentMembers = this.members.map { it.user.id }
@@ -234,7 +236,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
             Bot.LOG.debug("Adding ${newMembers.map { it.user.id }}")
             newMembers.forEach {
                 val member = GuildMember()
-                member.id = Model.randomId()
+                member.id = idGenerator.generate(10)
                 member.user = it.user
                 member.serverId = this.id
                 member.nick = it.nickname
@@ -247,7 +249,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
                 it.save()
             }
 
-            members = Model.get(GuildMember::class.java, Pair("server_id", this.id))
+            members = Model.get(GuildMember::class.java, Tuple("server_id", this.id))
 
             members.forEach { m ->
                 val toRemove = mutableListOf<GuildMemberRole>()
@@ -351,7 +353,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
     private fun updateChannels() {
         Bot.LOG.debug(
                 "Updating channels on ${this.name} (${this.id})") // TODO 1/16/18: Update the name of the channel
-        val channels = Model.get(Channel::class.java, Pair("server", this.id)).toMutableList()
+        val channels = Model.get(Channel::class.java, Tuple("server", this.id)).toMutableList()
 
         val removedChannels = mutableListOf<Channel>()
         channels.forEach {
@@ -386,41 +388,35 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
 
     fun syncSeenUsers() {
         lock()
-        Model.factory.getConnection().use { con ->
-            val users = mutableListOf<String>()
-            con.createStatement().executeQuery("SELECT id FROM seen_users").use { rs ->
-                while (rs.next()) {
-                    users.add(rs.getString("id"))
-                }
-            }
+        val userIds = DB.getFirstColumnValues<String>("SELECT id FROM seen_users")
+        val newMembers = this.members.filter { it.user.id !in userIds }
+        Bot.LOG.debug("Found ${newMembers.size} new members")
 
-            val newMembers = this.members.filter { it.user.id !in users }
-            Bot.LOG.debug("Found ${newMembers.size} new members!")
+        newMembers.map { it.user }.forEach { user ->
+            val m = DiscordUser()
+            m.id = user.id
+            m.username = user.name
+            m.discriminator = user.discriminator.toInt()
+            m.create()
+        }
 
-            newMembers.map { it.user }.forEach { user ->
-                val m = DiscordUser()
-                m.id = user.id
-                m.username = user.name
-                m.discriminator = user.discriminator.toInt()
-                m.create()
-            }
-            // Update the usernames
-            con.createStatement().executeQuery(
-                    "SELECT id, username, discriminator FROM seen_users").use { rs ->
-                while (rs.next()) {
-                    val member = this.members.firstOrNull { it.user.id == rs.getString("id") }
-                            ?: continue
-                    if (member.user.name != rs.getString(
-                                    "username") || member.user.discriminator != rs.getString(
-                                    "discriminator"))
-                        con.prepareStatement(
-                                "UPDATE `seen_users` SET `username` = ?, `discriminator` = ? WHERE id = ?").use { statement ->
-                            statement.setString(1, member.user.name)
-                            statement.setInt(2, member.user.discriminator.toInt())
-                            statement.setString(3, member.user.id)
-                            statement.execute()
-                        }
-                }
+        // Update usernames for people on the guild
+        val results = DB.getResults(
+                "SELECT `id`, `username`, `discriminator` FROM seen_users WHERE `id` IN (${this.members.map { it.user.id }.joinToString(
+                        ",") { "'$it'" }})")
+        val members = mutableMapOf<String, Member>()
+        this.members.forEach {
+            members[it.user.id] = it
+        }
+        results.forEach { row ->
+            val member = members[row.getString("id")] ?: return@forEach
+            if (member.user.name != row.getString(
+                            "username") || member.user.discriminator.toInt() != row.getInt(
+                            "discriminator")) {
+                Bot.LOG.debug("Username for ${member.user.id} changed. Updating!")
+                DB.executeUpdate(
+                        "UPDATE `seen_users` SET `username` = ?, `discriminator` = ? WHERE id = ?",
+                        member.user.name, member.user.discriminator, member.user.id)
             }
         }
         unlock()
@@ -484,6 +480,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
     companion object {
         private val guilds = mutableMapOf<String, KirBotGuild>()
         private lateinit var leakDetectorThread: Thread
+        private val idGenerator = IdGenerator(IdGenerator.ALPHA + IdGenerator.NUMBERS)
 
         var leakThreshold = 1000
 

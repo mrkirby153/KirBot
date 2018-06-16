@@ -1,16 +1,18 @@
 package me.mrkirby153.KirBot.database.models.group
 
+import com.mrkirby153.bfs.annotations.Column
+import com.mrkirby153.bfs.annotations.PrimaryKey
+import com.mrkirby153.bfs.annotations.Table
+import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.database.models.AutoIncrementing
-import me.mrkirby153.KirBot.database.models.Column
-import me.mrkirby153.KirBot.database.models.Model
-import me.mrkirby153.KirBot.database.models.PrimaryKey
-import me.mrkirby153.KirBot.database.models.Table
 import net.dv8tion.jda.core.entities.User
 
 @Table("user_groups")
-@AutoIncrementing(false)
 class GroupMember : Model() {
+
+    init {
+        this.incrementing = false
+    }
 
     @PrimaryKey
     var id = ""
@@ -24,7 +26,7 @@ class GroupMember : Model() {
     @Transient
     var user: User? = null
         get() = Bot.shardManager.getUser(this.userId)
-        set(user){
+        set(user) {
             this.userId = user!!.id
             field = user
         }

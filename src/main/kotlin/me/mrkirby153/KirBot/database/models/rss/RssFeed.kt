@@ -1,17 +1,19 @@
 package me.mrkirby153.KirBot.database.models.rss
 
+import com.mrkirby153.bfs.annotations.Column
+import com.mrkirby153.bfs.annotations.PrimaryKey
+import com.mrkirby153.bfs.annotations.Table
+import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.database.models.AutoIncrementing
-import me.mrkirby153.KirBot.database.models.Column
-import me.mrkirby153.KirBot.database.models.Model
-import me.mrkirby153.KirBot.database.models.PrimaryKey
-import me.mrkirby153.KirBot.database.models.Table
 import net.dv8tion.jda.core.entities.TextChannel
 import java.sql.Timestamp
 
 @Table("rss_feeds")
-@AutoIncrementing(false)
 class RssFeed : Model() {
+
+    init {
+        this.incrementing = false
+    }
 
     @PrimaryKey
     var id = ""

@@ -1,12 +1,13 @@
 package me.mrkirby153.KirBot.command.executors.`fun`
 
+import com.mrkirby153.bfs.Tuple
+import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
-import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.database.models.Quote
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.Quotes
@@ -26,10 +27,10 @@ class CommandQuote : BaseCommand(false, CommandCategory.FUN) {
             return
         }
         val quote = cmdContext.get<Int>("id")!!
-        if(quote <= 0)
+        if (quote <= 0)
             throw CommandException("Specify a number greater than 0")
-        val q = Model.first(Quote::class.java,
-                quote.toString()) ?: throw CommandException("That quote doesn't exist")
+        val q = Model.first(Quote::class.java, "id", quote.toString()) ?: throw CommandException(
+                "That quote doesn't exist")
         if (q.serverId != context.guild.id) {
             throw CommandException("That quote doesn't exist")
         }
@@ -40,7 +41,7 @@ class CommandQuote : BaseCommand(false, CommandCategory.FUN) {
 @Command(name = "quotes")
 class CommandQuotes : BaseCommand(false, CommandCategory.FUN) {
     override fun execute(context: Context, cmdContext: CommandContext) {
-        val quoteCount = Model.get(Quote::class.java, Pair("server_id", context.guild.id)).size
+        val quoteCount = Model.get(Quote::class.java, Tuple("server_id", context.guild.id)).size
         context.channel.sendMessage(
                 ":left_speech_bubble: **Quotes**\n\n Total: $quoteCount \n\n Full List: " + botUrl(
                         "${context.guild.id}/quotes")).queue()
@@ -54,6 +55,7 @@ class CommandQuotes : BaseCommand(false, CommandCategory.FUN) {
                 cmdContext.get<String>("user")!!)?.nameAndDiscrim ?: cmdContext.get(
                 "user")!!} from quoting").queue()
     }
+
     @Command(name = "unblock", arguments = ["<user:snowflake>"], clearance = CLEARANCE_MOD)
     fun unblock(context: Context, cmdContext: CommandContext) {
         ModuleManager[Quotes::class.java].unblockUser(context.kirbotGuild,

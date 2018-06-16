@@ -1,5 +1,7 @@
 package me.mrkirby153.KirBot.command.executors.moderation.infraction
 
+import com.mrkirby153.bfs.Tuple
+import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
@@ -7,7 +9,6 @@ import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.LogInModlogs
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.models.DiscordUser
-import me.mrkirby153.KirBot.database.models.Model
 import me.mrkirby153.KirBot.infraction.Infraction
 import me.mrkirby153.KirBot.logger.LogEvent
 import me.mrkirby153.KirBot.user.CLEARANCE_ADMIN
@@ -31,8 +32,8 @@ class CommandInfractions : BaseCommand(false, CommandCategory.MODERATION) {
     @Command(name = "search", clearance = CLEARANCE_MOD, arguments = ["<user:snowflake>"])
     fun search(context: Context, cmdContext: CommandContext) {
         val user = cmdContext.get<String>("user") ?: throw CommandException("Specify a user")
-        val infractions = Model.get(Infraction::class.java, Pair("user_id", user),
-                Pair("guild", context.guild.id))
+        val infractions = Model.get(Infraction::class.java, Tuple("user_id", user),
+                Tuple("guild", context.guild.id))
 
         val header = arrayOf("ID", "Created", "Type", "User", "Moderator", "Reason", "Active")
 
@@ -42,10 +43,10 @@ class CommandInfractions : BaseCommand(false, CommandCategory.MODERATION) {
         infractions.forEach {
             val moderator = if (it.issuerId == null) "Unknown" else users.computeIfAbsent(
                     it.issuerId!!, {
-                Model.first(DiscordUser::class.java, it)?.nameAndDiscrim ?: it
+                Model.first(DiscordUser::class.java, "id", it)?.nameAndDiscrim ?: it
             })
             val username = users.computeIfAbsent(it.userId, {
-                Model.first(DiscordUser::class.java, it)?.nameAndDiscrim ?: it
+                Model.first(DiscordUser::class.java, "id", it)?.nameAndDiscrim ?: it
             })
             table.addRow(
                     arrayOf(it.id.toString(), it.createdAt.toString(), it.type.toString(), username,
@@ -64,7 +65,7 @@ class CommandInfractions : BaseCommand(false, CommandCategory.MODERATION) {
     fun clearInfraction(context: Context, cmdContext: CommandContext) {
         val id = cmdContext.get<Int>("id")!!
 
-        val infraction = Model.first(Infraction::class.java, id) ?: throw CommandException(
+        val infraction = Model.first(Infraction::class.java, "id", id) ?: throw CommandException(
                 "Infraction not found")
 
         if (infraction.issuerId == null || infraction.issuerId != context.author.id) {
@@ -87,7 +88,7 @@ class CommandInfractions : BaseCommand(false, CommandCategory.MODERATION) {
         val id = cmdContext.get<Int>("id")!!
         val reason = cmdContext.get<String>("reason")!!
 
-        val infraction = Model.first(Infraction::class.java, Pair("id", id))
+        val infraction = Model.first(Infraction::class.java, Tuple("id", id))
                 ?: throw CommandException("That infraction doesn't exist")
 
         infraction.reason = reason

@@ -43,11 +43,12 @@ class LogManager(private val guild: KirBotGuild) {
             return // The user is in the ignored log array
 
         this.genericLog(LogEvent.MESSAGE_DELETE, ":wastebasket:",
-                "${author.logName} Message deleted in **#${chan.name}** \n ${LogManager.decrypt(
-                        msg.message).escapeMentions().urlEscape()}" + buildString {
-                    if (msg.attachments != null) {
+                "${author.logName} Message deleted in **#${chan.name}** \n ${msg.message.escapeMentions().urlEscape()}" + buildString {
+                    val attachments = msg.attachments
+                    if (attachments != null) {
+                        val split = attachments.split(",")
                         append(" (")
-                        msg.attachments!!.split(",").joinToString(", ") { "<${it.trim()}>" }
+                        append(split.joinToString(", ") { "<${it.trim()}>" })
                         append(")")
                     }
                 })
@@ -95,7 +96,7 @@ class LogManager(private val guild: KirBotGuild) {
         val ignored = guild.extraData.optJSONArray("log-ignored")?.map { it.toString() }
         if (ignored != null && user.id in ignored)
             return // The user is in the ignored log array
-        val oldMessage = LogManager.decrypt(old.message)
+        val oldMessage = old.message
         if (oldMessage.equals(message.contentRaw, true)) {
             return
         }

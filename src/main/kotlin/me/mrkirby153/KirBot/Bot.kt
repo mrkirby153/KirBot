@@ -119,7 +119,7 @@ object Bot {
                 ((endTime - startTime) / 1000).toInt())})")
 
         // Boot the modules
-        ModuleManager.loadModules(true)
+        ModuleManager.load(true)
 
         val guilds = shardManager.shards.flatMap { it.guilds }
         LOG.info("Started syncing of ${guilds.size} guilds")
@@ -143,6 +143,7 @@ object Bot {
         HttpUtils.clearCache()
 
         scheduler.scheduleAtFixedRate(FeedTask(), 0, 1, TimeUnit.HOURS)
+        ModuleManager.startScheduler()
 
         shardManager.onlineStatus = OnlineStatus.ONLINE
         shardManager.playing = properties.getOrDefault("playing-message", "!help").toString()

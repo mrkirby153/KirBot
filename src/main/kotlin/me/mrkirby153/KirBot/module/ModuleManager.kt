@@ -3,14 +3,17 @@ package me.mrkirby153.KirBot.module
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.kcutils.Time
 import org.reflections.Reflections
+import java.lang.IllegalArgumentException
+import java.util.concurrent.TimeUnit
 import kotlin.reflect.KClass
 import kotlin.system.measureTimeMillis
 
 object ModuleManager {
 
     private val availableModules = mutableListOf<Module>()
-
     val loadedModules = mutableListOf<Module>()
+
+    private var tickCount = 0
 
     fun <T : Module> getLoadedModule(clazz: Class<T>): T? {
         return loadedModules.firstOrNull { it.javaClass == clazz } as? T
@@ -25,7 +28,7 @@ object ModuleManager {
 
     operator fun <T : Module> get(clazz: KClass<T>): T = get(clazz.java)
 
-    fun loadModules(registerListeners: Boolean = true) {
+    fun load(registerListeners: Boolean = true) {
         val startTime = System.currentTimeMillis()
         Bot.LOG.info("Module Manager Starting Up...")
         // Populate the available modules
@@ -58,6 +61,16 @@ object ModuleManager {
             loadedModules.add(it)
         }
         Bot.LOG.info("Modules loaded in ${Time.format(1, System.currentTimeMillis() - startTime)}")
+    }
+
+    fun startScheduler() {
+        Bot.LOG.info("Starting periodic scheduler...")
+        Bot.scheduler.scheduleAtFixedRate({
+            val nextTick = ++tickCount
+            loadedModules.forEach { mod ->
+                mod.triggerPeriodicTasks(nextTick)
+            }
+        }, 0, 1, TimeUnit.SECONDS)
     }
 
 

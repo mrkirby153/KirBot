@@ -190,6 +190,6 @@ class Logger : Module("logging") {
 
     override fun onGuildVoiceMove(event: GuildVoiceMoveEvent) {
         event.guild.kirbotGuild.logManager.genericLog(LogEvent.VOICE_ACTION, ":telephone:",
-                "${event.member.user.logName}moved from **${event.channelLeft.name}** to **${event.channelJoined.name}**")
+                "${event.member.user.logName} moved from **${event.channelLeft.name}** to **${event.channelJoined.name}**")
     }
 }

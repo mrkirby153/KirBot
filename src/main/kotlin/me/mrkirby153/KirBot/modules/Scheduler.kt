@@ -1,6 +1,5 @@
 package me.mrkirby153.KirBot.modules
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.google.gson.GsonBuilder
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.module.Module
@@ -9,78 +8,124 @@ import me.mrkirby153.KirBot.scheduler.InterfaceAdapter
 import me.mrkirby153.KirBot.scheduler.Schedulable
 import me.mrkirby153.kcutils.Time
 import java.util.UUID
-import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
+import kotlin.math.roundToLong
 
 class Scheduler : Module("scheduler") {
 
-    private var schedulePrefix = "task:"
-    private var scheduleList = "tasks"
+    private var keyFormat = "task:%s"
+    private var list = "tasks"
 
-    private val executor = Executors.newCachedThreadPool(
-            ThreadFactoryBuilder().setDaemon(true).setNameFormat("schedule-executor-%d").build())
-
-    private val timer = Executors.newScheduledThreadPool(1,
-            ThreadFactoryBuilder().setDaemon(true).setNameFormat("executor_timer-%d").build())
+    private var nextTask: ScheduledFuture<*>? = null
+    private var nextTaskId: String? = null
 
     private val gson = GsonBuilder().apply {
         registerTypeAdapter(Schedulable::class.java, InterfaceAdapter<Schedulable>())
     }.create()
 
+    init {
+        dependencies.add(Redis::class.java)
+    }
+
     override fun onLoad() {
-        this.timer.scheduleAtFixedRate({
-            try {
-                this.process()
-            } catch (ignored: Exception) {
-            }
-        }, 0L, 1, TimeUnit.SECONDS)
+        this.queueTasks()
     }
 
     fun submit(schedulable: Schedulable, time: Long, unit: TimeUnit): String {
         val id = this.generateId()
         val convert = TimeUnit.MILLISECONDS.convert(time, unit)
-        Bot.LOG.debug("Scheduling for ${Time.format(1, convert)}")
 
         val item = ScheduledItem(id, schedulable)
         val t = System.currentTimeMillis() + convert
 
         ModuleManager[Redis::class.java].getConnection().use {
-            val key = schedulePrefix + id
+            val key = keyFormat.format(id)
             it.set(key, gson.toJson(item))
-            it.zadd(scheduleList, t.toDouble(), key)
+            it.zadd(list, t.toDouble(), key)
         }
+        queueTasks()
         return id
     }
 
     fun cancel(id: String): Boolean {
-        val key = schedulePrefix + id
+        val key = keyFormat.format(id)
         ModuleManager[Redis::class.java].getConnection().use {
-            it.zrem(scheduleList, key)
+            it.zrem(list, key)
             return it.del(key) > 0
         }
     }
 
-    fun process() {
-        ModuleManager[Redis::class.java].getConnection().use {
-            val keys = it.zrangeByScore(scheduleList, "-inf", System.currentTimeMillis().toString())
-            if (keys.size > 0) {
-                Bot.LOG.debug("Processing keys $keys")
-            } else {
+    private fun runOldTasks() {
+        Bot.LOG.debug("Running all expired tasks...")
+        // Run expired tasks
+        ModuleManager[Redis::class.java].getConnection().use { jedis ->
+            val keys = jedis.zrangeByScore(list, "-inf",
+                    (System.currentTimeMillis() + 100).toString())
+            val toRemove = mutableListOf<String>()
+            keys.forEach { key ->
+                val task = jedis.get(key)
+                if (task == null) {
+                    toRemove.add(key)
+                    return@forEach
+                }
+                val scheduledItem = gson.fromJson(task, ScheduledItem::class.java)
+                val future = Bot.scheduler.submit {
+                    Bot.LOG.debug("Running task ${scheduledItem.id}")
+                    scheduledItem.schedulable.run()
+                }
+                try {
+                    future.get(2, TimeUnit.SECONDS)
+                } catch (e: TimeoutException) {
+                    Bot.LOG.warn("Task ${scheduledItem.id} timed out when executing")
+                    // Ignore
+                }
+                jedis.zrem(list, key)
+                jedis.del(key)
+            }
+        }
+    }
+
+    private fun queueTasks() {
+        Bot.LOG.debug("Queueing tasks")
+        ModuleManager[Redis::class.java].getConnection().use { jedis ->
+            val nextKey = jedis.zrangeByScore(list, System.currentTimeMillis().toString(),
+                    "+inf", 0, 1)?.firstOrNull()
+            if (nextKey == null) {
+                Bot.LOG.debug("No more tasks left to run")
                 return
             }
-            val toDel = mutableListOf<String>()
-            keys.forEach { key ->
-                val json = it.get(key) ?: return@forEach
-                Bot.LOG.debug("Processing $json")
-                val obj = gson.fromJson(json, ScheduledItem::class.java)
-                this.executor.submit {
-                    obj.schedulable.run()
+            if (nextKey == this.nextTaskId) {
+                Bot.LOG.debug("Not re-scheduling the next task as it's the same")
+                return
+            } else {
+                if (nextTask != null) {
+                    Bot.LOG.debug("Re-scheduling $nextTaskId -- $nextKey runs shorter")
+                    nextTask?.cancel(false)
+                    reset()
                 }
-                toDel.add(key)
             }
-            it.zrem(scheduleList, *toDel.toTypedArray())
-            it.del(*toDel.toTypedArray())
+
+            val nextKeyScore = jedis.zscore(list, nextKey)
+
+            val runIn = nextKeyScore.roundToLong() - System.currentTimeMillis()
+            Bot.LOG.debug(
+                    "Next task: $nextKey in ${Time.formatLong(runIn, Time.TimeUnit.MILLISECONDS)}")
+
+            nextTaskId = nextKey
+            nextTask = Bot.scheduler.schedule({
+                runOldTasks()
+                nextTask = null
+                nextTaskId = null
+                queueTasks()
+            }, runIn, TimeUnit.MILLISECONDS)
         }
+    }
+
+    private fun reset() {
+        nextTaskId = null
+        nextTask = null
     }
 
     private fun generateId(): String {

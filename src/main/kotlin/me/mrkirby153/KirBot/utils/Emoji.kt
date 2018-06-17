@@ -14,4 +14,4 @@ val STATUS_OFFLINE = CustomEmoji("status_offline", "414874407022886913")
 val RED_TICK = CustomEmoji("kbRedTick", "414875062336880640")
 val GREEN_TICK = CustomEmoji("kbGreenTick", "414875062001205249")
 
-val EMOJI_RE = Regex("<:.+:([0-9]+)>")
+val EMOJI_RE = Regex("<a?:([^:]*):(\\d{17,18})>")

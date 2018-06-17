@@ -3,7 +3,6 @@ package me.mrkirby153.KirBot.modules
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import com.mrkirby153.bfs.model.Model
-import com.mrkirby153.bfs.sql.QueryBuilder
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.models.guild.GuildMessage
 import me.mrkirby153.KirBot.database.models.guild.SpamSettings
@@ -25,6 +24,7 @@ import net.dv8tion.jda.core.entities.User
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent
 import org.json.JSONObject
 import java.sql.Timestamp
+import java.time.Instant
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 
@@ -149,9 +149,9 @@ class Spam : Module("spam") {
                         messageQuery.limit(amount)
                     }
                     if (settings.has("clean_duration")) {
-                        val time = System.currentTimeMillis() - ((settings.optString(
-                                "clean_duration") ?: "0").toLong() * 1000)
-                        val after = Timestamp(time)
+                        val instant = Instant.now().minusSeconds((settings.optString(
+                                "clean_duration") ?: "0").toLong())
+                        val after = Timestamp(instant.toEpochMilli())
                         messageQuery.where("created_at", ">", after)
                     }
                     val messages = messageQuery.get()

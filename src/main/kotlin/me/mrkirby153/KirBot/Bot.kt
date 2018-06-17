@@ -6,11 +6,7 @@ import com.mrkirby153.bfs.sql.DB
 import com.mrkirby153.bfs.sql.QueryBuilder
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
-import com.sedmelluq.discord.lavaplayer.source.beam.BeamAudioSourceManager
-import com.sedmelluq.discord.lavaplayer.source.soundcloud.SoundCloudAudioSourceManager
-import com.sedmelluq.discord.lavaplayer.source.twitch.TwitchStreamAudioSourceManager
-import com.sedmelluq.discord.lavaplayer.source.vimeo.VimeoAudioSourceManager
-import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager
+import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers
 import me.mrkirby153.KirBot.database.DatabaseConnection
 import me.mrkirby153.KirBot.error.UncaughtErrorReporter
 import me.mrkirby153.KirBot.module.ModuleManager
@@ -57,11 +53,8 @@ object Bot {
     val constants = Bot.javaClass.getResourceAsStream("/constants.properties").readProperties()
 
     val playerManager: AudioPlayerManager = DefaultAudioPlayerManager().apply {
-        registerSourceManager(YoutubeAudioSourceManager())
-        registerSourceManager(SoundCloudAudioSourceManager())
-        registerSourceManager(VimeoAudioSourceManager())
-        registerSourceManager(TwitchStreamAudioSourceManager())
-        registerSourceManager(BeamAudioSourceManager())
+        AudioSourceManagers.registerRemoteSources(this)
+        AudioSourceManagers.registerLocalSource(this)
     }
 
     val debug = properties.getProperty("debug", "false").toBoolean()

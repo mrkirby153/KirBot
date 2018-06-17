@@ -2,11 +2,19 @@ package me.mrkirby153.KirBot.modules
 
 import com.google.gson.GsonBuilder
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.command.BaseCommand
+import me.mrkirby153.KirBot.command.Command
+import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.module.Module
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.scheduler.InterfaceAdapter
 import me.mrkirby153.KirBot.scheduler.Schedulable
+import me.mrkirby153.KirBot.user.CLEARANCE_GLOBAL_ADMIN
+import me.mrkirby153.KirBot.utils.Context
+import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import me.mrkirby153.kcutils.Time
+import org.json.JSONObject
+import org.json.JSONTokener
 import java.util.UUID
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
@@ -133,4 +141,66 @@ class Scheduler : Module("scheduler") {
     }
 
     data class ScheduledItem(val id: String, val schedulable: Schedulable)
+}
+
+@Command(name = "sstats", clearance = CLEARANCE_GLOBAL_ADMIN)
+class SchedulerStats : BaseCommand() {
+
+    override fun execute(context: Context, cmdContext: CommandContext) {
+        context.send().embed("Scheduler Statistics") {
+            description {
+                +"Current scheduler statistics"
+            }
+            fields {
+                ModuleManager[Redis::class.java].getConnection().use { jedis ->
+                    // Next Task
+                    val pendingTasks = jedis.zrangeByScore("tasks",
+                            System.currentTimeMillis().toString(), "+inf")
+                    field {
+                        title = "Pending tasks"
+                        description = pendingTasks.size.toString()
+                        inline = true
+                    }
+                    field {
+                        inline = true
+                        title = "Expired tasks"
+                        description = jedis.zrangeByScore("tasks", "-inf",
+                                (System.currentTimeMillis() + 100).toString()).size.toString()
+                    }
+                    field {
+                        title = "Next task"
+                        description = pendingTasks.firstOrNull() ?: "No tasks scheduled."
+                        inline = true
+                    }
+                    if (pendingTasks.firstOrNull() != null) {
+                        field {
+                            inline = true
+                            title = "Running in"
+                            description = Time.formatLong(jedis.zscore("tasks",
+                                    pendingTasks.first()).roundToLong() - System.currentTimeMillis(),
+                                    Time.TimeUnit.MILLISECONDS)
+                        }
+                        field {
+                            inline = true
+                            title = "Class name"
+                            description {
+                                val json = JSONObject(JSONTokener(jedis.get(pendingTasks.first())))
+                                val scheduler = json.getJSONObject("schedulable")
+                                appendln(scheduler.getString("type"))
+                            }
+                        }
+                    }
+                }
+            }
+            footer {
+                text {
+                    +"Requested by ${context.author.nameAndDiscrim}"
+                }
+            }
+            timestamp {
+                now()
+            }
+        }.rest().queue()
+    }
+
 }

@@ -240,3 +240,12 @@ fun Message.removeReactionById(user: User, reactionId: String) {
 fun <T> JSONArray.toTypedArray(clazz: Class<T>): List<T> {
     return this.map { it as T }
 }
+
+fun String.isNumber(): Boolean {
+    try{
+        this.toDouble()
+    } catch(e: NumberFormatException){
+        return false
+    }
+    return true
+}

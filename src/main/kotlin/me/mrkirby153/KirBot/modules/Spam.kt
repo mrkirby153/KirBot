@@ -3,20 +3,28 @@ package me.mrkirby153.KirBot.modules
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import com.mrkirby153.bfs.model.Model
+import com.mrkirby153.bfs.sql.QueryBuilder
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.database.models.guild.GuildMessage
 import me.mrkirby153.KirBot.database.models.guild.SpamSettings
-import me.mrkirby153.KirBot.infraction.InfractionType
 import me.mrkirby153.KirBot.infraction.Infractions
 import me.mrkirby153.KirBot.logger.LogEvent
 import me.mrkirby153.KirBot.module.Module
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.utils.Bucket
+import me.mrkirby153.KirBot.utils.EMOJI_RE
+import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.KirBot.utils.getClearance
+import me.mrkirby153.KirBot.utils.isNumber
 import me.mrkirby153.KirBot.utils.kirbotGuild
-import me.mrkirby153.KirBot.utils.nameAndDiscrim
+import me.mrkirby153.KirBot.utils.logName
+import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.Guild
+import net.dv8tion.jda.core.entities.Message
 import net.dv8tion.jda.core.entities.User
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent
+import org.json.JSONObject
+import java.sql.Timestamp
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 
@@ -26,10 +34,6 @@ class Spam : Module("spam") {
 
     private val settingsCache: Cache<String, SpamSettings> = CacheBuilder.newBuilder().expireAfterWrite(
             1, TimeUnit.SECONDS).build()
-
-
-    val MAX_MESSAGES: Int = 2
-    val period = 10
 
     init {
         dependencies.add(Redis::class.java)
@@ -41,135 +45,186 @@ class Spam : Module("spam") {
 
     override fun onGuildMessageReceived(event: GuildMessageReceivedEvent) {
         if (event.author.id == event.guild.selfMember.user.id)
-            return
-        // Acquire a lock for the guild
-        getLock(event.guild.id).acquire()
-//        Bot.LOG.debug("Checking ${event.author}")
-        val effectiveRules = calculateEffectiveRules(event.author, event.guild)
+            return // Ignore ourselves
+        if (event.guild.id !in locks.keys)
+            locks[event.guild.id] = Semaphore(1)
+        locks[event.guild.id]!!.acquire()
 
-        effectiveRules.forEach { rule ->
-            val bucket = Bucket(
-                    "${rule.rule.toString().toLowerCase()}:${event.guild.id}:${event.author.id}",
-                    rule.count, rule.period * 1000)
-            val count = getViolations(rule.rule, event.message.contentRaw)
-            if (bucket.check(event.messageId, count)) {
-                Bot.LOG.debug("${event.author} has violated ${rule.rule}!")
-                violate(event.author, event.guild, rule.rule, rule.punishment, bucket)
+        val rules = getEffectiveRules(event.guild, event.author)
+
+        try {
+            rules.forEach {
+                checkMessage(event.message, it)
             }
+        } catch (e: ViolationException) {
+            violate(e)
         }
-
-        // Unlock the guild
-        getLock(event.guild.id).release()
+        locks[event.guild.id]!!.release()
     }
 
-    private fun getLock(guild: String) = this.locks.getOrPut(guild, { Semaphore(1) })
 
+   private fun checkMessage(message: Message, level: Int) {
+        fun checkBucket(check: String, friendlyText: String, amount: Int) {
+            if (amount == 0)
+                return
+            val bucket = getBucket(check, message.guild.id, level) ?: return
+            if (bucket.check(message.author.id, amount)) {
+                throw ViolationException("${check.toUpperCase()}: $friendlyText (${bucket.count(
+                        message.author.id)}/${bucket.size(message.author.id)}s)", message.author,
+                        level, message.guild)
+            }
+        }
+        checkBucket("max_messages", "Too many messages", 1)
+        checkBucket("max_newlines", "Too many newlines",
+                message.contentRaw.split(Regex("\\r\\n|\\r|\\n")).count())
+        checkBucket("max_mentions", "Too many mentions", {
+            val pattern = Regex("<@[!&]?\\d+>")
+            pattern.findAll(message.contentRaw).count()
+        }.invoke())
+        checkBucket("max_links", "Too many links", {
+            val pattern = Regex("https?://")
+            pattern.findAll(message.contentRaw).count()
+        }.invoke())
+        checkBucket("max_emoji", "Too many emoji", {
+            EMOJI_RE.findAll(message.contentRaw).count()
+        }.invoke())
+        checkBucket("max_uppercase", "Too many uppercase", {
+            val pattern = Regex("[A-Z]")
+            pattern.findAll(message.contentRaw).count()
+        }.invoke())
+        checkBucket("max_attachments", "Too many attachments", message.attachments.size)
+    }
 
-    private fun violate(user: User, guild: Guild, violation: Rule, punishment: Punishment,
-                        bucket: Bucket) {
+    private fun violate(violation: ViolationException) {
         ModuleManager[Redis::class.java].getConnection().use { con ->
-            val key = "lv:${guild.id}:${user.id}"
+            val key = "lv:${violation.guild.id}:${violation.user.id}"
             val last = (con.get(key) ?: "0").toLong()
-
             con.setex(key, 60, System.currentTimeMillis().toString())
-
             if (last + (10 * 1000) < System.currentTimeMillis()) {
-                // VIOLATION
-                guild.kirbotGuild.logManager.genericLog(LogEvent.SPAM_VIOLATE, ":helmet_with_cross:",
-                        "${user.nameAndDiscrim} (`${user.id}`) Has violated `$violation`: ${violation.friendlyType} (${bucket.count(
-                                "")} / ${bucket.size("")}s)")
+                val settings = getSettings(violation.guild.id)
+                val punishment = settings.optString("punishment") ?: return
+                val duration = settings.optLong("punishment_duration", -1)
 
-                when (punishment.type) {
-                    InfractionType.MUTE -> {
-                        Infractions.mute(user.id, guild, "1", "Spam Detected")
+                // Modlog
+                violation.guild.kirbotGuild.logManager.genericLog(LogEvent.SPAM_VIOLATE,
+                        ":helmet_with_cross:",
+                        "${violation.user.logName} Has violated ${violation.msg}")
+
+                when (punishment.toUpperCase()) {
+                    "NONE" -> {
+                        // Do nothing
                     }
-                    InfractionType.KICK -> Infractions.kick(user.id, guild, "1", "Spam Detected")
-                    InfractionType.BAN -> Infractions.ban(user.id, guild, "1", "Spam Detected")
-                    InfractionType.TEMPMUTE -> {
-                        Infractions.tempMute(user.id, guild, "1", punishment.duration.toLong(),
-                                TimeUnit.SECONDS, "Spam Detected")
+                    "MUTE" -> {
+                        Infractions.mute(violation.user.id, violation.guild, violation.user.id,
+                                "Spam detected")
+                    }
+                    "KICK" -> {
+                        Infractions.kick(violation.user.id, violation.guild, violation.user.id,
+                                "Spam detected")
+                    }
+                    "BAN" -> {
+                        Infractions.ban(violation.user.id, violation.guild, violation.user.id,
+                                "Spam detected")
+                    }
+                    "TEMPMUTE" -> {
+                        Infractions.tempMute(violation.user.id, violation.guild, violation.user.id,
+                                duration, TimeUnit.SECONDS, "Spam Detected")
                     }
                     else -> {
-                        Bot.LOG.warn("Unknown punishment ${punishment.type}")
+                        Bot.LOG.warn("Unknown punishment $punishment on guild ${violation.guild}")
+                        violation.guild.kirbotGuild.logManager.genericLog(LogEvent.SPAM_VIOLATE,
+                                ":warning:",
+                                "Unknown punishment `${punishment.toUpperCase()}`. No action has been taken")
+                    }
+                }
+
+                if (settings.has("clean_count") || settings.has("clean_duration")) {
+                    Bot.LOG.debug("Performing clean")
+                    Thread.sleep(250) // Wait to make sure in-flight stuff has been committed to the db
+                    val messageQuery = Model.query(GuildMessage::class.java).where("author",
+                            violation.user.id).where("server_id", violation.guild.id).where(
+                            "deleted", false)
+                    if (settings.has("clean_count")) {
+                        val amount = (settings.optString("clean_count") ?: "0").toLong()
+                        messageQuery.limit(amount)
+                    }
+                    if (settings.has("clean_duration")) {
+                        val time = System.currentTimeMillis() - ((settings.optString(
+                                "clean_duration") ?: "0").toLong() * 1000)
+                        val after = Timestamp(time)
+                        messageQuery.where("created_at", ">", after)
+                    }
+                    val messages = messageQuery.get()
+                    Bot.LOG.debug("Deleting ${messages.size} in ${violation.guild}")
+                    val messageByChannel = mutableMapOf<String, MutableList<String>>()
+                    messages.forEach { m ->
+                        if (messageByChannel[m.channel] == null)
+                            messageByChannel[m.channel] = mutableListOf()
+                        messageByChannel[m.channel]?.add(m.id)
+                    }
+                    messageByChannel.forEach { chan, msgs ->
+                        val channel = violation.guild.getTextChannelById(chan)
+                        if (channel == null) {
+                            Bot.LOG.debug("No channel found with $chan")
+                        }
+                        // Check for delete perms
+                        if (!channel.checkPermissions(Permission.MESSAGE_MANAGE)) {
+                            Bot.LOG.debug("No permissions in $channel")
+                            return@forEach
+                        }
+                        val mutableMsgs = msgs.toMutableList()
+                        while (mutableMsgs.isNotEmpty()) {
+                            val list = mutableMsgs.subList(0, Math.min(100, mutableMsgs.size))
+                            if(list.size == 1){
+                                channel.deleteMessageById(list.first()).queue()
+                            } else {
+                                channel.deleteMessagesByIds(list).queue()
+                            }
+                            mutableMsgs.removeAll(list)
+                        }
                     }
                 }
             } else {
-                Bot.LOG.debug("Last violation was within 10 seconds, ignoring")
+                // Ignore
+                Bot.LOG.debug(
+                        "Last violation for ${violation.user} was < 10 seconds ago. Ignoring")
             }
         }
     }
 
-    private fun calculateEffectiveRules(user: User, guild: Guild): Array<SpamRule> {
+    private fun getBucket(rule: String, guild: String, level: Int): Bucket? {
+        val ruleJson = getRule(guild, level)?.getJSONObject(rule) ?: return null
+        if (!ruleJson.has("count") || !ruleJson.has("period"))
+            return null
+        return Bucket("spam:$rule:$guild:%s", ruleJson.getInt("count"), ruleJson.getInt("period")*1000)
+    }
+
+    private fun getSettings(guild: String): JSONObject {
+        val cached = settingsCache.getIfPresent(guild)
+        if (cached != null) {
+            return cached.settings
+        }
+        val model = Model.first(SpamSettings::class.java, "id", guild)
+                ?: SpamSettings().apply { id = guild }
+        settingsCache.put(guild, model)
+        return model.settings
+    }
+
+    private fun getRule(guild: String, level: Int): JSONObject? {
+        return getSettings(guild).optJSONObject(level.toString())
+    }
+
+    private fun getEffectiveRules(guild: Guild, user: User): List<Int> {
         val clearance = user.getClearance(guild)
+        val settings = getSettings(guild.id)
 
-        // Find the rules with equal or lower clearance
-        val settings = getSettings(guild).settings
-
-        val effectiveCats = settings.keySet().map { it.toInt() }.filter { it >= clearance }
-
-        val rules = mutableListOf<SpamRule>()
-        effectiveCats.forEach { cat ->
-            val obj = settings.getJSONObject(cat.toString())
-
-            // can't use a foreach here because it breaks stuff :meowglare:
-            for (i in 0 until Rule.values().size) {
-                val it = Rule.values()[i]
-                val rule = obj.optJSONObject(it.jsonType) ?: continue
-
-                rules.add(SpamRule(it, rule.getInt("count"), rule.getInt("period"), Punishment(
-                        InfractionType.valueOf(obj.getString("punishment")),
-                        obj.optInt("punishment_duration"))))
-            }
-        }
-        return rules.toTypedArray()
+        return settings.keySet().filter { it.isNumber() }.map { it.toInt() }.filter { it >= clearance }
     }
 
-    private fun getSettings(guild: Guild): SpamSettings {
-        val settings = settingsCache.getIfPresent(guild.id)
-        return if (settings == null) {
-            val s = Model.first(SpamSettings::class.java, "id", guild.id)
-                    ?: SpamSettings().apply { this.id = guild.id }
-            settingsCache.put(guild.id, s)
-            s
-        } else {
-            settings
-        }
-    }
-
-    private fun getViolations(rule: Rule, message: String): Int {
-        when (rule) {
-            Rule.MAX_MESSAGES -> return 1
-            Rule.MAX_NEWLINES -> {
-                val count = message.split(Regex("\\r\\n|\\r|\\n")).count()
-                return if (count > 1) count else 0
-            }
-            Rule.MAX_MENTIONS -> {
-                val pattern = Regex("<@!?\\d+>")
-
-                return pattern.findAll(message).count()
-            }
-            Rule.MAX_LINKS -> {
-                val pattern = Regex("https?://")
-
-                return pattern.findAll(message).count()
-            }
-        }
-    }
-
-    private class SpamRule(val rule: Rule, val count: Int, val period: Int,
-                           val punishment: Punishment) {
+    private class ViolationException(val msg: String, val user: User, val level: Int,
+                                     val guild: Guild) : Exception(msg) {
         override fun toString(): String {
-            return "SpamRule(rule=$rule, count=$count, period=$period, punishment=$punishment)"
+            return "ViolationException(msg='$msg', user=$user, level=$level, guild=$guild)"
         }
-    }
-
-    // TODO 4/2/18: Add clean duration to clean the past X messages
-    private data class Punishment(val type: InfractionType, val duration: Int)
-
-    private enum class Rule(val jsonType: String, val friendlyType: String) {
-        MAX_MESSAGES("max_messages", "Too many messages"),
-        MAX_NEWLINES("max_newlines", "Too many lines"),
-        MAX_MENTIONS("max_mentions", "Too many mentions"),
-        MAX_LINKS("max_links", "Too many links")
     }
 }

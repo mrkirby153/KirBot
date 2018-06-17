@@ -12,7 +12,7 @@ class Bucket(val keyFormat: String, val maxActions: Int, val timePeriod: Int) {
             // Delete old keys
             con.zremrangeByScore(k, "-inf", (System.currentTimeMillis() - timePeriod).toString())
             for (i in 1..amount) {
-                con.zadd(k, System.currentTimeMillis().toDouble(), "$key-$i")
+                con.zadd(k, System.currentTimeMillis().toDouble(), "${System.currentTimeMillis()}-$i")
             }
             con.expire(k, timePeriod / 1000)
             return con.zcount(k, "-inf", "inf").toInt()

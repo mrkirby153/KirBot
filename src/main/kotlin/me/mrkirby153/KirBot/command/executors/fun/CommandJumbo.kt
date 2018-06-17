@@ -24,7 +24,7 @@ class CommandJumbo : BaseCommand(false) {
         val urls = mutableListOf<String>()
 
         emojis.split(" ").forEach { e ->
-            val matcher = EMOJI_RE.matcher(e)
+            val matcher = EMOJI_RE.toPattern().matcher(e)
             if (matcher.find()) {
                 val id = matcher.group(2)
                 urls.add("https://discordapp.com/api/emojis/$id.png")

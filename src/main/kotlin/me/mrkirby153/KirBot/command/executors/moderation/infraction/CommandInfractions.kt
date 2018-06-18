@@ -42,9 +42,9 @@ class CommandInfractions : BaseCommand(false, CommandCategory.MODERATION) {
         val users = mutableMapOf<String, String>()
         infractions.forEach {
             val moderator = if (it.issuerId == null) "Unknown" else users.computeIfAbsent(
-                    it.issuerId!!, {
+                    it.issuerId!!) {
                 Model.first(DiscordUser::class.java, "id", it)?.nameAndDiscrim ?: it
-            })
+            }
             val username = users.computeIfAbsent(it.userId, {
                 Model.first(DiscordUser::class.java, "id", it)?.nameAndDiscrim ?: it
             })
@@ -61,9 +61,11 @@ class CommandInfractions : BaseCommand(false, CommandCategory.MODERATION) {
         }
     }
 
-    @Command(name = "clear", clearance = CLEARANCE_MOD, arguments = ["<id:int>"])
+    @Command(name = "clear", clearance = CLEARANCE_MOD,
+            arguments = ["<id:int>", "[reason:string...]"])
     fun clearInfraction(context: Context, cmdContext: CommandContext) {
         val id = cmdContext.get<Int>("id")!!
+        val reason = cmdContext.get<String>("reason") ?: "No reason specified"
 
         val infraction = Model.first(Infraction::class.java, "id", id) ?: throw CommandException(
                 "Infraction not found")
@@ -77,7 +79,7 @@ class CommandInfractions : BaseCommand(false, CommandCategory.MODERATION) {
             infraction.delete()
             context.send().success("Infraction `$id` cleared!", true).queue()
             context.guild.kirbotGuild.logManager.genericLog(LogEvent.ADMIN_COMMAND, ":warning:",
-                    "Infraction `$id` deleted by ${context.author.nameAndDiscrim} (`${context.author.id}`)")
+                    "Infraction `$id` deleted by ${context.author.nameAndDiscrim} (`${context.author.id}`): `$reason`")
             true
         })
     }

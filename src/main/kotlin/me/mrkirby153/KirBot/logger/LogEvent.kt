@@ -44,6 +44,8 @@ enum class LogEvent(val permission: Long) {
     USER_UNBAN(131072),
     USER_KICK(262144),
 
+    USER_WARN(2097152),
+
     // A message by a user was censored
     MESSAGE_CENSOR(524288),
 

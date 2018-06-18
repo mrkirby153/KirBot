@@ -39,6 +39,17 @@ object Infractions {
         })
     }
 
+    fun warn(user: String, guild: Guild, issuer: String, reason: String? = null) {
+        createInfraction(user, guild, issuer, reason, InfractionType.WARN)
+        guild.kirbotGuild.logManager.genericLog(LogEvent.USER_WARN, ":warning:", buildString {
+            append(lookupUser(user, true))
+            append(" Was warned by **${lookupUser(issuer)}**")
+            if (reason != null) {
+                append(": `$reason`")
+            }
+        })
+    }
+
     fun ban(user: String, guild: Guild, issuer: String, reason: String? = null,
             purgeDays: Int = 0) {
         ModuleManager[InfractionModule::class.java].ignoreBans.add(user)

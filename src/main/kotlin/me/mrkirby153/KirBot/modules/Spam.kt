@@ -193,7 +193,7 @@ class Spam : Module("spam") {
     }
 
     private fun getBucket(rule: String, guild: String, level: Int): Bucket? {
-        val ruleJson = getRule(guild, level)?.getJSONObject(rule) ?: return null
+        val ruleJson = getRule(guild, level)?.optJSONObject(rule) ?: return null
         if (!ruleJson.has("count") || !ruleJson.has("period"))
             return null
         return Bucket("spam:$rule:$guild:%s", ruleJson.getInt("count"), ruleJson.getInt("period")*1000)

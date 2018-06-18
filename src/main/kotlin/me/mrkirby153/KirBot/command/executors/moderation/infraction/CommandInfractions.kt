@@ -2,6 +2,8 @@ package me.mrkirby153.KirBot.command.executors.moderation.infraction
 
 import com.mrkirby153.bfs.Tuple
 import com.mrkirby153.bfs.model.Model
+import com.mrkirby153.bfs.model.ModelOption
+import com.mrkirby153.bfs.sql.QueryBuilder
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
@@ -29,18 +31,37 @@ class CommandInfractions : BaseCommand(false, CommandCategory.MODERATION) {
         throw CommandException("Please provide a sub-command")
     }
 
-    @Command(name = "search", clearance = CLEARANCE_MOD, arguments = ["<user:snowflake>"])
+    @Command(name = "search", clearance = CLEARANCE_MOD, arguments = ["<query:string...>"])
     fun search(context: Context, cmdContext: CommandContext) {
-        val user = cmdContext.get<String>("user") ?: throw CommandException("Specify a user")
-        val infractions = Model.get(Infraction::class.java, Tuple("user_id", user),
-                Tuple("guild", context.guild.id))
+        val query = cmdContext.get<String>("query")!!
+        val infractions = mutableSetOf<Infraction>()
+
+        /*Model.get(Infraction::class.java, Tuple("user_id", user),
+                Tuple("guild", context.guild.id))*/
+        QueryBuilder.logQueries = true
+        infractions.addAll(Model.get(Infraction::class.java, Tuple("user_id", query),
+                Tuple("guild", context.guild.id)))
+        infractions.addAll(Model.get(Infraction::class.java, Tuple("issuer", query),
+                Tuple("guild", context.guild.id)))
+        infractions.addAll(Model.get(Infraction::class.java, Tuple("id", query),
+                Tuple("guild", context.guild.id)))
+        infractions.addAll(
+                Model.get(Infraction::class.java, ModelOption("reason", "like", "%$query%"),
+                        ModelOption("guild", "=", context.guild.id)))
+        QueryBuilder.logQueries = false
+
+        val deduped = mutableListOf<Infraction>()
+        infractions.forEach {
+            if(it.id !in deduped.map { it.id })
+                deduped.add(it)
+        }
 
         val header = arrayOf("ID", "Created", "Type", "User", "Moderator", "Reason", "Active")
 
 
         val table = TableBuilder(header)
         val users = mutableMapOf<String, String>()
-        infractions.forEach {
+        deduped.forEach {
             val moderator = if (it.issuerId == null) "Unknown" else users.computeIfAbsent(
                     it.issuerId!!) {
                 Model.first(DiscordUser::class.java, "id", it)?.nameAndDiscrim ?: it
@@ -57,7 +78,7 @@ class CommandInfractions : BaseCommand(false, CommandCategory.MODERATION) {
         if (builtTable.length < 2000) {
             context.channel.sendMessage("```$builtTable```").queue()
         } else {
-            context.channel.sendFile(builtTable.toByteArray(), "infractions-$user.txt").queue()
+            context.channel.sendFile(builtTable.toByteArray(), "infractions-$query.txt").queue()
         }
     }
 

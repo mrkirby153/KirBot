@@ -146,7 +146,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         }
 
         // Load the rest of this stuff async
-        val future = Bot.scheduler.submit({
+        val future = Bot.scheduler.submit {
 
             if (this.selfMember.nickname != settings.botNick) {
                 Bot.LOG.debug("Updating nickname to \"${settings.botNick}\"")
@@ -288,7 +288,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
             if (!ready)
                 Bot.LOG.debug("Guild ${this} is ready!")
             ready = true
-        })
+        }
 
         if (waitFor) {
             Bot.LOG.debug("Waiting for sync to complete")
@@ -332,9 +332,17 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
 
     fun getClearance(member: Member): Int {
         lock()
-        if (member.user.id in Bot.admins) {
+        try {
+            val redis = ModuleManager.getLoadedModule(Redis::class.java)
+            redis?.getConnection()?.use { jedis ->
+                if (jedis.sismember("admins", member.user.id)) {
+                    unlock()
+                    return CLEARANCE_GLOBAL_ADMIN
+                }
+            }
+        } catch(e: Exception){
+            // Ignore
             unlock()
-            return CLEARANCE_GLOBAL_ADMIN
         }
         if (member.isOwner) {
             unlock()
@@ -387,6 +395,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
     }
 
     fun syncSeenUsers() {
+        Bot.LOG.debug("Syncing users")
         lock()
         val userIds = DB.getFirstColumnValues<String>("SELECT id FROM seen_users")
         val newMembers = this.members.filter { it.user.id !in userIds }
@@ -485,31 +494,31 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         var leakThreshold = 1000
 
         operator fun get(guild: Guild): KirBotGuild {
-            synchronized(guilds, {
+            synchronized(guilds) {
                 return guilds.computeIfAbsent(guild.id, { KirBotGuild(guild) })
-            })
+            }
         }
 
         fun remove(guild: Guild) {
-            synchronized(guilds, {
+            synchronized(guilds) {
                 remove(guild.id)
-            })
+            }
         }
 
         fun remove(id: String) {
-            synchronized(guilds, {
+            synchronized(guilds) {
                 guilds.remove(id)
-            })
+            }
         }
 
         fun startLeakMonitor() {
-            leakDetectorThread = Thread({
+            leakDetectorThread = Thread {
                 Bot.LOG.debug("Starting Guild lock leak monitor")
                 while (true) {
                     guilds.values.forEach { it.checkLeak() }
                     Thread.sleep(10)
                 }
-            }).apply {
+            }.apply {
                 name = "LeakDetector"
                 isDaemon = true
             }

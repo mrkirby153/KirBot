@@ -46,8 +46,6 @@ object Bot {
 
     var numShards: Int = 1
 
-    val admins: List<String> = files.admins.run { this.readLines() }
-
     val seenStore = SeenStore()
 
     val constants = Bot.javaClass.getResourceAsStream("/constants.properties").readProperties()
@@ -119,8 +117,8 @@ object Bot {
         val syncTime = measureTimeMillis {
             guilds.forEach {
                 LOG.info("Syncing guild ${it.id} (${it.name})")
-                KirBotGuild[it].sync()
                 KirBotGuild[it].syncSeenUsers()
+                KirBotGuild[it].sync()
             }
         }
         // Remove old guilds

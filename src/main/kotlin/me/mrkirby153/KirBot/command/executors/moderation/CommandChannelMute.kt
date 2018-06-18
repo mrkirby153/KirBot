@@ -13,6 +13,7 @@ import me.mrkirby153.KirBot.modules.Scheduler
 import me.mrkirby153.KirBot.scheduler.Schedulable
 import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
+import me.mrkirby153.KirBot.utils.canInteractWith
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import me.mrkirby153.kcutils.Time
@@ -36,6 +37,8 @@ class CommandChannelMute : BaseCommand(false, CommandCategory.MODERATION) {
                 "That user was not found")
         val member = context.guild.getMember(user) ?: throw CommandException(
                 "That user isn't in this guild!")
+        if (!context.author.canInteractWith(context.guild, user))
+            throw CommandException("Missing permissions")
 
         val channel = context.channel as TextChannel
 
@@ -66,6 +69,8 @@ class CommandChanUnmute : BaseCommand() {
                 "That user was not found")
         val member = context.guild.getMember(user) ?: throw CommandException(
                 "That user isn't in this guild!")
+        if (!context.author.canInteractWith(context.guild, user))
+            throw CommandException("Missing permissions")
 
         val override = (context.channel as TextChannel).getPermissionOverride(
                 member)

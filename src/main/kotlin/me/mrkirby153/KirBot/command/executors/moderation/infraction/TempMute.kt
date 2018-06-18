@@ -13,6 +13,7 @@ import me.mrkirby153.KirBot.infraction.Infractions
 import me.mrkirby153.KirBot.logger.LogEvent
 import me.mrkirby153.KirBot.scheduler.Schedulable
 import me.mrkirby153.KirBot.utils.Context
+import me.mrkirby153.KirBot.utils.canInteractWith
 import me.mrkirby153.KirBot.utils.getMember
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
@@ -41,6 +42,9 @@ class TempMute : BaseCommand(false, CommandCategory.MODERATION) {
 
         if (context.channel !is TextChannel)
             throw CommandException("This command won't work in PMs")
+
+        if(!context.author.canInteractWith(context.guild, user))
+            throw CommandException("Missing permissions")
 
         context.send().success(
                 "Muted ${user.nameAndDiscrim} for ${Time.format(1, timeParsed)}" + buildString {

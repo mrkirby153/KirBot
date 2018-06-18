@@ -9,6 +9,7 @@ import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.infraction.Infractions
 import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
+import me.mrkirby153.KirBot.utils.canInteractWith
 import me.mrkirby153.KirBot.utils.getMember
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.User
@@ -25,6 +26,9 @@ class CommandMute : BaseCommand(false, CommandCategory.MODERATION) {
                 "This user isn't a part of the guild!")
         if (context.channel !is TextChannel)
             throw CommandException("This command won't work in PMs")
+
+        if(!context.author.canInteractWith(context.guild, user))
+            throw CommandException("Missing permissions")
 
         Infractions.mute(user.id, context.guild, context.author.id, reason)
         context.send().success(

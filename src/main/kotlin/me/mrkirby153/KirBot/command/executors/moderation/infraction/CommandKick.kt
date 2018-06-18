@@ -13,21 +13,24 @@ import me.mrkirby153.KirBot.utils.canInteractWith
 import me.mrkirby153.KirBot.utils.getMember
 import net.dv8tion.jda.core.entities.User
 
-@Command(name = "kick", arguments = ["<user:user>", "<reason:string...>"], clearance = CLEARANCE_MOD)
+@Command(name = "kick", arguments = ["<user:user>", "[reason:string...]"],
+        clearance = CLEARANCE_MOD)
 @LogInModlogs
 class CommandKick : BaseCommand(false, CommandCategory.MODERATION) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val user = cmdContext.get<User>("user") ?: throw CommandException("Please specify a user")
 
-        val reason = cmdContext.get<String>("reason") ?: throw CommandException(
-                "Please specify a reason")
+        val reason = cmdContext.get<String>("reason")
 
         if (!context.guild.selfMember.canInteract(user.getMember(context.guild)))
             throw CommandException("I cannot kick this user")
         if (!context.author.canInteractWith(context.guild, user))
-            throw CommandException("You cannot kick this user")
+            throw CommandException("Missing permissions")
         Infractions.kick(user.id, context.guild, context.author.id, reason)
-        context.send().success("Kicked **${user.name}#${user.discriminator}** (`$reason`)",
+        context.send().success("Kicked **${user.name}#${user.discriminator}** ${buildString {
+            if (reason != null)
+                append("(`$reason`)")
+        }}",
                 true).queue()
     }
 }

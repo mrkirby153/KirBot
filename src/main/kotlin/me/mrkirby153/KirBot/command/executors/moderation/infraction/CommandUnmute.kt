@@ -9,6 +9,7 @@ import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.infraction.Infractions
 import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
+import me.mrkirby153.KirBot.utils.canInteractWith
 import me.mrkirby153.KirBot.utils.getMember
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.User
@@ -26,6 +27,9 @@ class CommandUnmute : BaseCommand(false, CommandCategory.MODERATION) {
         if (context.channel !is TextChannel) {
             throw CommandException("This command doesn't work in PMs")
         }
+        if (!user.canInteractWith(context.guild, user))
+            throw CommandException("Missing permissions")
+
         Infractions.unmute(user.id, context.guild, context.author.id, cmdContext.get("reason"))
         context.send().success("Unmuted **${user.name}#${user.discriminator}**", true).queue()
     }

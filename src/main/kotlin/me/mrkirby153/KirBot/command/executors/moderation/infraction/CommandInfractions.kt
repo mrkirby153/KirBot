@@ -38,7 +38,6 @@ class CommandInfractions : BaseCommand(false, CommandCategory.MODERATION) {
 
         /*Model.get(Infraction::class.java, Tuple("user_id", user),
                 Tuple("guild", context.guild.id))*/
-        QueryBuilder.logQueries = true
         infractions.addAll(Model.get(Infraction::class.java, Tuple("user_id", query),
                 Tuple("guild", context.guild.id)))
         infractions.addAll(Model.get(Infraction::class.java, Tuple("issuer", query),
@@ -48,7 +47,6 @@ class CommandInfractions : BaseCommand(false, CommandCategory.MODERATION) {
         infractions.addAll(
                 Model.get(Infraction::class.java, ModelOption("reason", "like", "%$query%"),
                         ModelOption("guild", "=", context.guild.id)))
-        QueryBuilder.logQueries = false
 
         val deduped = mutableListOf<Infraction>()
         infractions.forEach {

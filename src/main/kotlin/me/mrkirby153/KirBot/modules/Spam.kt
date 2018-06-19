@@ -63,7 +63,7 @@ class Spam : Module("spam") {
     }
 
 
-   private fun checkMessage(message: Message, level: Int) {
+    private fun checkMessage(message: Message, level: Int) {
         fun checkBucket(check: String, friendlyText: String, amount: Int) {
             if (amount == 0)
                 return
@@ -93,6 +93,33 @@ class Spam : Module("spam") {
             pattern.findAll(message.contentRaw).count()
         }.invoke())
         checkBucket("max_attachments", "Too many attachments", message.attachments.size)
+        checkDuplicates(message, level)
+    }
+
+    private fun checkDuplicates(message: Message, level: Int) {
+        val rule = getRule(message.guild.id, level) ?: return
+        val dupeSettings = rule.optJSONObject("max_duplicates") ?: return
+        val count = dupeSettings.getInt("count")
+        val period = dupeSettings.getInt("period")
+
+        val time = Instant.now().minusSeconds(period.toLong()).epochSecond
+        val timestamp = Timestamp(time)
+        val messages = Model.query(GuildMessage::class.java).where("author",
+                message.author.id).where("server_id", message.guild.id).where("created_at", ">",
+                timestamp).where("deleted", false).get()
+
+        val map = mutableMapOf<String, Int>()
+        messages.forEach { msg ->
+            val text = msg.message
+            val c = (map[text.toLowerCase()] ?: 0) + 1
+            map[text.toLowerCase()] = c
+        }
+        map.forEach { _, v ->
+            if (v >= count) {
+                throw ViolationException("MAX_DUPLICATES: Too many duplicates ($v / ${map.size})",
+                        message.author, level, message.guild)
+            }
+        }
     }
 
     private fun violate(violation: ViolationException) {
@@ -140,7 +167,8 @@ class Spam : Module("spam") {
 
                 if (settings.has("clean_count") || settings.has("clean_duration")) {
                     Bot.LOG.debug("Performing clean")
-                    Thread.sleep(250) // Wait to make sure in-flight stuff has been committed to the db
+                    Thread.sleep(
+                            250) // Wait to make sure in-flight stuff has been committed to the db
                     val messageQuery = Model.query(GuildMessage::class.java).where("author",
                             violation.user.id).where("server_id", violation.guild.id).where(
                             "deleted", false)
@@ -175,7 +203,7 @@ class Spam : Module("spam") {
                         val mutableMsgs = msgs.toMutableList()
                         while (mutableMsgs.isNotEmpty()) {
                             val list = mutableMsgs.subList(0, Math.min(100, mutableMsgs.size))
-                            if(list.size == 1){
+                            if (list.size == 1) {
                                 channel.deleteMessageById(list.first()).queue()
                             } else {
                                 channel.deleteMessagesByIds(list).queue()
@@ -196,7 +224,8 @@ class Spam : Module("spam") {
         val ruleJson = getRule(guild, level)?.optJSONObject(rule) ?: return null
         if (!ruleJson.has("count") || !ruleJson.has("period"))
             return null
-        return Bucket("spam:$rule:$guild:%s", ruleJson.getInt("count"), ruleJson.getInt("period")*1000)
+        return Bucket("spam:$rule:$guild:%s", ruleJson.getInt("count"),
+                ruleJson.getInt("period") * 1000)
     }
 
     private fun getSettings(guild: String): JSONObject {

@@ -11,11 +11,13 @@ import me.mrkirby153.KirBot.utils.embed.b
 import me.mrkirby153.KirBot.utils.embed.embed
 import me.mrkirby153.KirBot.utils.localizeTime
 import me.mrkirby153.KirBot.utils.mdEscape
+import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import java.awt.Color
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 
-@Command(name = "poll", arguments = ["<duration:string>", "<question:string>", "<options:string...>"])
+@Command(name = "poll",
+        arguments = ["<duration:string>", "<question:string>", "<options:string...>"])
 class CommandPoll : BaseCommand(false, CommandCategory.FUN) {
     val time = mutableMapOf<String, Int>()
 
@@ -32,28 +34,34 @@ class CommandPoll : BaseCommand(false, CommandCategory.FUN) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val duration = timeOffset(cmdContext.get<String>("duration") ?: "0s")
 
-        if(duration <= 0){
+        val endsAt = System.currentTimeMillis() + (duration * 1000)
+        if (duration <= 0) {
             throw CommandException("Please specify a duration greater than zero!")
         }
 
         val question = cmdContext.get<String>("question")
 
-        val options = (cmdContext.get<String>("options") ?: "").split(Regex("[,\\|]")).map { it.trim() }.filter { it.isNotBlank() }
+        val options = (cmdContext.get<String>("options") ?: "").split(
+                Regex("[,\\|]")).map { it.trim() }.filter { it.isNotBlank() }
 
-        if(options.size <= 1){
+        if (options.size <= 1) {
             throw CommandException("Please provide more than one option for the poll")
         }
 
-        if(options.size > 9){
+        if (options.size > 9) {
             throw CommandException("You can only have 9 options for the poll!")
         }
         context.deleteAfter(30, TimeUnit.SECONDS)
 
+        val filteredOptions = options.filter { it.isNotEmpty() }
         context.send().embed("Poll") {
             color = Color.GREEN
-            description { +"Vote by clicking the reactions on the choices below! Results will be final in ${b(localizeTime(duration))}" }
+            description {
+                +"Vote by clicking the reactions on the choices below! Results will be final in ${b(
+                        localizeTime(duration))}"
+            }
             fields {
-                if(question != null)
+                if (question != null)
                     field {
                         title = "Question"
                         description = question
@@ -61,11 +69,18 @@ class CommandPoll : BaseCommand(false, CommandCategory.FUN) {
                 field {
                     title = "Options"
                     description {
-                        options.filter { it.isNotEmpty() }.forEachIndexed {index, option ->
+                        filteredOptions.forEachIndexed { index, option ->
                             appendln("${'\u0030' + (index)}\u20E3 **${option.mdEscape()}**")
                         }
                     }
                 }
+            }
+            footer {
+                url = context.author.effectiveAvatarUrl
+                text { +"Requested by ${context.author.nameAndDiscrim} - Ends" }
+            }
+            timestamp {
+                millis(endsAt)
             }
         }.rest().queue {
             val m = it
@@ -77,20 +92,37 @@ class CommandPoll : BaseCommand(false, CommandCategory.FUN) {
                 description {
                     +"Voting has ended, Check newer messages for results"
                 }
+                footer {
+                    url = context.author.effectiveAvatarUrl
+                    text { +"Requested by ${context.author.nameAndDiscrim} - Ended" }
+                }
+                fields {
+                    field {
+                        title = "Options"
+                        description {
+                            filteredOptions.forEachIndexed { index, option ->
+                                appendln("${'\u0030' + (index)}\u20E3 **${option.mdEscape()}**")
+                            }
+                        }
+                    }
+                }
+                timestamp {
+                    millis(endsAt)
+                }
                 color = Color.RED
             }.build()).queueAfter(duration.toLong(), TimeUnit.SECONDS) {
                 m.unpin().queue()
                 context.send().embed("Poll Results") {
                     color = Color.CYAN
-                    description {  +"Voting has ended! Here are the results" }
+                    description { +"Voting has ended! Here are the results" }
 
                     var topVotes = 0
                     val winners = mutableListOf<Int>()
                     fields {
-                        if(question != null)
-                            field{
+                        if (question != null)
+                            field {
                                 title = "Question"
-                                description  = question
+                                description = question
                             }
 
                         field {
@@ -101,7 +133,8 @@ class CommandPoll : BaseCommand(false, CommandCategory.FUN) {
                                     if (value !in 0 until options.size) return@forEach
 
                                     options[value].let {
-                                        appendln("${reaction.reactionEmote.name} **$it** — __${reaction.count - 1} Votes__")
+                                        appendln(
+                                                "${reaction.reactionEmote.name} **$it** — __${reaction.count - 1} Votes__")
 
                                         if (reaction.count - 1 > topVotes) {
                                             winners.clear()
@@ -117,8 +150,13 @@ class CommandPoll : BaseCommand(false, CommandCategory.FUN) {
 
                         field {
                             title = "Winner"
-                            description  = winners.joinToString(prefix = "**", postfix = "**") { options[it] }
+                            description = winners.joinToString(prefix = "**",
+                                    postfix = "**") { options[it] }
                         }
+                    }
+                    footer {
+                        url = context.author.effectiveAvatarUrl
+                        text { +"Requested by ${context.author.nameAndDiscrim}" }
                     }
                 }.rest().queue()
             }

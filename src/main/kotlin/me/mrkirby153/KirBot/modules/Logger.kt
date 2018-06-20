@@ -9,6 +9,7 @@ import me.mrkirby153.KirBot.logger.LogEvent
 import me.mrkirby153.KirBot.logger.LogManager
 import me.mrkirby153.KirBot.logger.LogPump
 import me.mrkirby153.KirBot.module.Module
+import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.logName
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
@@ -30,6 +31,7 @@ import net.dv8tion.jda.core.events.role.RoleCreateEvent
 import net.dv8tion.jda.core.events.role.RoleDeleteEvent
 import net.dv8tion.jda.core.events.role.update.RoleUpdateNameEvent
 import net.dv8tion.jda.core.events.user.UserNameUpdateEvent
+import org.json.JSONObject
 
 class Logger : Module("logging") {
 
@@ -37,6 +39,7 @@ class Logger : Module("logging") {
 
     init {
         dependencies.add(Database::class.java)
+        dependencies.add(Redis::class.java)
     }
 
     private lateinit var logPump: LogPump
@@ -45,6 +48,7 @@ class Logger : Module("logging") {
         log("Starting logger....")
         logPump = LogPump(logDelay)
         logPump.start()
+        registerLogEvents()
     }
 
     override fun onShutdown(event: ShutdownEvent?) {
@@ -191,5 +195,19 @@ class Logger : Module("logging") {
     override fun onGuildVoiceMove(event: GuildVoiceMoveEvent) {
         event.guild.kirbotGuild.logManager.genericLog(LogEvent.VOICE_ACTION, ":telephone:",
                 "${event.member.user.logName} moved from **${event.channelLeft.name}** to **${event.channelJoined.name}**")
+    }
+
+    /**
+     * Registers the available [LogEvent]s in redis for the panel
+     */
+    private fun registerLogEvents() {
+        val obj = JSONObject()
+        LogEvent.values().sorted().forEach {
+            obj.put(it.toString(), it.permission)
+        }
+        Bot.LOG.debug("Registering log events in redis: $obj")
+        ModuleManager[Redis::class.java].getConnection().use {
+            it.set("log_events", obj.toString())
+        }
     }
 }

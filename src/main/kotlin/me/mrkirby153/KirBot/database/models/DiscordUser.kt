@@ -8,6 +8,10 @@ import net.dv8tion.jda.core.entities.User
 @Table("seen_users")
 class DiscordUser : Model() {
 
+    init {
+        incrementing = false
+    }
+
     var id: String = ""
 
     var username: String = ""

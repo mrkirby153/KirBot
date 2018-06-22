@@ -88,12 +88,17 @@ object CommandExecutor {
                 context.send().info("The command prefix on this server is `$prefix`").queue()
                 return@submit
             }
-            val cmd = parts[0].toLowerCase()
+            var cmd = parts[0].toLowerCase()
 
             Bot.LOG.debug("Looking up $cmd on ${guild.id}")
 
             val args = if (parts.isNotEmpty()) parts.drop(1).toTypedArray() else emptyArray()
 
+            val aliasedCommand = guild.commandAliases.firstOrNull { it.command == cmd }
+            if(aliasedCommand?.alias != null) {
+                Bot.LOG.debug("Command has an overridden alias. $cmd -> ${aliasedCommand.alias}")
+                cmd = aliasedCommand.alias!!
+            }
             val command = getCommand(cmd)
             if (command == null) {
                 executeCustomCommand(context, cmd, args, shard, guild)
@@ -114,7 +119,9 @@ object CommandExecutor {
                 return@submit
             }
 
-            if (!isSubCommand && command.clearance > context.author.getClearance(guild)) {
+            val clearance = if(aliasedCommand != null && aliasedCommand.clearance != -1) aliasedCommand.clearance else command.clearance
+            Bot.LOG.debug("Effective clearance is $clearance")
+            if (!isSubCommand && clearance > context.author.getClearance(guild)) {
                 Bot.LOG.debug(
                         "${context.author.id} was denied access to $cmd due to lack of clearance. Required: ${command.clearance}, Found: ${context.author.getClearance(
                                 guild)}")

@@ -9,6 +9,7 @@ import me.mrkirby153.KirBot.database.models.CustomCommand
 import me.mrkirby153.KirBot.database.models.DiscordUser
 import me.mrkirby153.KirBot.database.models.RoleClearance
 import me.mrkirby153.KirBot.database.models.group.Group
+import me.mrkirby153.KirBot.database.models.guild.CommandAlias
 import me.mrkirby153.KirBot.database.models.guild.GuildMember
 import me.mrkirby153.KirBot.database.models.guild.GuildMemberRole
 import me.mrkirby153.KirBot.database.models.guild.MusicSettings
@@ -45,6 +46,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
 
     lateinit var settings: ServerSettings
     lateinit var customCommands: MutableList<CustomCommand>
+    lateinit var commandAliases: MutableList<CommandAlias>
     val clearances: MutableMap<String, Int> = mutableMapOf()
 
 
@@ -103,6 +105,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
 
         customCommands = Model.get(CustomCommand::class.java,
                 Tuple("server", this.id)).toMutableList()
+        commandAliases = Model.get(CommandAlias::class.java, Tuple("server_id", this.id)).toMutableList()
         logManager.reloadLogChannels()
         loadData()
     }

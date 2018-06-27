@@ -11,7 +11,7 @@
 
     <properties>
         <maven.build.timestamp.format>yyy-MM-dd_HHmmss</maven.build.timestamp.format>
-        <kotlin.version>1.2.41</kotlin.version>
+        <kotlin.version>1.2.50</kotlin.version>
         <pippo.version>1.4.0</pippo.version>
         <jda.version>3.5.1_339</jda.version>
         <buildNumber>${maven.build.timestamp}</buildNumber>
@@ -31,10 +31,6 @@
             <id>mrkirby153</id>
             <name>mrkirby153-main</name>
             <url>https://repo.mrkirby153.com/repository/maven-public/</url>
-        </repository>
-        <repository>
-            <id>aikar</id>
-            <url>https://repo.aikar.co/content/groups/aikar/</url>
         </repository>
     </repositories>
 
@@ -128,12 +124,6 @@
                         </goals>
                         <configuration>
                             <createDependencyReducedPom>false</createDependencyReducedPom>
-                            <relocations>
-                                <relocation>
-                                    <pattern>co.aikar.idb</pattern>
-                                    <shadedPattern>me.mrkirby153.idb</shadedPattern>
-                                </relocation>
-                            </relocations>
                         </configuration>
                     </execution>
                 </executions>
@@ -216,11 +206,6 @@
             <version>1.9.0</version>
         </dependency>
         <dependency>
-            <groupId>com.kotcrab.remark</groupId>
-            <artifactId>remark</artifactId>
-            <version>1.0.0</version>
-        </dependency>
-        <dependency>
             <groupId>org.reflections</groupId>
             <artifactId>reflections</artifactId>
             <version>0.9.11</version>
@@ -244,11 +229,6 @@
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
             <version>1.11</version>
-        </dependency>
-        <dependency>
-            <groupId>org.xerial</groupId>
-            <artifactId>sqlite-jdbc</artifactId>
-            <version>3.21.0.1</version>
         </dependency>
         <dependency>
             <groupId>me.xdrop</groupId>

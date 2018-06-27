@@ -11,6 +11,7 @@ import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.canInteractWith
 import me.mrkirby153.KirBot.utils.getMember
+import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.User
 
@@ -27,8 +28,17 @@ class CommandMute : BaseCommand(false, CommandCategory.MODERATION) {
         if (context.channel !is TextChannel)
             throw CommandException("This command won't work in PMs")
 
-        if(!context.author.canInteractWith(context.guild, user))
+        if (!context.author.canInteractWith(context.guild, user))
             throw CommandException("Missing permissions")
+
+        if (!context.guild.selfMember.hasPermission(Permission.MANAGE_ROLES))
+            throw CommandException("cannot assign the muted role on this guild")
+
+        val highest = context.guild.selfMember.roles.map { it.position }.max() ?: 0
+        val mutedRole = Infractions.getMutedRole(context.guild) ?: throw CommandException(
+                "could not get the muted role")
+        if (mutedRole.position > highest)
+            throw CommandException("cannot assign the muted role")
 
         Infractions.mute(user.id, context.guild, context.author.id, reason)
         context.send().success(

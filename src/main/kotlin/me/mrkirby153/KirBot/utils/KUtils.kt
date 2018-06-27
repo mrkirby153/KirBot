@@ -12,9 +12,11 @@ import net.dv8tion.jda.core.EmbedBuilder
 import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.Channel
 import net.dv8tion.jda.core.entities.Guild
+import net.dv8tion.jda.core.entities.Member
 import net.dv8tion.jda.core.entities.Message
 import net.dv8tion.jda.core.entities.MessageChannel
 import net.dv8tion.jda.core.entities.MessageEmbed
+import net.dv8tion.jda.core.entities.Role
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.User
 import net.dv8tion.jda.core.events.message.react.MessageReactionAddEvent
@@ -39,7 +41,8 @@ fun User.getClearance(server: Guild) = server.kirbotGuild.getClearance(this)
 
 fun User.getMember(server: Guild) = server.getMember(this)
 
-fun User.canInteractWith(guild: Guild, user: User): Boolean = this.getClearance(guild) > user.getClearance(guild)
+fun User.canInteractWith(guild: Guild, user: User): Boolean = this.getClearance(
+        guild) > user.getClearance(guild)
 
 fun Guild.shard(): Shard? {
     return Bot.shardManager.getShard(this)
@@ -64,7 +67,7 @@ fun promptForConfirmation(context: Context, msg: String, onConfirm: (() -> Boole
         WaitUtils.waitFor(MessageReactionAddEvent::class.java, {
             if (it.user.id != context.author.id)
                 return@waitFor
-            if(it.messageId != m.id)
+            if (it.messageId != m.id)
                 return@waitFor
             if (it.reactionEmote.isEmote) {
                 when (it.reactionEmote.id) {
@@ -237,15 +240,23 @@ fun Message.removeReactionById(user: User, reactionId: String) {
         it.removeReaction(user).queue()
     }
 }
+
 fun <T> JSONArray.toTypedArray(clazz: Class<T>): List<T> {
     return this.map { it as T }
 }
 
 fun String.isNumber(): Boolean {
-    try{
+    try {
         this.toDouble()
-    } catch(e: NumberFormatException){
+    } catch (e: NumberFormatException) {
         return false
     }
     return true
+}
+
+fun Member.canAssign(role: Role): Boolean {
+    if(!this.hasPermission(net.dv8tion.jda.core.Permission.MANAGE_ROLES))
+        return false
+    val memberHighest = this.roles.map { it.position }.max() ?: 0
+    return memberHighest > role.position
 }

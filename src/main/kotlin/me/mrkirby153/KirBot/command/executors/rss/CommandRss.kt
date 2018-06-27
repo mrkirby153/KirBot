@@ -16,8 +16,10 @@ import me.mrkirby153.KirBot.rss.FeedTask
 import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.HttpUtils
+import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.kcutils.Time
 import me.mrkirby153.kcutils.utils.IdGenerator
+import net.dv8tion.jda.core.Permission
 import okhttp3.Request
 import java.net.URL
 import java.util.concurrent.TimeUnit
@@ -36,6 +38,8 @@ class CommandRss : BaseCommand(false, CommandCategory.MISCELLANEOUS) {
     fun listFeeds(context: Context, cmdContext: CommandContext) {
         val feeds = Model.get(RssFeed::class.java, Tuple("server_id", context.guild.id))
 
+        if(!context.channel.checkPermissions(Permission.MESSAGE_EMBED_LINKS))
+            throw CommandException("Cannot embed links here.") // TODO 6/27/2018 Fall back to text only
         context.send().embed("RSS Feeds") {
             description {
                 +"This channel is subscribed to the following feeds: \n\n"

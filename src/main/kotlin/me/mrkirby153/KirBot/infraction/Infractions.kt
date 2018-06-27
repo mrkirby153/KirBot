@@ -10,7 +10,6 @@ import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.InfractionModule
 import me.mrkirby153.KirBot.modules.Scheduler
 import me.mrkirby153.KirBot.server.KirBotGuild
-import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.KirBot.utils.getMember
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
@@ -25,6 +24,9 @@ import java.util.concurrent.TimeUnit
 object Infractions {
 
     fun kick(user: String, guild: Guild, issuer: String, reason: String? = null) {
+        if (!guild.selfMember.hasPermission(Permission.KICK_MEMBERS)) {
+            return
+        }
         guild.controller.kick(guild.getMemberById(user), reason ?: "").queue()
 
         createInfraction(user, guild, if (issuer == "1") user else issuer, reason,
@@ -52,6 +54,8 @@ object Infractions {
 
     fun ban(user: String, guild: Guild, issuer: String, reason: String? = null,
             purgeDays: Int = 0) {
+        if (!guild.selfMember.hasPermission(Permission.BAN_MEMBERS))
+            return
         ModuleManager[InfractionModule::class.java].ignoreBans.add(user)
         guild.controller.ban(user, purgeDays, reason).queue()
 
@@ -67,6 +71,8 @@ object Infractions {
     }
 
     fun softban(user: String, guild: Guild, issuer: String, reason: String? = null) {
+        if (!guild.selfMember.hasPermission(Permission.BAN_MEMBERS))
+            return
         guild.controller.ban(user, 7, reason).queue {
             guild.controller.unban(user).queue()
         }
@@ -83,6 +89,8 @@ object Infractions {
     }
 
     fun unban(user: String, guild: Guild, issuer: String, reason: String = "") {
+        if (!guild.selfMember.hasPermission(Permission.BAN_MEMBERS))
+            return
         ModuleManager[InfractionModule::class.java].ignoreUnbans.add(user)
         guild.controller.unban(user).queue()
 
@@ -103,6 +111,8 @@ object Infractions {
     }
 
     fun mute(user: String, guild: Guild, issuer: String, reason: String? = null) {
+        if (!guild.selfMember.hasPermission(Permission.MANAGE_ROLES))
+            return
         addMutedRole(guild.getMemberById(user).user, guild)
         createInfraction(user, guild, if (issuer == "1") user else issuer, reason,
                 InfractionType.MUTE)
@@ -117,6 +127,8 @@ object Infractions {
     }
 
     fun unmute(user: String, guild: Guild, issuer: String, reason: String? = null) {
+        if (!guild.selfMember.hasPermission(Permission.MANAGE_ROLES))
+            return
         removeMutedRole(guild.getMemberById(user).user, guild)
 
         Model.get(Infraction::class.java, Tuple("user_id", user), Tuple("guild", guild.id),
@@ -135,6 +147,8 @@ object Infractions {
 
     fun tempMute(user: String, guild: Guild, issuer: String, duration: Long, units: TimeUnit,
                  reason: String? = null) {
+        if (!guild.selfMember.hasPermission(Permission.MANAGE_ROLES))
+            return
         addMutedRole(guild.getMemberById(user).user, guild)
         val inf = createInfraction(user, guild, if (issuer == "1") user else issuer, reason,
                 InfractionType.TEMPMUTE)
@@ -189,32 +203,40 @@ object Infractions {
 
 
     fun importFromBanlist(guild: KirBotGuild) {
-        guild.banList.queue { bans ->
-            bans.filter {
-                Model.first(Infraction::class.java, Tuple("user_id", it.user.id),
-                        Tuple("guild", guild.id), Tuple("active", true)) != null
-            }.forEach {
-                Bot.LOG.debug("Found missing infraction for ${it.user.id} on $guild")
-                val infraction = Infraction()
-                infraction.type = InfractionType.BAN
-                infraction.issuerId = null
-                infraction.reason = it.reason
-                infraction.userId = it.user.id
-                infraction.guild = guild.id
-                infraction.createdAt = Timestamp(System.currentTimeMillis())
-                infraction.save()
+        if (guild.selfMember.hasPermission(Permission.BAN_MEMBERS)) {
+            guild.banList.queue { bans ->
+                bans.filter {
+                    Model.first(Infraction::class.java, Tuple("user_id", it.user.id),
+                            Tuple("guild", guild.id), Tuple("active", true)) != null
+                }.forEach {
+                    Bot.LOG.debug("Found missing infraction for ${it.user.id} on $guild")
+                    val infraction = Infraction()
+                    infraction.type = InfractionType.BAN
+                    infraction.issuerId = null
+                    infraction.reason = it.reason
+                    infraction.userId = it.user.id
+                    infraction.guild = guild.id
+                    infraction.createdAt = Timestamp(System.currentTimeMillis())
+                    infraction.save()
+                }
             }
         }
     }
 
     fun addMutedRole(user: User, guild: Guild) {
+        val role = getMutedRole(guild)
+        if (role == null) {
+            guild.kirbotGuild.logManager.genericLog(LogEvent.USER_MUTE, ":warning:",
+                    "The muted role does not exist")
+            return
+        }
         guild.controller.addSingleRoleToMember(user.getMember(guild),
-                getOrCreateMutedRole(guild)).queue()
+                role).queue()
     }
 
     fun removeMutedRole(user: User, guild: Guild) {
         val r = user.getMember(guild).roles.map { it.id }
-        val mutedRole = getOrCreateMutedRole(guild)
+        val mutedRole = getMutedRole(guild) ?: return
         if (mutedRole.id in r) {
             guild.controller.removeSingleRoleFromMember(user.getMember(guild), mutedRole).queue()
         }
@@ -245,10 +267,14 @@ object Infractions {
         }
     }
 
-    private fun getOrCreateMutedRole(guild: Guild): Role {
+    fun getMutedRole(guild: Guild): Role? {
         val role = guild.roles.firstOrNull { it.name.equals("muted", true) }
         if (role == null) {
             Bot.LOG.debug("Muted role does not exist on $guild")
+            if (!guild.selfMember.hasPermission(Permission.MANAGE_ROLES)) {
+                Bot.LOG.debug("No permission to create the muted role, aborting")
+                return null
+            }
             val r = guild.controller.createRole().complete()
             val kbRoles = guild.selfMember.roles
             var highest = kbRoles.first().position
@@ -266,15 +292,7 @@ object Infractions {
                 }
             }
             return r
-        } else {
-            // Check the permissions
-            guild.textChannels.forEach { chan ->
-                val o = chan.getPermissionOverride(role)
-                if (o == null && chan.checkPermissions(Permission.MANAGE_PERMISSIONS)) {
-                    chan.createPermissionOverride(role).setDeny(Permission.MESSAGE_WRITE).queue()
-                }
-            }
-            return role
         }
+        return role
     }
 }

@@ -7,8 +7,10 @@ import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.utils.Context
+import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.KirBot.utils.embed.link
 import me.mrkirby153.KirBot.utils.mdEscape
+import net.dv8tion.jda.core.Permission
 
 @Command(name = "move", arguments = ["<from:int,0,x>", "[to:int,0,x]"])
 class CommandMove : BaseCommand(CommandCategory.MUSIC) {
@@ -19,7 +21,8 @@ class CommandMove : BaseCommand(CommandCategory.MUSIC) {
         } else {
             Bot.LOG.debug("Music is disabled in ${context.guild.id}, ignoring")
         }
-
+        if(!context.channel.checkPermissions(Permission.MESSAGE_EMBED_LINKS))
+            throw CommandException("I cannot embed links here")
         val song = cmdContext.get<Double>("from")?.toInt() ?: throw CommandException("Please specify a number")
 
         val toPosition = cmdContext.get<Double>("to")?.toInt() ?: 0

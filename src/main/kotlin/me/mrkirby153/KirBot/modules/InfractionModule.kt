@@ -8,6 +8,7 @@ import me.mrkirby153.KirBot.logger.LogEvent
 import me.mrkirby153.KirBot.module.Module
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
+import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.audit.ActionType
 import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.entities.User
@@ -68,6 +69,10 @@ class InfractionModule : Module("infractions") {
 
     private fun findBannedUser(guild: Guild, user: String): User? {
         Bot.LOG.debug("Looking up ban for $user in $guild audit logs")
+        if(!guild.selfMember.hasPermission(Permission.VIEW_AUDIT_LOGS)) {
+            Bot.LOG.debug("Cannot view audit logs, not looking up user")
+            return null
+        }
         var foundUser: User? = null
         val entries = guild.auditLogs.type(ActionType.BAN).complete()
         entries.forEach { e ->
@@ -82,6 +87,10 @@ class InfractionModule : Module("infractions") {
 
     private fun findUnbannedUser(guild: Guild, user: String): User? {
         Bot.LOG.debug("Looking up unban for $user in $guild audit logs")
+        if(!guild.selfMember.hasPermission(Permission.VIEW_AUDIT_LOGS)) {
+            Bot.LOG.debug("Cannot view audit logs, not looking up user")
+            return null
+        }
         var found: User? = null
         val entries = guild.auditLogs.type(ActionType.UNBAN).complete()
         entries.forEach {

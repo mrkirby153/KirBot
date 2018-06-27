@@ -4,12 +4,15 @@ import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
+import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.music.MusicManager
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.botUrl
+import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.KirBot.utils.embed.link
 import me.mrkirby153.KirBot.utils.mdEscape
+import net.dv8tion.jda.core.Permission
 import java.util.Random
 
 @Command(name = "queue,np,nowplaying", arguments = ["[option:string]"])
@@ -47,6 +50,8 @@ class CommandQueue : BaseCommand(CommandCategory.MUSIC) {
             context.channel.sendMessage(":x: Nothing is playing right now!").queue()
             return
         }
+        if(!context.channel.checkPermissions(Permission.MESSAGE_EMBED_LINKS))
+            throw CommandException("I cannot embed links here")
         context.send().embed {
             val nowPlaying = musicManager.nowPlaying ?: return@embed
             if (nowPlaying.info.uri.contains("youtu")) {

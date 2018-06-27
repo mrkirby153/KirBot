@@ -18,6 +18,7 @@ import me.mrkirby153.KirBot.utils.getMember
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import me.mrkirby153.kcutils.Time
+import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.User
 import java.util.concurrent.TimeUnit
@@ -45,6 +46,15 @@ class TempMute : BaseCommand(false, CommandCategory.MODERATION) {
 
         if(!context.author.canInteractWith(context.guild, user))
             throw CommandException("Missing permissions")
+
+        if (!context.guild.selfMember.hasPermission(Permission.MANAGE_ROLES))
+            throw CommandException("cannot assign the muted role on this guild")
+
+        val highest = context.guild.selfMember.roles.map { it.position }.max() ?: 0
+        val mutedRole = Infractions.getMutedRole(context.guild) ?: throw CommandException(
+                "could not get the muted role")
+        if (mutedRole.position > highest)
+            throw CommandException("cannot assign the muted role")
 
         context.send().success(
                 "Muted ${user.nameAndDiscrim} for ${Time.format(1, timeParsed)}" + buildString {

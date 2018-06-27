@@ -10,6 +10,8 @@ import me.mrkirby153.KirBot.database.models.guild.MusicSettings
 import me.mrkirby153.KirBot.google.YoutubeSearch
 import me.mrkirby153.KirBot.music.AudioTrackLoader
 import me.mrkirby153.KirBot.utils.Context
+import me.mrkirby153.KirBot.utils.checkPermissions
+import net.dv8tion.jda.core.Permission
 
 @Command(name = "play", arguments = ["<query/url:string...>"])
 class CommandPlay : BaseCommand(CommandCategory.MUSIC) {
@@ -19,6 +21,8 @@ class CommandPlay : BaseCommand(CommandCategory.MUSIC) {
         } else {
             Bot.LOG.debug("Music is disabled in ${context.guild.id}, ignoring")
         }
+        if(!context.channel.checkPermissions(Permission.MESSAGE_EMBED_LINKS))
+            throw CommandException("I cannot embed links here")
         val data = cmdContext.get<String>("query/url") ?: ""
 
         val queuePosition =  -1 // TODO 12/17/2017 Reimplement QueueAt

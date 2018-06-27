@@ -8,11 +8,13 @@ import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
+import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.KirBot.utils.embed.b
 import me.mrkirby153.KirBot.utils.embed.embed
 import me.mrkirby153.KirBot.utils.embed.link
 import me.mrkirby153.KirBot.utils.localizeTime
 import me.mrkirby153.KirBot.utils.mdEscape
+import net.dv8tion.jda.core.Permission
 import java.awt.Color
 import java.util.concurrent.TimeUnit
 
@@ -53,6 +55,10 @@ class CommandSkip : BaseCommand(CommandCategory.MUSIC) {
 
         val currentlyPlaying = musicManager.nowPlaying ?: throw CommandException("Nothing playing!")
         val skipTimer = musicSettings.skipTimer
+        if(!context.channel.checkPermissions(Permission.MESSAGE_EMBED_LINKS))
+            throw CommandException("I cannot embed links here")
+        if(!context.channel.checkPermissions(Permission.MESSAGE_ADD_REACTION))
+            throw CommandException("I need to be able to add reactions to start a poll here")
         context.send().embed("Music") {
             color = Color.GREEN
             description {

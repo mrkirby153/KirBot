@@ -11,6 +11,7 @@ import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.canInteractWith
 import me.mrkirby153.KirBot.utils.getMember
+import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.User
 
@@ -29,6 +30,15 @@ class CommandUnmute : BaseCommand(false, CommandCategory.MODERATION) {
         }
         if (!user.canInteractWith(context.guild, user))
             throw CommandException("Missing permissions")
+
+        if (!context.guild.selfMember.hasPermission(Permission.MANAGE_ROLES))
+            throw CommandException("cannot un-assign the muted role on this guild")
+
+        val highest = context.guild.selfMember.roles.map { it.position }.max() ?: 0
+        val mutedRole = Infractions.getMutedRole(context.guild) ?: throw CommandException(
+                "could not get the muted role")
+        if (mutedRole.position > highest)
+            throw CommandException("cannot un-assign the muted role")
 
         Infractions.unmute(user.id, context.guild, context.author.id, cmdContext.get("reason"))
         context.send().success("Unmuted **${user.name}#${user.discriminator}**", true).queue()

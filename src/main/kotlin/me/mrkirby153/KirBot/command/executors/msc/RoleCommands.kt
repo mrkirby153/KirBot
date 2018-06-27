@@ -7,6 +7,7 @@ import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
+import me.mrkirby153.KirBot.utils.canAssign
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import net.dv8tion.jda.core.entities.Role
@@ -46,14 +47,18 @@ class RoleCommands : BaseCommand(false) {
 
         val targetHighest = member.roles.map { it.position }.max() ?: 0
 
-        if (role.position >= highestRole)
-            throw CommandException("you cannot add roles above yourself")
+
+        if (member.user.id == context.author.id)
+            throw CommandException("you cannot execute this on yourself!")
 
         if (targetHighest >= highestRole)
             throw CommandException("you cannot execute that on this user")
 
-        if (member.user.id == context.author.id)
-            throw CommandException("you cannot execute this on yourself!")
+        if (!context.member.canAssign(role))
+            throw CommandException("you cannot add roles above yourself")
+
+        if(!context.guild.selfMember.canAssign(role))
+            throw CommandException("I cannot assign that role")
 
         context.guild.controller.addSingleRoleToMember(member, role).queue()
         context.send().success("Added role **${role.name}** to ${member.user.nameAndDiscrim}",
@@ -80,14 +85,18 @@ class RoleCommands : BaseCommand(false) {
 
         val targetHighest = member.roles.map { it.position }.max()!!
 
+        if (member.user.id == context.author.id)
+            throw CommandException("you cannot execute this on yourself!")
+
         if (targetHighest >= highestRole)
             throw CommandException("you cannot execute that on this user")
 
-        if (role.position >= highestRole)
-            throw CommandException("you cannot remove roles above yourself")
+        if (!context.member.canAssign(role))
+            throw CommandException("you cannot add roles above yourself")
 
-        if (member.user.id == context.author.id)
-            throw CommandException("you cannot execute this on yourself!")
+        if(!context.guild.selfMember.canAssign(role))
+            throw CommandException("I cannot assign that role")
+
         context.guild.controller.removeSingleRoleFromMember(member, role).queue()
         context.send().success("Removed role **${role.name}** to ${member.user.nameAndDiscrim}",
                 true).queue()

@@ -14,6 +14,7 @@ import me.mrkirby153.KirBot.scheduler.Schedulable
 import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.canInteractWith
+import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import me.mrkirby153.kcutils.Time
@@ -39,6 +40,8 @@ class CommandChannelMute : BaseCommand(false, CommandCategory.MODERATION) {
                 "That user isn't in this guild!")
         if (!context.author.canInteractWith(context.guild, user))
             throw CommandException("Missing permissions")
+        if(!context.channel.checkPermissions(Permission.MANAGE_CHANNEL))
+            throw CommandException("Cannot modify this channel")
 
         val channel = context.channel as TextChannel
 
@@ -71,6 +74,9 @@ class CommandChanUnmute : BaseCommand() {
                 "That user isn't in this guild!")
         if (!context.author.canInteractWith(context.guild, user))
             throw CommandException("Missing permissions")
+
+        if(!context.channel.checkPermissions(Permission.MANAGE_CHANNEL))
+            throw CommandException("Cannot modify this channel")
 
         val override = (context.channel as TextChannel).getPermissionOverride(
                 member)

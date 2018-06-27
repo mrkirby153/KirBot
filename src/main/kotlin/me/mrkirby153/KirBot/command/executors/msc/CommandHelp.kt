@@ -9,15 +9,19 @@ import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.user.CLEARANCE_GLOBAL_ADMIN
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.botUrl
+import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.KirBot.utils.embed.link
 import me.mrkirby153.KirBot.utils.embed.u
 import me.mrkirby153.KirBot.utils.mdEscape
+import net.dv8tion.jda.core.Permission
 import java.awt.Color
 
 @Command(name = "help,?", arguments = ["[command:string...]"])
 class CommandHelp : BaseCommand(CommandCategory.MISCELLANEOUS) {
 
     override fun execute(context: Context, cmdContext: CommandContext) {
+        if(!context.channel.checkPermissions(Permission.MESSAGE_EMBED_LINKS))
+            throw CommandException("Cannot embed links here. Please enable link embedding")
         if (!cmdContext.has("command")) {
             displayAllCommands(context)
         } else {

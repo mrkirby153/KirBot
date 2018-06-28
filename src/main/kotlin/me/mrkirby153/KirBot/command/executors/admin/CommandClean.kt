@@ -18,14 +18,19 @@ import net.dv8tion.jda.core.events.message.guild.react.GuildMessageReactionAddEv
 import java.time.OffsetDateTime
 import java.util.concurrent.TimeUnit
 
-@Command(name = "clean", arguments = ["[amount:int]"], clearance = CLEARANCE_MOD)
+@Command(name = "clean", clearance = CLEARANCE_MOD)
 @LogInModlogs
 class CommandClean :
         BaseCommand(false, CommandCategory.ADMIN) {
 
-    val confirmAmount = 100
+    private val confirmAmount = 100
 
     override fun execute(context: Context, cmdContext: CommandContext) {
+        // Do nothing.
+    }
+
+    @Command(name = "all", arguments = ["[amount:int]"], clearance = CLEARANCE_MOD)
+    fun allClean(context: Context, cmdContext: CommandContext){
         val amount = cmdContext.get<Int>("amount") ?: 50
         if (amount > confirmAmount) {
             confirmClean(context, context.channel as TextChannel, amount)
@@ -34,7 +39,7 @@ class CommandClean :
         }
     }
 
-    @Command(name = "bots", arguments = ["[amount:int]"])
+    @Command(name = "bots", arguments = ["[amount:int]"], clearance = CLEARANCE_MOD)
     fun botClean(context: Context, cmdContext: CommandContext) {
         val amount = cmdContext.get<Int>("amount") ?: 50
         if (amount > confirmAmount) {
@@ -44,7 +49,7 @@ class CommandClean :
         doClean(context.channel as TextChannel, amount, bots = true)
     }
 
-    @Command(name = "user", arguments = ["<user:snowflake>", "[amount:int]"])
+    @Command(name = "user", arguments = ["<user:snowflake>", "[amount:int]"], clearance = CLEARANCE_MOD)
     fun userClean(context: Context, cmdContext: CommandContext) {
         val user = cmdContext.get<String>("user")!!
         val amount = cmdContext.get<Int>("amount") ?: 50

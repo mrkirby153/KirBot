@@ -28,7 +28,7 @@ class CommandUnmute : BaseCommand(false, CommandCategory.MODERATION) {
         if (context.channel !is TextChannel) {
             throw CommandException("This command doesn't work in PMs")
         }
-        if (!user.canInteractWith(context.guild, user))
+        if (!context.author.canInteractWith(context.guild, user))
             throw CommandException("Missing permissions")
 
         val highest = context.guild.selfMember.roles.map { it.position }.max() ?: 0

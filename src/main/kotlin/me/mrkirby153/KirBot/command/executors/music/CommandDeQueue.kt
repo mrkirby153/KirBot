@@ -8,12 +8,12 @@ import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
-import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.KirBot.utils.embed.link
 import me.mrkirby153.KirBot.utils.mdEscape
 import net.dv8tion.jda.core.Permission
 
-@Command(name = "dequeue", clearance = CLEARANCE_MOD, arguments = ["<position:int,1,x>"])
+@Command(name = "dequeue", clearance = CLEARANCE_MOD, arguments = ["<position:int>"],
+        permissions = [Permission.MESSAGE_EMBED_LINKS])
 class CommandDeQueue : BaseCommand(CommandCategory.MUSIC) {
 
     override fun execute(context: Context, cmdContext: CommandContext) {
@@ -23,8 +23,6 @@ class CommandDeQueue : BaseCommand(CommandCategory.MUSIC) {
             Bot.LOG.debug("Music is disabled in ${context.guild.id}, ignoring")
         }
         val index = (cmdContext.get<Int>("position")?.toInt() ?: 1) - 1
-        if(!context.channel.checkPermissions(Permission.MESSAGE_EMBED_LINKS))
-            throw CommandException("I cannot embed links here")
 
         try {
             val song = context.kirbotGuild.musicManager.queue.removeAt(index)

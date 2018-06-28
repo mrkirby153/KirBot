@@ -16,7 +16,7 @@ import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.User
 
 @Command(name = "mute,shutup,quiet", arguments = ["<user:user>", "[reason:string...]"],
-        clearance = CLEARANCE_MOD)
+        clearance = CLEARANCE_MOD, permissions = [Permission.MANAGE_ROLES])
 @LogInModlogs
 class CommandMute : BaseCommand(false, CommandCategory.MODERATION) {
     override fun execute(context: Context, cmdContext: CommandContext) {
@@ -30,9 +30,6 @@ class CommandMute : BaseCommand(false, CommandCategory.MODERATION) {
 
         if (!context.author.canInteractWith(context.guild, user))
             throw CommandException("Missing permissions")
-
-        if (!context.guild.selfMember.hasPermission(Permission.MANAGE_ROLES))
-            throw CommandException("cannot assign the muted role on this guild")
 
         val highest = context.guild.selfMember.roles.map { it.position }.max() ?: 0
         val mutedRole = Infractions.getMutedRole(context.guild) ?: throw CommandException(

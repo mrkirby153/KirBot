@@ -14,7 +14,6 @@ import me.mrkirby153.KirBot.scheduler.Schedulable
 import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.canInteractWith
-import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import me.mrkirby153.kcutils.Time
@@ -22,7 +21,8 @@ import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.TextChannel
 import java.util.concurrent.TimeUnit
 
-@Command(name = "chanmute,cmute", arguments = ["<user:snowflake>", "<time:string>"], clearance = CLEARANCE_MOD)
+@Command(name = "chanmute,cmute", arguments = ["<user:snowflake>", "<time:string>"],
+        clearance = CLEARANCE_MOD, permissions = [Permission.MANAGE_CHANNEL])
 @LogInModlogs
 class CommandChannelMute : BaseCommand(false, CommandCategory.MODERATION) {
     override fun execute(context: Context, cmdContext: CommandContext) {
@@ -40,8 +40,6 @@ class CommandChannelMute : BaseCommand(false, CommandCategory.MODERATION) {
                 "That user isn't in this guild!")
         if (!context.author.canInteractWith(context.guild, user))
             throw CommandException("Missing permissions")
-        if(!context.channel.checkPermissions(Permission.MANAGE_CHANNEL))
-            throw CommandException("Cannot modify this channel")
 
         val channel = context.channel as TextChannel
 
@@ -56,14 +54,17 @@ class CommandChannelMute : BaseCommand(false, CommandCategory.MODERATION) {
                 UnmuteScheduler(context.guild.id, channel.id, user.id), timeParsed,
                 TimeUnit.MILLISECONDS)
         Bot.LOG.debug("Submitted unmuter as  $id")
-        context.kirbotGuild.logManager.genericLog(LogEvent.USER_MUTE, ":zipper_mouth:", "${user.nameAndDiscrim} (`${user.id}`) is now muted for ${Time.formatLong(timeParsed)}")
+        context.kirbotGuild.logManager.genericLog(LogEvent.USER_MUTE, ":zipper_mouth:",
+                "${user.nameAndDiscrim} (`${user.id}`) is now muted for ${Time.formatLong(
+                        timeParsed)}")
         context.send().success(
                 "${user.nameAndDiscrim} (`${user.id}`) is now muted in this channel for ${Time.formatLong(
                         timeParsed)}", hand = true).queue()
     }
 }
 
-@Command(name = "chanunmute,cunmute", arguments = ["<user:snowflake>"], clearance = CLEARANCE_MOD)
+@Command(name = "chanunmute,cunmute", arguments = ["<user:snowflake>"], clearance = CLEARANCE_MOD,
+        permissions = [Permission.MANAGE_CHANNEL])
 @LogInModlogs
 class CommandChanUnmute : BaseCommand() {
     override fun execute(context: Context, cmdContext: CommandContext) {
@@ -74,9 +75,6 @@ class CommandChanUnmute : BaseCommand() {
                 "That user isn't in this guild!")
         if (!context.author.canInteractWith(context.guild, user))
             throw CommandException("Missing permissions")
-
-        if(!context.channel.checkPermissions(Permission.MANAGE_CHANNEL))
-            throw CommandException("Cannot modify this channel")
 
         val override = (context.channel as TextChannel).getPermissionOverride(
                 member)

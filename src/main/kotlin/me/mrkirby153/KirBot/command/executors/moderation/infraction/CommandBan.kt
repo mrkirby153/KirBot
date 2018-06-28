@@ -14,7 +14,8 @@ import me.mrkirby153.KirBot.utils.getMember
 import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.User
 
-@Command(name = "ban", arguments = ["<user:user>", "[reason:string...]"], clearance = CLEARANCE_MOD)
+@Command(name = "ban", arguments = ["<user:user>", "[reason:string...]"], clearance = CLEARANCE_MOD,
+        permissions = [Permission.BAN_MEMBERS])
 @LogInModlogs
 class CommandBan : BaseCommand(false, CommandCategory.MODERATION) {
     override fun execute(context: Context, cmdContext: CommandContext) {
@@ -29,8 +30,6 @@ class CommandBan : BaseCommand(false, CommandCategory.MODERATION) {
             throw CommandException("I cannot ban this user")
         if (!context.author.canInteractWith(context.guild, user))
             throw CommandException("Missing permissions")
-        if(!context.member.hasPermission(Permission.BAN_MEMBERS))
-            throw CommandException("cannot ban members on this guild")
         Infractions.ban(user.id, context.guild, context.author.id, reason, 0)
         context.send().success(
                 "Banned **${user.name}#${user.discriminator}** (`${user.id}`)" + buildString {
@@ -41,7 +40,7 @@ class CommandBan : BaseCommand(false, CommandCategory.MODERATION) {
 }
 
 @Command(name = "forceban", arguments = ["<user:snowflake>", "[reason:string...]"],
-        clearance = CLEARANCE_MOD)
+        clearance = CLEARANCE_MOD, permissions = [Permission.BAN_MEMBERS])
 @LogInModlogs
 class CommandForceBan : BaseCommand(false, CommandCategory.MODERATION) {
     override fun execute(context: Context, cmdContext: CommandContext) {
@@ -54,8 +53,6 @@ class CommandForceBan : BaseCommand(false, CommandCategory.MODERATION) {
             if (!context.author.canInteractWith(context.guild, resolvedUser))
                 throw CommandException("Missing permissions")
         }
-        if(!context.member.hasPermission(Permission.BAN_MEMBERS))
-            throw CommandException("cannot ban members on this guild")
         Infractions.ban(user, context.guild, context.author.id, reason, 0)
         context.send().success("Banned `$user` ${buildString {
             if (reason != null)
@@ -65,12 +62,10 @@ class CommandForceBan : BaseCommand(false, CommandCategory.MODERATION) {
 }
 
 @Command(name = "unban", arguments = ["<user:snowflake>", "[reason:string...]"],
-        clearance = CLEARANCE_MOD)
+        clearance = CLEARANCE_MOD, permissions = [Permission.BAN_MEMBERS])
 @LogInModlogs
 class CommandUnban : BaseCommand(false, CommandCategory.MODERATION) {
     override fun execute(context: Context, cmdContext: CommandContext) {
-        if(!context.member.hasPermission(Permission.BAN_MEMBERS))
-            throw CommandException("cannot unban members on this guild")
         val user = cmdContext.get<String>("user") ?: throw CommandException("Please specify a user")
         val reason = cmdContext.get<String>("reason") ?: ""
         Infractions.unban(user, context.guild, context.author.id, reason)

@@ -23,7 +23,8 @@ import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.User
 import java.util.concurrent.TimeUnit
 
-@Command(name = "tempmute", arguments = ["<user:user>", "<time:string>", "[reason:string...]"])
+@Command(name = "tempmute", arguments = ["<user:user>", "<time:string>", "[reason:string...]"],
+        permissions = [Permission.MANAGE_ROLES])
 @LogInModlogs
 class TempMute : BaseCommand(false, CommandCategory.MODERATION) {
     override fun execute(context: Context, cmdContext: CommandContext) {
@@ -44,11 +45,8 @@ class TempMute : BaseCommand(false, CommandCategory.MODERATION) {
         if (context.channel !is TextChannel)
             throw CommandException("This command won't work in PMs")
 
-        if(!context.author.canInteractWith(context.guild, user))
+        if (!context.author.canInteractWith(context.guild, user))
             throw CommandException("Missing permissions")
-
-        if (!context.guild.selfMember.hasPermission(Permission.MANAGE_ROLES))
-            throw CommandException("cannot assign the muted role on this guild")
 
         val highest = context.guild.selfMember.roles.map { it.position }.max() ?: 0
         val mutedRole = Infractions.getMutedRole(context.guild) ?: throw CommandException(

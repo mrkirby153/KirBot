@@ -10,6 +10,7 @@ import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.canAssign
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
+import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.Role
 
 @Command(name = "role,r,roles", clearance = CLEARANCE_MOD)
@@ -28,7 +29,7 @@ class RoleCommands : BaseCommand(false) {
     }
 
     @Command(name = "add", clearance = CLEARANCE_MOD,
-            arguments = ["<user:snowflake>", "<role:string...>"])
+            arguments = ["<user:snowflake>", "<role:string...>"], permissions = [Permission.MANAGE_ROLES])
     fun addRole(context: Context, cmdContext: CommandContext) {
         val roleString = cmdContext.get<String>("role")!!
 
@@ -66,7 +67,7 @@ class RoleCommands : BaseCommand(false) {
     }
 
     @Command(name = "remove,rem", clearance = CLEARANCE_MOD,
-            arguments = ["<user:snowflake>", "<role:string...>"])
+            arguments = ["<user:snowflake>", "<role:string...>"], permissions = [Permission.MANAGE_ROLES])
     fun removeRole(context: Context, cmdContext: CommandContext) {
         val roleString = cmdContext.get<String>("role")!!
 

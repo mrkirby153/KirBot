@@ -283,7 +283,6 @@ object Infractions {
                     highest = it.position
             }
             r.manager.setName("Muted").queue {
-                guild.controller.modifyRolePositions().selectPosition(r).moveTo(highest - 1).queue()
                 guild.textChannels.forEach { chan ->
                     val o = chan.getPermissionOverride(r)
                     if (o == null) {

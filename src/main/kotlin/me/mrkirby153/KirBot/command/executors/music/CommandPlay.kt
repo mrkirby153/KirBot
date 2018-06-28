@@ -10,10 +10,10 @@ import me.mrkirby153.KirBot.database.models.guild.MusicSettings
 import me.mrkirby153.KirBot.google.YoutubeSearch
 import me.mrkirby153.KirBot.music.AudioTrackLoader
 import me.mrkirby153.KirBot.utils.Context
-import me.mrkirby153.KirBot.utils.checkPermissions
 import net.dv8tion.jda.core.Permission
 
-@Command(name = "play", arguments = ["<query/url:string...>"])
+@Command(name = "play", arguments = ["<query/url:string...>"],
+        permissions = [Permission.MESSAGE_EMBED_LINKS])
 class CommandPlay : BaseCommand(CommandCategory.MUSIC) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         if (!context.kirbotGuild.musicManager.settings.enabled) {
@@ -21,11 +21,9 @@ class CommandPlay : BaseCommand(CommandCategory.MUSIC) {
         } else {
             Bot.LOG.debug("Music is disabled in ${context.guild.id}, ignoring")
         }
-        if(!context.channel.checkPermissions(Permission.MESSAGE_EMBED_LINKS))
-            throw CommandException("I cannot embed links here")
         val data = cmdContext.get<String>("query/url") ?: ""
 
-        val queuePosition =  -1 // TODO 12/17/2017 Reimplement QueueAt
+        val queuePosition = -1 // TODO 12/17/2017 Reimplement QueueAt
 
         if (data.isBlank()) {
             if (context.kirbotGuild.musicManager.playing)
@@ -41,7 +39,8 @@ class CommandPlay : BaseCommand(CommandCategory.MUSIC) {
         }
 
         if (context.guild.selfMember.voiceState.inVoiceChannel() && context.member.voiceState.channel != context.guild.selfMember.voiceState.channel) {
-            throw CommandException("I am already playing music in **${context.guild.selfMember.voiceState.channel.name}**. Join me there!")
+            throw CommandException(
+                    "I am already playing music in **${context.guild.selfMember.voiceState.channel.name}**. Join me there!")
         }
 
         val musicSettings = context.kirbotGuild.musicManager.settings
@@ -69,8 +68,11 @@ class CommandPlay : BaseCommand(CommandCategory.MUSIC) {
             msg.delete().queue()
         }
         if (musicSettings.maxQueueLength != -1 && context.kirbotGuild.musicManager.queueLength() / (60 * 1000) >= musicSettings.maxQueueLength) {
-            throw CommandException("The queue is too long right now, please try again when it is shorter")
+            throw CommandException(
+                    "The queue is too long right now, please try again when it is shorter")
         }
-        Bot.playerManager.loadItem(url, AudioTrackLoader(context.kirbotGuild.musicManager, context.author, context, queuePosition))
+        Bot.playerManager.loadItem(url,
+                AudioTrackLoader(context.kirbotGuild.musicManager, context.author, context,
+                        queuePosition))
     }
 }

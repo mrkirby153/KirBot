@@ -6,12 +6,11 @@ import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.user.CLEARANCE_ADMIN
-import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.getMember
 import net.dv8tion.jda.core.entities.Role
 
-@Command(name = "selfrole,selfroles", clearance = CLEARANCE_MOD)
+@Command(name = "selfrole,selfroles")
 class CommandSelfroles : BaseCommand() {
 
     override fun execute(context: Context, cmdContext: CommandContext) {

@@ -3,6 +3,7 @@ package me.mrkirby153.KirBot.modules
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import com.mrkirby153.bfs.model.Model
+import com.mrkirby153.bfs.sql.QueryBuilder
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.models.guild.GuildMessage
 import me.mrkirby153.KirBot.database.models.guild.SpamSettings
@@ -103,7 +104,7 @@ class Spam : Module("spam") {
         val period = dupeSettings.getInt("period")
 
         val time = Instant.now().minusSeconds(period.toLong()).epochSecond
-        val timestamp = Timestamp(time)
+        val timestamp = Timestamp(time * 1000)
         val messages = Model.query(GuildMessage::class.java).where("author",
                 message.author.id).where("server_id", message.guild.id).where("created_at", ">",
                 timestamp).where("deleted", false).get()

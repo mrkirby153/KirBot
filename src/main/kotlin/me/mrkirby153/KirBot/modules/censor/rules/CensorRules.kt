@@ -61,7 +61,7 @@ class InviteRule : CensorRule {
         if (message.invites.isEmpty())
             return
         message.invites.forEach { invite ->
-            val guild = resolve(message.jda, invite)
+            val guild = resolve(message.jda, invite) ?: throw ViolationException("Invite `$invite`")
             if(guild.id == message.guild.id) // Allow invites to the current server
                 return@forEach
             if ((blacklistedGuilds != null && guild.id in blacklistedGuilds) || (blacklistedInvites != null && invite in blacklistedInvites))
@@ -71,9 +71,13 @@ class InviteRule : CensorRule {
         }
     }
 
-    fun resolve(jda: JDA, invite: String): Invite.Guild {
-        val inv = Invite.resolve(jda, invite).complete()
-        return inv.guild
+    fun resolve(jda: JDA, invite: String): Invite.Guild? {
+        try {
+            val inv = Invite.resolve(jda, invite).complete()
+            return inv.guild
+        } catch(e: Exception){
+            return null
+        }
     }
 }
 

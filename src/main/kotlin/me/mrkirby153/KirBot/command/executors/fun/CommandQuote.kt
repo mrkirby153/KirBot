@@ -44,7 +44,7 @@ class CommandQuotes : BaseCommand(false, CommandCategory.FUN) {
         val quoteCount = Model.get(Quote::class.java, Tuple("server_id", context.guild.id)).size
         context.channel.sendMessage(
                 ":left_speech_bubble: **Quotes**\n\n Total: $quoteCount \n\n Full List: " + botUrl(
-                        "${context.guild.id}/quotes")).queue()
+                        "server/${context.guild.id}/quotes")).queue()
     }
 
     @Command(name = "block", arguments = ["<user:snowflake>"], clearance = CLEARANCE_MOD)

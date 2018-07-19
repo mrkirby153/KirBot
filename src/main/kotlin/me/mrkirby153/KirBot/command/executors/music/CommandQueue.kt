@@ -78,7 +78,7 @@ class CommandQueue : BaseCommand(CommandCategory.MUSIC) {
                                             track.duration)})")
                     }
                 +"\n\n"
-                +("**View The Full Queue**" link botUrl("${context.guild.id}/queue"))
+                +("**View The Full Queue**" link botUrl("server/${context.guild.id}/queue"))
             }
             timestamp {
                 now()

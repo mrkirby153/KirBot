@@ -33,6 +33,9 @@ class ServerSettings : Model() {
     @Column("cmd_whitelist")
     var cmdWhitelistRaw = ""
 
+    @Column("icon_id")
+    var iconId = ""
+
     var cmdWhitelist: List<String>
         get() = JSONArray(JSONTokener(this.cmdWhitelistRaw)).toTypedArray(String::class.java)
         set(value) {

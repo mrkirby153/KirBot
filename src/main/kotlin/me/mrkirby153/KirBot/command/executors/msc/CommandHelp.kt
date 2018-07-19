@@ -38,7 +38,7 @@ class CommandHelp : BaseCommand(CommandCategory.MISCELLANEOUS) {
                 +"The command prefix for this server is: `${context.kirbotGuild.settings.cmdDiscriminator}` \n\n"
                 +"Below is a list of all the commands available. \n Type `$cmdPrefix$aliasUsed <command>` for more info"
                 +"\n\nFor a full list of custom commands available on this server, "
-                +("Click Here" link (botUrl("${context.guild.id}/customCommands")))
+                +("Click Here" link (botUrl("server/${context.guild.id}/commands")))
             }
             fields {
                 for ((category, commands) in CommandExecutor.getCommandsByCategory()) {

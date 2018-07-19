@@ -132,6 +132,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
             guild.id = this.id
             guild.name = this.name
             guild.realname = RealnameSetting.OFF
+            guild.iconId = this.iconId
             guild.save()
             val musicSettings = MusicSettings()
             musicSettings.id = this.id
@@ -159,8 +160,13 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
 
             if (settings.name != this.name) {
                 Bot.LOG.debug("Name has changed on ${this.name}, updating")
-                guild.name = this.name
-                guild.save()
+                settings.name = this.name
+                settings.save()
+            }
+
+            if(settings.iconId != this.iconId){
+                settings.iconId = this.iconId
+                settings.save()
             }
 
             updateChannels()

@@ -145,11 +145,15 @@ infix fun Any.botUrl(url: String): String {
 fun TextChannel.hide() {
     this.permissionOverrides.filter { it.allowed.contains(Permission.MESSAGE_READ) }.forEach {
         val override = it
+        if(it.isMemberOverride && it.member.user.id == this.guild.selfMember.user.id)
+            return@forEach
         it.manager.clear(Permission.MESSAGE_READ).queue {
             if (override.denied.isEmpty() && override.allowed.isEmpty())
                 override.delete().queue()
         }
     }
+    val user = this.getPermissionOverride(guild.selfMember) ?: this.createPermissionOverride(guild.selfMember).complete()
+    user.manager.grant(Permission.MESSAGE_READ).queue()
     val public = this.getPermissionOverride(guild.publicRole) ?: this.createPermissionOverride(
             guild.publicRole).complete()
     public.manager.deny(Permission.MESSAGE_READ).queue()

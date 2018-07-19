@@ -190,7 +190,7 @@ object Infractions {
         return if (guild == null)
             Model.get(Infraction::class.java, Tuple("user_id", user), Tuple("active", true))
         else
-            Model.get(Infraction::class.java, Tuple("user_id", user), Tuple("guild", guild),
+            Model.get(Infraction::class.java, Tuple("user_id", user), Tuple("guild", guild.id),
                     Tuple("active", true))
     }
 

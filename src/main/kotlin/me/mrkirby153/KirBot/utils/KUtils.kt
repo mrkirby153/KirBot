@@ -145,14 +145,15 @@ infix fun Any.botUrl(url: String): String {
 fun TextChannel.hide() {
     this.permissionOverrides.filter { it.allowed.contains(Permission.MESSAGE_READ) }.forEach {
         val override = it
-        if(it.isMemberOverride && it.member.user.id == this.guild.selfMember.user.id)
+        if (it.isMemberOverride && it.member.user.id == this.guild.selfMember.user.id)
             return@forEach
         it.manager.clear(Permission.MESSAGE_READ).queue {
             if (override.denied.isEmpty() && override.allowed.isEmpty())
                 override.delete().queue()
         }
     }
-    val user = this.getPermissionOverride(guild.selfMember) ?: this.createPermissionOverride(guild.selfMember).complete()
+    val user = this.getPermissionOverride(guild.selfMember) ?: this.createPermissionOverride(
+            guild.selfMember).complete()
     user.manager.grant(Permission.MESSAGE_READ).queue()
     val public = this.getPermissionOverride(guild.publicRole) ?: this.createPermissionOverride(
             guild.publicRole).complete()
@@ -259,8 +260,53 @@ fun String.isNumber(): Boolean {
 }
 
 fun Member.canAssign(role: Role): Boolean {
-    if(!this.hasPermission(net.dv8tion.jda.core.Permission.MANAGE_ROLES))
+    if (!this.hasPermission(net.dv8tion.jda.core.Permission.MANAGE_ROLES))
         return false
     val memberHighest = this.roles.map { it.position }.max() ?: 0
     return memberHighest > role.position
+}
+
+
+fun String.resolveMentions(): String {
+    return this.resolveRoles().resolveUserMentions()
+}
+
+fun String.resolveRoles(): String {
+    val roleList = Bot.shardManager.shards.flatMap { it.roles }
+    val regex = Regex("<@&(\\d{17,18})>")
+    var mutableMsg = this
+    var matched: Boolean
+    do {
+        val matcher = regex.find(mutableMsg)
+        if (matcher == null) {
+            matched = false
+        } else {
+            matched = true
+            val roleId = matcher.groupValues[1]
+            val role = roleList.firstOrNull { it.id == roleId }
+            val name = role?.name ?: "invalid-role"
+            mutableMsg = mutableMsg.replace("<@&$roleId>", "@$name")
+        }
+    } while (matched)
+    return mutableMsg
+}
+
+fun String.resolveUserMentions(): String {
+    val members = Bot.shardManager.shards.flatMap { it.users }
+    val regex = Regex("<@!?(\\d{17,18})>")
+    var mutableMsg = this
+    var matched: Boolean
+    do {
+        val matcher = regex.find(mutableMsg)
+        if (matcher == null) {
+            matched = false
+        } else {
+            matched = true
+            val memberId = matcher.groupValues[1]
+            val member = members.firstOrNull { it.id == memberId }
+            val name = member?.nameAndDiscrim ?: "invalid-user"
+            mutableMsg = mutableMsg.replace(Regex("<@!?$memberId>"), "@$name")
+        }
+    } while (matched)
+    return mutableMsg
 }

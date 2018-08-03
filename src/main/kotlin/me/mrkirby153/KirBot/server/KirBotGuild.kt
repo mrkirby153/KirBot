@@ -1,6 +1,5 @@
 package me.mrkirby153.KirBot.server
 
-import com.mrkirby153.bfs.Tuple
 import com.mrkirby153.bfs.model.Model
 import com.mrkirby153.bfs.sql.DB
 import me.mrkirby153.KirBot.Bot
@@ -99,13 +98,14 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
     fun loadSettings() {
         Bot.LOG.debug("Loading settings for ${this}")
 
-        settings = Model.first(ServerSettings::class.java,
-                Tuple("id", this.id)) ?: throw IllegalStateException(
+        settings = Model.where(ServerSettings::class.java, "id",
+                this.id).first() ?: throw IllegalStateException(
                 "Attempting to load settings for a guild that doesn't exist")
 
-        customCommands = Model.get(CustomCommand::class.java,
-                Tuple("server", this.id)).toMutableList()
-        commandAliases = Model.get(CommandAlias::class.java, Tuple("server_id", this.id)).toMutableList()
+        customCommands = Model.where(CustomCommand::class.java,
+                "server", this.id).get().toMutableList()
+        commandAliases = Model.where(CommandAlias::class.java, "server_id",
+                this.id).get().toMutableList()
         logManager.reloadLogChannels()
         loadData()
     }
@@ -124,7 +124,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         val keyGen = IdGenerator(IdGenerator.ALPHA + IdGenerator.NUMBERS)
         Bot.LOG.debug("Syncing guild ${this.id}")
         lock()
-        var guild = Model.first(ServerSettings::class.java, "id", this.id)
+        var guild = Model.where(ServerSettings::class.java, "id", this.id).first()
 
         if (guild == null) {
             Bot.LOG.debug("Guild does not exist... Creating")
@@ -145,7 +145,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
 
         // Load role clearance sync because those are important
         clearances.clear()
-        Model.get(RoleClearance::class.java, Tuple("server_id", this.id)).forEach {
+        Model.where(RoleClearance::class.java, "server_id", this.id).get().forEach {
             clearances[it.roleId] = it.permission
         }
 
@@ -164,15 +164,15 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
                 settings.save()
             }
 
-            if(settings.iconId != this.iconId){
+            if (settings.iconId != this.iconId) {
                 settings.iconId = this.iconId
                 settings.save()
             }
 
             updateChannels()
 
-            val roles = Model.get(me.mrkirby153.KirBot.database.models.guild.Role::class.java,
-                    Tuple("server_id", this.id)).toMutableList()
+            val roles = Model.where(me.mrkirby153.KirBot.database.models.guild.Role::class.java,
+                    "server_id", this.id).get().toMutableList()
 
             // Update the existing roles
             val removedRoles = mutableListOf<String>()
@@ -202,7 +202,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
 
             RealnameHandler(this).update(false)
 
-            val groups = Model.get(Group::class.java, Tuple("server_id", this.id))
+            val groups = Model.where(Group::class.java, "server_id", this.id).get()
 
             groups.forEach { g ->
                 if (g.role != null) {
@@ -226,7 +226,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
                 }
             }
 
-            var members = Model.get(GuildMember::class.java, Tuple("server_id", this.id))
+            var members = Model.where(GuildMember::class.java, "server_id", this.id).get()
 
             val toDelete = mutableListOf<GuildMember>()
             val currentMembers = this.members.map { it.user.id }
@@ -258,7 +258,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
                 it.save()
             }
 
-            members = Model.get(GuildMember::class.java, Tuple("server_id", this.id))
+            members = Model.where(GuildMember::class.java, "server_id", this.id).get()
 
             members.forEach { m ->
                 val toRemove = mutableListOf<GuildMemberRole>()
@@ -349,7 +349,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
                     return CLEARANCE_GLOBAL_ADMIN
                 }
             }
-        } catch(e: Exception){
+        } catch (e: Exception) {
             // Ignore
             unlock()
         }
@@ -370,7 +370,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
     private fun updateChannels() {
         Bot.LOG.debug(
                 "Updating channels on ${this.name} (${this.id})") // TODO 1/16/18: Update the name of the channel
-        val channels = Model.get(Channel::class.java, Tuple("server", this.id)).toMutableList()
+        val channels = Model.where(Channel::class.java, "server", this.id).get().toMutableList()
 
         val removedChannels = mutableListOf<Channel>()
         channels.forEach {

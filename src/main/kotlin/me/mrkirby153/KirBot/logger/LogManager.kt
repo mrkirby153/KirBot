@@ -1,6 +1,5 @@
 package me.mrkirby153.KirBot.logger
 
-import com.mrkirby153.bfs.Tuple
 import com.mrkirby153.bfs.model.Model
 import com.mrkirby153.bfs.sql.DB
 import me.mrkirby153.KirBot.Bot
@@ -28,14 +27,14 @@ class LogManager(private val guild: KirBotGuild) {
 
     private val logQueue = LinkedList<LogMessage>()
 
-    private var logChannels = Model.get(LogSettings::class.java, Tuple("server_id", guild.id))
+    private var logChannels =  Model.where(LogSettings::class.java, "server_id", guild.id).get()
 
     fun reloadLogChannels() {
-        this.logChannels = Model.get(LogSettings::class.java, Tuple("server_id", guild.id))
+        this.logChannels = Model.where(LogSettings::class.java, "server_id", guild.id).get()
     }
 
     fun logMessageDelete(id: String) {
-        val msg = Model.first(GuildMessage::class.java, Tuple("id", id)) ?: return
+        val msg = Model.where(GuildMessage::class.java, "id", id).first() ?: return
 
         val author = Bot.shardManager.getUser(msg.author) ?: return
         val chan = guild.getTextChannelById(msg.channel) ?: return
@@ -92,7 +91,7 @@ class LogManager(private val guild: KirBotGuild) {
     }
 
     fun logEdit(message: Message) {
-        val old = Model.first(GuildMessage::class.java, Tuple("id", message.id)) ?: return
+        val old = Model.where(GuildMessage::class.java, "id", message.id).first() ?: return
         val user = message.author
         val ignored = guild.extraData.optJSONArray("log-ignored")?.map { it.toString() }
         if (ignored != null && user.id in ignored)

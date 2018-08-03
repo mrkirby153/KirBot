@@ -1,6 +1,5 @@
 package me.mrkirby153.KirBot.command.executors.`fun`
 
-import com.mrkirby153.bfs.Tuple
 import com.mrkirby153.bfs.model.Model
 import com.mrkirby153.bfs.sql.DB
 import me.mrkirby153.KirBot.Bot
@@ -29,8 +28,8 @@ class CommandInfo : BaseCommand(CommandCategory.FUN) {
         val user = cmdContext.get<User>("user") ?: context.author
 
         val seenData = Bot.seenStore.get(user)
-        val member = Model.first(GuildMember::class.java, Tuple("user_id", user.id),
-                Tuple("server_id", context.guild.id))
+        val member = Model.where(GuildMember::class.java, "user_id", user.id).where("server_id",
+                context.guild.id).first()
 
         val sentMessages = DB.getFirstColumn<Long>(
                 "SELECT COUNT(*) FROM server_messages WHERE `author` = ?", user.id)
@@ -63,7 +62,8 @@ class CommandInfo : BaseCommand(CommandCategory.FUN) {
                 if (user.getMember(context.guild) != null) {
                     val joinTime = user.getMember(context.guild).joinDate.toEpochSecond() * 1000
                     appendln("Joined: ${Time.formatLong(
-                            System.currentTimeMillis() - joinTime, Time.TimeUnit.MINUTES).toLowerCase()} ago (${SimpleDateFormat(
+                            System.currentTimeMillis() - joinTime,
+                            Time.TimeUnit.MINUTES).toLowerCase()} ago (${SimpleDateFormat(
                             Time.DATE_FORMAT_NOW).format(joinTime)})")
                 }
                 if (member != null) {

@@ -68,7 +68,7 @@ class TempMute : BaseCommand(false, CommandCategory.MODERATION) {
 
         override fun run() {
             Bot.LOG.debug("Timed mute for $infId expired!")
-            val infraction = Model.first(Infraction::class.java, "id", infId)
+            val infraction = Model.where(Infraction::class.java, "id", infId).first()
             infraction?.revoke()
 
             val user = Bot.shardManager.getUser(userId) ?: return

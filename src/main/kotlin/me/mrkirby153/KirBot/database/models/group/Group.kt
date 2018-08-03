@@ -44,5 +44,5 @@ class Group : Model() {
         }
 
     val members: List<GroupMember>
-        get() = Model.get(GroupMember::class.java, "group_id", this.id)
+        get() = Model.where(GroupMember::class.java, "group_id", this.id).get()
 }

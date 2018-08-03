@@ -73,7 +73,7 @@ class Censor : Module("censor") {
     private fun getSettings(guild: Guild): CensorSettings {
         val settings = cache.getIfPresent(guild.id)
         return if (settings == null) {
-            val s = Model.first(CensorSettings::class.java, "id", guild.id)
+            val s = Model.where(CensorSettings::class.java, "id", guild.id).first()
                     ?: CensorSettings().apply { this.id = guild.id }
             s
         } else {

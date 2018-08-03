@@ -1,6 +1,5 @@
 package me.mrkirby153.KirBot.modules
 
-import com.mrkirby153.bfs.Tuple
 import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.database.models.Quote
 import me.mrkirby153.KirBot.module.Module
@@ -73,7 +72,7 @@ class Quotes : Module("quote") {
                 return@queue
             }
             // Create the quote
-            val q = Model.first(Quote::class.java, Tuple("message_id", event.messageId))
+            val q = Model.where(Quote::class.java,"message_id", event.messageId).first()
             if (q != null) {
                 debug("Denied, quote already exists")
                 return@queue

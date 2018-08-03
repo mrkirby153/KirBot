@@ -1,9 +1,7 @@
 package me.mrkirby153.KirBot.command.executors.moderation.infraction
 
-import com.mrkirby153.bfs.Tuple
 import com.mrkirby153.bfs.model.Model
-import com.mrkirby153.bfs.model.ModelOption
-import com.mrkirby153.bfs.sql.QueryBuilder
+import com.mrkirby153.bfs.sql.DB
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
@@ -34,24 +32,13 @@ class CommandInfractions : BaseCommand(false, CommandCategory.MODERATION) {
     @Command(name = "search", clearance = CLEARANCE_MOD, arguments = ["<query:string...>"])
     fun search(context: Context, cmdContext: CommandContext) {
         val query = cmdContext.get<String>("query")!!
-        val infractions = mutableSetOf<Infraction>()
 
-        /*Model.get(Infraction::class.java, Tuple("user_id", user),
-                Tuple("guild", context.guild.id))*/
-        infractions.addAll(Model.get(Infraction::class.java, Tuple("user_id", query),
-                Tuple("guild", context.guild.id)))
-        infractions.addAll(Model.get(Infraction::class.java, Tuple("issuer", query),
-                Tuple("guild", context.guild.id)))
-        infractions.addAll(Model.get(Infraction::class.java, Tuple("id", query),
-                Tuple("guild", context.guild.id)))
-        infractions.addAll(
-                Model.get(Infraction::class.java, ModelOption("reason", "like", "%$query%"),
-                        ModelOption("guild", "=", context.guild.id)))
-
-        val deduped = mutableListOf<Infraction>()
-        infractions.forEach {
-            if(it.id !in deduped.map { it.id })
-                deduped.add(it)
+        val infractions = DB.getResults(
+                "SELECT DISTINCT * FROM infractions WHERE `guild` = ? OR (`user_id` = ? AND `guild` = ?) OR (`issuer` = ? AND `guild` = ?) OR (`id` = ?) OR (`reason` LIKE ? AND `guild` = ?)",
+                context.guild.id, query, context.guild.id, query, context.guild.id, query, "%$query%", context.guild.id).map {
+            val inf = Infraction()
+            inf.setData(it)
+            return@map inf
         }
 
         val header = arrayOf("ID", "Created", "Type", "User", "Moderator", "Reason", "Active")
@@ -59,13 +46,13 @@ class CommandInfractions : BaseCommand(false, CommandCategory.MODERATION) {
 
         val table = TableBuilder(header)
         val users = mutableMapOf<String, String>()
-        deduped.forEach {
+        infractions.forEach {
             val moderator = if (it.issuerId == null) "Unknown" else users.computeIfAbsent(
                     it.issuerId!!) {
-                Model.first(DiscordUser::class.java, "id", it)?.nameAndDiscrim ?: it
+                Model.where(DiscordUser::class.java, "id", it).first()?.nameAndDiscrim ?: it
             }
             val username = users.computeIfAbsent(it.userId, {
-                Model.first(DiscordUser::class.java, "id", it)?.nameAndDiscrim ?: it
+                Model.where(DiscordUser::class.java, "id", it).first()?.nameAndDiscrim ?: it
             })
             table.addRow(
                     arrayOf(it.id.toString(), it.createdAt.toString(), it.type.toString(), username,
@@ -76,7 +63,7 @@ class CommandInfractions : BaseCommand(false, CommandCategory.MODERATION) {
         if (builtTable.length < 2000) {
             context.channel.sendMessage("```$builtTable```").queue()
         } else {
-            context.channel.sendFile(builtTable.toByteArray(), "infractions-$query.txt").queue()
+            context.channel.sendFile(builtTable.toByteArray(), "infractions.txt").queue()
         }
     }
 
@@ -86,7 +73,7 @@ class CommandInfractions : BaseCommand(false, CommandCategory.MODERATION) {
         val id = cmdContext.get<Int>("id")!!
         val reason = cmdContext.get<String>("reason") ?: "No reason specified"
 
-        val infraction = Model.first(Infraction::class.java, "id", id) ?: throw CommandException(
+        val infraction = Model.where(Infraction::class.java, "id", id).first() ?: throw CommandException(
                 "Infraction not found")
 
         if (infraction.issuerId == null || infraction.issuerId != context.author.id) {
@@ -109,7 +96,7 @@ class CommandInfractions : BaseCommand(false, CommandCategory.MODERATION) {
         val id = cmdContext.get<Int>("id")!!
         val reason = cmdContext.get<String>("reason")!!
 
-        val infraction = Model.first(Infraction::class.java, Tuple("id", id))
+        val infraction = Model.where(Infraction::class.java, "id", id).first()
                 ?: throw CommandException("That infraction doesn't exist")
 
         infraction.reason = reason

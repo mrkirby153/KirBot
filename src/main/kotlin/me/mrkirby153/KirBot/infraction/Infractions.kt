@@ -1,6 +1,5 @@
 package me.mrkirby153.KirBot.infraction
 
-import com.mrkirby153.bfs.Tuple
 import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.executors.moderation.infraction.TempMute
@@ -131,8 +130,8 @@ object Infractions {
             return
         removeMutedRole(guild.getMemberById(user).user, guild)
 
-        Model.get(Infraction::class.java, Tuple("user_id", user), Tuple("guild", guild.id),
-                Tuple("type", "mute"), Tuple("active", true)).forEach {
+        Model.where(Infraction::class.java, "user_id", user).where("guild", guild.id).where("type",
+                "mute").where("active", true).get().forEach {
             it.revoke()
         }
 
@@ -187,18 +186,18 @@ object Infractions {
     }
 
     fun getActiveInfractions(user: String, guild: Guild? = null): List<Infraction> {
-        return if (guild == null)
-            Model.get(Infraction::class.java, Tuple("user_id", user), Tuple("active", true))
-        else
-            Model.get(Infraction::class.java, Tuple("user_id", user), Tuple("guild", guild.id),
-                    Tuple("active", true))
+        val qb = Model.where(Infraction::class.java, "user_id", user).where("active", true)
+        if (guild != null) {
+            qb.where("guild", guild.id)
+        }
+        return qb.get()
     }
 
     fun getAllInfractions(user: User, guild: Guild? = null): List<Infraction> {
-        return if (guild == null)
-            Model.get(Infraction::class.java, "user_id", user.id)
-        else
-            Model.get(Infraction::class.java, Tuple("user_id", user.id), Tuple("guild", guild))
+        val qb = Model.where(Infraction::class.java, "user_id", user.id)
+        if (guild != null)
+            qb.where("guild", guild.id)
+        return qb.get()
     }
 
 
@@ -206,8 +205,8 @@ object Infractions {
         if (guild.selfMember.hasPermission(Permission.BAN_MEMBERS)) {
             guild.banList.queue { bans ->
                 bans.filter {
-                    Model.first(Infraction::class.java, Tuple("user_id", it.user.id),
-                            Tuple("guild", guild.id), Tuple("active", true)) != null
+                    Model.where(Infraction::class.java, "user_id", it.user.id).where("guild",
+                            guild.id).where("active", true).first() != null
                 }.forEach {
                     Bot.LOG.debug("Found missing infraction for ${it.user.id} on $guild")
                     val infraction = Infraction()
@@ -247,7 +246,7 @@ object Infractions {
             return "Automatic"
         } else {
             val user = Bot.shardManager.getUser(id)?.nameAndDiscrim
-            val model = Model.first(DiscordUser::class.java, "id", id)
+            val model = Model.where(DiscordUser::class.java, "id", id).first()
 
             if (user != null) {
                 return buildString {

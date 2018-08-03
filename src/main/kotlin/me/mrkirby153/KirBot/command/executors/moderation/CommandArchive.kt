@@ -71,16 +71,7 @@ class CommandArchive : BaseCommand(false) {
 
     private fun decode(row: DbRow): GuildMessage {
         val msg = GuildMessage()
-        msg.id = row.get("id")
-        msg.serverId = row.get("server_id")
-        msg.author = row.get("author")
-        msg.channel = row.get("channel")
-        msg.message = LogManager.decrypt(row.get("message"))
-        msg._created_at = row.get("created_at")
-        msg._updated_at = row.get("updated_at")
-        msg.editCount = row.get("edit_count")
-        msg.deleted = row.get("deleted")
-        msg.attachments = row.get("attachments")
+        msg.setData(row)
         return msg
     }
 }

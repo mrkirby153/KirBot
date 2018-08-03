@@ -1,6 +1,5 @@
 package me.mrkirby153.KirBot.music
 
-import com.mrkirby153.bfs.Tuple
 import com.mrkirby153.bfs.model.Model
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
@@ -39,7 +38,7 @@ class MusicManager(val guild: Guild) {
     var nowPlayingMessage: Message? = null
 
     val settings: MusicSettings
-        get() = Model.first(MusicSettings::class.java, Tuple("id", this.guild.id))!!
+        get() = Model.where(MusicSettings::class.java, "id", this.guild.id).first()
 
     init {
         guild.audioManager.sendingHandler = sender

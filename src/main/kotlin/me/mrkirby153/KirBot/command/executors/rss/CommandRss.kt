@@ -1,6 +1,5 @@
 package me.mrkirby153.KirBot.command.executors.rss
 
-import com.mrkirby153.bfs.Tuple
 import com.mrkirby153.bfs.model.Model
 import com.rometools.rome.io.SyndFeedInput
 import com.rometools.rome.io.XmlReader
@@ -35,7 +34,7 @@ class CommandRss : BaseCommand(false, CommandCategory.MISCELLANEOUS) {
 
     @Command(name = "list", clearance = CLEARANCE_MOD, permissions = [Permission.MESSAGE_EMBED_LINKS])
     fun listFeeds(context: Context, cmdContext: CommandContext) {
-        val feeds = Model.get(RssFeed::class.java, Tuple("server_id", context.guild.id))
+        val feeds = Model.where(RssFeed::class.java, "server_id", context.guild.id).get()
 
         context.send().embed("RSS Feeds") {
             description {
@@ -120,7 +119,7 @@ class CommandRss : BaseCommand(false, CommandCategory.MISCELLANEOUS) {
     fun removeFeed(context: Context, cmdContext: CommandContext) {
         val id = cmdContext.get<String>("id") ?: throw CommandException("Please provide a feed Id")
 
-        val feed = Model.first(RssFeed::class.java, "id", id)
+        val feed = Model.where(RssFeed::class.java, "id", id).first()
         if (feed == null || feed.serverId != context.guild.id)
             throw CommandException("That feed does not exist")
         feed.delete()
@@ -135,7 +134,7 @@ class CommandRss : BaseCommand(false, CommandCategory.MISCELLANEOUS) {
         } else {
             val id = cmdContext.get<String>("id")!!
 
-            val feed = Model.first(RssFeed::class.java, "id", id)
+            val feed = Model.where(RssFeed::class.java, "id", id).first()
 
             if (feed == null || feed.serverId != context.guild.id)
                 throw CommandException("That feed does not exist")

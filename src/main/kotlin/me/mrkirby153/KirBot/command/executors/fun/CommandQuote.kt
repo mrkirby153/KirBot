@@ -1,6 +1,5 @@
 package me.mrkirby153.KirBot.command.executors.`fun`
 
-import com.mrkirby153.bfs.Tuple
 import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.BaseCommand
@@ -29,7 +28,7 @@ class CommandQuote : BaseCommand(false, CommandCategory.FUN) {
         val quote = cmdContext.get<Int>("id")!!
         if (quote <= 0)
             throw CommandException("Specify a number greater than 0")
-        val q = Model.first(Quote::class.java, "id", quote.toString()) ?: throw CommandException(
+        val q = Model.where(Quote::class.java, "id", quote.toString()).first() ?: throw CommandException(
                 "That quote doesn't exist")
         if (q.serverId != context.guild.id) {
             throw CommandException("That quote doesn't exist")
@@ -41,7 +40,7 @@ class CommandQuote : BaseCommand(false, CommandCategory.FUN) {
 @Command(name = "quotes")
 class CommandQuotes : BaseCommand(false, CommandCategory.FUN) {
     override fun execute(context: Context, cmdContext: CommandContext) {
-        val quoteCount = Model.get(Quote::class.java, Tuple("server_id", context.guild.id)).size
+        val quoteCount =  Model.where(Quote::class.java, "server_id", context.guild.id).get().size
         context.channel.sendMessage(
                 ":left_speech_bubble: **Quotes**\n\n Total: $quoteCount \n\n Full List: " + botUrl(
                         "server/${context.guild.id}/quotes")).queue()

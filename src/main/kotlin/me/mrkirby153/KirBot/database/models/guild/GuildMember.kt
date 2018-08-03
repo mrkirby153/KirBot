@@ -1,6 +1,5 @@
 package me.mrkirby153.KirBot.database.models.guild
 
-import com.mrkirby153.bfs.Tuple
 import com.mrkirby153.bfs.annotations.Column
 import com.mrkirby153.bfs.annotations.PrimaryKey
 import com.mrkirby153.bfs.annotations.Table
@@ -46,6 +45,6 @@ class GuildMember : Model() {
         }
 
     val roles: List<GuildMemberRole>
-        get() = Model.get(GuildMemberRole::class.java, Tuple("server_id", serverId),
-                Tuple("user_id", userId))
+        get() = Model.where(GuildMemberRole::class.java, "server_id", serverId).where("user_id",
+                userId).get()
 }

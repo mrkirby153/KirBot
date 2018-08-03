@@ -1,6 +1,5 @@
 package me.mrkirby153.KirBot.rss
 
-import com.mrkirby153.bfs.Tuple
 import com.mrkirby153.bfs.model.Model
 import com.rometools.rome.io.SyndFeedInput
 import com.rometools.rome.io.XmlReader
@@ -32,8 +31,7 @@ class FeedTask : Runnable {
         private val idGenerator = IdGenerator(IdGenerator.ALPHA + IdGenerator.NUMBERS)
 
         fun checkFeeds(guild: Guild, ignoreFailed: Boolean = false) {
-            val feeds = Model.get(RssFeed::class.java,
-                    Tuple("server_id", guild.id))
+            val feeds = Model.where(RssFeed::class.java, "server_id", guild.id).get()
             feeds.filter { ignoreFailed || !it.failed }.forEach {
                 checkFeed(it)
             }
@@ -46,7 +44,7 @@ class FeedTask : Runnable {
                 val input = SyndFeedInput()
                 val f = input.build(XmlReader(url))
 
-                val posted = Model.get(FeedItem::class.java, Tuple("rss_feed_id", feed.id)).map { it.guid }
+                val posted = Model.where(FeedItem::class.java, "rss_feed_id", feed.id).get().map { it.guid }
                 f.entries.filter { it.uri !in posted }.forEach {
                     feed.channel?.sendMessage(it.link)?.queue()
                     val item = FeedItem()

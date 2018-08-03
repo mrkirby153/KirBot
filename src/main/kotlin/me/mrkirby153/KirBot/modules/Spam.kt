@@ -3,7 +3,6 @@ package me.mrkirby153.KirBot.modules
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import com.mrkirby153.bfs.model.Model
-import com.mrkirby153.bfs.sql.QueryBuilder
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.models.guild.GuildMessage
 import me.mrkirby153.KirBot.database.models.guild.SpamSettings
@@ -234,7 +233,7 @@ class Spam : Module("spam") {
         if (cached != null) {
             return cached.settings
         }
-        val model = Model.first(SpamSettings::class.java, "id", guild)
+        val model = Model.where(SpamSettings::class.java, "id", guild).first()
                 ?: SpamSettings().apply { id = guild }
         settingsCache.put(guild, model)
         return model.settings

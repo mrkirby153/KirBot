@@ -31,7 +31,7 @@ class ServerSettings : Model() {
     var cmdDiscriminator = "!"
 
     @Column("cmd_whitelist")
-    var cmdWhitelistRaw = ""
+    var cmdWhitelistRaw = "[]"
 
     @Column("icon_id")
     var iconId = ""

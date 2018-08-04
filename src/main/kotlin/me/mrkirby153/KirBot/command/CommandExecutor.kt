@@ -27,6 +27,7 @@ import java.lang.reflect.Method
 import java.util.LinkedList
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import kotlin.system.measureTimeMillis
 
 object CommandExecutor {
@@ -38,6 +39,7 @@ object CommandExecutor {
     private val executorThread = Executors.newFixedThreadPool(2,
             ThreadFactoryBuilder().setDaemon(true).setNameFormat(
                     "KirBot Command Executor-%d").build())
+    private val commandWatchdogThread = Executors.newCachedThreadPool(ThreadFactoryBuilder().setDaemon(true).setNameFormat("Command Watchdog-%d").build())
 
     fun loadAll() {
         Bot.LOG.info("Starting loading of commands, this may take a while")
@@ -54,7 +56,7 @@ object CommandExecutor {
     }
 
     fun execute(context: Context) {
-        this.executorThread.submit({
+        val future = this.executorThread.submit({
             if (context.channel.type == ChannelType.PRIVATE)
                 return@submit
 
@@ -128,7 +130,8 @@ object CommandExecutor {
                 Bot.LOG.debug(
                         "${context.author.id} was denied access to $cmd due to lack of clearance. Required $clearance -- Found: ${context.author.getClearance(
                                 context.guild)}")
-                context.channel.sendMessage(":lock: You do not have permission to perform this command").queue()
+                context.channel.sendMessage(
+                        ":lock: You do not have permission to perform this command").queue()
                 return@submit
             }
 
@@ -165,6 +168,8 @@ object CommandExecutor {
                 }
             } catch (e: CommandException) {
                 context.send().error(e.message ?: "An unknown error has occurred!").queue()
+            } catch(e: InterruptedException){
+                Bot.LOG.debug("Caught interrupted exception from command. Ignoring")
             } catch (e: Exception) {
                 e.printStackTrace()
                 ErrorLogger.logThrowable(e, context.guild, context.author)
@@ -172,6 +177,17 @@ object CommandExecutor {
             }
             Bot.LOG.debug("Command execution finished")
         })
+        commandWatchdogThread.submit {
+            try {
+                future.get(10, TimeUnit.SECONDS)
+            } catch (e: TimeoutException) {
+                Bot.LOG.debug("Command hit timeout, canceling")
+                future.cancel(true)
+                context.send().error("An unknown error has occurred!").queue()
+            } catch (e: Exception){
+                e.printStackTrace()
+            }
+        }
     }
 
     fun executeCustomCommand(context: Context, command: String, args: Array<String>) {

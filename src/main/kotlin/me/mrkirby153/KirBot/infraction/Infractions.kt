@@ -204,19 +204,22 @@ object Infractions {
     fun importFromBanlist(guild: KirBotGuild) {
         if (guild.selfMember.hasPermission(Permission.BAN_MEMBERS)) {
             guild.banList.queue { bans ->
-                bans.filter {
-                    Model.where(Infraction::class.java, "user_id", it.user.id).where("guild",
-                            guild.id).where("active", true).first() != null
-                }.forEach {
-                    Bot.LOG.debug("Found missing infraction for ${it.user.id} on $guild")
-                    val infraction = Infraction()
-                    infraction.type = InfractionType.BAN
-                    infraction.issuerId = null
-                    infraction.reason = it.reason
-                    infraction.userId = it.user.id
-                    infraction.guild = guild.id
-                    infraction.createdAt = Timestamp(System.currentTimeMillis())
-                    infraction.save()
+                val bannedIds = bans.map { it.user.id }
+                val recordedBans = Model.where(Infraction::class.java, "guild", guild.id).where(
+                        "active", true).where("type", InfractionType.BAN.internalName).whereIn(
+                        "user_id", bannedIds.toTypedArray()).get().map { it.userId }
+
+                val missingInfractions = bannedIds.filter { it !in recordedBans }
+                Bot.LOG.debug("Found ${missingInfractions.size} missing infractions")
+                missingInfractions.forEach { userId ->
+                    val inf = Infraction()
+                    inf.type = InfractionType.BAN
+                    inf.issuerId = null
+                    inf.reason = bans.firstOrNull { it.user.id == userId }?.reason ?: "Unknown"
+                    inf.userId = userId
+                    inf.guild = guild.id
+                    inf.createdAt = Timestamp(System.currentTimeMillis())
+                    inf.save()
                 }
             }
         }

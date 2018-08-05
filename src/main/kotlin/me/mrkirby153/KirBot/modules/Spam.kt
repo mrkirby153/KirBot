@@ -143,23 +143,29 @@ class Spam : Module("spam") {
                         // Do nothing
                     }
                     "MUTE" -> {
-                        Infractions.mute(violation.user.id, violation.guild, violation.user.id,
+                        Infractions.mute(violation.user.id, violation.guild,
+                                violation.guild.selfMember.user.id,
                                 reason)
                     }
                     "KICK" -> {
-                        Infractions.kick(violation.user.id, violation.guild, violation.user.id,
+                        Infractions.kick(violation.user.id, violation.guild,
+                                violation.guild.selfMember.user.id,
                                 reason)
                     }
                     "BAN" -> {
-                        Infractions.ban(violation.user.id, violation.guild, violation.user.id,
+                        Infractions.ban(violation.user.id, violation.guild,
+                                violation.guild.selfMember.user.id,
                                 reason)
                     }
                     "TEMPMUTE" -> {
-                        Infractions.tempMute(violation.user.id, violation.guild, violation.user.id,
+                        Infractions.tempMute(violation.user.id, violation.guild,
+                                violation.guild.selfMember.user.id,
                                 duration, TimeUnit.SECONDS, reason)
                     }
                     "TEMPBAN" -> {
-                        Infractions.tempban(violation.user.id, violation.guild, violation.user.id, duration, TimeUnit.SECONDS, reason)
+                        Infractions.tempban(violation.user.id, violation.guild,
+                                violation.guild.selfMember.user.id, duration, TimeUnit.SECONDS,
+                                reason)
                     }
                     else -> {
                         Bot.LOG.warn("Unknown punishment $punishment on guild ${violation.guild}")

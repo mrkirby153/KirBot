@@ -212,9 +212,8 @@ object Infractions {
             return
         removeMutedRole(guild.getMemberById(user).user, guild)
 
-        Model.where(Infraction::class.java, "user_id", user).where("guild", guild.id).where("type",
-                "mute").where("active", true).get().forEach {
-            it.revoke()
+        getActiveInfractions(user, guild).filter { it.type == InfractionType.MUTE || it.type == InfractionType.TEMPMUTE }.forEach { ban ->
+            ban.revoke()
         }
 
         guild.kirbotGuild.logManager.genericLog(LogEvent.USER_UNMUTE, ":open_mouth:", buildString {

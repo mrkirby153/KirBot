@@ -149,6 +149,8 @@ object Infractions {
     fun softban(user: String, guild: Guild, issuer: String, reason: String? = null) {
         if (!guild.selfMember.hasPermission(Permission.BAN_MEMBERS))
             return
+        ModuleManager[InfractionModule::class.java].ignoreBans.add(user)
+        ModuleManager[InfractionModule::class.java].ignoreUnbans.add(user)
         guild.controller.ban(user, 7, reason).queue {
             guild.controller.unban(user).queue()
         }

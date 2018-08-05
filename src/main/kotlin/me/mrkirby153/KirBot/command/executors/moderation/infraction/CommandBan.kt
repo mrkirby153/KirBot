@@ -100,3 +100,23 @@ class CommandTempban : BaseCommand(false, CommandCategory.MODERATION) {
     }
 
 }
+
+@Command(name = "softban", arguments = ["<user:snowflake>", "[reason:string...]"], clearance = CLEARANCE_MOD, permissions = [Permission.BAN_MEMBERS])
+@LogInModlogs
+class CommandSoftban: BaseCommand(false, CommandCategory.MODERATION){
+    override fun execute(context: Context, cmdContext: CommandContext) {
+        val user = cmdContext.get<String>("user")!!
+        val reason = cmdContext.get<String>("reason")
+        val resolvedUser = context.guild.getMemberById(user)?.user
+        if (resolvedUser != null) {
+            if (!context.author.canInteractWith(context.guild, resolvedUser))
+                throw CommandException("Missing permissions")
+        }
+        Infractions.softban(user, context.guild, context.author.id)
+        context.send().success("Soft-banned ${resolvedUser?.logName ?: user}" + buildString {
+            if(reason != null)
+                append(": `$reason`")
+        }, true).queue()
+    }
+
+}

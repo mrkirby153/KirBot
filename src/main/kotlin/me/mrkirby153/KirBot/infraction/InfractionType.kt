@@ -9,7 +9,8 @@ enum class InfractionType(val internalName: String) {
     MUTE("mute"),
     TEMPMUTE("tempmute"),
     UNKNOWN("unknown"),
-    WARN("warn");
+    WARN("warn"),
+    TEMPBAN("tempban");
 
     companion object {
         fun getType(internalName: String): InfractionType {

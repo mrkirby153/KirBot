@@ -11,8 +11,11 @@ import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.canInteractWith
 import me.mrkirby153.KirBot.utils.getMember
+import me.mrkirby153.KirBot.utils.logName
+import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.User
+import java.util.concurrent.TimeUnit
 
 @Command(name = "ban", arguments = ["<user:user>", "[reason:string...]"], clearance = CLEARANCE_MOD,
         permissions = [Permission.BAN_MEMBERS])
@@ -71,4 +74,29 @@ class CommandUnban : BaseCommand(false, CommandCategory.MODERATION) {
         Infractions.unban(user, context.guild, context.author.id, reason)
         context.send().success("Unbanned `$user`", true).queue()
     }
+}
+
+@Command(name = "tempban", arguments = ["<user:snowflake>", "<time:string>", "[reason:string...]"],
+        clearance = CLEARANCE_MOD, permissions = [Permission.BAN_MEMBERS])
+@LogInModlogs
+class CommandTempban : BaseCommand(false, CommandCategory.MODERATION) {
+    override fun execute(context: Context, cmdContext: CommandContext) {
+        val user = cmdContext.get<String>("user")!!
+        val reason = cmdContext.get<String>("reason")
+        val timeRaw = cmdContext.get<String>("time") ?: "0"
+
+        val time = Time.parse(timeRaw)
+        if (time < 0)
+            throw CommandException("Specify a duration greater than zero")
+        val resolvedUser = context.guild.getMemberById(user)?.user
+        if (resolvedUser != null) {
+            if (!context.author.canInteractWith(context.guild, resolvedUser))
+                throw CommandException("Missing permissions")
+        }
+        Infractions.tempban(user, context.guild, context.author.id, time, TimeUnit.MILLISECONDS,
+                reason)
+        context.send().success(
+                "${resolvedUser?.logName ?: user} has been temp-banned for ${Time.format(1, time)}", true).queue()
+    }
+
 }

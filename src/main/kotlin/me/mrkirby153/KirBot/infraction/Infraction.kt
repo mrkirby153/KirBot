@@ -31,8 +31,10 @@ class Infraction : Model() {
 
     var active: Boolean = true
 
-    @Column("revoked_at")
-    var revokedAt: Timestamp? = null
+    val metadata: String? = null
+
+    @Column("expires_at")
+    var expiresAt: Timestamp? = null
 
     @Transient
     var type: InfractionType = InfractionType.UNKNOWN
@@ -43,7 +45,6 @@ class Infraction : Model() {
         }
 
     fun revoke() {
-        this.revokedAt = Timestamp(System.currentTimeMillis())
         this.active = false
         save()
     }

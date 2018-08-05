@@ -9,6 +9,7 @@ import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers
 import me.mrkirby153.KirBot.database.DatabaseConnection
 import me.mrkirby153.KirBot.error.UncaughtErrorReporter
+import me.mrkirby153.KirBot.infraction.Infractions
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.AdminControl
 import me.mrkirby153.KirBot.rss.FeedTask
@@ -135,6 +136,7 @@ object Bot {
 
         scheduler.scheduleAtFixedRate(FeedTask(), 0, 1, TimeUnit.HOURS)
         ModuleManager.startScheduler()
+        Infractions.waitForInfraction()
 
         shardManager.onlineStatus = OnlineStatus.ONLINE
         shardManager.playing = properties.getOrDefault("playing-message", "!help").toString()

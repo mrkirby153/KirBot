@@ -137,25 +137,26 @@ class Spam : Module("spam") {
                         ":helmet_with_cross:",
                         "${violation.user.logName} Has violated ${violation.msg}")
 
+                val reason = "Spam detected: ${violation.msg}"
                 when (punishment.toUpperCase()) {
                     "NONE" -> {
                         // Do nothing
                     }
                     "MUTE" -> {
                         Infractions.mute(violation.user.id, violation.guild, violation.user.id,
-                                "Spam detected")
+                                reason)
                     }
                     "KICK" -> {
                         Infractions.kick(violation.user.id, violation.guild, violation.user.id,
-                                "Spam detected")
+                                reason)
                     }
                     "BAN" -> {
                         Infractions.ban(violation.user.id, violation.guild, violation.user.id,
-                                "Spam detected")
+                                reason)
                     }
                     "TEMPMUTE" -> {
                         Infractions.tempMute(violation.user.id, violation.guild, violation.user.id,
-                                duration, TimeUnit.SECONDS, "Spam Detected")
+                                duration, TimeUnit.SECONDS, reason)
                     }
                     else -> {
                         Bot.LOG.warn("Unknown punishment $punishment on guild ${violation.guild}")

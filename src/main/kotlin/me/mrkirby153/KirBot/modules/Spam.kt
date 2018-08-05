@@ -158,6 +158,9 @@ class Spam : Module("spam") {
                         Infractions.tempMute(violation.user.id, violation.guild, violation.user.id,
                                 duration, TimeUnit.SECONDS, reason)
                     }
+                    "TEMPBAN" -> {
+                        Infractions.tempban(violation.user.id, violation.guild, violation.user.id, duration, TimeUnit.SECONDS, reason)
+                    }
                     else -> {
                         Bot.LOG.warn("Unknown punishment $punishment on guild ${violation.guild}")
                         violation.guild.kirbotGuild.logManager.genericLog(LogEvent.SPAM_VIOLATE,

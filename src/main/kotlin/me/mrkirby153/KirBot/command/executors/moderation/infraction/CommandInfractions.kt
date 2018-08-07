@@ -29,19 +29,22 @@ class CommandInfractions : BaseCommand(false, CommandCategory.MODERATION) {
         throw CommandException("Please provide a sub-command")
     }
 
-    @Command(name = "search", clearance = CLEARANCE_MOD, arguments = ["<query:string...>"])
+    @Command(name = "search", clearance = CLEARANCE_MOD, arguments = ["[query:string...]"])
+    @LogInModlogs
     fun search(context: Context, cmdContext: CommandContext) {
-        val query = cmdContext.get<String>("query")!!
+        val query = cmdContext.get<String>("query") ?: ""
 
         val infractions = DB.getResults(
-                "SELECT DISTINCT * FROM infractions WHERE `guild` = ? OR (`user_id` = ? AND `guild` = ?) OR (`issuer` = ? AND `guild` = ?) OR (`id` = ?) OR (`reason` LIKE ? AND `guild` = ?)",
-                context.guild.id, query, context.guild.id, query, context.guild.id, query, "%$query%", context.guild.id).map {
+                "SELECT DISTINCT * FROM infractions WHERE (`user_id` = ? AND `guild` = ?) OR (`issuer` = ? AND `guild` = ?) OR (`id` = ?) OR (`reason` LIKE ? AND `guild` = ?) ORDER BY `id` DESC LIMIT 5",
+                query, context.guild.id, query, context.guild.id, query,
+                "%$query%", context.guild.id).map {
             val inf = Infraction()
             inf.setData(it)
             return@map inf
         }
 
-        val header = arrayOf("ID", "Created", "Type", "User", "Moderator", "Reason", "Active")
+        val header = arrayOf("ID", "Created", "Type", "User", "Moderator", "Reason", "Active",
+                "Expires")
 
 
         val table = TableBuilder(header)
@@ -54,9 +57,12 @@ class CommandInfractions : BaseCommand(false, CommandCategory.MODERATION) {
             val username = users.computeIfAbsent(it.userId, {
                 Model.where(DiscordUser::class.java, "id", it).first()?.nameAndDiscrim ?: it
             })
+            val reason = if (it.reason != null) if (it.reason!!.length >= 256) it.reason!!.substring(
+                    0..255) + "..." else it.reason else ""
             table.addRow(
                     arrayOf(it.id.toString(), it.createdAt.toString(), it.type.toString(), username,
-                            moderator, it.reason, if (it.active) "yes" else "no"))
+                            moderator, reason, if (it.active) "yes" else "no",
+                            it.expiresAt?.toString() ?: "NULL"))
         }
 
         val builtTable = table.buildTable()
@@ -67,14 +73,55 @@ class CommandInfractions : BaseCommand(false, CommandCategory.MODERATION) {
         }
     }
 
+    @Command(name = "info", clearance = CLEARANCE_MOD, arguments = ["<id:int>"])
+    @LogInModlogs
+    fun info(context: Context, cmdContext: CommandContext) {
+        val id = cmdContext.get<Int>("id")!!
+        val infraction = Model.where(Infraction::class.java, "id", id).first()
+        if (infraction == null || infraction.guild != context.guild.id)
+            throw CommandException("Infraction not found!")
+        context.send().embed(infraction.type.internalName.capitalize()) {
+            fields {
+                field {
+                    val user = Model.where(DiscordUser::class.java, "id", infraction.userId).first()
+                    title = "User"
+                    description {
+                        if (user != null)
+                            +user.nameAndDiscrim
+                        else
+                            +infraction.userId
+                    }
+                    inline = true
+                }
+                field {
+                    val user = Model.where(DiscordUser::class.java, "id", infraction.issuerId).first()
+                    title = "Moderator"
+                    description {
+                        if (user != null)
+                            +user.nameAndDiscrim
+                        else
+                            +infraction.userId
+                    }
+                    inline = true
+                }
+                field {
+                    title = "Reason"
+                    description = infraction.reason ?: ""
+                }
+            }
+        }.rest().queue()
+    }
+
     @Command(name = "clear", clearance = CLEARANCE_MOD,
             arguments = ["<id:int>", "[reason:string...]"])
+    @LogInModlogs
     fun clearInfraction(context: Context, cmdContext: CommandContext) {
         val id = cmdContext.get<Int>("id")!!
         val reason = cmdContext.get<String>("reason") ?: "No reason specified"
 
-        val infraction = Model.where(Infraction::class.java, "id", id).first() ?: throw CommandException(
-                "Infraction not found")
+        val infraction = Model.where(Infraction::class.java, "id", id).first()
+                ?: throw CommandException(
+                        "Infraction not found")
 
         if (infraction.issuerId == null || infraction.issuerId != context.author.id) {
             if (context.author.getClearance(context.guild) < CLEARANCE_ADMIN)
@@ -92,6 +139,7 @@ class CommandInfractions : BaseCommand(false, CommandCategory.MODERATION) {
 
     @Command(name = "reason", clearance = CLEARANCE_MOD,
             arguments = ["<id:number>", "<reason:string...>"])
+    @LogInModlogs
     fun reason(context: Context, cmdContext: CommandContext) {
         val id = cmdContext.get<Int>("id")!!
         val reason = cmdContext.get<String>("reason")!!

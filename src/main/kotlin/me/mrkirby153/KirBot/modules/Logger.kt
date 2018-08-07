@@ -9,6 +9,7 @@ import me.mrkirby153.KirBot.logger.LogManager
 import me.mrkirby153.KirBot.logger.LogPump
 import me.mrkirby153.KirBot.module.Module
 import me.mrkirby153.KirBot.module.ModuleManager
+import me.mrkirby153.KirBot.utils.Debouncer
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.logName
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
@@ -36,6 +37,8 @@ class Logger : Module("logging") {
 
     private val logDelay = 1000L
 
+    val debouncer = Debouncer()
+
     init {
         dependencies.add(Database::class.java)
         dependencies.add(Redis::class.java)
@@ -48,6 +51,11 @@ class Logger : Module("logging") {
         logPump = LogPump(logDelay)
         logPump.start()
         registerLogEvents()
+    }
+
+    @Periodic(120)
+    fun clearDebounces() {
+        debouncer.removeExpired()
     }
 
     override fun onShutdown(event: ShutdownEvent?) {
@@ -74,17 +82,27 @@ class Logger : Module("logging") {
     override fun onGuildMemberRoleAdd(event: GuildMemberRoleAddEvent) {
         if (!event.guild.kirbotGuild.ready)
             return
-        event.guild.kirbotGuild.logManager.genericLog(LogEvent.ROLE_ADD, ":key:",
-                "Assigned **${event.roles.joinToString(
-                        ", ") { it.name }}** to ${event.user.logName}")
+        val roles = event.roles.filter {
+            debouncer.find(GuildMemberRoleAddEvent::class.java, Pair("user", event.user.id),
+                    Pair("role", it.id))
+        }
+        if (roles.isNotEmpty())
+            event.guild.kirbotGuild.logManager.genericLog(LogEvent.ROLE_ADD, ":key:",
+                    "Assigned **${roles.joinToString(
+                            ", ") { it.name }}** to ${event.user.logName}")
     }
 
     override fun onGuildMemberRoleRemove(event: GuildMemberRoleRemoveEvent) {
         if (!event.guild.kirbotGuild.ready)
             return
-        event.guild.kirbotGuild.logManager.genericLog(LogEvent.ROLE_REMOVE, ":key:",
-                "Removed **${event.roles.joinToString(
-                        ", ") { it.name }}** from ${event.user.logName}")
+        val roles = event.roles.filter {
+            debouncer.find(GuildMemberRoleRemoveEvent::class.java, Pair("user", event.user.id),
+                    Pair("role", it.id))
+        }
+        if (roles.isNotEmpty())
+            event.guild.kirbotGuild.logManager.genericLog(LogEvent.ROLE_REMOVE, ":key:",
+                    "Removed **${roles.joinToString(
+                            ", ") { it.name }}** from ${event.user.logName}")
     }
 
     override fun onGuildMemberJoin(event: GuildMemberJoinEvent) {
@@ -97,6 +115,8 @@ class Logger : Module("logging") {
 
     override fun onGuildMemberLeave(event: GuildMemberLeaveEvent) {
         if (!event.guild.kirbotGuild.ready)
+            return
+        if (debouncer.find(GuildMemberLeaveEvent::class.java, Pair("user", event.user.id)))
             return
         event.guild.kirbotGuild.logManager.genericLog(LogEvent.USER_LEAVE, ":outbox_tray:",
                 "${event.user.logName} left")

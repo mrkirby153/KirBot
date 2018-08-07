@@ -7,6 +7,7 @@ import me.mrkirby153.KirBot.database.models.DiscordUser
 import me.mrkirby153.KirBot.logger.LogEvent
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.InfractionModule
+import me.mrkirby153.KirBot.modules.Logger
 import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.utils.getMember
 import me.mrkirby153.KirBot.utils.kirbotGuild
@@ -16,6 +17,9 @@ import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.entities.Role
 import net.dv8tion.jda.core.entities.User
+import net.dv8tion.jda.core.events.guild.GuildBanEvent
+import net.dv8tion.jda.core.events.guild.GuildUnbanEvent
+import net.dv8tion.jda.core.events.guild.member.GuildMemberLeaveEvent
 import java.sql.Timestamp
 import java.time.Instant
 import java.util.concurrent.Executors
@@ -103,6 +107,7 @@ object Infractions {
         if (!guild.selfMember.hasPermission(Permission.KICK_MEMBERS)) {
             return
         }
+        ModuleManager[Logger::class.java].debouncer.create(GuildMemberLeaveEvent::class.java, Pair("user", user))
         guild.controller.kick(guild.getMemberById(user), reason ?: "").queue()
 
         createInfraction(user, guild, if (issuer == "1") user else issuer, reason,
@@ -132,7 +137,8 @@ object Infractions {
             purgeDays: Int = 0) {
         if (!guild.selfMember.hasPermission(Permission.BAN_MEMBERS))
             return
-        ModuleManager[InfractionModule::class.java].ignoreBans.add(user)
+        ModuleManager[InfractionModule::class.java].debouncer.create(GuildBanEvent::class.java, Pair("user", user), Pair("guild", guild.id))
+        ModuleManager[Logger::class.java].debouncer.create(GuildMemberLeaveEvent::class.java, Pair("user", user))
         guild.controller.ban(user, purgeDays, reason).queue()
 
         createInfraction(user, guild, if (issuer == "1") user else issuer, reason,
@@ -149,8 +155,9 @@ object Infractions {
     fun softban(user: String, guild: Guild, issuer: String, reason: String? = null) {
         if (!guild.selfMember.hasPermission(Permission.BAN_MEMBERS))
             return
-        ModuleManager[InfractionModule::class.java].ignoreBans.add(user)
-        ModuleManager[InfractionModule::class.java].ignoreUnbans.add(user)
+        ModuleManager[InfractionModule::class.java].debouncer.create(GuildBanEvent::class.java, Pair("user", user), Pair("guild", guild.id))
+        ModuleManager[InfractionModule::class.java].debouncer.create(GuildUnbanEvent::class.java, Pair("user", user), Pair("guild", guild.id))
+        ModuleManager[Logger::class.java].debouncer.create(GuildMemberLeaveEvent::class.java, Pair("user", user))
         guild.controller.ban(user, 7, reason).queue {
             guild.controller.unban(user).queue()
         }
@@ -169,7 +176,7 @@ object Infractions {
     fun unban(user: String, guild: Guild, issuer: String, reason: String = "") {
         if (!guild.selfMember.hasPermission(Permission.BAN_MEMBERS))
             return
-        ModuleManager[InfractionModule::class.java].ignoreUnbans.add(user)
+        ModuleManager[InfractionModule::class.java].debouncer.create(GuildUnbanEvent::class.java, Pair("user", user), Pair("guild", guild.id))
         guild.banList.queue { banList ->
             if (user in banList.map { it.user.id })
                 guild.controller.unban(user).queue()

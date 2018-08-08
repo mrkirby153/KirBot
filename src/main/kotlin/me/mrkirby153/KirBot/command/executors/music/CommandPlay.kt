@@ -12,7 +12,7 @@ import me.mrkirby153.KirBot.music.AudioTrackLoader
 import me.mrkirby153.KirBot.utils.Context
 import net.dv8tion.jda.core.Permission
 
-@Command(name = "play", arguments = ["<query/url:string...>"],
+@Command(name = "play", arguments = ["[query/url:string...]"],
         permissions = [Permission.MESSAGE_EMBED_LINKS])
 class CommandPlay : BaseCommand(CommandCategory.MUSIC) {
     override fun execute(context: Context, cmdContext: CommandContext) {

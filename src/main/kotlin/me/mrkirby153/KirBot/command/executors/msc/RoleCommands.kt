@@ -11,10 +11,12 @@ import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.canAssign
+import me.mrkirby153.KirBot.utils.getMember
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.logName
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import net.dv8tion.jda.core.Permission
+import net.dv8tion.jda.core.entities.Member
 import net.dv8tion.jda.core.entities.Role
 import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleAddEvent
 import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleRemoveEvent
@@ -32,6 +34,43 @@ class RoleCommands : BaseCommand(false) {
             msg += "\n${it.id} - ${it.name}"
         }
         context.channel.sendMessage("$msg```").queue()
+    }
+
+    /**
+     * Checks if the given member can assign the given role
+     *
+     * @param member The member
+     * @param role The role to assign
+     *
+     * @throws CommandException If an error occurs in the comparison
+     */
+    private fun checkAssignment(member: Member, role: Role, mode: String = "assign") {
+        if (member.isOwner)
+            return // The owner can assign all roles regardless of permissions
+        val highestPos = member.roles.maxBy { it.position }?.position ?: 0
+        val rolePos = role.position
+        if (rolePos >= highestPos) {
+            throw CommandException("You cannot $mode roles above your own")
+        }
+    }
+
+    /**
+     * Checks if the given member can interact with the other member
+     *
+     * @param member The member to check
+     * @param otherMember The member to check against
+     *
+     * @throws CommandException If the user cannot manipulate the user
+     */
+    private fun checkManipulate(member: Member, otherMember: Member) {
+        if (member.user.id == otherMember.user.id)
+            throw CommandException("You cannot execute that on yourself")
+        if (member.isOwner)
+            return  // The owner can manipulate everyone regardless of permissions
+        val highestPos = member.roles.maxBy { it.position }?.position ?: 0
+        val otherPos = otherMember.roles.maxBy { it.position }?.position ?: 0
+        if (otherPos >= highestPos)
+            throw CommandException("You cannot execute this on that user")
     }
 
     @Command(name = "add", clearance = CLEARANCE_MOD,
@@ -54,20 +93,9 @@ class RoleCommands : BaseCommand(false) {
         val member = context.guild.getMemberById(cmdContext.get<String>("user"))
                 ?: throw CommandException("That user is not in the guild")
 
-        val m = context.member
-        val highestRole = m.roles.map { it.position }.max() ?: 0
-
-        val targetHighest = member.roles.map { it.position }.max() ?: 0
-
-
-        if (member.user.id == context.author.id)
-            throw CommandException("you cannot execute this on yourself!")
-
-        if (targetHighest >= highestRole)
-            throw CommandException("you cannot execute that on this user")
-
-        if (!context.member.canAssign(role))
-            throw CommandException("you cannot add roles above yourself")
+        val m = context.author.getMember(context.guild)
+        checkManipulate(m, member)
+        checkAssignment(m, role)
 
         if (!context.guild.selfMember.canAssign(role))
             throw CommandException("I cannot assign that role")
@@ -76,7 +104,7 @@ class RoleCommands : BaseCommand(false) {
                 Pair("user", member.user.id), Pair("role", role.id))
         context.guild.controller.addSingleRoleToMember(member, role).queue()
         context.kirbotGuild.logManager.genericLog(LogEvent.ROLE_ADD, ":key:",
-                "Assigned **${role.name}** to ${m.user.logName}: `$reason`")
+                "Assigned **${role.name}** to ${member.user.logName}: `$reason`")
         context.send().success("Added role **${role.name}** to ${member.user.nameAndDiscrim}",
                 true).queue()
     }
@@ -101,27 +129,16 @@ class RoleCommands : BaseCommand(false) {
                 ?: throw CommandException(
                         "that user is not in the guild")
 
-        val highestRole = context.member.roles.map { it.position }.max()!!
+        val m = context.author.getMember(context.guild)
+        checkManipulate(m, member)
+        checkAssignment(m, role, "remove")
 
-        val targetHighest = member.roles.map { it.position }.max()!!
-
-        if (member.user.id == context.author.id)
-            throw CommandException("you cannot execute this on yourself!")
-
-        if (targetHighest >= highestRole)
-            throw CommandException("you cannot execute that on this user")
-
-        if (!context.member.canAssign(role))
-            throw CommandException("you cannot add roles above yourself")
-
-        if (!context.guild.selfMember.canAssign(role))
-            throw CommandException("I cannot assign that role")
-
-        ModuleManager[Logger::class].debouncer.create(GuildMemberRoleRemoveEvent::class.java, Pair("user", member.user.id), Pair("role", role.id))
+        ModuleManager[Logger::class].debouncer.create(GuildMemberRoleRemoveEvent::class.java,
+                Pair("user", member.user.id), Pair("role", role.id))
         context.kirbotGuild.logManager.genericLog(LogEvent.ROLE_ADD, ":key:",
                 "Removed **${role.name}** from ${member.user.logName}: `$reason`")
         context.guild.controller.removeSingleRoleFromMember(member, role).queue()
-        context.send().success("Removed role **${role.name}** to ${member.user.nameAndDiscrim}",
+        context.send().success("Removed role **${role.name}** from ${member.user.nameAndDiscrim}",
                 true).queue()
     }
 }

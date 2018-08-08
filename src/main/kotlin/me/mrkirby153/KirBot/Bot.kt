@@ -51,6 +51,8 @@ object Bot {
 
     val constants = Bot.javaClass.getResourceAsStream("/constants.properties").readProperties()
 
+    val gitProperties = Bot.javaClass.getResourceAsStream("/git.properties").readProperties()
+
     val playerManager: AudioPlayerManager = DefaultAudioPlayerManager().apply {
         AudioSourceManagers.registerRemoteSources(this)
         AudioSourceManagers.registerLocalSource(this)

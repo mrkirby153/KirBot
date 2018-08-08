@@ -39,6 +39,11 @@ fun InputStream.readProperties(): Properties {
 
 fun User.getClearance(server: Guild) = server.kirbotGuild.getClearance(this)
 
+val User.globalAdmin: Boolean
+    get() = ModuleManager.getLoadedModule(Redis::class.java)?.getConnection()?.use {
+        it.sismember("admins", this.id)
+    } ?: false
+
 fun User.getMember(server: Guild) = server.getMember(this)
 
 fun User.canInteractWith(guild: Guild, user: User): Boolean = this.getClearance(
@@ -158,7 +163,8 @@ fun TextChannel.hide() {
     val public = this.getPermissionOverride(guild.publicRole) ?: this.createPermissionOverride(
             guild.publicRole).complete()
     public.manager.deny(Permission.MESSAGE_READ).queue()
-    Model.where(me.mrkirby153.KirBot.database.models.Channel::class.java, "id", this.id).first()?.run {
+    Model.where(me.mrkirby153.KirBot.database.models.Channel::class.java, "id",
+            this.id).first()?.run {
         this.hidden = this@hide.getPermissionOverride(this@hide.guild.publicRole)?.denied?.contains(
                 Permission.MESSAGE_READ) ?: false
         this.save()
@@ -168,7 +174,8 @@ fun TextChannel.hide() {
 fun TextChannel.unhide() {
     val public = this.getPermissionOverride(guild.publicRole) ?: return
     public.manager.clear(Permission.MESSAGE_READ).queue()
-    Model.where(me.mrkirby153.KirBot.database.models.Channel::class.java, "id", this.id).first()?.run {
+    Model.where(me.mrkirby153.KirBot.database.models.Channel::class.java, "id",
+            this.id).first()?.run {
         this.hidden = this@unhide.getPermissionOverride(
                 this@unhide.guild.publicRole)?.denied?.contains(Permission.MESSAGE_READ) ?: false
         this.save()

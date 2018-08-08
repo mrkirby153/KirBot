@@ -6,6 +6,7 @@ import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.utils.Context
+import me.mrkirby153.KirBot.utils.globalAdmin
 import me.mrkirby153.KirBot.utils.localizeTime
 import java.awt.Color
 
@@ -21,7 +22,7 @@ class CommandStats : BaseCommand(CommandCategory.ADMIN) {
             users.addAll(shard.users.map { it.id })
         }
 
-        context.send().embed("Bot Statistics"){
+        context.send().embed("Bot Statistics") {
             color = Color.BLUE
             fields {
                 field {
@@ -29,7 +30,7 @@ class CommandStats : BaseCommand(CommandCategory.ADMIN) {
                     inline = true
                     description = guilds.toString()
                 }
-                if(Bot.numShards > 1){
+                if (Bot.numShards > 1) {
                     field {
                         title = "Shard"
                         inline = true
@@ -44,17 +45,32 @@ class CommandStats : BaseCommand(CommandCategory.ADMIN) {
                 field {
                     title = "Uptime"
                     inline = true
-                    description = localizeTime(((System.currentTimeMillis() - Bot.startTime) / 1000).toInt())
+                    description = localizeTime(
+                            ((System.currentTimeMillis() - Bot.startTime) / 1000).toInt())
                 }
                 field {
                     title = "Version"
-                    inline = true
-                    description = Bot.constants.getProperty("bot-version")
+                    inline = !context.author.globalAdmin
+                    description = buildString {
+                        if (!context.author.globalAdmin) {
+                            append(Bot.gitProperties.getProperty("git.build.version", "Unknown"))
+                        } else {
+                            appendln("__Branch__: ${Bot.gitProperties["git.branch"]}")
+                            appendln("__Built At__: ${Bot.gitProperties["git.build.time"]}")
+                            append("__Commit__: ${Bot.gitProperties["git.commit.id"]}")
+                            if (Bot.gitProperties.getProperty("git.dirty", "false")!!.toBoolean()) {
+                                append("*\n")
+                            } else {
+                                append("\n")
+                            }
+                            appendln("__Message__: `${Bot.gitProperties["git.commit.message.short"]}`")
+                        }
+                    }
                 }
                 field {
                     title = "URL"
                     inline = true
-                    description  = Bot.constants.getProperty("bot-base-url")
+                    description = Bot.constants.getProperty("bot-base-url")
                 }
             }
         }.rest().queue()

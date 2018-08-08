@@ -83,7 +83,7 @@ class Logger : Module("logging") {
         if (!event.guild.kirbotGuild.ready)
             return
         val roles = event.roles.filter {
-            debouncer.find(GuildMemberRoleAddEvent::class.java, Pair("user", event.user.id),
+            !debouncer.find(GuildMemberRoleAddEvent::class.java, Pair("user", event.user.id),
                     Pair("role", it.id))
         }
         if (roles.isNotEmpty())
@@ -96,7 +96,7 @@ class Logger : Module("logging") {
         if (!event.guild.kirbotGuild.ready)
             return
         val roles = event.roles.filter {
-            debouncer.find(GuildMemberRoleRemoveEvent::class.java, Pair("user", event.user.id),
+            !debouncer.find(GuildMemberRoleRemoveEvent::class.java, Pair("user", event.user.id),
                     Pair("role", it.id))
         }
         if (roles.isNotEmpty())

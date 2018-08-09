@@ -35,8 +35,8 @@ import net.dv8tion.jda.core.events.guild.voice.GuildVoiceMoveEvent
 import net.dv8tion.jda.core.events.role.RoleCreateEvent
 import net.dv8tion.jda.core.events.role.RoleDeleteEvent
 import net.dv8tion.jda.core.events.role.update.GenericRoleUpdateEvent
-import net.dv8tion.jda.core.events.user.UserNameUpdateEvent
-import net.dv8tion.jda.core.events.user.UserOnlineStatusUpdateEvent
+import net.dv8tion.jda.core.events.user.update.UserUpdateNameEvent
+import net.dv8tion.jda.core.events.user.update.UserUpdateOnlineStatusEvent
 import net.dv8tion.jda.core.hooks.ListenerAdapter
 import java.util.concurrent.TimeUnit
 
@@ -77,7 +77,7 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
         event.guild.kirbotGuild.unlock()
     }
 
-    override fun onUserNameUpdate(event: UserNameUpdateEvent) {
+    override fun onUserUpdateName(event: UserUpdateNameEvent){
         val user = Model.where(DiscordUser::class.java, "id", event.user.id).first() ?: return
         user.username = event.user.name
         user.discriminator = event.user.discriminator.toInt()
@@ -160,7 +160,7 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
         }, 0, TimeUnit.MILLISECONDS)
     }
 
-    override fun onUserOnlineStatusUpdate(event: UserOnlineStatusUpdateEvent) {
+    override fun onUserUpdateOnlineStatus(event: UserUpdateOnlineStatusEvent) {
         Bot.seenStore.updateOnlineStatus(event.user.mutualGuilds[0].getMember(event.user))
     }
 
@@ -200,14 +200,14 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
         channel.create()
     }
 
-    override fun onGenericTextChannelUpdate(event: GenericTextChannelUpdateEvent) {
+    override fun onGenericTextChannelUpdate(event: GenericTextChannelUpdateEvent<*>) {
         if (!event.guild.kirbotGuild.ready)
             return
         Model.where(me.mrkirby153.KirBot.database.models.Channel::class.java, "id",
                 event.channel.id).first()?.updateChannel()
     }
 
-    override fun onGenericVoiceChannelUpdate(event: GenericVoiceChannelUpdateEvent) {
+    override fun onGenericVoiceChannelUpdate(event: GenericVoiceChannelUpdateEvent<*>) {
         if (!event.guild.kirbotGuild.ready)
             return
         Model.where(me.mrkirby153.KirBot.database.models.Channel::class.java, "id",
@@ -223,7 +223,7 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
         role.save()
     }
 
-    override fun onGenericRoleUpdate(event: GenericRoleUpdateEvent) {
+    override fun onGenericRoleUpdate(event: GenericRoleUpdateEvent<*>) {
         if (!event.guild.kirbotGuild.ready)
             return
         val role = Model.where(Role::class.java, "id", event.role.id).first() ?: return

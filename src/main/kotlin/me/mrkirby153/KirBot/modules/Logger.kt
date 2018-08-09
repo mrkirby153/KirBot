@@ -30,7 +30,7 @@ import net.dv8tion.jda.core.events.message.guild.GuildMessageUpdateEvent
 import net.dv8tion.jda.core.events.role.RoleCreateEvent
 import net.dv8tion.jda.core.events.role.RoleDeleteEvent
 import net.dv8tion.jda.core.events.role.update.RoleUpdateNameEvent
-import net.dv8tion.jda.core.events.user.UserNameUpdateEvent
+import net.dv8tion.jda.core.events.user.update.UserUpdateNameEvent
 import org.json.JSONObject
 
 class Logger : Module("logging") {
@@ -162,13 +162,13 @@ class Logger : Module("logging") {
         }
     }
 
-    override fun onUserNameUpdate(event: UserNameUpdateEvent) {
+    override fun onUserUpdateName(event: UserUpdateNameEvent) {
         Bot.shardManager.shards.forEach { shard ->
             shard.guilds.forEach { guild ->
                 if (event.user.id in guild.members.map { it.user.id } && guild.kirbotGuild.ready)
                     guild.kirbotGuild.logManager.genericLog(LogEvent.USER_NAME_CHANGE,
                             ":name_badge:",
-                            "${event.oldName}#${event.oldDiscriminator} (`${event.user.id}`) changed username to **${event.user.nameAndDiscrim}**")
+                            "${event.oldName}#${event.user.discriminator} (`${event.user.id}`) changed username to **${event.user.nameAndDiscrim}**")
             }
         }
     }

@@ -46,12 +46,8 @@ class CommandColor : BaseCommand(CommandCategory.FUN) {
             }
             role?.manager?.setColor(color)?.queue()
         } else {
-            context.guild.controller.createRole().queue { r ->
+            context.guild.controller.createRole().setName("color-${member.user.id}").setColor(color).setPermissions(0).queue { r->
                 context.guild.controller.addRolesToMember(member, r).queue()
-                val m = r.managerUpdatable
-                m.colorField.value = color
-                m.nameField.value = "color-${member.user.id}"
-                m.update().queue()
             }
         }
     }

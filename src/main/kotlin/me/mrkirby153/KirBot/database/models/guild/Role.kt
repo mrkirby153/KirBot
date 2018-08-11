@@ -9,11 +9,7 @@ import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.entities.Role
 
 @Table("roles")
-class Role : Model() {
-
-    init {
-        this.incrementing = false
-    }
+class Role(role: Role? = null) : Model() {
 
     @PrimaryKey
     var id = ""
@@ -53,6 +49,18 @@ class Role : Model() {
             this.order = role.position
             field = role
         }
+
+
+    init {
+        this.incrementing = false
+        if(role != null){
+            this.id = role.id
+            this.serverId = role.guild.id
+            this.name = role.name
+            this.permissions = role.permissionsRaw
+            this.order = role.position
+        }
+    }
 
     fun updateRole() {
         val role = this.role ?: return

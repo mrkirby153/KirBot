@@ -12,11 +12,7 @@ import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.VoiceChannel
 
 @Table("channels")
-class Channel : Model() {
-
-    init {
-        this.incrementing = false
-    }
+class Channel(channel: Channel? = null) : Model() {
 
     @PrimaryKey
     var id = ""
@@ -64,6 +60,17 @@ class Channel : Model() {
             this.type = getType(channel)
             field = channel
         }
+
+    init {
+        this.incrementing = false
+        if(channel != null){
+            this.id = channel.id
+            this.guildId = channel.guild.id
+            this.name = channel.name
+            this.type = getType(channel)
+            this.hidden = channel.getPermissionOverride(guild?.publicRole)?.denied?.contains(Permission.MESSAGE_READ) ?: false
+        }
+    }
 
 
     enum class Type {

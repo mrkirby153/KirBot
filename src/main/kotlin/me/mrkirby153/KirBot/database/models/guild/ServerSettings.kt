@@ -22,7 +22,7 @@ class ServerSettings : Model() {
     var name = ""
 
     @Column("realname")
-    private var realnameRaw = ""
+    private var realnameRaw = "OFF"
 
     @Column("require_realname")
     var requireRealname = false
@@ -34,7 +34,7 @@ class ServerSettings : Model() {
     var cmdWhitelistRaw = "[]"
 
     @Column("icon_id")
-    var iconId = ""
+    var iconId : String? = ""
 
     var cmdWhitelist: List<String>
         get() = JSONArray(JSONTokener(this.cmdWhitelistRaw)).toTypedArray(String::class.java)

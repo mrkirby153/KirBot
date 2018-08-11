@@ -5,15 +5,12 @@ import com.mrkirby153.bfs.annotations.PrimaryKey
 import com.mrkirby153.bfs.annotations.Table
 import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.utils.toTypedArray
+import net.dv8tion.jda.core.entities.Guild
 import org.json.JSONArray
 import org.json.JSONTokener
 
 @Table("music_settings")
-class MusicSettings : Model() {
-
-    init {
-        this.incrementing = false
-    }
+class MusicSettings(guild: Guild? = null) : Model() {
 
     @PrimaryKey
     var id = ""
@@ -24,7 +21,7 @@ class MusicSettings : Model() {
     private var modeRaw = "OFF"
 
     @Column("channels")
-    var channelsRaw: String = ""
+    var channelsRaw: String = "[]"
 
     var channels: List<String>
         get() = JSONArray(JSONTokener(this.channelsRaw)).toTypedArray(String::class.java)
@@ -46,6 +43,14 @@ class MusicSettings : Model() {
 
     @Column("skip_timer")
     var skipTimer = 30
+
+
+    init {
+        this.incrementing = false
+        if(guild != null){
+            this.id = guild.id
+        }
+    }
 
     override fun toString(): String {
         return "MusicSettings(id='$id', enabled=$enabled, modeRaw='$modeRaw', channels=$channels, maxQueueLength=$maxQueueLength, playlists=$playlists, maxSongLength=$maxSongLength, skipCooldown=$skipCooldown, skipTimer=$skipTimer)"

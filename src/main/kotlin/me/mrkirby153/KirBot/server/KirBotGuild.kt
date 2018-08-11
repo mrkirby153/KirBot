@@ -328,6 +328,8 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
             if (fuzzyRated.isEmpty())
                 return null
             val entries = fuzzyRated.entries.sortedBy { it.value }.reversed().filter { it.value > 40 }
+            if(entries.isEmpty())
+                return null
             val first = entries.first()
             return when {
                 entries.size == 1 -> first.key

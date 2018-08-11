@@ -1,5 +1,6 @@
 package me.mrkirby153.KirBot.command.executors.admin
 
+import com.mrkirby153.bfs.sql.QueryBuilder
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
@@ -15,7 +16,8 @@ import me.mrkirby153.KirBot.utils.RED_TICK
 import me.mrkirby153.KirBot.utils.deleteAfter
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.events.message.guild.react.GuildMessageReactionAddEvent
-import java.time.OffsetDateTime
+import java.time.Duration
+import java.time.Instant
 import java.util.concurrent.TimeUnit
 
 @Command(name = "clean", clearance = CLEARANCE_MOD)
@@ -30,7 +32,7 @@ class CommandClean :
     }
 
     @Command(name = "all", arguments = ["[amount:int]"], clearance = CLEARANCE_MOD)
-    fun allClean(context: Context, cmdContext: CommandContext){
+    fun allClean(context: Context, cmdContext: CommandContext) {
         val amount = cmdContext.get<Int>("amount") ?: 50
         if (amount > confirmAmount) {
             confirmClean(context, context.channel as TextChannel, amount)
@@ -49,7 +51,8 @@ class CommandClean :
         doClean(context.channel as TextChannel, amount, bots = true)
     }
 
-    @Command(name = "user", arguments = ["<user:snowflake>", "[amount:int]"], clearance = CLEARANCE_MOD)
+    @Command(name = "user", arguments = ["<user:snowflake>", "[amount:int]"],
+            clearance = CLEARANCE_MOD)
     fun userClean(context: Context, cmdContext: CommandContext) {
         val user = cmdContext.get<String>("user")!!
         val amount = cmdContext.get<Int>("amount") ?: 50
@@ -60,7 +63,8 @@ class CommandClean :
         doClean(context.channel as TextChannel, amount, user, false)
     }
 
-    private fun confirmClean(context: Context, channel: TextChannel, amount: Int, user: String? = null,
+    private fun confirmClean(context: Context, channel: TextChannel, amount: Int,
+                             user: String? = null,
                              bots: Boolean = false) {
         context.send().info(
                 ":warning: Whoa, you're about to delete $amount messages. Are you sure you want to do this?").queue { msg ->
@@ -69,7 +73,7 @@ class CommandClean :
             WaitUtils.waitFor(GuildMessageReactionAddEvent::class.java, {
                 if (it.user.id != context.author.id)
                     return@waitFor
-                if(it.messageId != msg.id)
+                if (it.messageId != msg.id)
                     return@waitFor
                 if (it.reactionEmote.isEmote) {
                     when (it.reactionEmote.id) {
@@ -91,9 +95,8 @@ class CommandClean :
 
     fun doClean(channel: TextChannel, amount: Int, user: String? = null,
                 bots: Boolean = false) {
-        if(amount <=1)
+        if (amount <= 1)
             throw CommandException("Specify a number greater than 1")
-        var amountLeft = amount // The amount of messages we need to delete
         if (user != null) {
             Bot.LOG.debug("Performing user clean $user")
         } else if (bots) {
@@ -101,48 +104,37 @@ class CommandClean :
         } else {
             Bot.LOG.debug("Performing all clean")
         }
-        val waitMessage = channel.sendMessage(
-                ":arrows_counterclockwise: Please wait while I delete up to $amount messages...").complete()
-        var deletedMessages = 0
-        val history = channel.history
-        while (amountLeft > 0) {
-            val messages = history.retrievePast(100).complete().filter {
-                it.creationTime.isAfter(
-                        OffsetDateTime.now().minusDays(
-                                14)) // We can only delete messages 14 days old
-            }.filter {
-                        it.id != waitMessage.id // We don't want to delete the wait message
-                    }
-            // Filter these messages for matching query
-            val filtered = messages.filter {
-                if (user != null) {
-                    it.author.id == user
-                } else if (bots) {
-                    it.author.isBot
-                } else
-                    true
-            }
-            if (filtered.isEmpty()) {
-                // We found no messages, we're done here
-                break
-            }
+        val now = Instant.now().minus(Duration.ofDays(14))
+        val oldestSnowflake = (now.toEpochMilli() - 1420070400000).shl(22)
 
-            // Of the remaining, we need to retrieve max the amount to delete
-            val toDelete = filtered.subList(0,
-                    Math.min(Math.min(amountLeft, filtered.size), 99))
+        val builder = QueryBuilder()
+        builder.table("server_messages")
+        builder.where("channel", channel.id)
+        builder.where("deleted", false)
+        builder.innerJoin("seen_users", "server_messages.author", "=", "seen_users.id")
+        builder.select("server_messages.id")
+        builder.limit(amount.toLong())
 
-            amountLeft -= toDelete.size
-            deletedMessages += toDelete.size
-            Bot.LOG.debug("Performing delete on ${toDelete.map { it.id }}")
-            if (toDelete.size == 1) {
-                // Just delete the first message cos we can't bulk delete it
-                toDelete[0].delete().queue()
-            } else {
-                channel.deleteMessages(toDelete).queue()
-            }
+        if (bots)
+            builder.where("bot", true)
+        if (user != null)
+            builder.where("author", user)
+
+        val rows = builder.query()
+        Bot.LOG.debug("Matched ${rows.size} messages")
+        val ids = rows.mapNotNull { it.getString("id") }
+
+        val bulkDeletable = ids.filter { it.toLong() > oldestSnowflake }.toMutableList()
+        val notBulk = ids.filter { it.toLong() < oldestSnowflake }
+        Bot.LOG.debug("Bulk deleting ${bulkDeletable.size}, Regular deleting ${notBulk.size}")
+
+        while (bulkDeletable.isNotEmpty()) {
+            val toDelete = bulkDeletable.subList(0, Math.min(99, bulkDeletable.size))
+            channel.deleteMessagesByIds(toDelete).queue()
+            bulkDeletable.removeAll(toDelete)
         }
-        waitMessage.editMessage(":ok_hand: Deleted $deletedMessages messages").queue {
-            it.deleteAfter(10, TimeUnit.SECONDS)
+        notBulk.forEach { m ->
+            channel.deleteMessageById(m).queue()
         }
     }
 }

@@ -9,6 +9,7 @@ import me.mrkirby153.KirBot.database.models.RoleClearance
 import me.mrkirby153.KirBot.database.models.guild.CommandAlias
 import me.mrkirby153.KirBot.database.models.guild.GuildMember
 import me.mrkirby153.KirBot.database.models.guild.GuildMemberRole
+import me.mrkirby153.KirBot.database.models.guild.GuildMessage
 import me.mrkirby153.KirBot.database.models.guild.MusicSettings
 import me.mrkirby153.KirBot.database.models.guild.ServerSettings
 import me.mrkirby153.KirBot.infraction.Infractions
@@ -32,6 +33,7 @@ import net.dv8tion.jda.core.entities.User
 import org.json.JSONObject
 import org.json.JSONTokener
 import java.util.concurrent.Semaphore
+import kotlin.math.min
 
 class KirBotGuild(val guild: Guild) : Guild by guild {
 
@@ -125,7 +127,8 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         settings.iconId = this.iconId
         settings.save()
 
-        val musicSettings = Model.where(MusicSettings::class.java, "id", this.id).first() ?: MusicSettings(this)
+        val musicSettings = Model.where(MusicSettings::class.java, "id", this.id).first()
+                ?: MusicSettings(this)
         musicSettings.save()
 
         loadSettings()
@@ -198,6 +201,9 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
                 }
             }
             Infractions.importFromBanlist(this)
+            Bot.scheduler.submit({
+                backfillChannels()
+            })
             if (!ready)
                 Bot.LOG.debug("Guild $this is ready")
             ready = true
@@ -328,6 +334,52 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
                 first.value - entries[1].value > 20 -> first.key
                 else -> throw TooManyRolesException()
             }
+        }
+    }
+
+    fun backfillChannels() {
+        Bot.LOG.debug("Starting channel backfill")
+        this.textChannels.filter {
+            this.selfMember.hasPermission(it, Permission.MESSAGE_HISTORY)
+        }.forEach { channel ->
+            Bot.LOG.debug("Backfilling ${channel.name}")
+            val history = channel.history
+            var retrievedAmount = history.retrievedHistory.size
+            while (retrievedAmount < 500) {
+                val toRetrieve = min(100, 500 - retrievedAmount)
+                Bot.LOG.debug("[#${channel.name}] Retrieving up to $toRetrieve messages")
+                val m = history.retrievePast(toRetrieve).complete()
+                if (m.size == 0) {
+                    break
+                }
+                retrievedAmount = history.retrievedHistory.size
+                Bot.LOG.debug("[#${channel.name}] Retrieved $retrievedAmount messages, ${500 - retrievedAmount} to go")
+            }
+            Bot.LOG.debug("[#${channel.name}] History retrieval complete!")
+            if (history.retrievedHistory.size == 0) {
+                Bot.LOG.debug("[#${channel.name}] No messages retrieved!")
+                return@forEach
+            }
+            val storedMessages = Model.query(GuildMessage::class.java).whereIn("id",
+                    history.retrievedHistory.map { it.id }.toTypedArray()).get()
+            var new = 0
+            var updated = 0
+            history.retrievedHistory.forEach { message ->
+                val stored = storedMessages.firstOrNull { it.id == message.id }
+                if (stored == null) {
+                    GuildMessage(message).save()
+                    new++
+                } else {
+                    if (stored.message != message.contentRaw) {
+                        Bot.LOG.debug("[#${channel.name}] Message content for ${stored.id} has changed")
+                        stored.message = message.contentRaw
+                        stored.editCount++
+                        updated++
+                        stored.save()
+                    }
+                }
+            }
+            Bot.LOG.debug("Backfilled ${channel.name}. New: $new, Updated: $updated")
         }
     }
 

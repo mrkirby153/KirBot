@@ -5,13 +5,11 @@ import com.mrkirby153.bfs.annotations.PrimaryKey
 import com.mrkirby153.bfs.annotations.Table
 import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.logger.LogManager
+import net.dv8tion.jda.core.entities.Message
+import java.sql.Timestamp
 
 @Table("server_messages")
-class GuildMessage : Model() {
-
-    init {
-        this.incrementing = false
-    }
+class GuildMessage(message: Message? = null) : Model() {
 
     @PrimaryKey
     var id = ""
@@ -39,4 +37,19 @@ class GuildMessage : Model() {
         set(value) {
             field = if (value != null) LogManager.encrypt(value) else null
         }
+
+
+    init {
+        this.incrementing = false
+        if (message != null) {
+            this.id = message.id
+            this.serverId = message.guild.id
+            this.author = message.author.id
+            this.channel = message.channel.id
+            this.message = message.contentRaw
+            this.attachments = if(message.attachments.size > 0) message.attachments.joinToString(",") { it.url } else null
+            this.createdAt = Timestamp.from(message.creationTime.toInstant())
+            this.updatedAt = this.createdAt
+        }
+    }
 }

@@ -20,6 +20,7 @@ import me.mrkirby153.KirBot.music.MusicManager
 import me.mrkirby153.KirBot.realname.RealnameHandler
 import me.mrkirby153.KirBot.user.CLEARANCE_ADMIN
 import me.mrkirby153.KirBot.user.CLEARANCE_GLOBAL_ADMIN
+import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.KirBot.utils.toTypedArray
 import me.mrkirby153.kcutils.child
 import me.mrkirby153.kcutils.mkdirIfNotExist
@@ -29,6 +30,7 @@ import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.entities.Member
 import net.dv8tion.jda.core.entities.Role
+import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.User
 import org.json.JSONObject
 import org.json.JSONTokener
@@ -59,6 +61,8 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
     private var lockedThread: Thread? = null
     private var lockDump: Array<StackTraceElement> = arrayOf()
     private var lockDumped = false
+
+    private val visibleChannelCache = mutableMapOf<String, Boolean>()
 
     var ready = false
 
@@ -120,6 +124,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
 
     fun sync(waitFor: Boolean = false) {
         Bot.LOG.debug("STARTING SYNC FOR $this")
+        cacheVisibilities(false)
         settings = Model.where(ServerSettings::class.java, "id",
                 this.id).first() ?: ServerSettings()
         settings.id = this.id
@@ -342,9 +347,33 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         })
     }
 
+    fun cacheVisibilities(backfill: Boolean = true) {
+        val newChannels = mutableListOf<TextChannel>()
+        this.textChannels.forEach { c ->
+            val canView = c.checkPermissions(Permission.VIEW_CHANNEL)
+            if (visibleChannelCache[c.id] != canView && canView)
+                newChannels.add(c)
+            visibleChannelCache[c.id] = canView
+        }
+        if (backfill)
+            if (newChannels.isNotEmpty()) {
+                Bot.LOG.debug("Found ${newChannels.size} new channels, backfilling")
+                Bot.scheduler.submit({
+                    newChannels.forEach {
+                        backfillChannels(it)
+                    }
+                })
+            }
+    }
+
     fun backfillChannels(channel: net.dv8tion.jda.core.entities.TextChannel? = null) {
         if (channel != null) {
             Bot.LOG.debug("Backfilling ${channel.name}")
+            if (!channel.checkPermissions(Permission.MESSAGE_HISTORY)) {
+                Bot.LOG.debug(
+                        "Skipping backfill on ${channel.name} - No permission to read history")
+                return
+            }
             val history = channel.history
             var retrievedAmount = history.retrievedHistory.size
             while (retrievedAmount < 500) {

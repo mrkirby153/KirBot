@@ -19,6 +19,7 @@ import net.dv8tion.jda.core.entities.Member
 import net.dv8tion.jda.core.events.channel.text.TextChannelCreateEvent
 import net.dv8tion.jda.core.events.channel.text.TextChannelDeleteEvent
 import net.dv8tion.jda.core.events.channel.text.update.GenericTextChannelUpdateEvent
+import net.dv8tion.jda.core.events.channel.text.update.TextChannelUpdatePermissionsEvent
 import net.dv8tion.jda.core.events.channel.voice.VoiceChannelCreateEvent
 import net.dv8tion.jda.core.events.channel.voice.VoiceChannelDeleteEvent
 import net.dv8tion.jda.core.events.channel.voice.update.GenericVoiceChannelUpdateEvent
@@ -77,7 +78,7 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
         event.guild.kirbotGuild.unlock()
     }
 
-    override fun onUserUpdateName(event: UserUpdateNameEvent){
+    override fun onUserUpdateName(event: UserUpdateNameEvent) {
         val user = Model.where(DiscordUser::class.java, "id", event.user.id).first() ?: return
         user.username = event.user.name
         user.discriminator = event.user.discriminator.toInt()
@@ -108,6 +109,10 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
             role.user = event.user
             role.save()
         }
+        if (event.member == event.guild.selfMember) {
+            Bot.LOG.debug("We had a role added, re-caching visibilities")
+            event.guild.kirbotGuild.cacheVisibilities()
+        }
     }
 
     override fun onGuildMemberRoleRemove(event: GuildMemberRoleRemoveEvent) {
@@ -117,12 +122,17 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
             Model.where(GuildMemberRole::class.java, "server_id", event.guild.id).where("user_id",
                     event.user.id).where("role_id", it.id).get().forEach { it.delete() }
         }
+        if (event.member == event.guild.selfMember) {
+            Bot.LOG.debug("We had a role removed, re-caching visibilities")
+            event.guild.kirbotGuild.cacheVisibilities()
+        }
     }
 
     override fun onGuildMemberNickChange(event: GuildMemberNickChangeEvent) {
         if (!event.guild.kirbotGuild.ready)
             return
-        Model.where(GuildMember::class.java, "server_id", event.guild.id).where("user_id", event.user.id).first()?.run {
+        Model.where(GuildMember::class.java, "server_id", event.guild.id).where("user_id",
+                event.user.id).first()?.run {
             nick = event.newNick
             save()
         }
@@ -168,13 +178,15 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
     override fun onTextChannelDelete(event: TextChannelDeleteEvent) {
         if (!event.guild.kirbotGuild.ready)
             return
-        Model.where(me.mrkirby153.KirBot.database.models.Channel::class.java, "id", event.channel.id).delete()
+        Model.where(me.mrkirby153.KirBot.database.models.Channel::class.java, "id",
+                event.channel.id).delete()
     }
 
     override fun onVoiceChannelDelete(event: VoiceChannelDeleteEvent) {
         if (!event.guild.kirbotGuild.ready)
             return
-        Model.where(me.mrkirby153.KirBot.database.models.Channel::class.java, "id", event.channel.id).delete()
+        Model.where(me.mrkirby153.KirBot.database.models.Channel::class.java, "id",
+                event.channel.id).delete()
     }
 
     override fun onTextChannelCreate(event: TextChannelCreateEvent) {
@@ -187,6 +199,15 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
         channel.type = me.mrkirby153.KirBot.database.models.Channel.Type.TEXT
         channel.hidden = false
         channel.create()
+    }
+
+    override fun onTextChannelUpdatePermissions(event: TextChannelUpdatePermissionsEvent) {
+        val selfRoles = event.guild.selfMember.roles
+        val matchedRoles = event.changedRoles.filter { it in selfRoles }
+        if (matchedRoles.isNotEmpty() || event.guild.selfMember in event.changedMembers) {
+            Bot.LOG.debug("Our channel override was updated on ${event.channel.name} re-caching visibilities")
+            event.guild.kirbotGuild.cacheVisibilities()
+        }
     }
 
     override fun onVoiceChannelCreate(event: VoiceChannelCreateEvent) {

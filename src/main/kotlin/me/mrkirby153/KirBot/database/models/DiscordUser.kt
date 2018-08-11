@@ -14,6 +14,8 @@ class DiscordUser(user: User? = null) : Model() {
 
     var discriminator: Int = 0
 
+    var bot: Boolean = false
+
     @Transient
     var user: User? = null
         get() = Bot.shardManager.getUser(this.id)
@@ -28,6 +30,7 @@ class DiscordUser(user: User? = null) : Model() {
             this.id = user.id
             this.username = user.name
             this.discriminator = user.discriminator.toInt()
+            this.bot = user.isBot
         }
     }
 
@@ -35,6 +38,7 @@ class DiscordUser(user: User? = null) : Model() {
         val u = Bot.shardManager.getUser(this.id) ?: return
         this.username = u.name
         this.discriminator = u.discriminator.toInt()
+        this.bot = u.isBot
         this.save()
     }
 }

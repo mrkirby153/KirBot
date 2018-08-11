@@ -82,7 +82,7 @@ class LogManager(private val guild: KirBotGuild) {
 
             msgs.add(
                     String.format("%s (%s / %s / %s) %s: %s (%s)", timeFormatted, serverId, channel,
-                            authorId, username, msg, result.getString("attachments") ?: ""))
+                            authorId, username, msg, LogManager.decrypt(result.getString("attachments") ?: "")))
         }
         val archiveUrl = if (msgs.isNotEmpty()) uploadToArchive(
                 LogManager.encrypt(msgs.joinToString("\n"))) else ""

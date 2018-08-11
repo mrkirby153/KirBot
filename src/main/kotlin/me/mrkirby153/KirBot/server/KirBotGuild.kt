@@ -201,9 +201,6 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
                 }
             }
             Infractions.importFromBanlist(this)
-            Bot.scheduler.submit({
-                backfillChannels()
-            })
             if (!ready)
                 Bot.LOG.debug("Guild $this is ready")
             ready = true
@@ -328,7 +325,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
             if (fuzzyRated.isEmpty())
                 return null
             val entries = fuzzyRated.entries.sortedBy { it.value }.reversed().filter { it.value > 40 }
-            if(entries.isEmpty())
+            if (entries.isEmpty())
                 return null
             val first = entries.first()
             return when {
@@ -339,11 +336,14 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         }
     }
 
-    fun backfillChannels() {
-        Bot.LOG.debug("Starting channel backfill")
-        this.textChannels.filter {
-            this.selfMember.hasPermission(it, Permission.MESSAGE_HISTORY)
-        }.forEach { channel ->
+    fun dispatchBackfill() {
+        Bot.scheduler.submit({
+            backfillChannels()
+        })
+    }
+
+    fun backfillChannels(channel: net.dv8tion.jda.core.entities.TextChannel? = null) {
+        if (channel != null) {
             Bot.LOG.debug("Backfilling ${channel.name}")
             val history = channel.history
             var retrievedAmount = history.retrievedHistory.size
@@ -355,12 +355,13 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
                     break
                 }
                 retrievedAmount = history.retrievedHistory.size
-                Bot.LOG.debug("[#${channel.name}] Retrieved $retrievedAmount messages, ${500 - retrievedAmount} to go")
+                Bot.LOG.debug(
+                        "[#${channel.name}] Retrieved $retrievedAmount messages, ${500 - retrievedAmount} to go")
             }
             Bot.LOG.debug("[#${channel.name}] History retrieval complete!")
             if (history.retrievedHistory.size == 0) {
                 Bot.LOG.debug("[#${channel.name}] No messages retrieved!")
-                return@forEach
+                return
             }
             val storedMessages = Model.query(GuildMessage::class.java).whereIn("id",
                     history.retrievedHistory.map { it.id }.toTypedArray()).get()
@@ -373,7 +374,8 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
                     new++
                 } else {
                     if (stored.message != message.contentRaw) {
-                        Bot.LOG.debug("[#${channel.name}] Message content for ${stored.id} has changed")
+                        Bot.LOG.debug(
+                                "[#${channel.name}] Message content for ${stored.id} has changed")
                         stored.message = message.contentRaw
                         stored.editCount++
                         updated++
@@ -382,6 +384,8 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
                 }
             }
             Bot.LOG.debug("Backfilled ${channel.name}. New: $new, Updated: $updated")
+        } else {
+            this.guild.textChannels.forEach { backfillChannels(it) }
         }
     }
 

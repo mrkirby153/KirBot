@@ -14,6 +14,8 @@ import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.User
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
+import java.time.Duration
+import java.time.Instant
 import java.util.concurrent.TimeUnit
 
 
@@ -127,15 +129,22 @@ object ErrorLogger {
     }
 
     fun ackAll() {
+        if(errorRepository.values.isEmpty())
+            return
         val messageIds = errorRepository.values.map { it.messageId }.toMutableList()
         if (messageIds.size < 2) {
             channel?.deleteMessageById(messageIds[0])?.queue()
         } else {
-            while (messageIds.isNotEmpty()) {
-                val toDelete = messageIds.subList(0, Math.min(messageIds.size, 99))
+            val now = Instant.now().minus(Duration.ofDays(14))
+            val oldestSnowflake = (now.toEpochMilli() - 1420070400000).shl(22)
+            val bulkDeletable = messageIds.filter { it.toLong() > oldestSnowflake }.toMutableList()
+            val nonBulk = messageIds.filter { it !in bulkDeletable }
+            while (bulkDeletable.isNotEmpty()) {
+                val toDelete = bulkDeletable.subList(0, Math.min(bulkDeletable.size, 99))
                 channel?.deleteMessagesByIds(toDelete)?.queue()
-                messageIds.removeAll(toDelete)
+                bulkDeletable.removeAll(toDelete)
             }
+            nonBulk.forEach { channel?.deleteMessageById(it)?.queue() }
         }
         errorRepository.clear()
         save()

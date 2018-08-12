@@ -128,10 +128,14 @@ class CommandClean :
         val notBulk = ids.filter { it.toLong() < oldestSnowflake }
         Bot.LOG.debug("Bulk deleting ${bulkDeletable.size}, Regular deleting ${notBulk.size}")
 
-        while (bulkDeletable.isNotEmpty()) {
-            val toDelete = bulkDeletable.subList(0, Math.min(99, bulkDeletable.size))
-            channel.deleteMessagesByIds(toDelete).queue()
-            bulkDeletable.removeAll(toDelete)
+        if(bulkDeletable.size < 2){
+            bulkDeletable.forEach { channel.deleteMessageById(it).queue() }
+        } else {
+            while (bulkDeletable.isNotEmpty()) {
+                val toDelete = bulkDeletable.subList(0, Math.min(99, bulkDeletable.size))
+                channel.deleteMessagesByIds(toDelete).queue()
+                bulkDeletable.removeAll(toDelete)
+            }
         }
         notBulk.forEach { m ->
             channel.deleteMessageById(m).queue()

@@ -19,15 +19,15 @@ import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.Message
 import net.dv8tion.jda.core.entities.TextChannel
 import java.text.SimpleDateFormat
-import java.util.Calendar
 import java.util.LinkedList
+import java.util.Locale
 import java.util.TimeZone
 
 class LogManager(private val guild: KirBotGuild) {
 
     private val logQueue = LinkedList<LogMessage>()
 
-    private var logChannels =  Model.where(LogSettings::class.java, "server_id", guild.id).get()
+    private var logChannels = Model.where(LogSettings::class.java, "server_id", guild.id).get()
 
     fun reloadLogChannels() {
         this.logChannels = Model.where(LogSettings::class.java, "server_id", guild.id).get()
@@ -82,7 +82,8 @@ class LogManager(private val guild: KirBotGuild) {
 
             msgs.add(
                     String.format("%s (%s / %s / %s) %s: %s (%s)", timeFormatted, serverId, channel,
-                            authorId, username, msg, LogManager.decrypt(result.getString("attachments") ?: "")))
+                            authorId, username, msg,
+                            LogManager.decrypt(result.getString("attachments") ?: "")))
         }
         val archiveUrl = if (msgs.isNotEmpty()) uploadToArchive(
                 LogManager.encrypt(msgs.joinToString("\n"))) else ""
@@ -113,11 +114,11 @@ class LogManager(private val guild: KirBotGuild) {
     fun genericLog(logEvent: LogEvent, emoji: String, message: String) {
         if (!guild.ready)
             return
-        val timezone = TimeZone.getTimeZone(this.guild.settings.logTimezone)
-        val calendar = Calendar.getInstance(timezone)
+       val sdf = SimpleDateFormat("HH:mm:ss", Locale.ENGLISH)
+        sdf.timeZone = TimeZone.getTimeZone(this.guild.settings.logTimezone)
         val m = buildString {
             append("`[")
-            append(SimpleDateFormat("HH:mm:ss").format(calendar.timeInMillis))
+            append(sdf.format(System.currentTimeMillis()))
             append("]` ")
             append(emoji)
             append(" $message")

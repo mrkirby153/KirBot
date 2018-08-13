@@ -1,12 +1,15 @@
 package me.mrkirby153.KirBot.command.executors.`fun`
 
+import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
+import me.mrkirby153.KirBot.module.ModuleManager
+import me.mrkirby153.KirBot.modules.Scheduler
+import me.mrkirby153.KirBot.scheduler.Schedulable
 import me.mrkirby153.KirBot.utils.Context
-import me.mrkirby153.KirBot.utils.deleteAfter
 import me.mrkirby153.KirBot.utils.embed.b
 import me.mrkirby153.KirBot.utils.embed.embed
 import me.mrkirby153.KirBot.utils.localizeTime
@@ -51,7 +54,6 @@ class CommandPoll : BaseCommand(false, CommandCategory.FUN) {
         if (options.size > 9) {
             throw CommandException("You can only have 9 options for the poll!")
         }
-        context.deleteAfter(30, TimeUnit.SECONDS)
 
         val filteredOptions = options.filter { it.isNotEmpty() }
         context.send().embed("Poll") {
@@ -83,83 +85,13 @@ class CommandPoll : BaseCommand(false, CommandCategory.FUN) {
                 millis(endsAt)
             }
         }.rest().queue {
-            val m = it
-            for (index in 0 until options.size) {
-                it.addReaction("${'\u0030' + (index)}\u20E3").queue()
+            for(i in 0 until options.size){
+                it.addReaction("${'\u0030' + i}\u20E3").queue()
             }
-
-            it.editMessage(embed("Poll") {
-                description {
-                    +"Voting has ended, Check newer messages for results"
-                }
-                footer {
-                    url = context.author.effectiveAvatarUrl
-                    text { +"Requested by ${context.author.nameAndDiscrim} - Ended" }
-                }
-                fields {
-                    field {
-                        title = "Options"
-                        description {
-                            filteredOptions.forEachIndexed { index, option ->
-                                appendln("${'\u0030' + (index)}\u20E3 **${option.mdEscape()}**")
-                            }
-                        }
-                    }
-                }
-                timestamp {
-                    millis(endsAt)
-                }
-                color = Color.RED
-            }.build()).queueAfter(duration.toLong(), TimeUnit.SECONDS) {
-                m.unpin().queue()
-                context.send().embed("Poll Results") {
-                    color = Color.CYAN
-                    description { +"Voting has ended! Here are the results" }
-
-                    var topVotes = 0
-                    val winners = mutableListOf<Int>()
-                    fields {
-                        if (question != null)
-                            field {
-                                title = "Question"
-                                description = question
-                            }
-
-                        field {
-                            title = "Results"
-                            description {
-                                it.reactions.forEach { reaction ->
-                                    val value = reaction.reactionEmote.name[0] - '\u0030'
-                                    if (value !in 0 until options.size) return@forEach
-
-                                    options[value].let {
-                                        appendln(
-                                                "${reaction.reactionEmote.name} **$it** — __${reaction.count - 1} Votes__")
-
-                                        if (reaction.count - 1 > topVotes) {
-                                            winners.clear()
-                                            topVotes = reaction.count - 1
-                                            winners += value
-                                        } else if (reaction.count - 1 == topVotes) {
-                                            winners += value
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        field {
-                            title = "Winner"
-                            description = winners.joinToString(prefix = "**",
-                                    postfix = "**") { options[it] }
-                        }
-                    }
-                    footer {
-                        url = context.author.effectiveAvatarUrl
-                        text { +"Requested by ${context.author.nameAndDiscrim}" }
-                    }
-                }.rest().queue()
-            }
+            val task = PollTask(context.guild.id, context.channel.id, it.id,
+                    context.author.avatarUrl, context.author.nameAndDiscrim, endsAt,
+                    filteredOptions.toTypedArray(), question)
+            ModuleManager[Scheduler::class.java].submit(task, duration.toLong(), TimeUnit.SECONDS)
         }
     }
 
@@ -201,5 +133,84 @@ class CommandPoll : BaseCommand(false, CommandCategory.FUN) {
 
     private fun timeMult(`val`: String): Int {
         return this.time[`val`] ?: return 0
+    }
+
+    class PollTask(var guildId: String, var channelId: String, var messageId: String,
+                   var avatarUrl: String, var nameAndDiscrim: String, var endsAt: Long,
+                   var options: Array<String>, var question: String?) : Schedulable {
+        override fun run() {
+            val guild = Bot.shardManager.getGuild(this.guildId) ?: return
+            val channel = guild.getTextChannelById(channelId) ?: return
+            val message = channel.getMessageById(messageId).complete() ?: return
+            message.editMessage(embed("Poll") {
+                description {
+                    +"Voting has ended, check newer messages for results"
+                }
+                footer {
+                    url = avatarUrl
+                    text { +"Requested by $nameAndDiscrim - Ended" }
+                }
+                fields {
+                    field {
+                        title = "Options"
+                        description {
+                            options.forEachIndexed { index, option ->
+                                appendln("${'\u0030' + index}\u20E3 **${option.mdEscape()}**")
+                            }
+                        }
+                    }
+                }
+                timestamp {
+                    millis(endsAt)
+                }
+                color = Color.RED
+            }.build()).queue()
+            channel.sendMessage(embed("Poll Results") {
+                color = Color.CYAN
+                description { +"Voting has ended! Here are the results" }
+
+                var topVotes = 0
+                val winners = mutableListOf<Int>()
+                fields {
+                    if (question != null) {
+                        field {
+                            title = "Question"
+                            description = question ?: ""
+                        }
+                    }
+                    field {
+                        title = "Results"
+                        description {
+                            message.reactions.forEach { reaction ->
+                                val value = reaction.reactionEmote.name[0] - '\u0030'
+                                if (value !in 0 until options.size) return@forEach
+                                options[value].let {
+                                    appendln(
+                                            "${reaction.reactionEmote.name} **$it** - __${reaction.count - 1} Votes__")
+                                    if (reaction.count - 1 > topVotes) {
+                                        winners.clear()
+                                        topVotes = reaction.count - 1
+                                        winners += value
+                                    } else if (reaction.count - 1 == topVotes) {
+                                        winners += value
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    field {
+                        title = "Winner"
+                        description = winners.joinToString(prefix = "**",
+                                postfix = "**") { options[it].mdEscape() }
+                    }
+                }
+
+                footer {
+                    url = avatarUrl
+                    text { +"Polled by $nameAndDiscrim" }
+                }
+            }.build()).queue()
+        }
     }
 }

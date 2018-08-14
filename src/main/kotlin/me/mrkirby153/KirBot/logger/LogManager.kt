@@ -29,11 +29,15 @@ class LogManager(private val guild: KirBotGuild) {
 
     private var logChannels = Model.where(LogSettings::class.java, "server_id", guild.id).get()
 
+    var hushed = false
+
     fun reloadLogChannels() {
         this.logChannels = Model.where(LogSettings::class.java, "server_id", guild.id).get()
     }
 
     fun logMessageDelete(id: String) {
+        if(hushed)
+            return
         val msg = Model.where(GuildMessage::class.java, "id", id).first() ?: return
 
         val author = Bot.shardManager.getUser(msg.author) ?: return
@@ -56,6 +60,8 @@ class LogManager(private val guild: KirBotGuild) {
     }
 
     fun logBulkDelete(chan: TextChannel, messages: List<String>) {
+        if(hushed)
+            return
         var shouldLog = false
         logChannels.forEach { c ->
             if (shouldLog(LogEvent.MESSAGE_BULKDELETE, c.included, c.excluded))

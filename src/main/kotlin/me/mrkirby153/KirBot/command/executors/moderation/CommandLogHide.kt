@@ -11,11 +11,16 @@ import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import net.dv8tion.jda.core.entities.User
 
-@Command(name = "log-hide", arguments = ["<user:user>"], clearance = CLEARANCE_ADMIN)
-@LogInModlogs
-class CommandLogHide : BaseCommand(false, CommandCategory.MODERATION) {
 
+@Command(name = "modlog", clearance = CLEARANCE_ADMIN)
+class CommandModlogs : BaseCommand(false, CommandCategory.MODERATION) {
     override fun execute(context: Context, cmdContext: CommandContext) {
+
+    }
+
+    @Command(name = "hide", arguments = ["<user:user>"], clearance = CLEARANCE_ADMIN)
+    @LogInModlogs
+    fun hide(context: Context, cmdContext: CommandContext) {
         val userId = cmdContext.get<User>("user")?.id ?: return
 
         val currentlyHidden = context.kirbotGuild.extraData.optJSONArray(
@@ -28,12 +33,10 @@ class CommandLogHide : BaseCommand(false, CommandCategory.MODERATION) {
 
         context.send().info(":ok_hand: Hidden `$userId` from the logs").queue()
     }
-}
 
-@Command(name = "log-show", arguments = ["<user:user>"], clearance = CLEARANCE_ADMIN)
-@LogInModlogs
-class CommandLogUnhide : BaseCommand(false, CommandCategory.MODERATION) {
-    override fun execute(context: Context, cmdContext: CommandContext) {
+    @Command(name = "unhide", arguments = ["<user:user>"], clearance = CLEARANCE_ADMIN)
+    @LogInModlogs
+    fun unhide(context: Context, cmdContext: CommandContext) {
         val userId = cmdContext.get<User>("user")?.id ?: return
 
         val currentlyHidden = context.kirbotGuild.extraData.optJSONArray(
@@ -46,11 +49,10 @@ class CommandLogUnhide : BaseCommand(false, CommandCategory.MODERATION) {
 
         context.send().info(":ok_hand: Unhidden `$userId` from the logs").queue()
     }
-}
 
-@Command(name = "log-hidden", clearance = CLEARANCE_ADMIN)
-class CommandLogHidden : BaseCommand(false, CommandCategory.MODERATION) {
-    override fun execute(context: Context, cmdContext: CommandContext) {
+    @Command(name = "hidden", clearance = CLEARANCE_ADMIN)
+    @LogInModlogs
+    fun hidden(context: Context, cmdContext: CommandContext) {
         val currentlyHidden = context.kirbotGuild.extraData.optJSONArray(
                 "log-ignored")?.map { it.toString() }?.toMutableSet() ?: mutableSetOf()
         context.send().text(buildString {
@@ -67,4 +69,17 @@ class CommandLogHidden : BaseCommand(false, CommandCategory.MODERATION) {
         }).queue()
     }
 
+    @Command(name = "hush", clearance = CLEARANCE_ADMIN)
+    @LogInModlogs
+    fun hush(context: Context, cmdContext: CommandContext) {
+        context.kirbotGuild.logManager.hushed = true
+        context.send().success("Modlogs hushed :zipper_mouth: (Message deletes will not be logged)").queue()
+    }
+
+    @Command(name = "unhush", clearance = CLEARANCE_ADMIN)
+    @LogInModlogs
+    fun unhush(context: Context, cmdContext: CommandContext){
+        context.kirbotGuild.logManager.hushed = false
+        context.send().success("Modlogs unhushed :open_mouth:").queue()
+    }
 }

@@ -1,55 +1,57 @@
 package me.mrkirby153.KirBot.logger
 
-enum class LogEvent(val permission: Long) {
+enum class LogEvent {
 
     // A message was edited
-    MESSAGE_EDIT(1),
+    MESSAGE_EDIT,
     // A message deleted
-    MESSAGE_DELETE(2),
+    MESSAGE_DELETE,
     // Multiple messages were deleted
-    MESSAGE_BULKDELETE(4),
+    MESSAGE_BULKDELETE,
 
     // A role was given to a user
-    ROLE_ADD(8),
+    ROLE_ADD,
     // A role was removed from a user
-    ROLE_REMOVE(16),
+    ROLE_REMOVE,
     // A role was created
-    ROLE_CREATE(32),
+    ROLE_CREATE,
     // A role was deleted
-    ROLE_DELETE(64),
+    ROLE_DELETE,
     // A role was updated
-    ROLE_UPDATE(128),
+    ROLE_UPDATE,
 
     // A user joins the guild
-    USER_JOIN(256),
+    USER_JOIN,
     // A user leaves the guild
-    USER_LEAVE(512),
+    USER_LEAVE,
     // A user changes their username
-    USER_NAME_CHANGE(1024),
+    USER_NAME_CHANGE,
     // A user changes their nickname
-    USER_NICKNAME_CHANGE(2048),
+    USER_NICKNAME_CHANGE,
 
     // A command was run that should log to the modlogs
-    ADMIN_COMMAND(4096),
+    ADMIN_COMMAND,
 
     // A user has violated the spam filter
-    SPAM_VIOLATE(8192),
+    SPAM_VIOLATE,
     // A user was muted
-    USER_MUTE(16384),
+    USER_MUTE,
     // A user was unmuted
-    USER_UNMUTE(32768),
+    USER_UNMUTE,
     // A user was banned
-    USER_BAN(65536),
+    USER_BAN,
     // A user was unbanned
-    USER_UNBAN(131072),
-    USER_KICK(262144),
+    USER_UNBAN,
+    USER_KICK,
 
-    USER_WARN(2097152),
+    USER_WARN,
 
     // A message by a user was censored
-    MESSAGE_CENSOR(524288),
+    MESSAGE_CENSOR,
 
-    VOICE_ACTION(1048576);
+    VOICE_ACTION;
+
+    val permission = 1L.shl(this.ordinal)
 
     companion object {
 

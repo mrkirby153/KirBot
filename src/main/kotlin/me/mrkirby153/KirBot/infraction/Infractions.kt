@@ -11,6 +11,7 @@ import me.mrkirby153.KirBot.modules.Logger
 import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.utils.getMember
 import me.mrkirby153.KirBot.utils.kirbotGuild
+import me.mrkirby153.KirBot.utils.logName
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.core.Permission
@@ -288,11 +289,6 @@ object Infractions {
         return infraction
     }
 
-    fun createInfraction(user: String, guild: Guild, issuer: User, reason: String?,
-                         type: InfractionType): Infraction {
-        return createInfraction(user, guild, issuer.id, reason, type)
-    }
-
     fun getActiveInfractions(user: String, guild: Guild? = null): List<Infraction> {
         val qb = Model.where(Infraction::class.java, "user_id", user).where("active", true)
         if (guild != null) {
@@ -341,7 +337,7 @@ object Infractions {
         val role = getMutedRole(guild)
         if (role == null) {
             guild.kirbotGuild.logManager.genericLog(LogEvent.USER_MUTE, ":warning:",
-                    "The muted role does not exist")
+                    "Cannot assign the muted role to ${user.logName} because the muted role is not configured")
             return
         }
         guild.controller.addSingleRoleToMember(user.getMember(guild),
@@ -382,30 +378,6 @@ object Infractions {
     }
 
     fun getMutedRole(guild: Guild): Role? {
-        val role = guild.roles.firstOrNull { it.name.equals("muted", true) }
-        if (role == null) {
-            Bot.LOG.debug("Muted role does not exist on $guild")
-            if (!guild.selfMember.hasPermission(Permission.MANAGE_ROLES)) {
-                Bot.LOG.debug("No permission to create the muted role, aborting")
-                return null
-            }
-            val r = guild.controller.createRole().complete()
-            val kbRoles = guild.selfMember.roles
-            var highest = kbRoles.first().position
-            kbRoles.forEach {
-                if (it.position > highest)
-                    highest = it.position
-            }
-            r.manager.setName("Muted").queue {
-                guild.textChannels.forEach { chan ->
-                    val o = chan.getPermissionOverride(r)
-                    if (o == null) {
-                        chan.createPermissionOverride(r).setDeny(Permission.MESSAGE_WRITE).queue()
-                    }
-                }
-            }
-            return r
-        }
-        return role
+        return guild.kirbotGuild.settings.mutedRole
     }
 }

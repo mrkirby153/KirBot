@@ -4,8 +4,10 @@ import com.mrkirby153.bfs.annotations.Column
 import com.mrkirby153.bfs.annotations.PrimaryKey
 import com.mrkirby153.bfs.annotations.Table
 import com.mrkirby153.bfs.model.Model
+import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.realname.RealnameSetting
 import me.mrkirby153.KirBot.utils.toTypedArray
+import net.dv8tion.jda.core.entities.Role
 import org.json.JSONArray
 import org.json.JSONTokener
 
@@ -34,7 +36,7 @@ class ServerSettings : Model() {
     var cmdWhitelistRaw = "[]"
 
     @Column("icon_id")
-    var iconId : String? = ""
+    var iconId: String? = ""
 
     var cmdWhitelist: List<String>
         get() = JSONArray(JSONTokener(this.cmdWhitelistRaw)).toTypedArray(String::class.java)
@@ -54,6 +56,17 @@ class ServerSettings : Model() {
 
     @Column("log_timezone")
     var logTimezone = "UTC"
+
+    @Column("muted_role")
+    var mutedRoleId: String? = null
+
+    @Transient
+    var mutedRole: Role? = null
+        get() = if(mutedRoleId != null) Bot.shardManager.getGuild(this.id)?.getRoleById(this.mutedRoleId) else null
+        set(setting) {
+            this.mutedRoleId = setting?.id
+            field = setting
+        }
 
     @Transient
     var realname: RealnameSetting = RealnameSetting.OFF

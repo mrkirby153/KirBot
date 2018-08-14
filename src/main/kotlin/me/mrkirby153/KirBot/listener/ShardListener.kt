@@ -257,8 +257,13 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
         // Delete the selfrole entry if the role is deleted
         if (event.role.id in event.guild.kirbotGuild.getSelfroles())
             event.guild.kirbotGuild.removeSelfrole(event.role.id)
-//        Model.first(Role::class.java, Tuple("id", event.role.id))?.delete()
         Model.where(Role::class.java, "id", event.role.id).delete()
+        // If the role is the muted role, delete it
+        val settings = event.guild.kirbotGuild.settings
+        if(settings.mutedRoleId == event.role.id) {
+            settings.mutedRole = null
+            settings.save()
+        }
     }
 
     override fun onGuildVoiceJoin(event: GuildVoiceJoinEvent) {

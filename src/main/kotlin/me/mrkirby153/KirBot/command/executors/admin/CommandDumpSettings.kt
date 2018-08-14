@@ -15,10 +15,10 @@ class CommandDumpSettings : BaseCommand() {
         context.channel.sendMessage(buildString {
             append("General Settings\n")
             appendln("```")
-            settings.getColumnData().forEach { k, v ->
+            settings.columnData.forEach { k, v ->
                 append(k)
                 append(" = ")
-                append(v.toString())
+                append(v?.toString() ?: "Null")
                 append("\n")
             }
             append("```")
@@ -28,7 +28,7 @@ class CommandDumpSettings : BaseCommand() {
         context.channel.sendMessage(buildString {
             append("Music Settings\n")
             appendln("```")
-            musicSettings.getColumnData().forEach { k, v ->
+            musicSettings.columnData.forEach { k, v ->
                 append(k)
                 append(" = ")
                 append(v.toString())

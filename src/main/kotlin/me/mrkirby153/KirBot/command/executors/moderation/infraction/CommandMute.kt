@@ -36,9 +36,9 @@ class CommandMute : BaseCommand(false, CommandCategory.MODERATION) {
 
         val highest = context.guild.selfMember.roles.map { it.position }.max() ?: 0
         val mutedRole = Infractions.getMutedRole(context.guild) ?: throw CommandException(
-                "could not get the muted role")
+                "The muted role is not configured on this server!")
         if (mutedRole.position > highest)
-            throw CommandException("cannot assign the muted role")
+            throw CommandException("Cannot assign the muted role")
 
         if (reason != null) {
             val split = reason.split(" ")

@@ -21,23 +21,39 @@ class ShardManager(val token: String, private val totalShards: Int) {
         set(game) {
             field = game
             Bot.LOG.debug("Updating playing game to $game")
-            shards.forEach { updatePresence(it) }
+            if (autoUpdatePresence)
+                shards.forEach { updatePresence(it) }
         }
     var onlineStatus: OnlineStatus = OnlineStatus.IDLE
         set(status) {
             field = status
             Bot.LOG.debug("Updating online status to $status")
-            shards.forEach {
-                updatePresence(it)
-            }
+            if (autoUpdatePresence)
+                shards.forEach {
+                    updatePresence(it)
+                }
+        }
+    var gameType: Game.GameType = Game.GameType.DEFAULT
+        set(game) {
+            field = game
+            Bot.LOG.debug("Updating game type to $game")
+            if (autoUpdatePresence)
+                shards.forEach { updatePresence(it) }
         }
 
-    private fun updatePresence(jda: JDA) {
-        val game = if (totalShards > 1) Game.playing(
-                "$playing | Shard ${jda.shardInfo.shardId} of $totalShards") else Game.playing(
-                playing)
-        Bot.LOG.debug("Updating presence for $jda to $game ($onlineStatus)")
-        jda.presence.setPresence(onlineStatus, game)
+    var autoUpdatePresence = true
+
+    fun updatePresence(jda: JDA? = null) {
+        if(jda == null){
+            shards.forEach { updatePresence(it) }
+        } else {
+            val game = if (totalShards > 1) Game.of(gameType,
+                    "$playing | Shard ${jda.shardInfo.shardId} of $totalShards") else Game.of(
+                    gameType,
+                    playing)
+            Bot.LOG.debug("Updating presence for $jda to $game ($onlineStatus)")
+            jda.presence.setPresence(onlineStatus, game)
+        }
     }
 
     fun addShard(id: Int) {

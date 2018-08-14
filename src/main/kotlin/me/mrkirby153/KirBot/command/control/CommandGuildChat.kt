@@ -10,7 +10,7 @@ import me.mrkirby153.KirBot.utils.deleteAfter
 import net.dv8tion.jda.core.MessageBuilder
 import java.util.concurrent.TimeUnit
 
-@Command(name = "gchat", control = true, arguments = ["<channel:string>", "[msg:string...]"])
+@Command(name = "gchat", admin = true, arguments = ["<channel:string>", "[msg:string...]"])
 class CommandGuildChat : BaseCommand() {
 
     private val lastChannel = mutableMapOf<String, String>()

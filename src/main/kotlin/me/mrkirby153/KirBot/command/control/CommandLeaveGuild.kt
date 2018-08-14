@@ -7,7 +7,7 @@ import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.utils.Context
 
-@Command(name = "leaveGuild", arguments = ["<guild:string>"], control = true)
+@Command(name = "leaveGuild", arguments = ["<guild:string>"], admin = true)
 class CommandLeaveGuild : BaseCommand() {
 
     override fun execute(context: Context, cmdContext: CommandContext) {

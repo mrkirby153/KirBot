@@ -9,7 +9,6 @@ import me.mrkirby153.KirBot.module.Module
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.scheduler.InterfaceAdapter
 import me.mrkirby153.KirBot.scheduler.Schedulable
-import me.mrkirby153.KirBot.user.CLEARANCE_GLOBAL_ADMIN
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import me.mrkirby153.kcutils.Time
@@ -143,7 +142,7 @@ class Scheduler : Module("scheduler") {
     data class ScheduledItem(val id: String, val schedulable: Schedulable)
 }
 
-@Command(name = "sstats", clearance = CLEARANCE_GLOBAL_ADMIN)
+@Command(name = "sstats", admin = true)
 class SchedulerStats : BaseCommand() {
 
     override fun execute(context: Context, cmdContext: CommandContext) {

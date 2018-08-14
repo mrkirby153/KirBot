@@ -4,9 +4,8 @@ import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.args.CommandContext
-import me.mrkirby153.KirBot.user.CLEARANCE_GLOBAL_ADMIN
 import me.mrkirby153.KirBot.utils.Context
-import me.mrkirby153.KirBot.utils.getClearance
+import me.mrkirby153.KirBot.utils.globalAdmin
 import me.mrkirby153.kcutils.Time
 
 @Command(name = "ping")
@@ -21,8 +20,7 @@ class CommandPing : BaseCommand(false) {
                     context.shard.ping)}` \nAverage across all shards (${Bot.shardManager.shards.size}): `${Time.format(
                     1, avgHeartbeat.toLong())}`"
             val msg = "Pong! `${Time.format(1, stop - start)}`"
-            context.channel.sendMessage(if (context.author.getClearance(
-                    context.guild) >= CLEARANCE_GLOBAL_ADMIN) adminMsg else msg).queue()
+            context.channel.sendMessage(if(context.author.globalAdmin) adminMsg else msg).queue()
         }
     }
 }

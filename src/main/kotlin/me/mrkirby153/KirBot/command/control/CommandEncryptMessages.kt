@@ -9,7 +9,7 @@ import me.mrkirby153.KirBot.logger.LogManager
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.promptForConfirmation
 
-@Command(name = "encrypt-message", arguments = ["[message:string]"], control = true)
+@Command(name = "encrypt-message", arguments = ["[message:string]"], admin = true)
 class CommandEncryptMessages : BaseCommand() {
 
     override fun execute(context: Context, cmdContext: CommandContext) {
@@ -45,7 +45,7 @@ class CommandEncryptMessages : BaseCommand() {
     }
 }
 
-@Command(name = "decrypt-message", arguments = ["[message:string]"], control = true)
+@Command(name = "decrypt-message", arguments = ["[message:string]"], admin = true)
 class CommandDecryptMessage : BaseCommand() {
 
     override fun execute(context: Context, cmdContext: CommandContext) {

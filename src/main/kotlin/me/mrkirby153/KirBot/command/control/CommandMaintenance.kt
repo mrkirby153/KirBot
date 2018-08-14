@@ -10,7 +10,7 @@ import me.mrkirby153.KirBot.utils.deleteAfter
 import me.mrkirby153.KirBot.utils.promptForConfirmation
 import java.util.concurrent.TimeUnit
 
-@Command(name = "clear-archives", control = true)
+@Command(name = "clear-archives", admin = true)
 class CommandClearArchives : BaseCommand() {
 
     override fun execute(context: Context, cmdContext: CommandContext) {

@@ -6,11 +6,10 @@ import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandExecutor
 import me.mrkirby153.KirBot.command.args.CommandContext
-import me.mrkirby153.KirBot.user.CLEARANCE_GLOBAL_ADMIN
 import me.mrkirby153.KirBot.utils.Context
 import net.dv8tion.jda.core.entities.User
 
-@Command(name = "su", arguments = ["<user:user>", "<command:string...>"], clearance = CLEARANCE_GLOBAL_ADMIN)
+@Command(name = "su", arguments = ["<user:user>", "<command:string...>"], admin = true)
 class CommandSu : BaseCommand(CommandCategory.ADMIN) {
 
     override fun execute(context: Context, cmdContext: CommandContext) {

@@ -6,7 +6,6 @@ import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.AdminControl
-import me.mrkirby153.KirBot.user.CLEARANCE_GLOBAL_ADMIN
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import me.mrkirby153.kcutils.Time
@@ -16,7 +15,7 @@ import java.text.SimpleDateFormat
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
-@Command(name = "db-backup", clearance = CLEARANCE_GLOBAL_ADMIN)
+@Command(name = "db-backup", admin = true)
 class CommandDumpDatabase : BaseCommand(false) {
 
     override fun execute(context: Context, cmdContext: CommandContext) {

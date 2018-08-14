@@ -28,8 +28,8 @@ abstract class BaseCommand(val respectWhitelist: Boolean = true,
             return list.toTypedArray()
         }
 
-    val controlCommand: Boolean
-        get() = this.javaClass.getAnnotation(Command::class.java)?.control ?: false
+    val annotation: Command
+        get() = this.javaClass.getAnnotation(Command::class.java)!!
 
     init {
         val annotation = this.javaClass.getAnnotation(Command::class.java)

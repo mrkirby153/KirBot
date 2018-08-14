@@ -19,7 +19,6 @@ import me.mrkirby153.KirBot.modules.Redis
 import me.mrkirby153.KirBot.music.MusicManager
 import me.mrkirby153.KirBot.realname.RealnameHandler
 import me.mrkirby153.KirBot.user.CLEARANCE_ADMIN
-import me.mrkirby153.KirBot.user.CLEARANCE_GLOBAL_ADMIN
 import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.KirBot.utils.toTypedArray
 import me.mrkirby153.kcutils.child
@@ -251,18 +250,6 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
 
     fun getClearance(member: Member): Int {
         lock()
-        try {
-            val redis = ModuleManager.getLoadedModule(Redis::class.java)
-            redis?.getConnection()?.use { jedis ->
-                if (jedis.sismember("admins", member.user.id)) {
-                    unlock()
-                    return CLEARANCE_GLOBAL_ADMIN
-                }
-            }
-        } catch (e: Exception) {
-            // Ignore
-            unlock()
-        }
         if (member.isOwner) {
             unlock()
             return CLEARANCE_ADMIN

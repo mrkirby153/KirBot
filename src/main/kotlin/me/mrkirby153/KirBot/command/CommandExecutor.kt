@@ -9,12 +9,11 @@ import me.mrkirby153.KirBot.command.help.HelpManager
 import me.mrkirby153.KirBot.database.models.CustomCommand
 import me.mrkirby153.KirBot.logger.ErrorLogger
 import me.mrkirby153.KirBot.logger.LogEvent
-import me.mrkirby153.KirBot.module.ModuleManager
-import me.mrkirby153.KirBot.modules.AdminControl
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.KirBot.utils.deleteAfter
 import me.mrkirby153.KirBot.utils.getClearance
+import me.mrkirby153.KirBot.utils.globalAdmin
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.logName
 import me.mrkirby153.kcutils.Time
@@ -126,6 +125,8 @@ object CommandExecutor {
 
             val clearance = if (alias != null && alias.clearance != -1) alias.clearance else annotation?.clearance
                     ?: 0
+            if(annotation.admin && !context.author.globalAdmin)
+                return@submit
             if (clearance > context.author.getClearance(context.guild)) {
                 Bot.LOG.debug(
                         "${context.author.id} was denied access to $cmd due to lack of clearance. Required $clearance -- Found: ${context.author.getClearance(
@@ -253,8 +254,6 @@ object CommandExecutor {
             if (data.cmdWhitelist.isEmpty())
                 return true
             data.cmdWhitelist.any { it == channel.id }
-        } else if (command.controlCommand && channel.id != ModuleManager[AdminControl::class.java].logChannel?.id) {
-            return false
         } else {
             true
         }

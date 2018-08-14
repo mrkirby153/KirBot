@@ -8,7 +8,6 @@ import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.Database
-import me.mrkirby153.KirBot.user.CLEARANCE_GLOBAL_ADMIN
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.kcutils.use
 import me.mrkirby153.kcutils.utils.TableBuilder
@@ -16,7 +15,7 @@ import java.sql.SQLException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
-@Command(name = "sql", arguments = ["<query:string...>"], clearance = CLEARANCE_GLOBAL_ADMIN)
+@Command(name = "sql", arguments = ["<query:string...>"], admin = true)
 class CommandSQL : BaseCommand(false, CommandCategory.ADMIN) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val query = cmdContext.get<String>("query") ?: throw CommandException(

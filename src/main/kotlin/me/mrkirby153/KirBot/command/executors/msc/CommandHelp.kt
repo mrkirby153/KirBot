@@ -6,7 +6,6 @@ import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.CommandExecutor
 import me.mrkirby153.KirBot.command.args.CommandContext
-import me.mrkirby153.KirBot.user.CLEARANCE_GLOBAL_ADMIN
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.botUrl
 import me.mrkirby153.KirBot.utils.embed.link
@@ -51,7 +50,7 @@ class CommandHelp : BaseCommand(CommandCategory.MISCELLANEOUS) {
                         inline = true
                         description {
                             commands.forEach {
-                                if (it.clearance == CLEARANCE_GLOBAL_ADMIN || it.controlCommand)
+                                if (it.annotation.admin)
                                     return@forEach
                                 +("$prefix${it.aliases.first().mdEscape()}" link ".")
                                 +"\n"

@@ -10,7 +10,7 @@ import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.kcutils.Time
 import java.text.SimpleDateFormat
 
-@Command(name = "whitelistGuild", control = true, arguments = ["<guild:string>"])
+@Command(name = "whitelistGuild", admin = true, arguments = ["<guild:string>"])
 class CommandWhitelistGuild : BaseCommand() {
 
     override fun execute(context: Context, cmdContext: CommandContext) {

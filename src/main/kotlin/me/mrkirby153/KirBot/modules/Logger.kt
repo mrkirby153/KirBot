@@ -188,17 +188,15 @@ class Logger : Module("logging") {
     override fun onGuildMessageReceived(event: GuildMessageReceivedEvent) {
         if (!event.guild.kirbotGuild.ready)
             return
-        if (event.message.contentRaw.isNotEmpty() || event.message.attachments.size > 0) {
-            val msg = GuildMessage()
-            msg.id = event.message.id
-            msg.serverId = event.guild.id
-            msg.author = event.author.id
-            msg.channel = event.channel.id
-            msg.message = LogManager.encrypt(event.message.contentRaw)
-            if (event.message.attachments.size > 0)
-                msg.attachments = event.message.attachments.joinToString(", ") { it.url }
-            msg.save()
-        }
+        val msg = GuildMessage()
+        msg.id = event.message.id
+        msg.serverId = event.guild.id
+        msg.author = event.author.id
+        msg.channel = event.channel.id
+        msg.message = LogManager.encrypt(event.message.contentRaw)
+        if (event.message.attachments.size > 0)
+            msg.attachments = event.message.attachments.joinToString(", ") { it.url }
+        msg.save()
     }
 
     override fun onGuildVoiceJoin(event: GuildVoiceJoinEvent) {

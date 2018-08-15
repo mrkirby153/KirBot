@@ -76,10 +76,10 @@ object CommandExecutor {
             }
             Bot.LOG.debug("Processing message \"$message\"")
 
-            message = if (isMention) message.replace(Regex("^<@!?$botId>"),
+            message = if (isMention) message.replace(Regex("^<@!?$botId>\\s?"),
                     "") else message.substring(prefix.length)
             val parts = message.split(" ").toTypedArray()
-            if (parts.isEmpty() && isMention) {
+            if ((parts.isEmpty() || message.isEmpty()) && isMention) {
                 context.channel.sendMessage(
                         "The command prefix on this server is `$prefix`").queue()
                 return@submit

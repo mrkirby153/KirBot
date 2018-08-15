@@ -10,12 +10,9 @@ import me.mrkirby153.KirBot.database.models.guild.ServerSettings
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.AdminControl
 import me.mrkirby153.KirBot.modules.Redis
-import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.sharding.Shard
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.kcutils.utils.IdGenerator
-import net.dv8tion.jda.core.entities.Channel
-import net.dv8tion.jda.core.entities.Member
 import net.dv8tion.jda.core.events.channel.text.TextChannelCreateEvent
 import net.dv8tion.jda.core.events.channel.text.TextChannelDeleteEvent
 import net.dv8tion.jda.core.events.channel.text.update.GenericTextChannelUpdateEvent
@@ -30,9 +27,6 @@ import net.dv8tion.jda.core.events.guild.member.GuildMemberLeaveEvent
 import net.dv8tion.jda.core.events.guild.member.GuildMemberNickChangeEvent
 import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleAddEvent
 import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleRemoveEvent
-import net.dv8tion.jda.core.events.guild.voice.GuildVoiceJoinEvent
-import net.dv8tion.jda.core.events.guild.voice.GuildVoiceLeaveEvent
-import net.dv8tion.jda.core.events.guild.voice.GuildVoiceMoveEvent
 import net.dv8tion.jda.core.events.role.RoleCreateEvent
 import net.dv8tion.jda.core.events.role.RoleDeleteEvent
 import net.dv8tion.jda.core.events.role.update.GenericRoleUpdateEvent
@@ -265,49 +259,4 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
             settings.save()
         }
     }
-
-    override fun onGuildVoiceJoin(event: GuildVoiceJoinEvent) {
-        val guild = event.guild.kirbotGuild
-        guild.lock()
-        if (!guild.musicManager.manualPause && guild.musicManager.audioPlayer.isPaused) {
-            if (event.guild.selfMember.voiceState.inVoiceChannel() && event.guild.selfMember.voiceState.channel.id == event.channelJoined.id)
-                Bot.LOG.debug("Resuming music in ${event.guild.id}:${event.channelJoined.id}")
-            guild.musicManager.audioPlayer.isPaused = false
-        }
-        guild.unlock()
-    }
-
-    override fun onGuildVoiceLeave(event: GuildVoiceLeaveEvent) {
-        val guild = event.guild.kirbotGuild
-        guild.lock()
-        if (inChannel(event.channelLeft, event.guild.selfMember))
-            pauseIfEmpty(event.channelLeft, guild)
-        guild.unlock()
-    }
-
-    override fun onGuildVoiceMove(event: GuildVoiceMoveEvent) {
-        val guild = event.guild.kirbotGuild
-        guild.lock()
-        if (inChannel(event.channelJoined,
-                        event.guild.selfMember) && !guild.musicManager.manualPause) {
-            Bot.LOG.debug("Resuming in ${guild.id} as someone joined!")
-            guild.musicManager.audioPlayer.isPaused = false
-        } else {
-            if (inChannel(event.channelLeft, event.guild.selfMember))
-                pauseIfEmpty(event.channelLeft, guild)
-        }
-        guild.unlock()
-    }
-
-
-    private fun pauseIfEmpty(channel: Channel, guild: KirBotGuild) {
-        if (channel.members.none { m -> m.user.id != channel.guild.selfMember.user.id }) {
-            guild.musicManager.audioPlayer.isPaused = true
-            Bot.LOG.debug(
-                    "Pausing music in ${channel.guild.id}:${channel.id} as nobody is in the chanel")
-        }
-    }
-
-    private fun inChannel(channel: Channel,
-                          member: Member) = (member.voiceState.inVoiceChannel() && member.voiceState.channel.id == channel.id)
 }

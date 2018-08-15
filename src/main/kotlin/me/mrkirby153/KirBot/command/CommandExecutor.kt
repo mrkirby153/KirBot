@@ -45,7 +45,7 @@ object CommandExecutor {
         val time = measureTimeMillis {
             val reflections = Reflections("me.mrkirby153.KirBot")
 
-            val commands = reflections.getSubTypesOf(BaseCommand::class.java)
+            val commands = reflections.getTypesAnnotatedWith(Command::class.java)
 
             Bot.LOG.info("Found ${commands.size} commands")
 

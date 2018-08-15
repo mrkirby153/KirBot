@@ -3,6 +3,8 @@ package me.mrkirby153.KirBot.command.executors.admin
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.args.CommandContext
+import me.mrkirby153.KirBot.module.ModuleManager
+import me.mrkirby153.KirBot.modules.music.MusicModule
 import me.mrkirby153.KirBot.user.CLEARANCE_ADMIN
 import me.mrkirby153.KirBot.utils.Context
 
@@ -24,7 +26,7 @@ class CommandDumpSettings : BaseCommand() {
             append("```")
         }).queue()
 
-        val musicSettings = context.kirbotGuild.musicManager.settings
+        val musicSettings = ModuleManager[MusicModule::class.java].getManager(context.guild).settings
         context.channel.sendMessage(buildString {
             append("Music Settings\n")
             appendln("```")

@@ -6,6 +6,8 @@ import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.CommandExecutor
 import me.mrkirby153.KirBot.command.args.CommandContext
+import me.mrkirby153.KirBot.module.ModuleManager
+import me.mrkirby153.KirBot.modules.music.MusicModule
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.botUrl
 import me.mrkirby153.KirBot.utils.embed.link
@@ -41,7 +43,7 @@ class CommandHelp : BaseCommand(CommandCategory.MISCELLANEOUS) {
             }
             fields {
                 for ((category, commands) in CommandExecutor.getCommandsByCategory()) {
-                    val musicEnabled = context.kirbotGuild.musicManager.settings.enabled
+                    val musicEnabled = ModuleManager[MusicModule::class.java].getManager(context.guild).settings.enabled
                     if (category == CommandCategory.MUSIC && !musicEnabled) {
                         continue
                     }

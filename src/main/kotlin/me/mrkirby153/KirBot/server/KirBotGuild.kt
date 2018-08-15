@@ -16,7 +16,6 @@ import me.mrkirby153.KirBot.infraction.Infractions
 import me.mrkirby153.KirBot.logger.LogManager
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.Redis
-import me.mrkirby153.KirBot.music.MusicManager
 import me.mrkirby153.KirBot.realname.RealnameHandler
 import me.mrkirby153.KirBot.user.CLEARANCE_ADMIN
 import me.mrkirby153.KirBot.utils.checkPermissions
@@ -48,7 +47,6 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
     val clearances: MutableMap<String, Int> = mutableMapOf()
 
 
-    val musicManager = MusicManager(this)
     val logManager = LogManager(this)
 
     var extraData = JSONObject()

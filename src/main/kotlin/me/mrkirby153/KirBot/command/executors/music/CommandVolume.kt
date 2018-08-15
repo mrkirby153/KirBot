@@ -1,23 +1,17 @@
 package me.mrkirby153.KirBot.command.executors.music
 
-import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
-import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.args.CommandContext
+import me.mrkirby153.KirBot.modules.music.MusicBaseCommand
+import me.mrkirby153.KirBot.modules.music.MusicManager
 import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
 
 @Command(name = "volume", clearance = CLEARANCE_MOD, arguments = ["[volume:string]"])
-class CommandVolume : BaseCommand(CommandCategory.MUSIC) {
+class CommandVolume : MusicBaseCommand() {
 
-    override fun execute(context: Context, cmdContext: CommandContext) {
-        if (!context.kirbotGuild.musicManager.settings.enabled) {
-            return
-        } else {
-            Bot.LOG.debug("Music is disabled in ${context.guild.id}, ignoring")
-        }
-        val audioPlayer = context.kirbotGuild.musicManager.audioPlayer
+    override fun execute(context: Context, cmdContext: CommandContext, manager: MusicManager) {
+        val audioPlayer = manager.audioPlayer
 
         if (!cmdContext.has("volume")) {
             context.send().info("Current Volume: **${audioPlayer.volume}**").queue()

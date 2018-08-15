@@ -1,46 +1,33 @@
 package me.mrkirby153.KirBot.command.executors.music
 
-import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
-import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
+import me.mrkirby153.KirBot.modules.music.MusicBaseCommand
+import me.mrkirby153.KirBot.modules.music.MusicManager
+import me.mrkirby153.KirBot.user.CLEARANCE_DEFAULT
 import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
-import me.mrkirby153.KirBot.utils.embed.link
-import me.mrkirby153.KirBot.utils.mdEscape
+import me.mrkirby153.KirBot.utils.getClearance
 import net.dv8tion.jda.core.Permission
 
-@Command(name = "dequeue", clearance = CLEARANCE_MOD, arguments = ["<position:int>"],
+@Command(name = "dequeue", clearance = CLEARANCE_DEFAULT, arguments = ["<position:int>"],
         permissions = [Permission.MESSAGE_EMBED_LINKS])
-class CommandDeQueue : BaseCommand(CommandCategory.MUSIC) {
+class CommandDeQueue : MusicBaseCommand() {
 
-    override fun execute(context: Context, cmdContext: CommandContext) {
-        if (!context.kirbotGuild.musicManager.settings.enabled) {
-            return
-        } else {
-            Bot.LOG.debug("Music is disabled in ${context.guild.id}, ignoring")
-        }
+    override fun execute(context: Context, cmdContext: CommandContext, manager: MusicManager) {
         val index = (cmdContext.get<Int>("position")?.toInt() ?: 1) - 1
-
         try {
-            val song = context.kirbotGuild.musicManager.queue.removeAt(index)
-            context.kirbotGuild.musicManager.updateQueue()
-            context.send().embed {
-                description {
-                    +"**${song.track.info.title.mdEscape()}**" link song.track.info.uri
-                    +"\nRemoved `${song.track.info.title}` from the queue"
-                }
-                if (song.track.info.uri.contains("youtu"))
-                    thumbnail = "https://i.ytimg.com/vi/${song.track.info.identifier}/default.jpg"
-                timestamp {
-                    now()
-                }
-            }.rest().queue()
+            val song = manager.queue[index]
+            if (song.queuedBy != context.author) {
+                if (context.author.getClearance(context.guild) < CLEARANCE_MOD)
+                    throw CommandException("You cannot dequeue that song")
+            }
+            manager.queue.removeAt(index)
+            context.send().success("Removed `${song.track.info.title}` from the queue!").queue()
         } catch (e: IndexOutOfBoundsException) {
             throw CommandException(
-                    "Position must be between 0 and ${context.kirbotGuild.musicManager.queue.size}")
+                    "Position must be between 1 and ${manager.queue.size + 1}")
         }
     }
 }

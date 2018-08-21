@@ -7,7 +7,6 @@ import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.music.MusicBaseCommand
 import me.mrkirby153.KirBot.modules.music.MusicManager
 import me.mrkirby153.KirBot.modules.music.MusicModule
-import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.embed.b
 import me.mrkirby153.KirBot.utils.embed.embed
@@ -44,6 +43,11 @@ class CommandSkip : MusicBaseCommand() {
 
         val currentlyPlaying = manager.nowPlaying ?: throw CommandException("Nothing playing!")
         val skipTimer = musicSettings.skipTimer
+        if (alone(context.member)) {
+            context.send().success("Playing next song").queue()
+            manager.playNextTrack()
+            return
+        }
         context.send().embed("Music") {
             color = Color.GREEN
             description {
@@ -100,8 +104,10 @@ class CommandSkip : MusicBaseCommand() {
         }
     }
 
-    @Command(name = "force", clearance = CLEARANCE_MOD)
+    @Command(name = "force", clearance = 0)
     fun forceSkip(context: Context, cmdContext: CommandContext) {
+        if(!isDJ(context.member))
+            throw CommandException("You must be a DJ to use this command! (Have a role named `DJ`)")
         context.channel.sendMessage("Skipping song").queue()
         ModuleManager[MusicModule::class.java].getManager(context.guild).playNextTrack()
     }

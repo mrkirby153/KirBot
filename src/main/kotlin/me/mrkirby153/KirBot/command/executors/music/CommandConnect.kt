@@ -22,6 +22,14 @@ class CommandConnect : MusicBaseCommand() {
                 ?: throw CommandException("Please join a voice channel first!")
         if (!channel.checkPermissions(Permission.VOICE_CONNECT))
             throw CommandException("I cannot join this voice channel")
+
+        if(context.guild.selfMember.voiceState.inVoiceChannel()){
+            if(context.guild.selfMember.voiceState.channel.members.any { it != context.guild.selfMember }){
+                if(!isDJ(context.member))
+                    throw CommandException("Only DJs can switch channels while the bot is playing")
+            }
+        }
+
         manager.connect(channel, context.textChannel)
         context.send().success(
                 "Joining **${channel.name}** and binding to <#${context.channel.id}>").queue()

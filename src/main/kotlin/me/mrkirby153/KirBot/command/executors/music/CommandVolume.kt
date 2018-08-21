@@ -33,13 +33,10 @@ class CommandVolume : MusicBaseCommand() {
 
         val volume = Math.min(150, Math.max(num.toInt(), 0))
 
-        if (add) {
-            audioPlayer.volume += volume
-        } else if (sub) {
-            audioPlayer.volume -= volume
-        } else {
-
-            audioPlayer.volume = volume
+        when {
+            add -> audioPlayer.volume += volume
+            sub -> audioPlayer.volume -= volume
+            else -> audioPlayer.volume = volume
         }
         context.send().info("Set volume to __**${audioPlayer.volume}**__").queue()
     }

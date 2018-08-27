@@ -69,7 +69,7 @@ fun promptForConfirmation(context: Context, msg: String, onConfirm: (() -> Boole
     context.channel.sendMessage(msg).queue { m ->
         m.addReaction(GREEN_TICK.emote).queue()
         m.addReaction(RED_TICK.emote).queue()
-        WaitUtils.waitFor(MessageReactionAddEvent::class.java, {
+        WaitUtils.waitFor(MessageReactionAddEvent::class.java) {
             if (it.user.id != context.author.id)
                 return@waitFor
             if (it.messageId != m.id)
@@ -88,7 +88,7 @@ fun promptForConfirmation(context: Context, msg: String, onConfirm: (() -> Boole
                     }
                 }
             }
-        })
+        }
     }
 }
 
@@ -118,16 +118,12 @@ fun makeEmbed(title: String?, msg: String?, color: Color? = Color.WHITE, img: St
 }
 
 fun localizeTime(time: Int): String {
-    if (time < 60) {
-        return "$time seconds"
-    } else if (time < 3600) {
-        return "${roundTime(2, time.toDouble() / 60)} minutes"
-    } else if (time < 86400) {
-        return "${(roundTime(2, time.toDouble() / 3600))} hours"
-    } else if (time < 604800) {
-        return "${roundTime(2, time.toDouble() / 86400)} days"
-    } else {
-        return "${roundTime(2, time.toDouble() / 604800)} weeks"
+    return when {
+        time < 60 -> "$time seconds"
+        time < 3600 -> "${roundTime(2, time.toDouble() / 60)} minutes"
+        time < 86400 -> "${(roundTime(2, time.toDouble() / 3600))} hours"
+        time < 604800 -> "${roundTime(2, time.toDouble() / 86400)} days"
+        else -> "${roundTime(2, time.toDouble() / 604800)} weeks"
     }
 }
 
@@ -135,7 +131,7 @@ fun roundTime(degree: Int, number: Double): Double {
     if (degree == 0)
         return Math.round(number).toDouble()
     var format = "#.#"
-    for (i in (1..degree - 1))
+    for (i in (1 until degree))
         format += "#"
 
     val sym = DecimalFormatSymbols(Locale.US)

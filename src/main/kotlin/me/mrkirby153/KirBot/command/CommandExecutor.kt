@@ -55,7 +55,7 @@ object CommandExecutor {
     }
 
     fun execute(context: Context) {
-        val future = this.executorThread.submit({
+        val future = this.executorThread.submit {
             if (context.channel.type == ChannelType.PRIVATE)
                 return@submit
 
@@ -120,13 +120,17 @@ object CommandExecutor {
                 logInModLogs = command.javaClass.getAnnotation(LogInModlogs::class.java) != null
             }
 
-            if (cmdMethod == null)
+            if (cmdMethod == null) {
+                Bot.LOG.debug("No command method found!")
                 return@submit
+            }
 
             val clearance = if (alias != null && alias.clearance != -1) alias.clearance else annotation?.clearance
                     ?: 0
-            if(annotation.admin && !context.author.globalAdmin)
+            if(annotation.admin && !context.author.globalAdmin) {
+                Bot.LOG.debug("Attempted to execute an admin command while not being a global admin")
                 return@submit
+            }
             if (clearance > context.author.getClearance(context.guild)) {
                 Bot.LOG.debug(
                         "${context.author.id} was denied access to $cmd due to lack of clearance. Required $clearance -- Found: ${context.author.getClearance(
@@ -177,7 +181,7 @@ object CommandExecutor {
                 context.send().error("An unknown error occurred!").queue()
             }
             Bot.LOG.debug("Command execution finished")
-        })
+        }
         commandWatchdogThread.submit {
             try {
                 future.get(10, TimeUnit.SECONDS)

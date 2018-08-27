@@ -16,6 +16,8 @@ class Redis : Module("redis") {
         val port = getProp("redis-port")?.toInt() ?: 6379
         val dbNum = getProp("redis-db")?.toInt() ?: 0
 
+        debug("Connecting to redis database $host:$port ($dbNum)")
+
         this.redisConnection = RedisConnection(host, port,
                 if (password.isEmpty()) null else password, dbNum)
 

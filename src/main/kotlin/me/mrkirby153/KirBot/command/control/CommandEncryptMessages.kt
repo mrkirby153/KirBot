@@ -16,8 +16,8 @@ class CommandEncryptMessages : BaseCommand() {
         if (!cmdContext.has("message")) {
             val count = DB.getFirstColumn<Long>("SELECT COUNT(*) FROM server_messages")
             promptForConfirmation(context,
-                    "Are you sure you want to encrypt `$count` messages?", {
-                Bot.scheduler.submit({
+                    "Are you sure you want to encrypt `$count` messages?") {
+                Bot.scheduler.submit {
                     context.channel.sendMessage(
                             "Encrypting messages, this may take some time").queue()
                     var m = 0
@@ -35,9 +35,9 @@ class CommandEncryptMessages : BaseCommand() {
                         }
                     }
                     context.channel.sendMessage("Encrypted `$m` messages").queue()
-                })
+                }
                 true
-            })
+            }
         } else {
             context.channel.sendMessage(
                     "`${LogManager.encrypt(cmdContext.get<String>("message")!!)}`").queue()

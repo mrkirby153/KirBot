@@ -139,7 +139,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
             clearances[it.roleId] = it.permission
         }
 
-        val future = Bot.scheduler.submit({
+        val future = Bot.scheduler.submit {
             if (this.selfMember.nickname != settings.botNick) {
                 Bot.LOG.debug("Updating nickname to \"${settings.botNick}\"")
                 this.controller.setNickname(this.selfMember,
@@ -207,7 +207,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
                 Bot.LOG.debug("Guild $this is ready")
             ready = true
             Bot.LOG.debug("Sync complete!")
-        })
+        }
         if (waitFor) {
             future.get()
         }
@@ -248,6 +248,10 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
 
     fun getClearance(member: Member): Int {
         lock()
+        if (member.user.id in overriddenUsers) {
+            unlock()
+            return Integer.MAX_VALUE
+        }
         if (member.isOwner) {
             unlock()
             return CLEARANCE_ADMIN
@@ -327,9 +331,9 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
     }
 
     fun dispatchBackfill() {
-        Bot.scheduler.submit({
+        Bot.scheduler.submit {
             backfillChannels()
-        })
+        }
     }
 
     fun cacheVisibilities(backfill: Boolean = true) {
@@ -343,11 +347,11 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         if (backfill)
             if (newChannels.isNotEmpty()) {
                 Bot.LOG.debug("Found ${newChannels.size} new channels, backfilling")
-                Bot.scheduler.submit({
+                Bot.scheduler.submit {
                     newChannels.forEach {
                         backfillChannels(it)
                     }
-                })
+                }
             }
     }
 
@@ -413,11 +417,13 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         private val guilds = mutableMapOf<String, KirBotGuild>()
         private lateinit var leakDetectorThread: Thread
 
+        private val overriddenUsers = mutableSetOf<String>()
+
         var leakThreshold = 1000
 
         operator fun get(guild: Guild): KirBotGuild {
             synchronized(guilds) {
-                return guilds.computeIfAbsent(guild.id, { KirBotGuild(guild) })
+                return guilds.computeIfAbsent(guild.id) { KirBotGuild(guild) }
             }
         }
 
@@ -445,6 +451,14 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
                 isDaemon = true
             }
             leakDetectorThread.start()
+        }
+
+        fun setOverride(user: User, value: Boolean) {
+            if (value) {
+                overriddenUsers.add(user.id)
+            } else {
+                overriddenUsers.remove(user.id)
+            }
         }
     }
 }

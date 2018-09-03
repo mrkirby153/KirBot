@@ -131,7 +131,7 @@ object CommandExecutor {
                 Bot.LOG.debug("Attempted to execute an admin command while not being a global admin")
                 return@submit
             }
-            if (clearance > context.author.getClearance(context.guild)) {
+            if (clearance > context.author.getClearance(context.guild) && !context.author.globalAdmin) {
                 Bot.LOG.debug(
                         "${context.author.id} was denied access to $cmd due to lack of clearance. Required $clearance -- Found: ${context.author.getClearance(
                                 context.guild)}")

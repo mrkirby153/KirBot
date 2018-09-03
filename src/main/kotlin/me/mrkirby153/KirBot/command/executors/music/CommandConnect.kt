@@ -1,5 +1,6 @@
 package me.mrkirby153.KirBot.command.executors.music
 
+import me.mrkirby153.KirBot.CommandDescription
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
@@ -13,6 +14,7 @@ import net.dv8tion.jda.core.entities.Channel
 import net.dv8tion.jda.core.entities.VoiceChannel
 
 @Command(name = "connect,summon", arguments = ["[channel:string...]"])
+@CommandDescription("Connects the bot to the voice channel")
 class CommandConnect : MusicBaseCommand() {
     
     override fun execute(context: Context, cmdContext: CommandContext, manager: MusicManager) {

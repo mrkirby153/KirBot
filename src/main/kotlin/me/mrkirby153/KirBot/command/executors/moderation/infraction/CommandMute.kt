@@ -1,5 +1,6 @@
 package me.mrkirby153.KirBot.command.executors.moderation.infraction
 
+import me.mrkirby153.KirBot.CommandDescription
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
@@ -21,6 +22,7 @@ import java.util.concurrent.TimeUnit
 @Command(name = "mute,shutup,quiet", arguments = ["<user:user>", "[reason:string...]"],
         clearance = CLEARANCE_MOD, permissions = [Permission.MANAGE_ROLES])
 @LogInModlogs
+@CommandDescription("Mute a user (Assign the set muted role)")
 class CommandMute : BaseCommand(false, CommandCategory.MODERATION) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val user = cmdContext.get<User>("user") ?: throw CommandException(

@@ -1,11 +1,13 @@
 package me.mrkirby153.KirBot.command.executors.msc
 
+import me.mrkirby153.KirBot.CommandDescription
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.utils.Context
 
 @Command("charinfo", ["<text:string...>"])
+@CommandDescription("Get information about a string of characters")
 class CommandCharInfo : BaseCommand(false) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val text = cmdContext.get<String>("text") ?: return

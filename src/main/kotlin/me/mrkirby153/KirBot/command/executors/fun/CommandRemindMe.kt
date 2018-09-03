@@ -1,6 +1,7 @@
 package me.mrkirby153.KirBot.command.executors.`fun`
 
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.CommandDescription
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
@@ -21,6 +22,7 @@ import java.text.SimpleDateFormat
 import java.util.concurrent.TimeUnit
 
 @Command(name = "remindMe,remind", arguments = ["<time:string>", "<query:string...>"])
+@CommandDescription("Set reminders")
 class CommandRemindMe : BaseCommand(false, CommandCategory.FUN) {
 
     override fun execute(context: Context, cmdContext: CommandContext) {

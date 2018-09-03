@@ -1,5 +1,6 @@
 package me.mrkirby153.KirBot.command.executors.`fun`
 
+import me.mrkirby153.KirBot.CommandDescription
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandException
@@ -12,6 +13,7 @@ import org.json.JSONTokener
 import java.net.URLEncoder
 
 @Command(name = "urban", arguments = ["<term:string...>"])
+@CommandDescription("Retrieve definitions of words from the Urban Dictionary")
 class CommandUrban : BaseCommand(false) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val query = cmdContext.get<String>("term")!!

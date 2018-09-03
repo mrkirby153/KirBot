@@ -2,6 +2,8 @@ package me.mrkirby153.KirBot.command.executors.moderation
 
 import com.mrkirby153.bfs.sql.DB
 import com.mrkirby153.bfs.sql.DbRow
+import com.sun.org.glassfish.gmbal.Description
+import me.mrkirby153.KirBot.CommandDescription
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandException
@@ -15,12 +17,14 @@ import me.mrkirby153.KirBot.utils.uploadToArchive
 import java.text.SimpleDateFormat
 
 @Command(name = "archive", clearance = CLEARANCE_MOD)
+@CommandDescription("Create an archive")
 class CommandArchive : BaseCommand(false) {
     override fun execute(context: Context, cmdContext: CommandContext) {
     }
 
     @Command(name = "user", clearance = CLEARANCE_MOD,
             arguments = ["<user:snowflake>", "[amount:int]"])
+    @CommandDescription("Create an archive of messages that a user has sent")
     fun archiveUser(context: Context, cmdContext: CommandContext) {
         val amount = cmdContext.get<Int>("amount") ?: 50
         val user = cmdContext.get<String>("user")!!
@@ -33,6 +37,7 @@ class CommandArchive : BaseCommand(false) {
 
     @Command(name = "channel", clearance = CLEARANCE_MOD,
             arguments = ["<channel:snowflake>", "[amount:int]"])
+    @CommandDescription("Creates an archive of messages sent in a channel")
     fun archiveChannel(context: Context, cmdContext: CommandContext) {
         val amount = cmdContext.get<Int>("amount") ?: 50
         val chan = cmdContext.get<String>("channel")!!

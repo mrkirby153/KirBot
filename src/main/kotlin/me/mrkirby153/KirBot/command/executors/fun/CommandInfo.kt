@@ -3,6 +3,7 @@ package me.mrkirby153.KirBot.command.executors.`fun`
 import com.mrkirby153.bfs.model.Model
 import com.mrkirby153.bfs.sql.DB
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.CommandDescription
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
@@ -23,6 +24,7 @@ import net.dv8tion.jda.core.entities.User
 import java.text.SimpleDateFormat
 
 @Command(name = "info", arguments = ["[user:user]"])
+@CommandDescription("Retrieves information about a user")
 class CommandInfo : BaseCommand(CommandCategory.FUN) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val user = cmdContext.get<User>("user") ?: context.author

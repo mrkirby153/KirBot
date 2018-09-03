@@ -1,5 +1,6 @@
 package me.mrkirby153.KirBot.command.executors.msc
 
+import me.mrkirby153.KirBot.CommandDescription
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandException
@@ -22,6 +23,7 @@ import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleAddEvent
 import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleRemoveEvent
 
 @Command(name = "role,r,roles", clearance = CLEARANCE_MOD)
+@CommandDescription("List all the roles and their IDs")
 class RoleCommands : BaseCommand(false) {
 
     override fun execute(context: Context, cmdContext: CommandContext) {
@@ -76,6 +78,7 @@ class RoleCommands : BaseCommand(false) {
     @Command(name = "add", clearance = CLEARANCE_MOD,
             arguments = ["<user:snowflake>", "<role:string>", "[reason:string...]"],
             permissions = [Permission.MANAGE_ROLES])
+    @CommandDescription("Add a role to the given user")
     fun addRole(context: Context, cmdContext: CommandContext) {
         val roleString = cmdContext.get<String>("role")!!
         val reason = cmdContext.get<String>("reason") ?: "No reason specified"
@@ -112,6 +115,7 @@ class RoleCommands : BaseCommand(false) {
     @Command(name = "remove,rem", clearance = CLEARANCE_MOD,
             arguments = ["<user:snowflake>", "<role:string>", "[reason:string...]"],
             permissions = [Permission.MANAGE_ROLES])
+    @CommandDescription("Remove a role from the given user")
     fun removeRole(context: Context, cmdContext: CommandContext) {
         val roleString = cmdContext.get<String>("role")!!
         val reason = cmdContext.get<String>("reason") ?: "No reason specified"

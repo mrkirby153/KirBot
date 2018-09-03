@@ -2,6 +2,7 @@ package me.mrkirby153.KirBot.command.executors.`fun`
 
 import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.CommandDescription
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
@@ -17,6 +18,7 @@ import me.mrkirby153.KirBot.utils.escapeMentions
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 
 @Command(name = "quote", arguments = ["[id:int]"])
+@CommandDescription("Displays a quote previously taken")
 class CommandQuote : BaseCommand(false, CommandCategory.FUN) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         if (!cmdContext.has("id")) {
@@ -38,6 +40,7 @@ class CommandQuote : BaseCommand(false, CommandCategory.FUN) {
 }
 
 @Command(name = "quotes")
+@CommandDescription("Show quote help")
 class CommandQuotes : BaseCommand(false, CommandCategory.FUN) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val quoteCount =  Model.where(Quote::class.java, "server_id", context.guild.id).get().size
@@ -47,6 +50,7 @@ class CommandQuotes : BaseCommand(false, CommandCategory.FUN) {
     }
 
     @Command(name = "block", arguments = ["<user:snowflake>"], clearance = CLEARANCE_MOD)
+    @CommandDescription("Blocks a user from being quoted")
     fun block(context: Context, cmdContext: CommandContext) {
         ModuleManager[Quotes::class.java].blockUser(context.kirbotGuild,
                 cmdContext.get<String>("user")!!)
@@ -56,6 +60,7 @@ class CommandQuotes : BaseCommand(false, CommandCategory.FUN) {
     }
 
     @Command(name = "unblock", arguments = ["<user:snowflake>"], clearance = CLEARANCE_MOD)
+    @CommandDescription("Unblocks a user that was previously blocked, allowing them to quote again")
     fun unblock(context: Context, cmdContext: CommandContext) {
         ModuleManager[Quotes::class.java].unblockUser(context.kirbotGuild,
                 cmdContext.get<String>("user")!!)

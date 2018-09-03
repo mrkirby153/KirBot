@@ -1,5 +1,7 @@
 package me.mrkirby153.KirBot.command.executors.`fun`
 
+import com.sun.org.glassfish.gmbal.Description
+import me.mrkirby153.KirBot.CommandDescription
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandException
@@ -11,6 +13,7 @@ import me.mrkirby153.KirBot.utils.getMember
 import net.dv8tion.jda.core.entities.Role
 
 @Command(name = "selfrole,selfroles")
+@CommandDescription("Displays a list of self-assignable roles")
 class CommandSelfroles : BaseCommand() {
 
     override fun execute(context: Context, cmdContext: CommandContext) {
@@ -31,6 +34,7 @@ class CommandSelfroles : BaseCommand() {
     }
 
     @Command(name = "join", arguments = ["<role:string...>"])
+    @CommandDescription("Join a self-assignable role")
     fun join(context: Context, cmdContext: CommandContext) {
         val role = cmdContext.get<String>("role")!!
         val foundRole = findSelfassignRole(context, role)
@@ -45,6 +49,7 @@ class CommandSelfroles : BaseCommand() {
     }
 
     @Command(name = "leave", arguments = ["<role:string...>"])
+    @CommandDescription("Leave a self-assignable role")
     fun leave(context: Context, cmdContext: CommandContext) {
         val role = cmdContext.get<String>("role")!!
         val foundRole = findSelfassignRole(context, role)
@@ -59,6 +64,7 @@ class CommandSelfroles : BaseCommand() {
     }
 
     @Command(name = "add", arguments = ["<role:string...>"], clearance = CLEARANCE_ADMIN)
+    @CommandDescription("Add a role to the list of self-assignable roles")
     fun add(context: Context, cmdContext: CommandContext) {
         try {
             val role = cmdContext.get<String>("role")!!
@@ -76,6 +82,7 @@ class CommandSelfroles : BaseCommand() {
     }
 
     @Command(name = "remove", arguments = ["<role:string...>"], clearance = CLEARANCE_ADMIN)
+    @CommandDescription("Removes a role from the list of self-assignable roles")
     fun remove(context: Context, cmdContext: CommandContext) {
         val role = cmdContext.get<String>("role")!!
         try {

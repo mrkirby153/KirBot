@@ -1,5 +1,6 @@
 package me.mrkirby153.KirBot.command.executors.music
 
+import me.mrkirby153.KirBot.CommandDescription
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.modules.music.MusicBaseCommand
@@ -14,6 +15,7 @@ import kotlin.math.roundToInt
 
 @Command(name = "queue,np,nowplaying", arguments = ["[option:string]"],
         permissions = [Permission.MESSAGE_EMBED_LINKS])
+@CommandDescription("Shows the current queue")
 class CommandQueue : MusicBaseCommand() {
 
     override fun execute(context: Context, cmdContext: CommandContext, manager: MusicManager) {

@@ -1,5 +1,6 @@
 package me.mrkirby153.KirBot.command.executors.music
 
+import me.mrkirby153.KirBot.CommandDescription
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
@@ -9,6 +10,7 @@ import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
 
 @Command(name = "pause", clearance = CLEARANCE_MOD)
+@CommandDescription("Pause the music that is currently playing")
 class PauseCommand : MusicBaseCommand() {
 
     override fun execute(context: Context, cmdContext: CommandContext, manager: MusicManager) {

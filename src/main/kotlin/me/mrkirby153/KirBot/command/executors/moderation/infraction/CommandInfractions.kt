@@ -2,6 +2,7 @@ package me.mrkirby153.KirBot.command.executors.moderation.infraction
 
 import com.mrkirby153.bfs.model.Model
 import com.mrkirby153.bfs.sql.DB
+import me.mrkirby153.KirBot.CommandDescription
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
@@ -23,6 +24,7 @@ import me.mrkirby153.kcutils.utils.TableBuilder
 @Command(name = "infractions,infraction,inf", arguments = ["[user:snowflake]"],
         clearance = CLEARANCE_MOD)
 @LogInModlogs
+@CommandDescription("Infraction related commands")
 class CommandInfractions : BaseCommand(false, CommandCategory.MODERATION) {
 
     override fun execute(context: Context, cmdContext: CommandContext) {
@@ -31,6 +33,7 @@ class CommandInfractions : BaseCommand(false, CommandCategory.MODERATION) {
 
     @Command(name = "search", clearance = CLEARANCE_MOD, arguments = ["[query:string...]"])
     @LogInModlogs
+    @CommandDescription("Search for an infraction with the given query")
     fun search(context: Context, cmdContext: CommandContext) {
         val query = cmdContext.get<String>("query") ?: ""
 
@@ -75,6 +78,7 @@ class CommandInfractions : BaseCommand(false, CommandCategory.MODERATION) {
 
     @Command(name = "info", clearance = CLEARANCE_MOD, arguments = ["<id:int>"])
     @LogInModlogs
+    @CommandDescription("Gets detailed information about an infraction")
     fun info(context: Context, cmdContext: CommandContext) {
         val id = cmdContext.get<Int>("id")!!
         val infraction = Model.where(Infraction::class.java, "id", id).first()
@@ -115,6 +119,7 @@ class CommandInfractions : BaseCommand(false, CommandCategory.MODERATION) {
     @Command(name = "clear", clearance = CLEARANCE_MOD,
             arguments = ["<id:int>", "[reason:string...]"])
     @LogInModlogs
+    @CommandDescription("Clears an infraction (Deletes it from the database)")
     fun clearInfraction(context: Context, cmdContext: CommandContext) {
         val id = cmdContext.get<Int>("id")!!
         val reason = cmdContext.get<String>("reason") ?: "No reason specified"
@@ -140,6 +145,7 @@ class CommandInfractions : BaseCommand(false, CommandCategory.MODERATION) {
     @Command(name = "reason", clearance = CLEARANCE_MOD,
             arguments = ["<id:number>", "<reason:string...>"])
     @LogInModlogs
+    @CommandDescription("Sets the reason of an infraction")
     fun reason(context: Context, cmdContext: CommandContext) {
         val id = cmdContext.get<Int>("id")!!
         val reason = cmdContext.get<String>("reason")!!

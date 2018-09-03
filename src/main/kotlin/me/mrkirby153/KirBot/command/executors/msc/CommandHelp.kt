@@ -1,137 +1,110 @@
 package me.mrkirby153.KirBot.command.executors.msc
 
+import me.mrkirby153.KirBot.CommandDescription
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.CommandExecutor
 import me.mrkirby153.KirBot.command.args.CommandContext
-import me.mrkirby153.KirBot.module.ModuleManager
-import me.mrkirby153.KirBot.modules.music.MusicModule
+import me.mrkirby153.KirBot.command.help.HelpNode
 import me.mrkirby153.KirBot.utils.Context
-import me.mrkirby153.KirBot.utils.botUrl
-import me.mrkirby153.KirBot.utils.embed.link
-import me.mrkirby153.KirBot.utils.embed.u
-import me.mrkirby153.KirBot.utils.mdEscape
+import me.mrkirby153.KirBot.utils.embed.embed
 import net.dv8tion.jda.core.Permission
 import java.awt.Color
 
 @Command(name = "help,?", arguments = ["[command:string...]"],
         permissions = [Permission.MESSAGE_EMBED_LINKS])
+@CommandDescription("Display help for a command")
 class CommandHelp : BaseCommand(CommandCategory.MISCELLANEOUS) {
 
     override fun execute(context: Context, cmdContext: CommandContext) {
         if (!cmdContext.has("command")) {
             displayAllCommands(context)
         } else {
-            val command = CommandExecutor.commands.firstOrNull {
-                cmdContext.get<String>("command")!!.toLowerCase() in it.aliases
-            } ?: throw CommandException("No command was found with that name")
-            displayHelpForCommand(context, command)
+            displayHelpForCommand(context,
+                    cmdContext.get<String>("command")?.split(" ")?.toTypedArray()
+                            ?: emptyArray())
         }
     }
 
     private fun displayAllCommands(context: Context) {
-        context.send().embed("Help") {
+        val help = CommandExecutor.helpManager.getDedupedHelp()
+        val categorized = mutableMapOf<CommandCategory, List<HelpNode>>()
+        CommandCategory.values().forEach { cat ->
+            categorized[cat] = help.filter { it.category == cat }
+        }
+        var msg = ""
+        CommandCategory.values().forEach {
+            if (checkAppend(msg, "\n__${it.friendlyName}__\n")) {
+                msg += "\n__${it.friendlyName}__\n"
+            } else {
+                context.channel.sendMessage(embed {
+                    description { +msg }
+                    color = Color.BLUE
+                }.build()).queue()
+                msg = ""
+            }
+            categorized[it]?.forEach { help ->
+                var line = "    "
+                line += "**$cmdPrefix${help.command}**"
+                line += " - ${help.help}\n"
+                if (checkAppend(msg, line)) {
+                    msg += line
+                } else {
+                    context.channel.sendMessage(embed {
+                        description { +msg }
+                        color = Color.BLUE
+                    }.build()).queue()
+                    msg = ""
+                }
+            }
+        }
+        val helpInfo = "\nUse `${cmdPrefix}help <command>` for more information about a command"
+        if (!checkAppend(msg, helpInfo)) {
+            context.channel.sendMessage(embed {
+                description { +msg }
+                color = Color.BLUE
+            }.build()).queue()
+            msg = ""
+        } else {
+            msg += helpInfo
+        }
+        context.channel.sendMessage(embed {
+            description { +msg }
             color = Color.BLUE
-            val prefix = cmdPrefix.mdEscape()
-            description {
-                +"The command prefix for this server is: `${context.kirbotGuild.settings.cmdDiscriminator}` \n\n"
-                +"Below is a list of all the commands available. \n Type `$cmdPrefix$aliasUsed <command>` for more info"
-                +"\n\nFor a full list of custom commands available on this server, "
-                +("Click Here" link (botUrl("server/${context.guild.id}/commands")))
-            }
-            fields {
-                for ((category, commands) in CommandExecutor.getCommandsByCategory()) {
-                    val musicEnabled = ModuleManager[MusicModule::class.java].getManager(context.guild).settings.enabled
-                    if (category == CommandCategory.MUSIC && !musicEnabled) {
-                        continue
-                    }
-                    field {
-                        title = category.friendlyName
-                        inline = true
-                        description {
-                            commands.forEach {
-                                if (it.annotation.admin)
-                                    return@forEach
-                                +("$prefix${it.aliases.first().mdEscape()}" link ".")
-                                +"\n"
-                            }
-                        }
-                    }
-                }
-                val commands = context.kirbotGuild.customCommands
-                if (commands.isNotEmpty()) {
-                    field {
-                        title = "Other Commands"
-                        inline = true
-                        description {
-                            commands.forEach {
-                                +("$prefix${it.name.mdEscape()}" link ".")
-                                +"\n"
-                            }
-                        }
-                    }
-                }
-            }
-        }.rest().queue()
+        }.build()).queue()
     }
 
-    private fun displayHelpForCommand(context: Context, command: BaseCommand) {
-        val prefix = cmdPrefix.mdEscape()
-        val help = CommandExecutor.helpManager.get(command.aliases.first())
-        context.send().embed("Help: ${command.aliases.first().mdEscape()}") {
+    private fun checkAppend(msg: String, text: String): Boolean {
+        return msg.length + text.length < 2048
+    }
+
+    private fun displayHelpForCommand(context: Context, args: Array<String>) {
+        var index = 0
+        var cmd = CommandExecutor.helpManager.getHelp(args[index++])
+        while (index < args.size) {
+            if (cmd == null)
+                break
+            cmd = cmd.getChild(args[index++])
+        }
+        if (cmd == null)
+            throw CommandException("No command was found")
+        val cmdString = args.joinToString(" ")
+        context.channel.sendMessage(embed {
             description {
-                appendln(u("Command Name"))
-                appendln("  $prefix${command.aliases[0]}")
-                +"\n"
-                appendln(u("Description"))
-                appendln("  ${help?.description ?: "No description provided"}")
-                if (command.aliases.size > 1) {
-                    appendln("\n" + u("Aliases"))
-                    appendln("   - ${command.aliases.drop(1).joinToString(", ").mdEscape()}")
-                    +"\n"
-                }
-                appendln(u("Usage"))
-                val params = buildString {
-                    command.argumentList.forEach {
-                        append(it.replace(Regex("(,[A-Za-z0-9/]*)+"), ""))
-                        append(" ")
+                +"__$cmdPrefix${cmdString}__\n"
+                appendln("\n${cmd.help}")
+                appendln("\nUsage: ")
+                appendln("    $cmdPrefix$cmdString ${cmd.args}")
+                if (cmd.children.size > 0) {
+                    appendln("\nSub-Commands: ")
+                    cmd.children.forEach {
+                        appendln("    **$cmdPrefix$cmdString ${it.command}** - ${it.help}")
                     }
-                }.trim()
-                appendln("  $prefix${command.aliases.first()} $params")
-                if (help?.params?.isNotEmpty() == true) {
-                    +"\n"
-                    appendln(u("Arguments"))
-                    help.params.forEach {
-                        +"   - ${it.name}: ${it.description}\n"
-                    }
-                }
-                +"\n"
-                if (command.subCommands.isNotEmpty()) {
-                    appendln(u("Sub-Commands"))
-                    command.subCommands.forEach {
-                        +"   - $prefix${command.aliases[0]} $it\n"
-                    }
-                    +"\n"
-                }
-                appendln(u("Clearance"))
-                +command.clearance
-                +"\n"
-                if (help?.usage?.isNotEmpty() == true) {
-                    +"\n"
-                    appendln(u("Example Usage"))
-                    help.usage.forEach {
-                        +"  `$cmdPrefix$it`\n"
-                    }
-                    +"\n"
                 }
             }
-            footer {
-                text {
-                    +"Parameters surrounded with < > are required, Parameters surrounded with [ ] are optional. Surround a string with quotes to treat it as a single argument"
-                }
-            }
-        }.rest().queue()
+            color = Color.BLUE
+        }.build()).queue()
     }
 }

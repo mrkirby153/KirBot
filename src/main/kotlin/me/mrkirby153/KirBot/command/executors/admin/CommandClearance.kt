@@ -1,5 +1,6 @@
 package me.mrkirby153.KirBot.command.executors.admin
 
+import me.mrkirby153.KirBot.CommandDescription
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
@@ -13,6 +14,7 @@ import net.dv8tion.jda.core.entities.User
 import java.util.concurrent.TimeUnit
 
 @Command(name = "clearance", arguments = ["[user:user]"], clearance = CLEARANCE_DEFAULT)
+@CommandDescription("Displays the user's clearance")
 class CommandClearance : BaseCommand(CommandCategory.ADMIN) {
 
     override fun execute(context: Context, cmdContext: CommandContext) {

@@ -1,6 +1,7 @@
 package me.mrkirby153.KirBot.command.executors.music
 
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.CommandDescription
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
@@ -16,6 +17,7 @@ import net.dv8tion.jda.core.entities.TextChannel
 
 @Command(name = "play", arguments = ["[query/url:string...]"],
         permissions = [Permission.MESSAGE_EMBED_LINKS])
+@CommandDescription("Play music")
 class PlayCommand : MusicBaseCommand() {
     override fun execute(context: Context, cmdContext: CommandContext, manager: MusicManager) {
         val data = cmdContext.get<String>("query/url")

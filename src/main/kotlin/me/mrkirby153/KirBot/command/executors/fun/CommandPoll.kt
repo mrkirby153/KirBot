@@ -1,6 +1,7 @@
 package me.mrkirby153.KirBot.command.executors.`fun`
 
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.CommandDescription
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
@@ -21,6 +22,7 @@ import java.util.regex.Pattern
 
 @Command(name = "poll",
         arguments = ["<duration:string>", "<question:string>", "<options:string...>"])
+@CommandDescription("Create polls")
 class CommandPoll : BaseCommand(false, CommandCategory.FUN) {
     val time = mutableMapOf<String, Int>()
 

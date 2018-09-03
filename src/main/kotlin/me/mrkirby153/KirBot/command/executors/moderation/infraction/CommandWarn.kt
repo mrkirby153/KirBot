@@ -1,5 +1,6 @@
 package me.mrkirby153.KirBot.command.executors.moderation.infraction
 
+import me.mrkirby153.KirBot.CommandDescription
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
@@ -10,6 +11,7 @@ import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.canInteractWith
 
 @Command(name = "warn", arguments = ["<user:snowflake>", "<reason:string...>"])
+@CommandDescription("Register a warning infraction for the given user")
 class CommandWarn : BaseCommand(false, CommandCategory.MODERATION) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val userId = cmdContext.get<String>("user")!!

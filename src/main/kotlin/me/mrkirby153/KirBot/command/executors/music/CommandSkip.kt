@@ -1,5 +1,6 @@
 package me.mrkirby153.KirBot.command.executors.music
 
+import me.mrkirby153.KirBot.CommandDescription
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
@@ -19,6 +20,7 @@ import java.util.concurrent.TimeUnit
 
 @Command(name = "skip,next",
         permissions = [Permission.MESSAGE_ADD_REACTION, Permission.MESSAGE_EMBED_LINKS])
+@CommandDescription("Skips the currently playing song")
 class CommandSkip : MusicBaseCommand() {
     private val skipCooldown = mutableMapOf<String, Long>()
 

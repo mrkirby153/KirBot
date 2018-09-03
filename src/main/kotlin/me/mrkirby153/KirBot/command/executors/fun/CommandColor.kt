@@ -1,5 +1,6 @@
 package me.mrkirby153.KirBot.command.executors.`fun`
 
+import me.mrkirby153.KirBot.CommandDescription
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
@@ -11,6 +12,7 @@ import net.dv8tion.jda.core.entities.Role
 import java.awt.Color
 
 @Command(name = "color", arguments = ["<color:string>"])
+@CommandDescription("Sets a user's color in the member list")
 class CommandColor : BaseCommand(CommandCategory.FUN) {
 
     override fun execute(context: Context, cmdContext: CommandContext) {

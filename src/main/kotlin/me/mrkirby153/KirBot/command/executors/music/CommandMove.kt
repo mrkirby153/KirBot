@@ -1,5 +1,6 @@
 package me.mrkirby153.KirBot.command.executors.music
 
+import me.mrkirby153.KirBot.CommandDescription
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
@@ -10,6 +11,7 @@ import net.dv8tion.jda.core.Permission
 
 @Command(name = "move", arguments = ["<from:int>", "[to:int]"],
         permissions = [Permission.MESSAGE_EMBED_LINKS])
+@CommandDescription("Move songs around in the queue")
 class CommandMove : MusicBaseCommand() {
     override fun execute(context: Context, cmdContext: CommandContext, manager: MusicManager) {
         val song = cmdContext.get<Int>("from")?.toInt()!!

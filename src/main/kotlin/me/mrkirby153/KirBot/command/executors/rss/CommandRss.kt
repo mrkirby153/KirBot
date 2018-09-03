@@ -4,6 +4,7 @@ import com.mrkirby153.bfs.model.Model
 import com.rometools.rome.io.SyndFeedInput
 import com.rometools.rome.io.XmlReader
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.CommandDescription
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
@@ -24,6 +25,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
 @Command(name = "rss", clearance = CLEARANCE_MOD)
+@CommandDescription("Shows a list of RSS feeds currently being monitored")
 class CommandRss : BaseCommand(false, CommandCategory.MISCELLANEOUS) {
 
     private val idGenerator = IdGenerator(IdGenerator.ALPHA + IdGenerator.NUMBERS)
@@ -33,6 +35,7 @@ class CommandRss : BaseCommand(false, CommandCategory.MISCELLANEOUS) {
     }
 
     @Command(name = "list", clearance = CLEARANCE_MOD, permissions = [Permission.MESSAGE_EMBED_LINKS])
+    @CommandDescription("Show a list of RSS feeds being monitored")
     fun listFeeds(context: Context, cmdContext: CommandContext) {
         val feeds = Model.where(RssFeed::class.java, "server_id", context.guild.id).get()
 
@@ -66,6 +69,7 @@ class CommandRss : BaseCommand(false, CommandCategory.MISCELLANEOUS) {
     }
 
     @Command(name = "add", arguments = ["<url:string>"], clearance = CLEARANCE_MOD)
+    @CommandDescription("Adds a feed to be watched")
     fun addFeed(context: Context, cmdContext: CommandContext) {
         val url = cmdContext.get<String>("url") ?: throw CommandException("Please provide a URL")
 
@@ -116,6 +120,7 @@ class CommandRss : BaseCommand(false, CommandCategory.MISCELLANEOUS) {
     }
 
     @Command(name = "remove", arguments = ["<id:string>"], clearance = CLEARANCE_MOD)
+    @CommandDescription("Removes a feed from the watch list")
     fun removeFeed(context: Context, cmdContext: CommandContext) {
         val id = cmdContext.get<String>("id") ?: throw CommandException("Please provide a feed Id")
 
@@ -127,6 +132,7 @@ class CommandRss : BaseCommand(false, CommandCategory.MISCELLANEOUS) {
     }
 
     @Command(name = "refresh", arguments = ["[id:string]"], clearance = CLEARANCE_MOD)
+    @CommandDescription("Refresh a feed")
     fun refreshFeed(context: Context, cmdContext: CommandContext) {
         if (!cmdContext.has("id")) {
             FeedTask.checkFeeds(context.guild)

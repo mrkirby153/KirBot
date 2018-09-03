@@ -1,5 +1,6 @@
 package me.mrkirby153.KirBot.command.executors.music
 
+import me.mrkirby153.KirBot.CommandDescription
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
@@ -8,6 +9,7 @@ import me.mrkirby153.KirBot.modules.music.MusicManager
 import me.mrkirby153.KirBot.utils.Context
 
 @Command(name = "disconnect,dc,stop")
+@CommandDescription("Disconnects the bot from the current voice channel")
 class CommandDisconnect : MusicBaseCommand() {
 
     override fun execute(context: Context, cmdContext: CommandContext, manager: MusicManager) {

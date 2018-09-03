@@ -1,5 +1,6 @@
 package me.mrkirby153.KirBot.command.executors.`fun`
 
+import me.mrkirby153.KirBot.CommandDescription
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandException
@@ -17,6 +18,7 @@ import java.io.ByteArrayOutputStream
 import javax.imageio.ImageIO
 
 @Command(name = "jumbo", arguments = ["<emojis:string...>"])
+@CommandDescription("Sends a bigger version of the given emojis")
 class CommandJumbo : BaseCommand(false) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val emojis = cmdContext.get<String>("emojis")!!

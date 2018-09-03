@@ -1,5 +1,6 @@
 package me.mrkirby153.KirBot.command.executors.moderation.infraction
 
+import me.mrkirby153.KirBot.CommandDescription
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
@@ -17,6 +18,7 @@ import net.dv8tion.jda.core.entities.User
 @Command(name = "kick", arguments = ["<user:user>", "[reason:string...]"],
         clearance = CLEARANCE_MOD, permissions = [Permission.KICK_MEMBERS])
 @LogInModlogs
+@CommandDescription("Kick a user")
 class CommandKick : BaseCommand(false, CommandCategory.MODERATION) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val user = cmdContext.get<User>("user") ?: throw CommandException("Please specify a user")

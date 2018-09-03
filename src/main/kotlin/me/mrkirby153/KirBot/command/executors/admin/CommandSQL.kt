@@ -1,6 +1,7 @@
 package me.mrkirby153.KirBot.command.executors.admin
 
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.CommandDescription
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
@@ -16,12 +17,13 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
 @Command(name = "sql", arguments = ["<query:string...>"], admin = true)
+@CommandDescription("Execute raw SQL against the database")
 class CommandSQL : BaseCommand(false, CommandCategory.ADMIN) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val query = cmdContext.get<String>("query") ?: throw CommandException(
                 "Please specify a query")
 
-        val future = Bot.scheduler.submit({
+        val future = Bot.scheduler.submit {
             ModuleManager[Database::class].database.getConnection().use { con ->
                 con.createStatement().use { statement ->
                     try{
@@ -57,7 +59,7 @@ class CommandSQL : BaseCommand(false, CommandCategory.ADMIN) {
                     }
                 }
             }
-        })
+        }
         try {
             future.get(5, TimeUnit.SECONDS)
         } catch (e: TimeoutException) {

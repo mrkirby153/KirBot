@@ -2,6 +2,7 @@ package me.mrkirby153.KirBot.command.executors.admin
 
 import com.mrkirby153.bfs.sql.QueryBuilder
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.CommandDescription
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
@@ -22,6 +23,7 @@ import java.util.concurrent.TimeUnit
 
 @Command(name = "clean", clearance = CLEARANCE_MOD)
 @LogInModlogs
+@CommandDescription("Cleans (deletes) messages")
 class CommandClean :
         BaseCommand(false, CommandCategory.ADMIN) {
 
@@ -32,6 +34,7 @@ class CommandClean :
     }
 
     @Command(name = "all", arguments = ["[amount:int]"], clearance = CLEARANCE_MOD)
+    @CommandDescription("Cleans messages from everyone in the current channel")
     fun allClean(context: Context, cmdContext: CommandContext) {
         val amount = cmdContext.get<Int>("amount") ?: 50
         if (amount > confirmAmount) {
@@ -42,6 +45,7 @@ class CommandClean :
     }
 
     @Command(name = "bots", arguments = ["[amount:int]"], clearance = CLEARANCE_MOD)
+    @CommandDescription("Clean messages sent by bots in the current channel")
     fun botClean(context: Context, cmdContext: CommandContext) {
         val amount = cmdContext.get<Int>("amount") ?: 50
         if (amount > confirmAmount) {
@@ -53,6 +57,7 @@ class CommandClean :
 
     @Command(name = "user", arguments = ["<user:snowflake>", "[amount:int]"],
             clearance = CLEARANCE_MOD)
+    @CommandDescription("Clean messages sent by a specific user in the current channel")
     fun userClean(context: Context, cmdContext: CommandContext) {
         val user = cmdContext.get<String>("user")!!
         val amount = cmdContext.get<Int>("amount") ?: 50

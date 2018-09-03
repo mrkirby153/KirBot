@@ -1,5 +1,7 @@
 package me.mrkirby153.KirBot.command.executors.moderation.infraction
 
+import com.sun.org.glassfish.gmbal.Description
+import me.mrkirby153.KirBot.CommandDescription
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandCategory
@@ -20,6 +22,7 @@ import java.util.concurrent.TimeUnit
 @Command(name = "ban", arguments = ["<user:user>", "[reason:string...]"], clearance = CLEARANCE_MOD,
         permissions = [Permission.BAN_MEMBERS])
 @LogInModlogs
+@CommandDescription("Bans a user")
 class CommandBan : BaseCommand(false, CommandCategory.MODERATION) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val user = cmdContext.get<User>("user") ?: throw CommandException("Please specify a user")
@@ -45,6 +48,7 @@ class CommandBan : BaseCommand(false, CommandCategory.MODERATION) {
 @Command(name = "forceban", arguments = ["<user:snowflake>", "[reason:string...]"],
         clearance = CLEARANCE_MOD, permissions = [Permission.BAN_MEMBERS])
 @LogInModlogs
+@CommandDescription("Force bans a user")
 class CommandForceBan : BaseCommand(false, CommandCategory.MODERATION) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val user = cmdContext.get<String>("user") ?: throw CommandException("Please specify a user")
@@ -67,6 +71,7 @@ class CommandForceBan : BaseCommand(false, CommandCategory.MODERATION) {
 @Command(name = "unban", arguments = ["<user:snowflake>", "[reason:string...]"],
         clearance = CLEARANCE_MOD, permissions = [Permission.BAN_MEMBERS])
 @LogInModlogs
+@CommandDescription("Unbans a user")
 class CommandUnban : BaseCommand(false, CommandCategory.MODERATION) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val user = cmdContext.get<String>("user") ?: throw CommandException("Please specify a user")
@@ -79,6 +84,7 @@ class CommandUnban : BaseCommand(false, CommandCategory.MODERATION) {
 @Command(name = "tempban", arguments = ["<user:snowflake>", "<time:string>", "[reason:string...]"],
         clearance = CLEARANCE_MOD, permissions = [Permission.BAN_MEMBERS])
 @LogInModlogs
+@CommandDescription("Temporarily bans a user")
 class CommandTempban : BaseCommand(false, CommandCategory.MODERATION) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val user = cmdContext.get<String>("user")!!
@@ -103,6 +109,7 @@ class CommandTempban : BaseCommand(false, CommandCategory.MODERATION) {
 
 @Command(name = "softban", arguments = ["<user:snowflake>", "[reason:string...]"], clearance = CLEARANCE_MOD, permissions = [Permission.BAN_MEMBERS])
 @LogInModlogs
+@CommandDescription("Soft-bans (kicks and deletes the last 7 days) a user")
 class CommandSoftban: BaseCommand(false, CommandCategory.MODERATION){
     override fun execute(context: Context, cmdContext: CommandContext) {
         val user = cmdContext.get<String>("user")!!

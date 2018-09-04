@@ -25,6 +25,8 @@ import java.awt.Color
 import java.io.InputStream
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
+import java.time.Duration
+import java.time.Instant
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
@@ -312,4 +314,67 @@ fun String.resolveUserMentions(): String {
         }
     } while (matched)
     return mutableMsg
+}
+
+/**
+ * *This method was added for convenience and only works if the [MessageChannel] is a [TextChannel]*
+ *
+ * Bulk deletes messages by their ids. Unlike [TextChannel.deleteMessagesByIds] this endpoint has no
+ * maximum for the amount of messages that can be deleted. This method operates asynchronously and
+ * returns immediately after messages have been queued for deletion. The actual deletion process may
+ * take much longer, depending on the amount of messages queued
+ *
+ * @param messages A list of message IDs to bulk delete
+ *
+ * @throws IllegalArgumentException If less than 2 messages are provided for bulk delete or the
+ * message channel isn't a [TextChannel]
+ */
+fun MessageChannel.bulkDelete(messages: Collection<String>) {
+    if (this !is TextChannel) {
+        throw IllegalArgumentException("Cannot bulk delete on a message channel")
+    }
+    this.bulkDelete(messages)
+}
+
+/**
+ * Bulk deletes messages by their ids. Unlike [TextChannel.deleteMessagesByIds], this endpoint has no
+ * maximum for the amount of messages that can be deleted. This method also operates **asynchronously**
+ * and will return immediately after messages have been queued
+ *
+ * @param messages A list of message IDs to bulk delete.
+ *
+ * @throws IllegalArgumentException If less than 2 messages are provided to the endpoint
+ */
+fun TextChannel.bulkDelete(messages: Collection<String>) {
+    if (messages.size < 2) {
+        throw IllegalArgumentException("Must provide at least 2 messages to be deleted.")
+    }
+
+    // Messages less than two weeks old we can bulk delete
+    val oldestSnowflake = (Instant.now().minus(
+            Duration.ofDays(14)).toEpochMilli() - 1420070400000).shl(22)
+
+    val bulkDeletable = messages.filter { it.toLong() > oldestSnowflake }.toMutableList()
+    val notBulk = messages.filter { it.toLong() < oldestSnowflake }
+
+    Bot.LOG.debug("Bulk deleting ${bulkDeletable.size}, Regular deleting ${notBulk.size}")
+
+    if (bulkDeletable.size < 2) {
+        bulkDeletable.forEach { this.deleteMessageById(it).queue() }
+    } else {
+        while (bulkDeletable.isNotEmpty()) {
+            val toDelete = bulkDeletable.subList(0, Math.min(100, bulkDeletable.size))
+            // Check if only one message is left (The bulk delete endpoint throws an error if < 2 are given to it)
+            if (toDelete.size < 2) {
+                toDelete.forEach { this.deleteMessageById(it).queue() }
+            } else {
+                this.deleteMessagesByIds(toDelete).queue()
+            }
+            toDelete.removeAll(toDelete)
+        }
+    }
+
+    notBulk.forEach {
+        this.deleteMessageById(it).queue()
+    }
 }

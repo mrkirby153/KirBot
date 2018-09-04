@@ -14,6 +14,7 @@ import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.GREEN_TICK
 import me.mrkirby153.KirBot.utils.RED_TICK
+import me.mrkirby153.KirBot.utils.bulkDelete
 import me.mrkirby153.KirBot.utils.deleteAfter
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.events.message.guild.react.GuildMessageReactionAddEvent
@@ -75,7 +76,7 @@ class CommandClean :
                 ":warning: Whoa, you're about to delete $amount messages. Are you sure you want to do this?").queue { msg ->
             msg.addReaction(GREEN_TICK.emote).queue()
             msg.addReaction(RED_TICK.emote).queue()
-            WaitUtils.waitFor(GuildMessageReactionAddEvent::class.java, {
+            WaitUtils.waitFor(GuildMessageReactionAddEvent::class.java) {
                 if (it.user.id != context.author.id)
                     return@waitFor
                 if (it.messageId != msg.id)
@@ -94,7 +95,7 @@ class CommandClean :
                     }
                 }
                 cancel()
-            })
+            }
         }
     }
 
@@ -110,13 +111,12 @@ class CommandClean :
             Bot.LOG.debug("Performing all clean")
         }
         val now = Instant.now().minus(Duration.ofDays(14))
-        val oldestSnowflake = (now.toEpochMilli() - 1420070400000).shl(22)
 
         val builder = QueryBuilder()
         builder.table("server_messages")
         builder.where("channel", channel.id)
         builder.where("deleted", false)
-        builder.innerJoin("seen_users", "server_messages.author", "=", "seen_users.id")
+        builder.leftJoin("seen_users", "server_messages.author", "=", "seen_users.id")
         builder.select("server_messages.id")
         builder.limit(amount.toLong())
 
@@ -128,22 +128,6 @@ class CommandClean :
         val rows = builder.query()
         Bot.LOG.debug("Matched ${rows.size} messages")
         val ids = rows.mapNotNull { it.getString("id") }
-
-        val bulkDeletable = ids.filter { it.toLong() > oldestSnowflake }.toMutableList()
-        val notBulk = ids.filter { it.toLong() < oldestSnowflake }
-        Bot.LOG.debug("Bulk deleting ${bulkDeletable.size}, Regular deleting ${notBulk.size}")
-
-        if(bulkDeletable.size < 2){
-            bulkDeletable.forEach { channel.deleteMessageById(it).queue() }
-        } else {
-            while (bulkDeletable.isNotEmpty()) {
-                val toDelete = bulkDeletable.subList(0, Math.min(99, bulkDeletable.size))
-                channel.deleteMessagesByIds(toDelete).queue()
-                bulkDeletable.removeAll(toDelete)
-            }
-        }
-        notBulk.forEach { m ->
-            channel.deleteMessageById(m).queue()
-        }
+        channel.bulkDelete(ids)
     }
 }

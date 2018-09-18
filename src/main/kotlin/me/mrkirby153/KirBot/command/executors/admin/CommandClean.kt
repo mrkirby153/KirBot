@@ -118,6 +118,7 @@ class CommandClean :
         builder.where("deleted", false)
         builder.leftJoin("seen_users", "server_messages.author", "=", "seen_users.id")
         builder.select("server_messages.id")
+        builder.orderBy("server_messages.id", "DESC")
         builder.limit(amount.toLong())
 
         if (bots)

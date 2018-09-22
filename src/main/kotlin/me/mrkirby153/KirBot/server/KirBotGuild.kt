@@ -35,7 +35,7 @@ import org.json.JSONObject
 import org.json.JSONTokener
 import java.util.concurrent.Future
 import java.util.concurrent.Semaphore
-import kotlin.math.min
+import java.util.stream.Collectors
 
 class KirBotGuild(val guild: Guild) : Guild by guild {
 
@@ -377,37 +377,18 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
                         "Skipping backfill on ${channel.name} - No permission to read history")
                 return
             }
-            val history = channel.history
-            var retrievedAmount = history.retrievedHistory.size
-            while (retrievedAmount < 500) {
-                val toRetrieve = min(100, 500 - retrievedAmount)
-                Bot.LOG.debug("[#${channel.name}] Retrieving up to $toRetrieve messages")
-                val m = history.retrievePast(toRetrieve).complete()
-                if (m.size == 0) {
-                    break
-                }
-                retrievedAmount = history.retrievedHistory.size
-                Bot.LOG.debug(
-                        "[#${channel.name}] Retrieved $retrievedAmount messages, ${500 - retrievedAmount} to go")
-            }
-            Bot.LOG.debug("[#${channel.name}] History retrieval complete!")
-            if (history.retrievedHistory.size == 0) {
-                Bot.LOG.debug("[#${channel.name}] No messages retrieved!")
-                return
-            }
-            val storedMessages = Model.query(GuildMessage::class.java).whereIn("id",
-                    history.retrievedHistory.map { it.id }.toTypedArray()).get()
+            val history = channel.iterableHistory.stream().limit(500).collect(Collectors.toList())
+            val storedMessages = if(history.isNotEmpty()) Model.query(GuildMessage::class.java).whereIn("id",
+                    history.map { it.id }.toTypedArray()).get() else listOf()
             var new = 0
             var updated = 0
-            history.retrievedHistory.forEach { message ->
+            history.forEach { message ->
                 val stored = storedMessages.firstOrNull { it.id == message.id }
-                if (stored == null) {
+                if(stored == null){
                     GuildMessage(message).save()
                     new++
                 } else {
-                    if (stored.message != message.contentRaw) {
-                        Bot.LOG.debug(
-                                "[#${channel.name}] Message content for ${stored.id} has changed")
+                    if(stored.message != message.contentRaw){
                         stored.message = message.contentRaw
                         stored.editCount++
                         updated++
@@ -415,7 +396,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
                     }
                 }
             }
-            Bot.LOG.debug("Backfilled ${channel.name}. New: $new, Updated: $updated")
+            Bot.LOG.debug("Backfilled ${channel.name}: $new new, $updated updated out of ${history.size} total")
         } else {
             this.guild.textChannels.forEach { backfillChannels(it) }
         }

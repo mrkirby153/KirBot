@@ -2,12 +2,14 @@ package me.mrkirby153.KirBot
 
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
-import com.mrkirby153.bfs.sql.DB
+import com.mrkirby153.bfs.model.Model
 import com.mrkirby153.bfs.sql.QueryBuilder
+import com.mrkirby153.bfs.sql.elements.Pair
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers
 import me.mrkirby153.KirBot.database.DatabaseConnection
+import me.mrkirby153.KirBot.database.models.guild.ServerSettings
 import me.mrkirby153.KirBot.error.UncaughtErrorReporter
 import me.mrkirby153.KirBot.infraction.Infractions
 import me.mrkirby153.KirBot.module.ModuleManager
@@ -26,6 +28,9 @@ import okhttp3.Request
 import org.json.JSONObject
 import org.json.JSONTokener
 import org.slf4j.LoggerFactory
+import java.sql.Timestamp
+import java.time.Duration
+import java.time.Instant
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
@@ -73,8 +78,9 @@ object Bot {
                 logger.level = Level.DEBUG
             }
             KirBotGuild.startLeakMonitor()
-            QueryBuilder.logQueries = System.getProperty("kirbot.logQueries", "false")?.toBoolean() ?: false
-            if(QueryBuilder.logQueries){
+            QueryBuilder.logQueries = System.getProperty("kirbot.logQueries",
+                    "false")?.toBoolean() ?: false
+            if (QueryBuilder.logQueries) {
                 LOG.warn("Query logging is enabled. This will generate a lot of console output!")
             }
         }
@@ -91,7 +97,7 @@ object Bot {
 
         // Get the number of shards to start with
         numShards = if (properties.getProperty("shards") == null || properties.getProperty(
-                "shards") == "auto") {
+                        "shards") == "auto") {
             LOG.info("Automatically determining the number of shards to use")
             getNumShards(token)
         } else {
@@ -128,11 +134,14 @@ object Bot {
         // Remove old guilds
         Bot.LOG.info("Purging old guilds...")
         val guildList = shardManager.shards.flatMap { it.guilds }
-        val sql = "DELETE FROM `server_settings` WHERE `id` NOT IN (${guildList.joinToString(
-                ",") { "'${it.id}'" }})"
-        val deleted = DB.executeUpdate(sql)
+        Model.query(ServerSettings::class.java).whereNotIn("id",
+                guildList.map { it.id }.toTypedArray()).update(
+                Pair("deleted_at", Timestamp(System.currentTimeMillis())))
+        // Remove guilds whose time has passed
+        Model.query(ServerSettings::class.java).where("deleted_at", "<",
+                Timestamp.from(Instant.now().minus(Duration.ofDays(30)))).delete()
 
-        LOG.info("Synced ${guilds.size} guilds and removed $deleted guilds in ${Time.format(1,
+        LOG.info("Synced ${guilds.size} guilds ${Time.format(1,
                 syncTime)}")
 
         HttpUtils.clearCache()
@@ -146,7 +155,7 @@ object Bot {
         LOG.info("Startup completed in ${Time.format(0, System.currentTimeMillis() - startupTime)}")
         val memberSet = mutableSetOf<String>()
         Bot.shardManager.shards.flatMap { it.guilds }.flatMap { it.members }.forEach {
-            if(it.user.id !in memberSet)
+            if (it.user.id !in memberSet)
                 memberSet.add(it.user.id)
         }
         val guildCount = shardManager.shards.flatMap { it.guilds }.count()

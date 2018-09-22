@@ -137,7 +137,7 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
             return
         val guild = event.guild
         AdminControl.log("Left guild ${guild.name} (`${guild.id}`)")
-        Model.where(ServerSettings::class.java, "id", event.guild.id).delete()
+        Model.where(ServerSettings::class.java, "id", event.guild.id).first().delete()
         event.guild.kirbotGuild.onPart()
     }
 

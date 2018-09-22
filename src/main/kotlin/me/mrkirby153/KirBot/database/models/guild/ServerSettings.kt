@@ -3,7 +3,7 @@ package me.mrkirby153.KirBot.database.models.guild
 import com.mrkirby153.bfs.annotations.Column
 import com.mrkirby153.bfs.annotations.PrimaryKey
 import com.mrkirby153.bfs.annotations.Table
-import com.mrkirby153.bfs.model.Model
+import com.mrkirby153.bfs.model.SoftDeletingModel
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.realname.RealnameSetting
 import me.mrkirby153.KirBot.utils.toTypedArray
@@ -12,7 +12,7 @@ import org.json.JSONArray
 import org.json.JSONTokener
 
 @Table("server_settings")
-class ServerSettings : Model() {
+class ServerSettings : SoftDeletingModel() {
 
     init {
         this.incrementing = false

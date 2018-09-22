@@ -1,6 +1,7 @@
 package me.mrkirby153.KirBot.server
 
 import com.mrkirby153.bfs.model.Model
+import com.mrkirby153.bfs.model.SoftDeletingModel
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.models.Channel
 import me.mrkirby153.KirBot.database.models.CustomCommand
@@ -123,8 +124,9 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
     fun sync(waitFor: Boolean = false) {
         Bot.LOG.debug("STARTING SYNC FOR $this")
         cacheVisibilities(false)
-        settings = Model.where(ServerSettings::class.java, "id",
+        settings = SoftDeletingModel.withTrashed(ServerSettings::class.java).where("id",
                 this.id).first() ?: ServerSettings()
+        settings.deletedAt = null
         settings.id = this.id
         settings.name = this.name
         settings.iconId = this.iconId

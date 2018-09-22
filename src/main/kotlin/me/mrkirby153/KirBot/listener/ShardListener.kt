@@ -161,7 +161,7 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
                 "Joined guild ${event.guild.name} (`${event.guild.id}`) [${event.guild.members.size} members]")
         Bot.scheduler.schedule({
             event.guild.kirbotGuild.sync()
-            event.guild.kirbotGuild.dispatchBackfill()
+            event.guild.kirbotGuild.completeBackfill()
         }, 0, TimeUnit.MILLISECONDS)
     }
 

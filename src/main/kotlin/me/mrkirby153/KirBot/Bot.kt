@@ -39,7 +39,7 @@ object Bot {
     var initialized = false
 
     val startTime = System.currentTimeMillis()
-    val scheduler: ScheduledExecutorService = Executors.newScheduledThreadPool(2)
+    val scheduler: ScheduledExecutorService = Executors.newScheduledThreadPool(5)
 
     val files = BotFiles()
 

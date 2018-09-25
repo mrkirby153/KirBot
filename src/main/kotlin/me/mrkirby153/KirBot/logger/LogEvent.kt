@@ -49,7 +49,9 @@ enum class LogEvent {
     // A message by a user was censored
     MESSAGE_CENSOR,
 
-    VOICE_ACTION;
+    VOICE_ACTION,
+
+    MEMBER_RESTORE;
 
     val permission = 1L.shl(this.ordinal)
 

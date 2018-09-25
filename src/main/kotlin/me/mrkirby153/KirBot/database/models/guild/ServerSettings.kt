@@ -52,7 +52,20 @@ class ServerSettings : SoftDeletingModel() {
     var botNick: String? = null
 
     @Column("user_persistence")
-    var persistence = false
+    var persistence = 0L
+
+    @Column("persist_roles")
+    var persistRolesRaw = "[]"
+
+    var persistRoles: List<String>
+        get() = JSONArray(JSONTokener(this.persistRolesRaw)).toTypedArray(String::class.java)
+        set(value) {
+            this.persistRolesRaw = JSONArray().apply {
+                value.forEach {
+                    put(it)
+                }
+            }.toString()
+        }
 
     @Column("log_timezone")
     var logTimezone = "UTC"
@@ -62,7 +75,8 @@ class ServerSettings : SoftDeletingModel() {
 
     @Transient
     var mutedRole: Role? = null
-        get() = if(mutedRoleId != null) Bot.shardManager.getGuild(this.id)?.getRoleById(this.mutedRoleId) else null
+        get() = if (mutedRoleId != null) Bot.shardManager.getGuild(this.id)?.getRoleById(
+                this.mutedRoleId) else null
         set(setting) {
             this.mutedRoleId = setting?.id
             field = setting

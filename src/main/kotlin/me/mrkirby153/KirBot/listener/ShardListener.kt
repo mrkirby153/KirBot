@@ -1,6 +1,7 @@
 package me.mrkirby153.KirBot.listener
 
 import com.mrkirby153.bfs.model.Model
+import com.mrkirby153.bfs.sql.elements.Pair
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.models.DiscordUser
 import me.mrkirby153.KirBot.database.models.guild.GuildMember
@@ -10,6 +11,7 @@ import me.mrkirby153.KirBot.database.models.guild.ServerSettings
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.AdminControl
 import me.mrkirby153.KirBot.modules.Redis
+import me.mrkirby153.KirBot.server.UserPersistenceHandler
 import me.mrkirby153.KirBot.sharding.Shard
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.kcutils.utils.IdGenerator
@@ -23,10 +25,12 @@ import net.dv8tion.jda.core.events.channel.voice.update.GenericVoiceChannelUpdat
 import net.dv8tion.jda.core.events.guild.GuildJoinEvent
 import net.dv8tion.jda.core.events.guild.GuildLeaveEvent
 import net.dv8tion.jda.core.events.guild.member.GuildMemberJoinEvent
-import net.dv8tion.jda.core.events.guild.member.GuildMemberLeaveEvent
 import net.dv8tion.jda.core.events.guild.member.GuildMemberNickChangeEvent
 import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleAddEvent
 import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleRemoveEvent
+import net.dv8tion.jda.core.events.guild.voice.GuildVoiceGuildDeafenEvent
+import net.dv8tion.jda.core.events.guild.voice.GuildVoiceGuildMuteEvent
+import net.dv8tion.jda.core.events.guild.voice.GuildVoiceJoinEvent
 import net.dv8tion.jda.core.events.role.RoleCreateEvent
 import net.dv8tion.jda.core.events.role.RoleDeleteEvent
 import net.dv8tion.jda.core.events.role.update.GenericRoleUpdateEvent
@@ -43,24 +47,17 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
         if (!event.guild.kirbotGuild.ready)
             return
         event.guild.kirbotGuild.lock()
+        UserPersistenceHandler.restore(event.user, event.guild)
         val member = Model.where(GuildMember::class.java, "server_id", event.guild.id).where(
                 "user_id", event.user.id).first()
         if (member == null) {
-            Bot.LOG.debug("User has not joined before, or persistence is disabled")
-            val m = GuildMember()
-            m.id = idGenerator.generate(10)
-            m.serverId = event.guild.id
-            m.user = event.user
-            m.save()
+            GuildMember(event.member).save()
         } else {
-            if (event.guild.kirbotGuild.settings.persistence) {
-                Bot.LOG.debug("User has joined. Restoring their state")
-                val controller = event.guild.controller
-                controller.setNickname(event.member, member.nick).queue()
-                controller.addRolesToMember(event.member,
-                        member.roles.map { it.role }.filter { it != null }).queue()
-            }
+            member.user = event.member.user
+            member.nick = event.member.nickname
+            member.save()
         }
+
         val user = Model.where(DiscordUser::class.java, "id", event.user.id).first()
         if (user == null) {
             val u = DiscordUser()
@@ -79,17 +76,18 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
         user.save()
     }
 
-    override fun onGuildMemberLeave(event: GuildMemberLeaveEvent) {
-        if (!event.guild.kirbotGuild.ready)
-            return
-        event.guild.kirbotGuild.lock()
-        if (!event.guild.kirbotGuild.settings.persistence) { // Delete the user if persistence is disabled
-            val member = Model.where(GuildMember::class.java, "server_id", event.guild.id).where(
-                    "user_id", event.user.id).first()
-            member?.roles?.forEach { it.delete() }
-            member?.delete()
-        }
-        event.guild.kirbotGuild.unlock()
+    override fun onGuildVoiceGuildDeafen(event: GuildVoiceGuildDeafenEvent) {
+        Model.where(GuildMember::class.java, "server_id", event.guild.id).where("user_id",
+                event.member.user.id).update(Pair("deafened", event.isGuildDeafened))
+    }
+
+    override fun onGuildVoiceGuildMute(event: GuildVoiceGuildMuteEvent) {
+        Model.where(GuildMember::class.java, "server_id", event.guild.id).where("user_id",
+                event.member.user.id).update(Pair("muted", event.isGuildMuted))
+    }
+
+    override fun onGuildVoiceJoin(event: GuildVoiceJoinEvent) {
+        UserPersistenceHandler.restoreVoiceState(event.member.user, event.guild)
     }
 
     override fun onGuildMemberRoleAdd(event: GuildMemberRoleAddEvent) {
@@ -199,7 +197,8 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
         val selfRoles = event.guild.selfMember.roles
         val matchedRoles = event.changedRoles.filter { it in selfRoles }
         if (matchedRoles.isNotEmpty() || event.guild.selfMember in event.changedMembers) {
-            Bot.LOG.debug("Our channel override was updated on ${event.channel.name} re-caching visibilities")
+            Bot.LOG.debug(
+                    "Our channel override was updated on ${event.channel.name} re-caching visibilities")
             event.guild.kirbotGuild.cacheVisibilities()
         }
     }
@@ -254,7 +253,7 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
         Model.where(Role::class.java, "id", event.role.id).delete()
         // If the role is the muted role, delete it
         val settings = event.guild.kirbotGuild.settings
-        if(settings.mutedRoleId == event.role.id) {
+        if (settings.mutedRoleId == event.role.id) {
             settings.mutedRole = null
             settings.save()
         }

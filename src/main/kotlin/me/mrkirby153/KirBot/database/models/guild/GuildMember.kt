@@ -30,6 +30,9 @@ class GuildMember(member: Member? = null) : Model() {
     @Column("user_nick")
     var nick: String? = null
 
+    var deafened = false
+    var muted = false
+
     @Transient
     var user: User? = null
         get() = Bot.shardManager.getUser(this.userId)
@@ -51,6 +54,8 @@ class GuildMember(member: Member? = null) : Model() {
             nick = member.nickname
             name = member.user.name
             discrim = member.user.discriminator
+            muted = member.voiceState.isGuildMuted
+            deafened = member.voiceState.isDeafened
         }
     }
 
@@ -60,7 +65,12 @@ class GuildMember(member: Member? = null) : Model() {
 
     fun updateMember() {
         val guild = Bot.shardManager.getGuild(this.serverId) ?: return
-        val member = guild.getMemberById(this.userId) ?: return
+        val member = guild.getMemberById(this.userId)
+        if (member == null) {
+            Bot.LOG.debug("Guild member $this was not found (left the guild?) deleting")
+            delete()
+            return
+        }
 
         this.name = member.user.name
         this.discrim = member.user.discriminator

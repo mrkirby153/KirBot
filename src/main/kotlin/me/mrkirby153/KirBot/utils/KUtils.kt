@@ -224,6 +224,8 @@ fun MessageChannel.checkPermissions(
         vararg permissions: Permission) = (this as? TextChannel)?.checkPermissions<TextChannel>(
         *permissions) != false
 
+fun Guild.checkPermission(vararg permission: Permission) = this.selfMember.hasPermission(*permission)
+
 fun String.escapeMentions(): String {
     // Replace all @ symbols with @ followed by a Zero-Width Space
     return this.replace("@", "@\u200B")

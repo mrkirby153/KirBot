@@ -181,29 +181,21 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
                 RealnameHandler(this).update(false)
 
             // Update guild members
-            if (!settings.persistence) {
-                // Delete a user's role ONLY if persistence is disabled
-                Model.query(GuildMember::class.java).whereNotIn("user_id",
-                        this.members.map { it.user.id }.toTypedArray()).where("server_id",
-                        this.id).delete()
-            }
             val members = Model.where(GuildMember::class.java, "server_id", this.id).get()
             members.forEach(GuildMember::updateMember)
             this.members.filter { it.user.id !in members.map { it.userId } }.forEach { m ->
                 GuildMember(m).save()
             }
 
-            // Sync member roles
-            if (!settings.persistence) {
-                // Delete a member's roles ONLY if persistence is disabled
-                Model.query(GuildMemberRole::class.java).where("server_id", this.id).whereNotIn(
-                        "user_id", this.members.map { it.user.id }.toTypedArray()).delete()
-            }
             val memberRoles = Model.where(GuildMemberRole::class.java, "server_id", this.id).get()
             this.members.forEach { member ->
                 member.roles.filter { it.id !in memberRoles.filter { it.user?.id == member.user.id }.mapNotNull { it.role?.id } }.forEach { r ->
                     GuildMemberRole(member, r).save()
                 }
+                if (member.roles.isNotEmpty())
+                    Model.where(GuildMemberRole::class.java, "user_id", member.user.id).where(
+                            "server_id", member.guild.id).whereNotIn("role_id",
+                            member.roles.map { it.id }.toTypedArray()).delete()
             }
             Infractions.importFromBanlist(this)
             if (!ready)
@@ -378,17 +370,18 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
                 return
             }
             val history = channel.iterableHistory.stream().limit(500).collect(Collectors.toList())
-            val storedMessages = if(history.isNotEmpty()) Model.query(GuildMessage::class.java).whereIn("id",
+            val storedMessages = if (history.isNotEmpty()) Model.query(
+                    GuildMessage::class.java).whereIn("id",
                     history.map { it.id }.toTypedArray()).get() else listOf()
             var new = 0
             var updated = 0
             history.forEach { message ->
                 val stored = storedMessages.firstOrNull { it.id == message.id }
-                if(stored == null){
+                if (stored == null) {
                     GuildMessage(message).save()
                     new++
                 } else {
-                    if(stored.message != message.contentRaw){
+                    if (stored.message != message.contentRaw) {
                         stored.message = message.contentRaw
                         stored.editCount++
                         updated++
@@ -396,7 +389,8 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
                     }
                 }
             }
-            Bot.LOG.debug("Backfilled ${channel.name}: $new new, $updated updated out of ${history.size} total")
+            Bot.LOG.debug(
+                    "Backfilled ${channel.name}: $new new, $updated updated out of ${history.size} total")
         } else {
             this.guild.textChannels.forEach { backfillChannels(it) }
         }

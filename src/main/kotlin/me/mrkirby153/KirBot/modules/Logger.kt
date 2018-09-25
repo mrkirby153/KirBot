@@ -146,6 +146,8 @@ class Logger : Module("logging") {
     override fun onGuildMemberNickChange(event: GuildMemberNickChangeEvent) {
         if (!event.guild.kirbotGuild.ready)
             return
+        if(debouncer.find(GuildMemberNickChangeEvent::class.java, Pair("id", event.user.id)))
+            return
         when {
             event.prevNick == null -> {
                 event.guild.kirbotGuild.logManager.genericLog(LogEvent.USER_NICKNAME_CHANGE,

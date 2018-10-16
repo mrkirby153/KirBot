@@ -20,6 +20,7 @@ import me.mrkirby153.KirBot.utils.logName
 import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.entities.Message
+import net.dv8tion.jda.core.entities.MessageChannel
 import net.dv8tion.jda.core.entities.User
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent
 import org.json.JSONObject
@@ -69,9 +70,9 @@ class Spam : Module("spam") {
                 return
             val bucket = getBucket(check, message.guild.id, level) ?: return
             if (bucket.check(message.author.id, amount)) {
-                throw ViolationException("${check.toUpperCase()}: $friendlyText (${bucket.count(
+                throw ViolationException(check.toUpperCase(), "$friendlyText (${bucket.count(
                         message.author.id)}/${bucket.size(message.author.id)}s)", message.author,
-                        level, message.guild)
+                        level, message.guild, message.channel)
             }
         }
         checkBucket("max_messages", "Too many messages", 1)
@@ -102,22 +103,15 @@ class Spam : Module("spam") {
         val count = dupeSettings.getInt("count")
         val period = dupeSettings.getInt("period")
 
-        val time = Instant.now().minusSeconds(period.toLong()).epochSecond
-        val timestamp = Timestamp(time * 1000)
-        val messages = Model.query(GuildMessage::class.java).where("author",
-                message.author.id).where("server_id", message.guild.id).where("created_at", ">",
-                timestamp).where("deleted", false).get()
-
-        val map = mutableMapOf<String, Int>()
-        messages.forEach { msg ->
-            val text = msg.message
-            val c = (map[text.toLowerCase()] ?: 0) + 1
-            map[text.toLowerCase()] = c
-        }
-        map.forEach { _, v ->
-            if (v >= count) {
-                throw ViolationException("MAX_DUPLICATES: Too many duplicates ($v / ${map.size})",
-                        message.author, level, message.guild)
+        ModuleManager[Redis::class.java].getConnection().use { jedis ->
+            val key = "spam:duplicates:${message.guild.id}:${message.author.id}:${message.contentRaw}"
+            val n = jedis.incr(key)
+            if (n == 1L) {
+                jedis.expire(key, period)
+            }
+            if (n > count) {
+                throw ViolationException("MAX_DUPLICATES", "Too many duplicates ($n)",
+                        message.author, level, message.guild, message.channel)
             }
         }
     }
@@ -135,9 +129,9 @@ class Spam : Module("spam") {
                 // Modlog
                 violation.guild.kirbotGuild.logManager.genericLog(LogEvent.SPAM_VIOLATE,
                         ":helmet_with_cross:",
-                        "${violation.user.logName} Has violated ${violation.msg}")
+                        "${violation.user.logName} Has violated ${violation.type} in <#${violation.channel.id}>: ${violation.message}")
 
-                val reason = "Spam detected: ${violation.msg}"
+                val reason = "Spam detected: ${violation.type} in #${violation.channel.name}: ${violation.msg}"
                 when (punishment.toUpperCase()) {
                     "NONE" -> {
                         // Do nothing
@@ -260,10 +254,12 @@ class Spam : Module("spam") {
         return settings.keySet().filter { it.isNumber() }.map { it.toInt() }.filter { it >= clearance }
     }
 
-    private class ViolationException(val msg: String, val user: User, val level: Int,
-                                     val guild: Guild) : Exception(msg) {
+    private class ViolationException(val type: String, val msg: String, val user: User,
+                                     val level: Int, val guild: Guild,
+                                     val channel: MessageChannel) :
+            Exception(msg) {
         override fun toString(): String {
-            return "ViolationException(msg='$msg', user=$user, level=$level, guild=$guild)"
+            return "ViolationException(type='$type', msg='$msg', user=$user, level=$level, guild=$guild, channel=$channel)"
         }
     }
 }

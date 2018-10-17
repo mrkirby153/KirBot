@@ -33,7 +33,6 @@ import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.User
 import org.json.JSONObject
 import org.json.JSONTokener
-import java.util.concurrent.Future
 import java.util.concurrent.Semaphore
 import java.util.stream.Collectors
 
@@ -329,17 +328,6 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         Bot.scheduler.submit {
             backfillChannels()
         }
-    }
-
-    /**
-     * Dispatch a complete backfill on the guild
-     *
-     * @param callback A callback to run when the event is completed
-     *
-     * @return The future task of teh backfill
-     */
-    fun completeBackfill(callback: ((BackfillTask) -> Unit)? = null): Future<*> {
-        return Bot.scheduler.submit(BackfillTask(this).apply { this.callback = callback })
     }
 
     fun cacheVisibilities(backfill: Boolean = true) {

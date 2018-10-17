@@ -8,6 +8,7 @@ import net.dv8tion.jda.core.JDABuilder
 import net.dv8tion.jda.core.OnlineStatus
 import net.dv8tion.jda.core.entities.Game
 import net.dv8tion.jda.core.entities.Guild
+import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.User
 import net.dv8tion.jda.core.events.ReadyEvent
 import net.dv8tion.jda.core.hooks.ListenerAdapter
@@ -44,7 +45,7 @@ class ShardManager(val token: String, private val totalShards: Int) {
     var autoUpdatePresence = true
 
     fun updatePresence(jda: JDA? = null) {
-        if(jda == null){
+        if (jda == null) {
             shards.forEach { updatePresence(it) }
         } else {
             val game = if (totalShards > 1) Game.of(gameType,
@@ -63,6 +64,7 @@ class ShardManager(val token: String, private val totalShards: Int) {
         loadingShards.add(id)
         Bot.LOG.info("Starting shard ${id + 1}/${this.totalShards}")
         val jda = buildJDA(id)
+        jda.awaitReady()
         shards.add(Shard(id, jda, Bot))
         if (totalShards > 1)
             Thread.sleep(5000)
@@ -143,6 +145,11 @@ class ShardManager(val token: String, private val totalShards: Int) {
                 }
             }
         })
-        buildBlocking()
+        build()
+    }
+
+    fun getTextChannel(id: String): TextChannel? {
+        val channels = shards.flatMap { s -> s.guilds.flatMap { it.textChannels } }
+        return channels.firstOrNull { it.id == id }
     }
 }

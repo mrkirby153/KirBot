@@ -9,6 +9,7 @@ import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.sharding.Shard
 import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.core.EmbedBuilder
+import net.dv8tion.jda.core.OnlineStatus
 import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.Channel
 import net.dv8tion.jda.core.entities.Guild
@@ -224,7 +225,8 @@ fun MessageChannel.checkPermissions(
         vararg permissions: Permission) = (this as? TextChannel)?.checkPermissions<TextChannel>(
         *permissions) != false
 
-fun Guild.checkPermission(vararg permission: Permission) = this.selfMember.hasPermission(*permission)
+fun Guild.checkPermission(vararg permission: Permission) = this.selfMember.hasPermission(
+        *permission)
 
 fun String.escapeMentions(): String {
     // Replace all @ symbols with @ followed by a Zero-Width Space
@@ -379,4 +381,10 @@ fun TextChannel.bulkDelete(messages: Collection<String>) {
     notBulk.forEach {
         this.deleteMessageById(it).queue()
     }
+}
+
+fun User.getOnlineStats(): OnlineStatus {
+    val guild = this.mutualGuilds.firstOrNull() ?: return OnlineStatus.OFFLINE
+    val m = this.getMember(guild) ?: return OnlineStatus.OFFLINE
+    return m.onlineStatus
 }

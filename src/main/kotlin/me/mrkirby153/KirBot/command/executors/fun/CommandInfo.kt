@@ -2,7 +2,6 @@ package me.mrkirby153.KirBot.command.executors.`fun`
 
 import com.mrkirby153.bfs.model.Model
 import com.mrkirby153.bfs.sql.DB
-import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.CommandDescription
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
@@ -11,25 +10,36 @@ import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.models.guild.GuildMember
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.CustomEmoji
+import me.mrkirby153.KirBot.utils.HttpUtils
 import me.mrkirby153.KirBot.utils.STATUS_AWAY
 import me.mrkirby153.KirBot.utils.STATUS_DND
 import me.mrkirby153.KirBot.utils.STATUS_OFFLINE
 import me.mrkirby153.KirBot.utils.STATUS_ONLINE
+import me.mrkirby153.KirBot.utils.convertSnowflake
 import me.mrkirby153.KirBot.utils.getMember
+import me.mrkirby153.KirBot.utils.getOnlineStats
 import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.core.OnlineStatus
 import net.dv8tion.jda.core.entities.Game
 import net.dv8tion.jda.core.entities.Member
 import net.dv8tion.jda.core.entities.User
+import okhttp3.Request
+import java.awt.Color
+import java.awt.image.BufferedImage
 import java.text.SimpleDateFormat
+import java.util.Date
+import javax.imageio.ImageIO
 
 @Command(name = "info", arguments = ["[user:user]"])
 @CommandDescription("Retrieves information about a user")
 class CommandInfo : BaseCommand(CommandCategory.FUN) {
+
+    private val sdf = SimpleDateFormat("YYYY-MM-dd HH:mm:ss")
+
     override fun execute(context: Context, cmdContext: CommandContext) {
         val user = cmdContext.get<User>("user") ?: context.author
+        val onlineStatus = user.getOnlineStats()
 
-        val seenData = Bot.seenStore.get(user)
         val member = Model.where(GuildMember::class.java, "user_id", user.id).where("server_id",
                 context.guild.id).first()
 
@@ -41,10 +51,18 @@ class CommandInfo : BaseCommand(CommandCategory.FUN) {
         val deletedMessages = DB.getFirstColumn<Long>(
                 "SELECT COUNT(*) FROM server_messages WHERE `author` = ? AND deleted = 1", user.id)
 
+        val lastMessageId = DB.getFirstColumn<String>(
+                "SELECT id FROM server_messages WHERE author = ? AND server_id = ? ORDER BY id DESC LIMIT 1",
+                user.id, context.guild.id)
+        val firstMessageId = DB.getFirstColumn<String>(
+                "SELECT id from server_messages WHERE author = ? AND server_id = ? ORDER BY id ASC LIMIT 1",
+                user.id, context.guild.id)
+
         context.send().embed {
             thumbnail = user.effectiveAvatarUrl
-            if (user.getMember(context.guild) != null)
-                color = user.getMember(context.guild).color
+            if (user.getMember(context.guild) != null) {
+                color = getMostColour(getUserProfile(user))
+            }
             author {
                 name = "${user.name}#${user.discriminator}"
                 iconUrl = user.effectiveAvatarUrl
@@ -52,10 +70,7 @@ class CommandInfo : BaseCommand(CommandCategory.FUN) {
             description {
                 appendln("**> User Information**")
                 appendln("ID: ${user.id}")
-                if (seenData != null)
-                    appendln("Status: ${seenData.status.name} ${getOnlineEmoji(seenData.status)}")
-                else
-                    appendln("Status: Unknown")
+                appendln("Status: $onlineStatus ${getOnlineEmoji(onlineStatus)}")
                 appendln("Profile: ${user.asMention}")
                 if (user.getMember(context.guild).game != null)
                     appendln(getPlayingStatus(user.getMember(context.guild)))
@@ -71,9 +86,23 @@ class CommandInfo : BaseCommand(CommandCategory.FUN) {
                 if (member != null) {
                     appendln("")
                     appendln("**> Activity**")
-                    if (seenData != null)
-                        appendln("Last Message: ${Time.format(1,
-                                System.currentTimeMillis() - seenData.lastMessage)} ago")
+                    val firstMsg = if (firstMessageId != null) convertSnowflake(
+                            firstMessageId) else null
+                    val lastMsg = if (lastMessageId != null) convertSnowflake(
+                            lastMessageId) else null
+                    val now = Date(System.currentTimeMillis())
+                    if (lastMsg != null) {
+                        val lastMsgAgo = if (now.time - lastMsg.time <= 2000) "a few seconds ago" else "${Time.format(
+                                0, now.time - lastMsg.time)} ago"
+                        appendln("Last Message: $lastMsgAgo (${sdf.format(lastMsg)})")
+                    }
+                    if (firstMsg != null) {
+                        val firstMsgAgo = if (now.time - firstMsg.time <= 2000) "a few seconds ago" else "${Time.format(
+                                0, now.time - firstMsg.time)} ago"
+                        appendln("First Message: $firstMsgAgo (${sdf.format(firstMsg)})")
+                    }
+                    if(lastMsg != null || firstMsg != null)
+                        appendln("")
                 }
                 appendln("Sent Messages: $sentMessages")
                 appendln("Edited Messages: $editedMessages")
@@ -105,5 +134,40 @@ class CommandInfo : BaseCommand(CommandCategory.FUN) {
             }
             append(game.name)
         }
+    }
+
+    private fun getUserProfile(user: User): BufferedImage {
+        val url = user.effectiveAvatarUrl.replace(".gif", ".png")
+        val req = Request.Builder().url(url).build()
+        val resp = HttpUtils.CLIENT.newCall(req).execute()
+        val img = ImageIO.read(resp.body()!!.byteStream())
+        resp.close()
+        return img
+    }
+
+    /**
+     * Gets the  colour with the most pixels
+     *
+     * @param image The image to process
+     * @return a [Color] of the most prominent color
+     */
+    private fun getMostColour(image: BufferedImage): Color {
+        val colours = mutableMapOf<Int, Int>()
+        for (x in 0 until image.width) {
+            for (y in 0 until image.height) {
+                val c = image.getRGB(x, y)
+                val count = colours.computeIfAbsent(c) { 0 }
+                colours[c] = count + 1
+            }
+        }
+        var max = 0
+        var maxCount = 0
+        colours.forEach { k, v ->
+            if (maxCount < v) {
+                max = k
+                maxCount = v
+            }
+        }
+        return Color(max)
     }
 }

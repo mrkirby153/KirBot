@@ -121,6 +121,17 @@ object Bot {
         // Boot the modules
         ModuleManager.load(true)
 
+        // Remove old guilds
+        Bot.LOG.info("Purging old guilds...")
+        // Remove guilds whose time has passed
+        Model.query(ServerSettings::class.java).where("deleted_at", "<",
+                Timestamp.from(Instant.now().minus(Duration.ofDays(30)))).delete()
+        val guildList = shardManager.shards.flatMap { it.guilds }
+        Model.query(ServerSettings::class.java).whereNotIn("id",
+                guildList.map { it.id }.toTypedArray()).whereNull("deleted_at").update(
+                Pair("deleted_at", Timestamp(System.currentTimeMillis())))
+
+
         val guilds = shardManager.shards.flatMap { it.guilds }
         LOG.info("Started syncing of ${guilds.size} guilds")
         val syncTime = measureTimeMillis {
@@ -131,15 +142,6 @@ object Bot {
                 KirBotGuild[it].dispatchBackfill()
             }
         }
-        // Remove old guilds
-        Bot.LOG.info("Purging old guilds...")
-        val guildList = shardManager.shards.flatMap { it.guilds }
-        Model.query(ServerSettings::class.java).whereNotIn("id",
-                guildList.map { it.id }.toTypedArray()).update(
-                Pair("deleted_at", Timestamp(System.currentTimeMillis())))
-        // Remove guilds whose time has passed
-        Model.query(ServerSettings::class.java).where("deleted_at", "<",
-                Timestamp.from(Instant.now().minus(Duration.ofDays(30)))).delete()
 
         LOG.info("Synced ${guilds.size} guilds ${Time.format(1,
                 syncTime)}")

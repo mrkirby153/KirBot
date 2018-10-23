@@ -35,7 +35,7 @@ class CommandSQL : BaseCommand(false, CommandCategory.ADMIN) {
                         if (r) {
                             val rs = statement.resultSet
                             val meta = rs.metaData
-                            val columns = (1..meta.columnCount).map { meta.getColumnName(it) }
+                            val columns = (1..meta.columnCount).map { meta.getColumnLabel(it) }
 
                             val builder = TableBuilder(columns.toTypedArray())
 

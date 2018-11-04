@@ -20,11 +20,11 @@ import me.mrkirby153.KirBot.modules.Redis
 import me.mrkirby153.KirBot.realname.RealnameHandler
 import me.mrkirby153.KirBot.user.CLEARANCE_ADMIN
 import me.mrkirby153.KirBot.utils.checkPermissions
+import me.mrkirby153.KirBot.utils.fuzzyMatch
 import me.mrkirby153.KirBot.utils.toTypedArray
 import me.mrkirby153.kcutils.child
 import me.mrkirby153.kcutils.mkdirIfNotExist
 import me.mrkirby153.kcutils.use
-import me.xdrop.fuzzywuzzy.FuzzySearch
 import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.entities.Member
@@ -295,33 +295,8 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         if (query.matches(Regex("\\d{17,18}"))) {
             return getRoleById(query) ?: null
         }
-        // Try exact matches
-        val exactMatches = roles.filter {
-            it.name.toLowerCase().replace(" ", "") == query.replace(" ", "").toLowerCase()
-        }
-        if (exactMatches.isNotEmpty()) {
-            if (exactMatches.size > 1)
-                throw TooManyRolesException()
-            return exactMatches.first()
-        } else {
-            val fuzzyRated = mutableMapOf<Role, Int>()
-            roles.forEach { role ->
-                fuzzyRated[role] = FuzzySearch.partialRatio(query.toLowerCase(),
-                        role.name.toLowerCase().replace(" ", ""))
-
-            }
-            if (fuzzyRated.isEmpty())
-                return null
-            val entries = fuzzyRated.entries.sortedBy { it.value }.reversed().filter { it.value > 40 }
-            if (entries.isEmpty())
-                return null
-            val first = entries.first()
-            return when {
-                entries.size == 1 -> first.key
-                first.value - entries[1].value > 20 -> first.key
-                else -> throw TooManyRolesException()
-            }
-        }
+        return fuzzyMatch(this.roles, query.replace(" ", "").toLowerCase(),
+                { it.name.replace(" ", "").toLowerCase() })
     }
 
     fun dispatchBackfill() {

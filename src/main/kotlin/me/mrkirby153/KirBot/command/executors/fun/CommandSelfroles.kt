@@ -1,14 +1,13 @@
 package me.mrkirby153.KirBot.command.executors.`fun`
 
-import com.sun.org.glassfish.gmbal.Description
 import me.mrkirby153.KirBot.CommandDescription
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
-import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.user.CLEARANCE_ADMIN
 import me.mrkirby153.KirBot.utils.Context
+import me.mrkirby153.KirBot.utils.FuzzyMatchException
 import me.mrkirby153.KirBot.utils.getMember
 import net.dv8tion.jda.core.entities.Role
 
@@ -75,9 +74,11 @@ class CommandSelfroles : BaseCommand() {
             context.kirbotGuild.createSelfrole(foundRole.id)
             context.send().success(
                     "Added `${foundRole.name}` to the list of self assignable roles!").queue()
-        } catch (e: KirBotGuild.TooManyRolesException) {
+        } catch (e: FuzzyMatchException.TooManyMatchesException) {
             throw CommandException(
                     "Too many matches for that query. Try a more specific query or the role's id instead")
+        } catch (e: FuzzyMatchException.NoMatchesException) {
+            throw CommandException("No role was found for that query")
         }
     }
 
@@ -93,9 +94,11 @@ class CommandSelfroles : BaseCommand() {
             context.kirbotGuild.removeSelfrole(foundRole.id)
             context.send().success(
                     "Removed `${foundRole.name}` from the list of self assignable roles!").queue()
-        } catch(e: KirBotGuild.TooManyRolesException){
+        } catch(e: FuzzyMatchException.TooManyMatchesException){
             throw CommandException(
                     "Too many matches for that query. Try a more specific query or the role's id instead")
+        } catch (e: FuzzyMatchException.NoMatchesException) {
+            throw CommandException("No role was found for that query")
         }
     }
 
@@ -105,9 +108,11 @@ class CommandSelfroles : BaseCommand() {
             if (foundRole == null || foundRole.id !in context.kirbotGuild.getSelfroles())
                 throw CommandException("No self-assignable role was found with that query")
             return foundRole
-        } catch (e: KirBotGuild.TooManyRolesException) {
+        } catch (e: FuzzyMatchException.TooManyMatchesException) {
             throw CommandException(
                     "Too many roles were found for the query. Try a more specific query or the role id")
+        } catch (e: FuzzyMatchException.NoMatchesException) {
+            throw CommandException("No role was found for that query")
         }
     }
 }

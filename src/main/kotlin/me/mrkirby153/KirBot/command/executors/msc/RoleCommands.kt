@@ -8,9 +8,9 @@ import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.logger.LogEvent
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.Logger
-import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
+import me.mrkirby153.KirBot.utils.FuzzyMatchException
 import me.mrkirby153.KirBot.utils.canAssign
 import me.mrkirby153.KirBot.utils.getMember
 import me.mrkirby153.KirBot.utils.kirbotGuild
@@ -87,9 +87,11 @@ class RoleCommands : BaseCommand(false) {
         try {
             role = context.guild.kirbotGuild.matchRole(roleString) ?: throw CommandException(
                     "No roles found for that query")
-        } catch (e: KirBotGuild.TooManyRolesException) {
+        } catch (e: FuzzyMatchException.TooManyMatchesException) {
             throw CommandException(
                     "Multiple matches for that query. Try a more specific query or the role id")
+        } catch (e: FuzzyMatchException.NoMatchesException) {
+            throw CommandException("No roles found for that query")
         }
 
 
@@ -124,9 +126,11 @@ class RoleCommands : BaseCommand(false) {
         try {
             role = context.guild.kirbotGuild.matchRole(roleString) ?: throw CommandException(
                     "No roles found for that query")
-        } catch (e: KirBotGuild.TooManyRolesException) {
+        } catch (e: FuzzyMatchException.TooManyMatchesException) {
             throw CommandException(
                     "Multiple matches for that query. Try a more specific query or the role id")
+        } catch (e: FuzzyMatchException.NoMatchesException) {
+            throw CommandException("No roles found for that query")
         }
 
         val member = context.guild.getMemberById(cmdContext.get<String>("user"))

@@ -8,6 +8,7 @@ import me.mrkirby153.KirBot.modules.Redis
 import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.sharding.Shard
 import me.mrkirby153.kcutils.Time
+import me.xdrop.fuzzywuzzy.FuzzySearch
 import net.dv8tion.jda.core.EmbedBuilder
 import net.dv8tion.jda.core.OnlineStatus
 import net.dv8tion.jda.core.Permission
@@ -387,4 +388,62 @@ fun User.getOnlineStats(): OnlineStatus {
     val guild = this.mutualGuilds.firstOrNull() ?: return OnlineStatus.OFFLINE
     val m = this.getMember(guild) ?: return OnlineStatus.OFFLINE
     return m.onlineStatus
+}
+
+/**
+ * Fuzzy matches an item out of a list given a query string
+ *
+ * @param items The list of items to search
+ * @param query The query string to search for in the item
+ * @param mapper A function that maps the items to strings
+ * @param ratio The ratio that the items must match the query string
+ * @param minDifference The minimum difference in ratios between the first and second candidate (if any)
+ *
+ * @throws FuzzyMatchException.TooManyMatchesException If more than one item is candidate for the string
+ * @throws FuzzyMatchException.NoMatchesException If no items match the query string
+ *
+ * @return The item that most closely matches the query string
+ */
+fun <T> fuzzyMatch(items: List<T>, query: String, mapper: (T) -> String = { it.toString() },
+                   ratio: Int = 40, minDifference: Int = 20): T {
+    val exactMatches = items.filter { i ->
+        mapper.invoke(i) == query
+    }
+    if (exactMatches.isNotEmpty()) {
+        if (exactMatches.size > 1)
+            throw FuzzyMatchException.TooManyMatchesException()
+        return exactMatches.first()
+    } else {
+        val fuzzyRated = mutableMapOf<T, Int>()
+        items.forEach { i ->
+            fuzzyRated[i] = FuzzySearch.partialRatio(query, mapper.invoke(i))
+        }
+        val matches = fuzzyRated.entries.sortedBy { it.value }.reversed().filter { it.value > ratio }
+        if (matches.isEmpty())
+            throw FuzzyMatchException.NoMatchesException()
+        val first = matches.first()
+        return when {
+            // Only 1 item matched the criteria
+            matches.size == 1 -> first.key
+            // The 2nd item has a ratio that is less than the minDifference
+            first.value - matches[1].value > minDifference -> first.key
+            // We've failed the previous two conditions, we can't determine the role
+            else -> throw FuzzyMatchException.TooManyMatchesException()
+        }
+    }
+}
+
+/**
+ * An exception thrown when an error occurs when [Matching Strings][fuzzyMatch]
+ */
+open class FuzzyMatchException : Exception() {
+    /**
+     * An exception thrown when too many items match the given query string
+     */
+    class TooManyMatchesException : FuzzyMatchException()
+
+    /**
+     * An exception thrown when no items match the given query
+     */
+    class NoMatchesException : FuzzyMatchException()
 }

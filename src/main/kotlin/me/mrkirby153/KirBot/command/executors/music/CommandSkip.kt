@@ -12,8 +12,8 @@ import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.embed.b
 import me.mrkirby153.KirBot.utils.embed.embed
 import me.mrkirby153.KirBot.utils.embed.link
-import me.mrkirby153.KirBot.utils.localizeTime
 import me.mrkirby153.KirBot.utils.mdEscape
+import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.core.Permission
 import java.awt.Color
 import java.util.concurrent.TimeUnit
@@ -38,8 +38,7 @@ class CommandSkip : MusicBaseCommand() {
                 if (skipIn == -1L)
                     append("Try again after your current poll expires")
                 else
-                    append("Try again in ${localizeTime(
-                            ((skipIn - System.currentTimeMillis()) / 1000).toInt())}")
+                    append("Try again in ${Time.format(1, skipIn - System.currentTimeMillis())}")
             })
         }
 
@@ -57,7 +56,7 @@ class CommandSkip : MusicBaseCommand() {
                 +" has voted to skip the current track: \n"
                 +currentlyPlaying.info.title.mdEscape() link currentlyPlaying.info.uri
                 +"\nReact with :thumbsup: or :thumbsdown: to vote"
-                +"\nWhichever has the most votes in ${localizeTime(skipTimer)} wins!"
+                +"\nWhichever has the most votes in ${Time.format(1, skipTimer * 1000L)} wins!"
             }
             timestamp {
                 now()
@@ -108,7 +107,7 @@ class CommandSkip : MusicBaseCommand() {
 
     @Command(name = "force", clearance = 0)
     fun forceSkip(context: Context, cmdContext: CommandContext) {
-        if(!isDJ(context.member))
+        if (!isDJ(context.member))
             throw CommandException("You must be a DJ to use this command! (Have a role named `DJ`)")
         context.channel.sendMessage("Skipping song").queue()
         ModuleManager[MusicModule::class.java].getManager(context.guild).playNextTrack()

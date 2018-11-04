@@ -8,7 +8,7 @@ import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.globalAdmin
-import me.mrkirby153.KirBot.utils.localizeTime
+import me.mrkirby153.kcutils.Time
 import java.awt.Color
 
 @Command(name = "stats")
@@ -47,8 +47,7 @@ class CommandStats : BaseCommand(CommandCategory.ADMIN) {
                 field {
                     title = "Uptime"
                     inline = true
-                    description = localizeTime(
-                            ((System.currentTimeMillis() - Bot.startTime) / 1000).toInt())
+                    description = Time.formatLong(System.currentTimeMillis() - Bot.startTime)
                 }
                 field {
                     title = "Version"

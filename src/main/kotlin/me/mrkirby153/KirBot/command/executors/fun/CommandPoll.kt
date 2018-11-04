@@ -13,9 +13,9 @@ import me.mrkirby153.KirBot.scheduler.Schedulable
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.embed.b
 import me.mrkirby153.KirBot.utils.embed.embed
-import me.mrkirby153.KirBot.utils.localizeTime
 import me.mrkirby153.KirBot.utils.mdEscape
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
+import me.mrkirby153.kcutils.Time
 import java.awt.Color
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
@@ -37,9 +37,14 @@ class CommandPoll : BaseCommand(false, CommandCategory.FUN) {
 
 
     override fun execute(context: Context, cmdContext: CommandContext) {
-        val duration = timeOffset(cmdContext.get<String>("duration") ?: "0s")
+        val timeString = cmdContext.get<String>("duration") ?: "0s"
+        val duration = try {
+            Time.parse(timeString)
+        } catch (e: IllegalArgumentException) {
+            throw CommandException("Invalid time string `$timeString`")
+        }
 
-        val endsAt = System.currentTimeMillis() + (duration * 1000)
+        val endsAt = System.currentTimeMillis() + duration
         if (duration <= 0) {
             throw CommandException("Please specify a duration greater than zero!")
         }
@@ -62,7 +67,7 @@ class CommandPoll : BaseCommand(false, CommandCategory.FUN) {
             color = Color.GREEN
             description {
                 +"Vote by clicking the reactions on the choices below! Results will be final in ${b(
-                        localizeTime(duration))}"
+                        Time.format(1, duration))}"
             }
             fields {
                 if (question != null)
@@ -87,7 +92,7 @@ class CommandPoll : BaseCommand(false, CommandCategory.FUN) {
                 millis(endsAt)
             }
         }.rest().queue {
-            for(i in 0 until options.size){
+            for (i in 0 until options.size) {
                 it.addReaction("${'\u0030' + i}\u20E3").queue()
             }
             val task = PollTask(context.guild.id, context.channel.id, it.id,

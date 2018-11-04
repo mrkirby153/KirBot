@@ -6,18 +6,19 @@ import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.Redis
 import me.mrkirby153.kcutils.Time
 import me.xdrop.fuzzywuzzy.FuzzySearch
-import net.dv8tion.jda.core.EmbedBuilder
-import net.dv8tion.jda.core.entities.MessageEmbed
-import net.dv8tion.jda.core.entities.User
 import net.dv8tion.jda.core.events.message.react.MessageReactionAddEvent
-import java.awt.Color
-import java.text.DecimalFormat
-import java.text.DecimalFormatSymbols
 import java.util.Calendar
 import java.util.Date
-import java.util.Locale
 import java.util.UUID
 
+/**
+ * Uploads a string to the bot archive
+ *
+ * @param text The text to upload to the archive
+ * @param ttl The time (in seconds) that the archive should exist for
+ *
+ * @return A URL to the archive
+ */
 fun uploadToArchive(text: String, ttl: Int = 604800): String {
     ModuleManager[Redis::class.java].getConnection().use {
         val key = UUID.randomUUID().toString()
@@ -29,6 +30,14 @@ fun uploadToArchive(text: String, ttl: Int = 604800): String {
     }
 }
 
+/**
+ * Prompt the user for confirmation before performing an action
+ *
+ * @param context The context
+ * @param msg The message to send to the user
+ * @param onConfirm The action to run when confirmed
+ * @param onDeny The action to run when denied
+ */
 fun promptForConfirmation(context: Context, msg: String, onConfirm: (() -> Boolean)? = null,
                           onDeny: (() -> Boolean)? = null) {
     context.channel.sendMessage(msg).queue { m ->
@@ -57,51 +66,19 @@ fun promptForConfirmation(context: Context, msg: String, onConfirm: (() -> Boole
     }
 }
 
+/**
+ * Converts a snowflake to a [Date]
+ *
+ * @param snowflake The snowflake to convert
+ *
+ * @return The [Date]
+ */
 fun convertSnowflake(snowflake: String): Date {
     val s = snowflake.toLong()
     val time = s.shr(22)
     val calendar = Calendar.getInstance()
     calendar.timeInMillis = time + 1420070400000
     return calendar.time
-}
-
-@JvmOverloads
-fun makeEmbed(title: String?, msg: String?, color: Color? = Color.WHITE, img: String? = null,
-              thumb: String? = null, author: User? = null): MessageEmbed {
-    return EmbedBuilder().run {
-        setDescription(msg)
-        setTitle(title, null)
-        setColor(color)
-
-        if (author != null) {
-            setAuthor(author.name, null, author.avatarUrl)
-        }
-        setThumbnail(thumb)
-        setImage(img)
-        build()
-    }
-}
-
-fun localizeTime(time: Int): String {
-    return when {
-        time < 60 -> "$time seconds"
-        time < 3600 -> "${roundTime(2, time.toDouble() / 60)} minutes"
-        time < 86400 -> "${(roundTime(2, time.toDouble() / 3600))} hours"
-        time < 604800 -> "${roundTime(2, time.toDouble() / 86400)} days"
-        else -> "${roundTime(2, time.toDouble() / 604800)} weeks"
-    }
-}
-
-fun roundTime(degree: Int, number: Double): Double {
-    if (degree == 0)
-        return Math.round(number).toDouble()
-    var format = "#.#"
-    for (i in (1 until degree))
-        format += "#"
-
-    val sym = DecimalFormatSymbols(Locale.US)
-    val twoDform = DecimalFormat(format, sym)
-    return twoDform.format(number).toDouble()
 }
 
 infix fun Any.botUrl(url: String): String {

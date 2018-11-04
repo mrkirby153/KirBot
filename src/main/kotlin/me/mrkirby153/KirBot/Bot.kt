@@ -19,7 +19,6 @@ import me.mrkirby153.KirBot.seen.SeenStore
 import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.sharding.ShardManager
 import me.mrkirby153.KirBot.utils.HttpUtils
-import me.mrkirby153.KirBot.utils.localizeTime
 import me.mrkirby153.KirBot.utils.readProperties
 import me.mrkirby153.kcutils.Time
 import me.mrkirby153.kcutils.readProperties
@@ -115,8 +114,7 @@ object Bot {
         }
 
         val endTime = System.currentTimeMillis()
-        LOG.info("\n\n\nSHARDS INITIALIZED! (${localizeTime(
-                ((endTime - startTime) / 1000).toInt())})")
+        LOG.info("\n\n\nSHARDS INITIALIZED! (${Time.format(1, endTime - startTime)})")
 
         // Boot the modules
         ModuleManager.load(true)

@@ -35,7 +35,7 @@ class SeenStore {
         val data = get(user) ?: SeenData(user.id, "", -1, OnlineStatus.UNKNOWN)
         data.server = server.name
         data.lastMessage = System.currentTimeMillis()
-        data.status = user.getMember(server).onlineStatus
+        data.status = user.getMember(server)?.onlineStatus ?: OnlineStatus.OFFLINE
         set(user, data)
     }
 

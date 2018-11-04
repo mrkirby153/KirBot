@@ -18,15 +18,16 @@ class CommandColor : BaseCommand(CommandCategory.FUN) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val colorString = cmdContext.get<String>("color")
 
+        val member = context.author.getMember(context.guild) ?: return
         if (colorString.equals("reset", true)) {
-            resetColor(context.author.getMember(context.guild))
+            resetColor(member)
             context.send().success("Reset your color", true).queue()
             return
         }
 
         try {
             val color = Color.decode(colorString)
-            setColorRole(context, context.author.getMember(context.guild), color)
+            setColorRole(context, member, color)
             context.send().success("Set your color to `$colorString`", true).queue()
         } catch (e: NumberFormatException) {
             context.send().error("That is not a valid hexadecimal color!").queue()

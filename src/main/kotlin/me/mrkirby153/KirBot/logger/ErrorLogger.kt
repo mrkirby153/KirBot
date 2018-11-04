@@ -5,7 +5,6 @@ import com.google.gson.reflect.TypeToken
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.AdminControl
-import me.mrkirby153.KirBot.utils.bulkDelete
 import me.mrkirby153.KirBot.utils.deleteAfter
 import me.mrkirby153.KirBot.utils.embed.b
 import me.mrkirby153.kcutils.child
@@ -131,7 +130,7 @@ object ErrorLogger {
         if(errorRepository.values.isEmpty())
             return
         val messageIds = errorRepository.values.map { it.messageId }.toMutableList()
-        channel?.bulkDelete(messageIds)
+        channel?.purgeMessagesById(messageIds)
         errorRepository.clear()
         save()
     }

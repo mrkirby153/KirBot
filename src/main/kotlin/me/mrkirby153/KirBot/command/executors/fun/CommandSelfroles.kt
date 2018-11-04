@@ -8,7 +8,6 @@ import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.user.CLEARANCE_ADMIN
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.FuzzyMatchException
-import me.mrkirby153.KirBot.utils.getMember
 import net.dv8tion.jda.core.entities.Role
 
 @Command(name = "selfrole,selfroles")
@@ -39,8 +38,7 @@ class CommandSelfroles : BaseCommand() {
         val foundRole = findSelfassignRole(context, role)
         if (foundRole.id in context.member.roles.map { it.id })
             throw CommandException("You are already in `${foundRole.name}`")
-        if (foundRole.position >= context.jda.selfUser.getMember(
-                        context.guild).roles.sortedByDescending { it.position }.first().position)
+        if (foundRole.position >= context.guild.selfMember.roles.sortedByDescending { it.position }.first().position)
             throw CommandException(
                     "That role is above my highest role. I can't assign that to you!")
         context.guild.controller.addSingleRoleToMember(context.member, foundRole).queue()
@@ -54,8 +52,7 @@ class CommandSelfroles : BaseCommand() {
         val foundRole = findSelfassignRole(context, role)
         if (foundRole.id !in context.member.roles.map { it.id })
             throw CommandException("You are not in `${foundRole.name}`")
-        if (foundRole.position >= context.jda.selfUser.getMember(
-                        context.guild).roles.sortedByDescending { it.position }.first().position)
+        if (foundRole.position >= context.guild.selfMember.roles.sortedByDescending { it.position }.first().position)
             throw CommandException(
                     "That role is above my highest role. I can't remove that from you!")
         context.guild.controller.removeSingleRoleFromMember(context.member, foundRole).queue()
@@ -94,7 +91,7 @@ class CommandSelfroles : BaseCommand() {
             context.kirbotGuild.removeSelfrole(foundRole.id)
             context.send().success(
                     "Removed `${foundRole.name}` from the list of self assignable roles!").queue()
-        } catch(e: FuzzyMatchException.TooManyMatchesException){
+        } catch (e: FuzzyMatchException.TooManyMatchesException) {
             throw CommandException(
                     "Too many matches for that query. Try a more specific query or the role's id instead")
         } catch (e: FuzzyMatchException.NoMatchesException) {

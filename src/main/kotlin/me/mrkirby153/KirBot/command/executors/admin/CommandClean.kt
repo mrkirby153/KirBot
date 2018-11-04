@@ -14,7 +14,6 @@ import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.GREEN_TICK
 import me.mrkirby153.KirBot.utils.RED_TICK
-import me.mrkirby153.KirBot.utils.bulkDelete
 import me.mrkirby153.KirBot.utils.deleteAfter
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.events.message.guild.react.GuildMessageReactionAddEvent
@@ -129,6 +128,6 @@ class CommandClean :
         val rows = builder.query()
         Bot.LOG.debug("Matched ${rows.size} messages")
         val ids = rows.mapNotNull { it.getString("id") }
-        channel.bulkDelete(ids)
+        channel.purgeMessagesById(ids)
     }
 }

@@ -98,7 +98,7 @@ class RoleCommands : BaseCommand(false) {
         val member = context.guild.getMemberById(cmdContext.get<String>("user"))
                 ?: throw CommandException("That user is not in the guild")
 
-        val m = context.author.getMember(context.guild)
+        val m = context.author.getMember(context.guild) ?: return
         checkManipulate(m, member)
         checkAssignment(m, role)
 
@@ -137,7 +137,7 @@ class RoleCommands : BaseCommand(false) {
                 ?: throw CommandException(
                         "that user is not in the guild")
 
-        val m = context.author.getMember(context.guild)
+        val m = context.author.getMember(context.guild) ?: return
         checkManipulate(m, member)
         checkAssignment(m, role, "remove")
 

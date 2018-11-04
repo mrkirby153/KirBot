@@ -68,7 +68,7 @@ class RealnameHandler(var guild: KirBotGuild) {
                     guild.controller.modifyMemberRoles(user.getMember(guild),
                             arrayListOf(getUnidentifiedRole()),
                             arrayListOf(getIdentifiedRole())).queue()
-                    setNickname(user.getMember(guild), null)
+                    setNickname(member, null)
                 }
             } else {
                 val nickName: String? = when (settings.realname) {
@@ -83,11 +83,11 @@ class RealnameHandler(var guild: KirBotGuild) {
                     }
                 }
                 if (settings.requireRealname) {
-                    guild.controller.modifyMemberRoles(user.getMember(guild),
+                    guild.controller.modifyMemberRoles(member,
                             arrayListOf(getIdentifiedRole()),
                             arrayListOf(getUnidentifiedRole())).queue()
                 }
-                setNickname(user.getMember(guild), nickName)
+                setNickname(member, nickName)
             }
         }
         if (lock)

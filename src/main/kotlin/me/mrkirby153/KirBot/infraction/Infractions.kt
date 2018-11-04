@@ -345,7 +345,7 @@ object Infractions {
     }
 
     fun removeMutedRole(user: User, guild: Guild) {
-        val r = user.getMember(guild).roles.map { it.id }
+        val r = user.getMember(guild)?.roles?.map { it.id } ?: return
         val mutedRole = getMutedRole(guild) ?: return
         if (mutedRole.id in r) {
             guild.controller.removeSingleRoleFromMember(user.getMember(guild), mutedRole).queue()

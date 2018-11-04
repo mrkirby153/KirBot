@@ -58,9 +58,10 @@ class CommandInfo : BaseCommand(CommandCategory.FUN) {
                 "SELECT id from server_messages WHERE author = ? AND server_id = ? ORDER BY id ASC LIMIT 1",
                 user.id, context.guild.id)
 
+        val jdaMember = user.getMember(context.guild)
         context.send().embed {
             thumbnail = user.effectiveAvatarUrl
-            if (user.getMember(context.guild) != null) {
+            if (jdaMember != null) {
                 color = getMostColour(getUserProfile(user))
             }
             author {
@@ -72,12 +73,12 @@ class CommandInfo : BaseCommand(CommandCategory.FUN) {
                 appendln("ID: ${user.id}")
                 appendln("Status: $onlineStatus ${getOnlineEmoji(onlineStatus)}")
                 appendln("Profile: ${user.asMention}")
-                if (user.getMember(context.guild).game != null)
-                    appendln(getPlayingStatus(user.getMember(context.guild)))
+                if (jdaMember?.game != null)
+                    appendln(getPlayingStatus(jdaMember))
                 appendln("")
                 appendln("**> Member Information**")
-                if (user.getMember(context.guild) != null) {
-                    val joinTime = user.getMember(context.guild).joinDate.toEpochSecond() * 1000
+                if (jdaMember != null) {
+                    val joinTime = jdaMember.joinDate.toEpochSecond() * 1000
                     appendln("Joined: ${Time.formatLong(
                             System.currentTimeMillis() - joinTime,
                             Time.TimeUnit.MINUTES).toLowerCase()} ago (${SimpleDateFormat(

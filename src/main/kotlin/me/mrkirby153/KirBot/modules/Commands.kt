@@ -15,9 +15,6 @@ class Commands : Module("commands") {
     }
 
     override fun onMessageReceived(event: MessageReceivedEvent) {
-        if (!event.author.isFake)
-            Bot.seenStore.update(event.author, event.guild)
-
         if (event.author == Bot.shardManager.getShard(event.guild)!!.selfUser)
             return
 

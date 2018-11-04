@@ -15,7 +15,6 @@ import me.mrkirby153.KirBot.infraction.Infractions
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.AdminControl
 import me.mrkirby153.KirBot.rss.FeedTask
-import me.mrkirby153.KirBot.seen.SeenStore
 import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.sharding.ShardManager
 import me.mrkirby153.KirBot.utils.HttpUtils
@@ -50,8 +49,6 @@ object Bot {
     val properties = files.properties.readProperties()
 
     var numShards: Int = 1
-
-    val seenStore = SeenStore()
 
     val constants = Bot.javaClass.getResourceAsStream("/constants.properties").readProperties()
 

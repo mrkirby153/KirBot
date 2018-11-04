@@ -35,7 +35,6 @@ import net.dv8tion.jda.core.events.role.RoleCreateEvent
 import net.dv8tion.jda.core.events.role.RoleDeleteEvent
 import net.dv8tion.jda.core.events.role.update.GenericRoleUpdateEvent
 import net.dv8tion.jda.core.events.user.update.UserUpdateNameEvent
-import net.dv8tion.jda.core.events.user.update.UserUpdateOnlineStatusEvent
 import net.dv8tion.jda.core.hooks.ListenerAdapter
 import java.util.concurrent.TimeUnit
 
@@ -161,10 +160,6 @@ class ShardListener(val shard: Shard, val bot: Bot) : ListenerAdapter() {
             event.guild.kirbotGuild.sync()
             event.guild.kirbotGuild.dispatchBackfill()
         }, 0, TimeUnit.MILLISECONDS)
-    }
-
-    override fun onUserUpdateOnlineStatus(event: UserUpdateOnlineStatusEvent) {
-        Bot.seenStore.updateOnlineStatus(event.user.mutualGuilds[0].getMember(event.user))
     }
 
     override fun onTextChannelDelete(event: TextChannelDeleteEvent) {

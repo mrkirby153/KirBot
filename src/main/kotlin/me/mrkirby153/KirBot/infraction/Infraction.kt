@@ -36,12 +36,10 @@ class Infraction : Model() {
     @Column("expires_at")
     var expiresAt: Timestamp? = null
 
-    @Transient
-    var type: InfractionType = InfractionType.UNKNOWN
+    var type: InfractionType
         get() = InfractionType.getType(this.typeRaw)
         set(type) {
             this.typeRaw = type.internalName
-            field = type
         }
 
     fun revoke() {

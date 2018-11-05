@@ -27,29 +27,23 @@ class GuildMemberRole(member: Member? = null, role: Role? = null) : Model() {
     private var roleId = ""
 
 
-    @Transient
-    var server: Guild? = null
+    var server: Guild?
         get() = Bot.shardManager.getGuild(this.serverId)
         set(guild) {
             this.serverId = guild!!.id
-            field = guild
         }
 
-    @Transient
-    var user: User? = null
+    var user: User?
         get() = Bot.shardManager.getUser(this.userId)
         set(user) {
             this.userId = user!!.id
-            field = user
         }
 
-    @Transient
-    var role: Role? = null
+    var role: Role?
         get() = server?.getRoleById(this.roleId)
         set(role) {
             this.roleId = role!!.id
             this.serverId = role.guild.id
-            field = role
         }
 
 

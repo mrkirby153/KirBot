@@ -37,8 +37,7 @@ object Infractions {
 
     fun waitForInfraction() {
         Bot.LOG.debug("Queueing Infractions")
-        val nextInfraction = Model.query(Infraction::class.java).whereNull("expires_at",
-                true).where("active", true).orderBy("expires_at", "ASC").limit(1).first()
+        val nextInfraction = Model.query(Infraction::class.java).whereNotNull("expires_at").where("active", true).orderBy("expires_at", "ASC").limit(1).first()
         if (nextInfraction == null) {
             Bot.LOG.info("No infractions left to wait for")
             return
@@ -66,8 +65,7 @@ object Infractions {
     }
 
     private fun runExpiredInfractions() {
-        val expired = Model.query(Infraction::class.java).where("active", true).whereNull(
-                "expires_at", true).where("expires_at", "<", Timestamp.from(Instant.now())).get()
+        val expired = Model.query(Infraction::class.java).where("active", true).whereNotNull("expires_at").where("expires_at", "<", Timestamp.from(Instant.now())).get()
         Bot.LOG.debug("Running ${expired.count()} expired infractions")
         expired.forEach {
             Bot.LOG.debug("Expiring ${it.id}")

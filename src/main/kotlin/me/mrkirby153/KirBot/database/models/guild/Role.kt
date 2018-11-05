@@ -23,31 +23,25 @@ class Role(role: Role? = null) : Model() {
 
     var order = 0
 
-    @Transient
-    var guild: Guild? = null
+    var guild: Guild?
         get() = Bot.shardManager.getGuild(serverId)
         set(guild) {
             if (guild == null) {
-                field = null
                 return
             }
             this.serverId = guild.id
-            field = guild
         }
 
-    @Transient
-    var role: Role? = null
+    var role: Role?
         get() = guild?.getRoleById(this.id)
         set(role) {
             if (role == null) {
-                field = null
                 return
             }
             this.id = role.id
             this.name = role.name
             this.permissions = role.permissionsRaw
             this.order = role.position
-            field = role
         }
 
 

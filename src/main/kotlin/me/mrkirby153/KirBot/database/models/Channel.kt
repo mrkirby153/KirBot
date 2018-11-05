@@ -29,24 +29,19 @@ class Channel(channel: Channel? = null) : Model() {
     @Column("hidden")
     var hidden = false
 
-    @Transient
-    var type: Type = Type.UNKNOWN
+    var type: Type
         get() = Type.valueOf(this.typeRaw)
         set(value) {
             this.typeRaw = value.toString()
-            field = value
         }
 
-    @Transient
-    var guild: Guild? = null
+    var guild: Guild?
         get() = Bot.shardManager.getGuild(this.guildId)
         set(guild) {
             this.guildId = guild!!.id
-            field = guild
         }
 
-    @Transient
-    var channel: Channel? = null
+    var channel: Channel?
         get() {
             val guild = guild ?: return null
             return when (type) {
@@ -58,7 +53,6 @@ class Channel(channel: Channel? = null) : Model() {
         set(channel) {
             this.id = channel!!.id
             this.type = getType(channel)
-            field = channel
         }
 
     init {

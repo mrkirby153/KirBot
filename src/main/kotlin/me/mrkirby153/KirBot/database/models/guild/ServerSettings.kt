@@ -73,20 +73,16 @@ class ServerSettings : SoftDeletingModel() {
     @Column("muted_role")
     var mutedRoleId: String? = null
 
-    @Transient
-    var mutedRole: Role? = null
+    var mutedRole: Role?
         get() = if (mutedRoleId != null) Bot.shardManager.getGuild(this.id)?.getRoleById(
                 this.mutedRoleId) else null
         set(setting) {
             this.mutedRoleId = setting?.id
-            field = setting
         }
 
-    @Transient
-    var realname: RealnameSetting = RealnameSetting.OFF
+    var realname: RealnameSetting
         get() = RealnameSetting.valueOf(realnameRaw)
-        set(setting) {
-            this.realnameRaw = setting.toString()
-            field = setting
+        set(value) {
+            this.realnameRaw = value.toString()
         }
 }

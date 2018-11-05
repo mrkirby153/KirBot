@@ -33,8 +33,7 @@ class GuildMember(member: Member? = null) : Model() {
     var deafened = false
     var muted = false
 
-    @Transient
-    var user: User? = null
+    var user: User?
         get() = Bot.shardManager.getUser(this.userId)
         set(user) {
             if (user != null) {
@@ -42,7 +41,6 @@ class GuildMember(member: Member? = null) : Model() {
                 this.name = user.name
                 this.discrim = user.discriminator
             }
-            field = user
         }
 
     init {

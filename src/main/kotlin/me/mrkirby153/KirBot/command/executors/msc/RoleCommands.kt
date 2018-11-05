@@ -38,43 +38,6 @@ class RoleCommands : BaseCommand(false) {
         context.channel.sendMessage("$msg```").queue()
     }
 
-    /**
-     * Checks if the given member can assign the given role
-     *
-     * @param member The member
-     * @param role The role to assign
-     *
-     * @throws CommandException If an error occurs in the comparison
-     */
-    private fun checkAssignment(member: Member, role: Role, mode: String = "assign") {
-        if (member.isOwner)
-            return // The owner can assign all roles regardless of permissions
-        val highestPos = member.roles.maxBy { it.position }?.position ?: 0
-        val rolePos = role.position
-        if (rolePos >= highestPos) {
-            throw CommandException("You cannot $mode roles above your own")
-        }
-    }
-
-    /**
-     * Checks if the given member can interact with the other member
-     *
-     * @param member The member to check
-     * @param otherMember The member to check against
-     *
-     * @throws CommandException If the user cannot manipulate the user
-     */
-    private fun checkManipulate(member: Member, otherMember: Member) {
-        if (member.user.id == otherMember.user.id)
-            throw CommandException("You cannot execute that on yourself")
-        if (member.isOwner)
-            return  // The owner can manipulate everyone regardless of permissions
-        val highestPos = member.roles.maxBy { it.position }?.position ?: 0
-        val otherPos = otherMember.roles.maxBy { it.position }?.position ?: 0
-        if (otherPos >= highestPos)
-            throw CommandException("You cannot execute this on that user")
-    }
-
     @Command(name = "add", clearance = CLEARANCE_MOD,
             arguments = ["<user:snowflake>", "<role:string>", "[reason:string...]"],
             permissions = [Permission.MANAGE_ROLES])
@@ -148,5 +111,45 @@ class RoleCommands : BaseCommand(false) {
         context.guild.controller.removeSingleRoleFromMember(member, role).queue()
         context.send().success("Removed role **${role.name}** from ${member.user.nameAndDiscrim}",
                 true).queue()
+    }
+
+    companion object {
+
+        /**
+         * Checks if the given member can assign the given role
+         *
+         * @param member The member
+         * @param role The role to assign
+         *
+         * @throws CommandException If an error occurs in the comparison
+         */
+        fun checkAssignment(member: Member, role: Role, mode: String = "assign") {
+            if (member.isOwner)
+                return // The owner can assign all roles regardless of permissions
+            val highestPos = member.roles.maxBy { it.position }?.position ?: 0
+            val rolePos = role.position
+            if (rolePos >= highestPos) {
+                throw CommandException("You cannot $mode roles above your own")
+            }
+        }
+
+        /**
+         * Checks if the given member can interact with the other member
+         *
+         * @param member The member to check
+         * @param otherMember The member to check against
+         *
+         * @throws CommandException If the user cannot manipulate the user
+         */
+        fun checkManipulate(member: Member, otherMember: Member) {
+            if (member.user.id == otherMember.user.id)
+                throw CommandException("You cannot execute that on yourself")
+            if (member.isOwner)
+                return  // The owner can manipulate everyone regardless of permissions
+            val highestPos = member.roles.maxBy { it.position }?.position ?: 0
+            val otherPos = otherMember.roles.maxBy { it.position }?.position ?: 0
+            if (otherPos >= highestPos)
+                throw CommandException("You cannot execute this on that user")
+        }
     }
 }

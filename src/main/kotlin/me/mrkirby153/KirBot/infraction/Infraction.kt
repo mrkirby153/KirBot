@@ -31,7 +31,7 @@ class Infraction : Model() {
 
     var active: Boolean = true
 
-    val metadata: String? = null
+    var metadata: String? = null
 
     @Column("expires_at")
     var expiresAt: Timestamp? = null

@@ -9,6 +9,8 @@ import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.InfractionModule
 import me.mrkirby153.KirBot.modules.Logger
 import me.mrkirby153.KirBot.server.KirBotGuild
+import me.mrkirby153.KirBot.utils.canAssign
+import me.mrkirby153.KirBot.utils.checkPermission
 import me.mrkirby153.KirBot.utils.getMember
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.logName
@@ -21,6 +23,7 @@ import net.dv8tion.jda.core.entities.User
 import net.dv8tion.jda.core.events.guild.GuildBanEvent
 import net.dv8tion.jda.core.events.guild.GuildUnbanEvent
 import net.dv8tion.jda.core.events.guild.member.GuildMemberLeaveEvent
+import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleRemoveEvent
 import java.sql.Timestamp
 import java.time.Instant
 import java.util.concurrent.Executors
@@ -37,7 +40,8 @@ object Infractions {
 
     fun waitForInfraction() {
         Bot.LOG.debug("Queueing Infractions")
-        val nextInfraction = Model.query(Infraction::class.java).whereNotNull("expires_at").where("active", true).orderBy("expires_at", "ASC").limit(1).first()
+        val nextInfraction = Model.query(Infraction::class.java).whereNotNull("expires_at").where(
+                "active", true).orderBy("expires_at", "ASC").limit(1).first()
         if (nextInfraction == null) {
             Bot.LOG.info("No infractions left to wait for")
             return
@@ -65,7 +69,8 @@ object Infractions {
     }
 
     private fun runExpiredInfractions() {
-        val expired = Model.query(Infraction::class.java).where("active", true).whereNotNull("expires_at").where("expires_at", "<", Timestamp.from(Instant.now())).get()
+        val expired = Model.query(Infraction::class.java).where("active", true).whereNotNull(
+                "expires_at").where("expires_at", "<", Timestamp.from(Instant.now())).get()
         Bot.LOG.debug("Running ${expired.count()} expired infractions")
         expired.forEach {
             Bot.LOG.debug("Expiring ${it.id}")
@@ -89,11 +94,33 @@ object Infractions {
             InfractionType.TEMPBAN -> {
                 ModuleManager[InfractionModule::class.java].ignoreUnbans.add(infraction.userId)
                 guild.controller.unban(infraction.userId).queue()
-                guild.kirbotGuild.logManager.genericLog(LogEvent.USER_UNBAN, ":rotating_light:", buildString {
-                    append(lookupUser(infraction.userId, true))
-                    append(" Unbanned by **${lookupUser(guild.selfMember.user.id)}**")
-                    append(" (`Timed ban expired`)")
-                })
+                guild.kirbotGuild.logManager.genericLog(LogEvent.USER_UNBAN, ":rotating_light:",
+                        buildString {
+                            append(lookupUser(infraction.userId, true))
+                            append(" Unbanned by **${lookupUser(guild.selfMember.user.id)}**")
+                            append(" (`Timed ban expired`)")
+                        })
+            }
+            InfractionType.TEMPROLE -> {
+                // Remove the role from the user
+                val roleId = infraction.metadata
+                if (roleId != null) {
+                    val role = guild.getRoleById(roleId)
+                    val member = guild.getMember(user)
+                    if (role != null && member != null && role in member.roles) {
+                        if (guild.checkPermission(
+                                        Permission.MANAGE_ROLES) && guild.selfMember.canAssign(
+                                        role)) {
+                            ModuleManager[Logger::class.java].debouncer.create(
+                                    GuildMemberRoleRemoveEvent::class.java,
+                                    Pair("user", infraction.userId), Pair("role", role.id))
+                            guild.kirbotGuild.logManager.genericLog(LogEvent.ROLE_REMOVE, ":key:",
+                                    "Removed **${role.name}** from ${user.logName}: `Temprole expired`")
+                            guild.controller.removeSingleRoleFromMember(member, role).reason(
+                                    "#${infraction.id} - Temprole expired").queue()
+                        }
+                    }
+                }
             }
             else -> {
                 // Not a temporary infraction, don't do anything
@@ -106,7 +133,8 @@ object Infractions {
         if (!guild.selfMember.hasPermission(Permission.KICK_MEMBERS)) {
             return
         }
-        ModuleManager[Logger::class.java].debouncer.create(GuildMemberLeaveEvent::class.java, Pair("user", user))
+        ModuleManager[Logger::class.java].debouncer.create(GuildMemberLeaveEvent::class.java,
+                Pair("user", user))
         guild.controller.kick(guild.getMemberById(user), reason ?: "").queue()
 
         createInfraction(user, guild, if (issuer == "1") user else issuer, reason,
@@ -136,8 +164,10 @@ object Infractions {
             purgeDays: Int = 0) {
         if (!guild.selfMember.hasPermission(Permission.BAN_MEMBERS))
             return
-        ModuleManager[InfractionModule::class.java].debouncer.create(GuildBanEvent::class.java, Pair("user", user), Pair("guild", guild.id))
-        ModuleManager[Logger::class.java].debouncer.create(GuildMemberLeaveEvent::class.java, Pair("user", user))
+        ModuleManager[InfractionModule::class.java].debouncer.create(GuildBanEvent::class.java,
+                Pair("user", user), Pair("guild", guild.id))
+        ModuleManager[Logger::class.java].debouncer.create(GuildMemberLeaveEvent::class.java,
+                Pair("user", user))
         guild.controller.ban(user, purgeDays, reason).queue()
 
         createInfraction(user, guild, if (issuer == "1") user else issuer, reason,
@@ -154,9 +184,12 @@ object Infractions {
     fun softban(user: String, guild: Guild, issuer: String, reason: String? = null) {
         if (!guild.selfMember.hasPermission(Permission.BAN_MEMBERS))
             return
-        ModuleManager[InfractionModule::class.java].debouncer.create(GuildBanEvent::class.java, Pair("user", user), Pair("guild", guild.id))
-        ModuleManager[InfractionModule::class.java].debouncer.create(GuildUnbanEvent::class.java, Pair("user", user), Pair("guild", guild.id))
-        ModuleManager[Logger::class.java].debouncer.create(GuildMemberLeaveEvent::class.java, Pair("user", user))
+        ModuleManager[InfractionModule::class.java].debouncer.create(GuildBanEvent::class.java,
+                Pair("user", user), Pair("guild", guild.id))
+        ModuleManager[InfractionModule::class.java].debouncer.create(GuildUnbanEvent::class.java,
+                Pair("user", user), Pair("guild", guild.id))
+        ModuleManager[Logger::class.java].debouncer.create(GuildMemberLeaveEvent::class.java,
+                Pair("user", user))
         guild.controller.ban(user, 7, reason).queue {
             guild.controller.unban(user).queue()
         }
@@ -175,7 +208,8 @@ object Infractions {
     fun unban(user: String, guild: Guild, issuer: String, reason: String = "") {
         if (!guild.selfMember.hasPermission(Permission.BAN_MEMBERS))
             return
-        ModuleManager[InfractionModule::class.java].debouncer.create(GuildUnbanEvent::class.java, Pair("user", user), Pair("guild", guild.id))
+        ModuleManager[InfractionModule::class.java].debouncer.create(GuildUnbanEvent::class.java,
+                Pair("user", user), Pair("guild", guild.id))
         guild.banList.queue { banList ->
             if (user in banList.map { it.user.id })
                 guild.controller.unban(user).queue()
@@ -184,17 +218,19 @@ object Infractions {
         }
 
         // Deactivate all the users active bans (should only be one)
-        getActiveInfractions(user, guild).filter { it.type == InfractionType.BAN || it.type == InfractionType.TEMPBAN }.forEach { ban ->
+        getActiveInfractions(user,
+                guild).filter { it.type == InfractionType.BAN || it.type == InfractionType.TEMPBAN }.forEach { ban ->
             ban.revoke()
         }
         createInfraction(user, guild, if (issuer == "1") user else issuer, reason,
                 InfractionType.UNBAN)
-        guild.kirbotGuild.logManager.genericLog(LogEvent.USER_UNBAN, ":rotating_light:", buildString {
-            append(lookupUser(user, true))
-            append(" Unbanned by **${lookupUser(issuer)}**")
-            if (reason.isNotBlank())
-                append("(`$reason`)")
-        })
+        guild.kirbotGuild.logManager.genericLog(LogEvent.USER_UNBAN, ":rotating_light:",
+                buildString {
+                    append(lookupUser(user, true))
+                    append(" Unbanned by **${lookupUser(issuer)}**")
+                    if (reason.isNotBlank())
+                        append("(`$reason`)")
+                })
     }
 
     fun mute(user: String, guild: Guild, issuer: String, reason: String? = null) {
@@ -218,7 +254,8 @@ object Infractions {
             return
         removeMutedRole(guild.getMemberById(user).user, guild)
 
-        getActiveInfractions(user, guild).filter { it.type == InfractionType.MUTE || it.type == InfractionType.TEMPMUTE }.forEach { ban ->
+        getActiveInfractions(user,
+                guild).filter { it.type == InfractionType.MUTE || it.type == InfractionType.TEMPMUTE }.forEach { ban ->
             ban.revoke()
         }
 
@@ -267,14 +304,16 @@ object Infractions {
         waitForInfraction()
         guild.kirbotGuild.logManager.genericLog(LogEvent.USER_BAN, ":rotating_light:", buildString {
             append(lookupUser(user, true))
-            append(" Temp-banned for ${Time.formatLong(TimeUnit.MILLISECONDS.convert(duration, units))} by **${lookupUser(issuer)}**")
+            append(" Temp-banned for ${Time.formatLong(
+                    TimeUnit.MILLISECONDS.convert(duration, units))} by **${lookupUser(issuer)}**")
             if (reason != null)
                 append(": `$reason`")
         })
     }
 
     fun createInfraction(user: String, guild: Guild, issuer: String, reason: String?,
-                         type: InfractionType, expiresAt: Timestamp? = null): Infraction {
+                         type: InfractionType, expiresAt: Timestamp? = null,
+                         metadata: String? = null): Infraction {
         val infraction = Infraction()
         infraction.userId = user
         infraction.guild = guild.id
@@ -283,7 +322,9 @@ object Infractions {
         infraction.type = type
         infraction.createdAt = Timestamp(System.currentTimeMillis())
         infraction.expiresAt = expiresAt
+        infraction.metadata = metadata
         infraction.save()
+        waitForInfraction()
         return infraction
     }
 
@@ -307,7 +348,7 @@ object Infractions {
         if (guild.selfMember.hasPermission(Permission.BAN_MEMBERS)) {
             guild.banList.queue { bans ->
                 val bannedIds = bans.map { it.user.id }
-                if(bannedIds.isEmpty()) {
+                if (bannedIds.isEmpty()) {
                     Bot.LOG.debug("banlist is empty")
                     return@queue
                 }

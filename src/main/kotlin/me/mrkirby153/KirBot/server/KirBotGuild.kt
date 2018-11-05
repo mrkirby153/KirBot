@@ -13,7 +13,6 @@ import me.mrkirby153.KirBot.database.models.guild.GuildMemberRole
 import me.mrkirby153.KirBot.database.models.guild.GuildMessage
 import me.mrkirby153.KirBot.database.models.guild.MusicSettings
 import me.mrkirby153.KirBot.database.models.guild.ServerSettings
-import me.mrkirby153.KirBot.infraction.Infractions
 import me.mrkirby153.KirBot.logger.LogManager
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.Redis
@@ -196,7 +195,6 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
                             "server_id", member.guild.id).whereNotIn("role_id",
                             member.roles.map { it.id }.toTypedArray()).delete()
             }
-            Infractions.importFromBanlist(this)
             if (!ready)
                 Bot.LOG.debug("Guild $this is ready")
             ready = true
@@ -263,7 +261,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
     fun syncSeenUsers() {
         Bot.LOG.debug("Syncing users")
         lock()
-        val users = Model.get(DiscordUser::class.java)
+        val users = Model.query(DiscordUser::class.java).get()
         users.forEach(DiscordUser::updateUser)
         val newMembers = this.members.filter { it.user.id !in users.map { it.id } }
         Bot.LOG.debug("Found ${newMembers.size} new members")

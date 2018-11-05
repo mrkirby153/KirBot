@@ -11,6 +11,7 @@ import me.mrkirby153.KirBot.command.LogInModlogs
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.models.DiscordUser
 import me.mrkirby153.KirBot.infraction.Infraction
+import me.mrkirby153.KirBot.infraction.Infractions
 import me.mrkirby153.KirBot.logger.LogEvent
 import me.mrkirby153.KirBot.user.CLEARANCE_ADMIN
 import me.mrkirby153.KirBot.user.CLEARANCE_MOD
@@ -157,5 +158,18 @@ class CommandInfractions : BaseCommand(false, CommandCategory.MODERATION) {
         infraction.save()
 
         context.send().success("Updated reason of `$id`").queue()
+    }
+
+    @Command(name = "import-banlist", clearance = CLEARANCE_ADMIN)
+    @LogInModlogs
+    @CommandDescription("Imports the banlist as infractions")
+    fun importBanlist(context: Context, cmdContext: CommandContext) {
+        promptForConfirmation(context, "Are you sure you want to import the banlist?", onConfirm = {
+            context.channel.sendMessage(":timer: Importing from the banlist...").queue {
+                Infractions.importFromBanlist(context.guild.kirbotGuild)
+                it.editMessage("Completed!").queue()
+            }
+            return@promptForConfirmation true
+        })
     }
 }

@@ -23,6 +23,7 @@ import net.dv8tion.jda.core.entities.Message
 import net.dv8tion.jda.core.entities.MessageChannel
 import net.dv8tion.jda.core.entities.User
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent
+import net.dv8tion.jda.core.hooks.SubscribeEvent
 import org.json.JSONObject
 import java.sql.Timestamp
 import java.time.Instant
@@ -44,7 +45,8 @@ class Spam : Module("spam") {
 
     }
 
-    override fun onGuildMessageReceived(event: GuildMessageReceivedEvent) {
+    @SubscribeEvent
+    fun onGuildMessageReceived(event: GuildMessageReceivedEvent) {
         if (event.author.id == event.guild.selfMember.user.id)
             return // Ignore ourselves
         if (event.guild.id !in locks.keys)

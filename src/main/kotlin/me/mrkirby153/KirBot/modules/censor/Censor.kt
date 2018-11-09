@@ -20,6 +20,7 @@ import net.dv8tion.jda.core.entities.Message
 import net.dv8tion.jda.core.entities.User
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent
 import net.dv8tion.jda.core.events.message.guild.GuildMessageUpdateEvent
+import net.dv8tion.jda.core.hooks.SubscribeEvent
 import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 
@@ -43,13 +44,15 @@ class Censor : Module("censor") {
         censorRules.add(DomainRule())
     }
 
-    override fun onGuildMessageReceived(event: GuildMessageReceivedEvent) {
+    @SubscribeEvent
+    fun onGuildMessageReceived(event: GuildMessageReceivedEvent) {
         if (event.author == event.jda.selfUser)
             return
         process(event.message)
     }
 
-    override fun onGuildMessageUpdate(event: GuildMessageUpdateEvent) {
+    @SubscribeEvent
+     fun onGuildMessageUpdate(event: GuildMessageUpdateEvent) {
         if (event.author == event.jda.selfUser)
             return
         process(event.message)

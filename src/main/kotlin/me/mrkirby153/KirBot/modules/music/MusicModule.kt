@@ -9,6 +9,7 @@ import net.dv8tion.jda.core.events.guild.GuildLeaveEvent
 import net.dv8tion.jda.core.events.guild.voice.GuildVoiceJoinEvent
 import net.dv8tion.jda.core.events.guild.voice.GuildVoiceLeaveEvent
 import net.dv8tion.jda.core.events.guild.voice.GuildVoiceMoveEvent
+import net.dv8tion.jda.core.hooks.SubscribeEvent
 
 class MusicModule : Module("music") {
 
@@ -52,23 +53,27 @@ class MusicModule : Module("music") {
         }
     }
 
-    override fun onGuildLeave(event: GuildLeaveEvent) {
+    @SubscribeEvent
+    fun onGuildLeave(event: GuildLeaveEvent) {
         managers.remove(event.guild.id)
         stopPlaying(event.guild)
     }
 
-    override fun onGuildVoiceJoin(event: GuildVoiceJoinEvent) {
+    @SubscribeEvent
+    fun onGuildVoiceJoin(event: GuildVoiceJoinEvent) {
         if (getCurrentChannel(event.guild) == event.channelJoined)
             getManager(event.guild).resume(true)
     }
 
-    override fun onGuildVoiceLeave(event: GuildVoiceLeaveEvent) {
+    @SubscribeEvent
+    fun onGuildVoiceLeave(event: GuildVoiceLeaveEvent) {
         if (getCurrentChannel(event.guild) == event.channelLeft && isChannelEmpty(
                         event.channelLeft))
             getManager(event.guild).pause(true)
     }
 
-    override fun onGuildVoiceMove(event: GuildVoiceMoveEvent) {
+    @SubscribeEvent
+    fun onGuildVoiceMove(event: GuildVoiceMoveEvent) {
         if (getCurrentChannel(event.guild) == event.channelJoined) {
             getManager(event.guild).resume(true)
         }

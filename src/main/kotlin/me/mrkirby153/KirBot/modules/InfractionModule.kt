@@ -15,6 +15,7 @@ import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.entities.User
 import net.dv8tion.jda.core.events.guild.GuildBanEvent
 import net.dv8tion.jda.core.events.guild.GuildUnbanEvent
+import net.dv8tion.jda.core.hooks.SubscribeEvent
 import java.sql.Timestamp
 
 class InfractionModule : Module("infractions") {
@@ -33,7 +34,8 @@ class InfractionModule : Module("infractions") {
         debouncer.removeExpired()
     }
 
-    override fun onGuildBan(event: GuildBanEvent) {
+    @SubscribeEvent
+    fun onGuildBan(event: GuildBanEvent) {
         if (debouncer.find(GuildBanEvent::class.java, Pair("user", event.user.id),
                         Pair("guild", event.guild.id)))
             return
@@ -57,7 +59,8 @@ class InfractionModule : Module("infractions") {
             }
     }
 
-    override fun onGuildUnban(event: GuildUnbanEvent) {
+    @SubscribeEvent
+    fun onGuildUnban(event: GuildUnbanEvent) {
         if (debouncer.find(GuildUnbanEvent::class.java, Pair("user", event.user.id),
                         Pair("guild", event.guild.id)))
             return

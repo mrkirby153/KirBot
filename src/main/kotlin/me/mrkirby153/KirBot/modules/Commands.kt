@@ -6,6 +6,7 @@ import me.mrkirby153.KirBot.module.Module
 import me.mrkirby153.KirBot.utils.Context
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent
 import net.dv8tion.jda.core.events.message.MessageUpdateEvent
+import net.dv8tion.jda.core.hooks.SubscribeEvent
 
 class Commands : Module("commands") {
 
@@ -14,7 +15,8 @@ class Commands : Module("commands") {
         CommandExecutor.helpManager.load()
     }
 
-    override fun onMessageReceived(event: MessageReceivedEvent) {
+    @SubscribeEvent
+    fun onMessageReceived(event: MessageReceivedEvent) {
         if (event.author == Bot.shardManager.getShard(event.guild)!!.selfUser)
             return
 
@@ -23,7 +25,8 @@ class Commands : Module("commands") {
         CommandExecutor.execute(context)
     }
 
-    override fun onMessageUpdate(event: MessageUpdateEvent) {
+    @SubscribeEvent
+    fun onMessageUpdate(event: MessageUpdateEvent) {
         // If the message was edited
         if (event.channel.hasLatestMessage())
             if (event.channel.latestMessageId == event.messageId) {

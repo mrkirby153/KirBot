@@ -1,11 +1,11 @@
 package me.mrkirby153.KirBot.module
 
 import me.mrkirby153.KirBot.Bot
-import net.dv8tion.jda.core.hooks.ListenerAdapter
+import me.mrkirby153.KirBot.utils.KirBotEventListener
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 
-abstract class Module(val name: String) : ListenerAdapter() {
+abstract class Module(val name: String) : KirBotEventListener() {
 
     var loaded = false
 

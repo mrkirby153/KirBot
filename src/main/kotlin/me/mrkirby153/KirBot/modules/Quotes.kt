@@ -11,6 +11,7 @@ import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import me.mrkirby153.KirBot.utils.removeReaction
 import net.dv8tion.jda.core.events.message.react.MessageReactionAddEvent
+import net.dv8tion.jda.core.hooks.SubscribeEvent
 import java.awt.Color
 import java.util.concurrent.TimeUnit
 
@@ -48,7 +49,8 @@ class Quotes : Module("quote") {
         guild.saveData()
     }
 
-    override fun onMessageReactionAdd(event: MessageReactionAddEvent) {
+    @SubscribeEvent
+    fun onMessageReactionAdd(event: MessageReactionAddEvent) {
         if (event.reactionEmote.name != quoteReaction)
             return
         event.guild.kirbotGuild.lock()
@@ -72,20 +74,20 @@ class Quotes : Module("quote") {
                 event.guild.kirbotGuild.unlock()
                 return@queue
             }
-            if(msg.author.id == event.guild.selfMember.user.id) {
+            if (msg.author.id == event.guild.selfMember.user.id) {
                 debug("Denied, cannot quote KirBot")
                 msg.removeReaction(event.user, quoteReaction)
                 event.guild.kirbotGuild.unlock()
                 return@queue
             }
-            if(msg.contentDisplay.isEmpty()){
+            if (msg.contentDisplay.isEmpty()) {
                 debug("Denied, quote is an empty message")
                 msg.removeReaction(event.user, quoteReaction)
                 event.guild.kirbotGuild.unlock()
                 return@queue
             }
             // Create the quote
-            val q = Model.where(Quote::class.java,"message_id", event.messageId).first()
+            val q = Model.where(Quote::class.java, "message_id", event.messageId).first()
             if (q != null) {
                 debug("Denied, quote already exists")
                 event.guild.kirbotGuild.unlock()

@@ -233,12 +233,15 @@ object Infractions {
                 })
     }
 
-    fun mute(user: String, guild: Guild, issuer: String, reason: String? = null) {
+    fun mute(user: String, guild: Guild, issuer: String, reason: String? = null,
+             createInfraction: Boolean = true) {
         if (!guild.selfMember.hasPermission(Permission.MANAGE_ROLES))
             return
         addMutedRole(guild.getMemberById(user).user, guild)
-        createInfraction(user, guild, if (issuer == "1") user else issuer, reason,
-                InfractionType.MUTE)
+
+        if (createInfraction)
+            createInfraction(user, guild, if (issuer == "1") user else issuer, reason,
+                    InfractionType.MUTE)
 
         guild.kirbotGuild.logManager.genericLog(LogEvent.USER_MUTE, ":zipper_mouth:", buildString {
             append(lookupUser(user, true))
@@ -373,6 +376,7 @@ object Infractions {
     }
 
     fun addMutedRole(user: User, guild: Guild) {
+        Bot.LOG.debug("Adding muted role to $user in $guild")
         val role = getMutedRole(guild)
         if (role == null) {
             guild.kirbotGuild.logManager.genericLog(LogEvent.USER_MUTE, ":warning:",

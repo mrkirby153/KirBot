@@ -15,6 +15,7 @@ import me.mrkirby153.KirBot.database.models.guild.MusicSettings
 import me.mrkirby153.KirBot.database.models.guild.ServerSettings
 import me.mrkirby153.KirBot.logger.LogManager
 import me.mrkirby153.KirBot.module.ModuleManager
+import me.mrkirby153.KirBot.modules.AntiRaid
 import me.mrkirby153.KirBot.modules.Redis
 import me.mrkirby153.KirBot.realname.RealnameHandler
 import me.mrkirby153.KirBot.user.CLEARANCE_ADMIN
@@ -106,6 +107,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         commandAliases = Model.where(CommandAlias::class.java, "server_id",
                 this.id).get().toMutableList()
         logManager.reloadLogChannels()
+        ModuleManager.getLoadedModule(AntiRaid::class.java)?.raidSettingsCache?.invalidate(this.id)
         loadData()
     }
 

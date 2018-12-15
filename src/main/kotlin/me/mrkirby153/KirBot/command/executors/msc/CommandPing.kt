@@ -5,6 +5,8 @@ import me.mrkirby153.KirBot.CommandDescription
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.args.CommandContext
+import me.mrkirby153.KirBot.module.ModuleManager
+import me.mrkirby153.KirBot.modules.AntiRaid
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.globalAdmin
 import me.mrkirby153.kcutils.Time
@@ -24,5 +26,6 @@ class CommandPing : BaseCommand(false) {
             val msg = "Pong! `${Time.format(1, stop - start)}`"
             context.channel.sendMessage(if(context.author.globalAdmin) adminMsg else msg).queue()
         }
+        ModuleManager[AntiRaid::class.java].alertStaff(context.guild)
     }
 }

@@ -7,6 +7,8 @@ class CommandContext {
 
     fun <T> get(key: String): T? = arguments[key] as T?
 
+    fun <T> getNotNull(key: String): T = arguments[key] as T ?: throw NullPointerException("key $key is null")
+
     fun put(key: String, `object`: Any?) = arguments.put(key, `object`)
 
     fun has(key: String) = arguments.containsKey(key)

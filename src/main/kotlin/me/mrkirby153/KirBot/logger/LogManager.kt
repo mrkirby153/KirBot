@@ -7,7 +7,6 @@ import me.mrkirby153.KirBot.database.models.guild.GuildMessage
 import me.mrkirby153.KirBot.database.models.guild.LogSettings
 import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.utils.CustomEmoji
-import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.KirBot.utils.convertSnowflake
 import me.mrkirby153.KirBot.utils.crypto.AesCrypto
 import me.mrkirby153.KirBot.utils.escapeMentions
@@ -15,28 +14,48 @@ import me.mrkirby153.KirBot.utils.logName
 import me.mrkirby153.KirBot.utils.resolveMentions
 import me.mrkirby153.KirBot.utils.uploadToArchive
 import me.mrkirby153.KirBot.utils.urlEscape
-import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.Message
 import net.dv8tion.jda.core.entities.TextChannel
 import java.text.SimpleDateFormat
-import java.util.LinkedList
 import java.util.Locale
 import java.util.TimeZone
+import java.util.concurrent.ConcurrentHashMap
 
 class LogManager(private val guild: KirBotGuild) {
-
-    private val logQueue = LinkedList<LogMessage>()
-
     private var logChannels = Model.where(LogSettings::class.java, "server_id", guild.id).get()
+    private val channelLoggers = ConcurrentHashMap<String, ChannelLogger>()
 
     var hushed = false
 
     fun reloadLogChannels() {
+        Bot.LOG.debug("Reloading log channels on $guild")
         this.logChannels = Model.where(LogSettings::class.java, "server_id", guild.id).get()
+        updateLoggers()
+    }
+
+    private fun updateLoggers() {
+        channelLoggers.entries.removeIf { it.key !in this.guild.textChannels.map { it.id } }
+        this.guild.textChannels.forEach { chan ->
+            val logger = channelLoggers.getOrPut(chan.id) { ChannelLogger(this.guild, chan.id) }
+            val settings = this.logChannels.firstOrNull { it.channelId == chan.id }
+
+            if (settings != null) // If we have log events to subscribe to
+                logger.setSubscriptions(*LogEvent.values().filter {
+                    /*
+                        If the user has nothing included, include everything except the excluded
+                        If the user has things included, include the things included & nothing else
+                     */
+                    if (settings.included == 0L) {
+                        !LogEvent.has(settings.excluded, it)
+                    } else {
+                        LogEvent.has(settings.included, it)
+                    }
+                }.toTypedArray())
+        }
     }
 
     fun logMessageDelete(id: String) {
-        if(hushed)
+        if (hushed)
             return
         val msg = Model.where(GuildMessage::class.java, "id", id).first() ?: return
 
@@ -60,7 +79,7 @@ class LogManager(private val guild: KirBotGuild) {
     }
 
     fun logBulkDelete(chan: TextChannel, messages: List<String>) {
-        if(hushed)
+        if (hushed)
             return
         var shouldLog = false
         logChannels.forEach { c ->
@@ -120,7 +139,7 @@ class LogManager(private val guild: KirBotGuild) {
     fun genericLog(logEvent: LogEvent, emoji: String, message: String) {
         if (!guild.ready)
             return
-       val sdf = SimpleDateFormat("HH:mm:ss", Locale.ENGLISH)
+        val sdf = SimpleDateFormat("HH:mm:ss", Locale.ENGLISH)
         sdf.timeZone = TimeZone.getTimeZone(this.guild.settings.logTimezone)
         val m = buildString {
             append("`[")
@@ -130,61 +149,20 @@ class LogManager(private val guild: KirBotGuild) {
             append(" $message")
         }
         if (m.length > 2000)
-            return
-        logQueue.addLast(LogMessage(logEvent, m))
+            return // Drop the message as it's over 2k chars
+        submitEvent(LogMessage(logEvent, m))
     }
 
-    fun processQueue() {
-        if (logQueue.isEmpty())
-            return
-        val toRemove = mutableSetOf<LogMessage>()
-        logChannels.forEach { s ->
-            // Find events
-
-            val events = LinkedList<LogMessage>()
-
-            logQueue.filter { m ->
-                if (s.included == 0L) {
-                    // All events are included, check exclusions
-                    !LogEvent.has(s.excluded, m.event)
-                } else {
-                    // We have whitelisted events, use those instead
-                    LogEvent.has(s.included, m.event)
-                }
-            }.toCollection(events)
-
-            val string = buildString {
-                while (events.isNotEmpty()) {
-                    if (events.peek().message.length + length > 2000)
-                        return@buildString
-                    val evt = events.pop()
-                    appendln(evt.message)
-
-                    toRemove.add(evt)
-                }
-            }
-            if (string.isNotBlank()) {
-                val channel = guild.getTextChannelById(s.channelId) ?: return@forEach
-                if (channel.checkPermissions(Permission.MESSAGE_READ, Permission.MESSAGE_WRITE))
-                    channel.sendMessage(string).queue()
-            }
+    fun process() {
+        this.channelLoggers.forEach { chan, logger ->
+            logger.log()
         }
-        logQueue.removeIf {
-            if (it in toRemove)
-                return@removeIf true
-            // Remove all events that don't have loggings
-            var hasLogChannel = false
-            logChannels.forEach { chan ->
-                if (shouldLog(it.event, chan.included, chan.excluded)) {
-                    hasLogChannel = true
-                }
-            }
-            if (!hasLogChannel)
-                Bot.LOG.debug(
-                        "[${this.guild.id}] Event ${it.event} has no logging channel, removing")
-            !hasLogChannel
+    }
+
+    private fun submitEvent(event: LogMessage) {
+        this.channelLoggers.values.forEach {
+            it.submitEvent(event)
         }
-        logQueue.removeAll(toRemove)
     }
 
     private fun shouldLog(event: LogEvent, include: Long, exclude: Long): Boolean {

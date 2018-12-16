@@ -20,7 +20,7 @@ class LogPump(private val delay: Long) : Thread() {
         while (running || shuttingDown) {
             Bot.shardManager.shards.forEach { shard ->
                 shard.guilds.forEach { guild ->
-                    KirBotGuild[guild].logManager.processQueue()
+                    KirBotGuild[guild].logManager.process()
                 }
             }
             try {

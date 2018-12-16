@@ -36,7 +36,7 @@ import org.json.JSONObject
 
 class Logger : Module("logging") {
 
-    private val logDelay = 1000L
+    private val logDelay = 100L
 
     val debouncer = Debouncer()
 

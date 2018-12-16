@@ -35,7 +35,13 @@ class AntiRaid : Module("AntiRaid") {
             .build(
                     object : CacheLoader<String, AntiRaidSettings>() {
                         override fun load(key: String): AntiRaidSettings {
-                            return Model.where(AntiRaidSettings::class.java, "id", key).first()
+                            val settings = Model.where(AntiRaidSettings::class.java, "id", key).first()
+                            if(settings == null) {
+                                val newSettings = AntiRaidSettings()
+                                newSettings.save()
+                                return newSettings
+                            }
+                            return settings
                         }
                     }
             )

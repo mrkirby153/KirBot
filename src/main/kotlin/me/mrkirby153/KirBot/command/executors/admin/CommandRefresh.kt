@@ -14,7 +14,7 @@ import me.mrkirby153.KirBot.utils.kirbotGuild
 class CommandRefresh : BaseCommand(CommandCategory.ADMIN) {
 
     override fun execute(context: Context, cmdContext: CommandContext) {
-        context.guild.kirbotGuild.sync(true)
+        context.guild.kirbotGuild.sync()
         context.success()
     }
 }

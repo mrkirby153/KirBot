@@ -33,6 +33,7 @@ import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.User
 import org.json.JSONObject
 import org.json.JSONTokener
+import java.util.concurrent.Future
 import java.util.concurrent.Semaphore
 import java.util.stream.Collectors
 
@@ -63,6 +64,8 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
     private val visibleChannelCache = mutableMapOf<String, Boolean>()
 
     var ready = false
+
+    private val runningTasks = mutableListOf<Future<*>>()
 
     fun lock() {
         Bot.LOG.debug("[LOCK] Lock on ${this.id} aquired by ${Thread.currentThread().name}")
@@ -95,115 +98,123 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         }
     }
 
+    /**
+     * Load guild-specific settings
+     */
     fun loadSettings() {
         Bot.LOG.debug("Loading settings for ${this}")
-
-        settings = Model.where(ServerSettings::class.java, "id",
-                this.id).first() ?: throw IllegalStateException(
-                "Attempting to load settings for a guild that doesn't exist")
-
-        customCommands = Model.where(CustomCommand::class.java,
-                "server", this.id).get().toMutableList()
-        commandAliases = Model.where(CommandAlias::class.java, "server_id",
-                this.id).get().toMutableList()
-        logManager.reloadLogChannels()
-        ModuleManager.getLoadedModule(AntiRaid::class.java)?.raidSettingsCache?.invalidate(this.id)
-        loadData()
-    }
-
-    fun onPart() {
-        lock()
-        dataFile.delete()
-        ModuleManager[Redis::class.java].getConnection().use {
-            it.del("data:${this.id}")
-        }
-        unlock()
-        KirBotGuild.remove(this)
-    }
-
-    fun sync(waitFor: Boolean = false) {
-        Bot.LOG.debug("STARTING SYNC FOR $this")
-        cacheVisibilities(false)
+        // Load settings
         settings = SoftDeletingModel.withTrashed(ServerSettings::class.java).where("id",
                 this.id).first() ?: ServerSettings()
-        settings.deletedAt = null
+        if (settings.isTrashed) {
+            Bot.LOG.debug("Restoring trashed guild settings on $this")
+            settings.restore()
+        }
         settings.id = this.id
         settings.name = this.name
         settings.iconId = this.iconId
         settings.save()
 
+        customCommands = Model.where(CustomCommand::class.java,
+                "server", this.id).get().toMutableList()
+        commandAliases = Model.where(CommandAlias::class.java, "server_id",
+                this.id).get().toMutableList()
+
+        // Ensure music settings exist
         val musicSettings = Model.where(MusicSettings::class.java, "id", this.id).first()
                 ?: MusicSettings(this)
         musicSettings.save()
 
-        loadSettings()
+        logManager.reloadLogChannels()
+
+        // Purge anti-raid cache
+        ModuleManager.getLoadedModule(AntiRaid::class.java)?.raidSettingsCache?.invalidate(this.id)
+
+        loadData()
+
+        // Load clearances
         clearances.clear()
         Model.where(RoleClearance::class.java, "server_id", this.id).get().forEach {
             clearances[it.roleId] = it.permission
         }
+        // The guild is ready to process events even though stuff may still be loading
+        this.ready = true
+    }
 
-        val future = Bot.scheduler.submit {
+    fun onPart() {
+        cancelAllTasks(true)
+        dataFile.delete()
+        ModuleManager[Redis::class.java].getConnection().use {
+            it.del("data:${this.id}")
+        }
+        KirBotGuild.remove(this)
+    }
+
+    fun sync() {
+        Bot.LOG.debug("STARTING SYNC FOR $this")
+        cacheVisibilities(false)
+        loadSettings()
+
+        runAsyncTask {
             if (this.selfMember.nickname != settings.botNick) {
-                Bot.LOG.debug("Updating nickname to \"${settings.botNick}\"")
                 this.controller.setNickname(this.selfMember,
                         if (settings.botNick?.isEmpty() == true) null else settings.botNick).queue()
             }
+        }
 
-            // Update channels
-            Bot.LOG.debug("Updating channels on ${this.name} (${this.id})")
+        runAsyncTask {
+            Bot.LOG.debug("Updating channels on $this")
             val channels = this.textChannels.map { it as net.dv8tion.jda.core.entities.Channel }.union(
                     this.voiceChannels)
             Model.query(Channel::class.java).whereNotIn("id",
                     channels.map { it.id }.toTypedArray()).where("server", this.id).delete()
             val storedChannels = Model.where(Channel::class.java, "server", this.id).get()
-            storedChannels.forEach(Channel::updateChannel)
-            val storedChannelIds = storedChannels.map { it.id }
-
-            channels.filter { it.id !in storedChannelIds }.forEach {
-                Bot.LOG.debug("Adding channel: $it")
+            storedChannels.forEach(Channel::updateChannel) // Update existing channels
+            channels.filter { it.id !in storedChannels.map { it.id } }.forEach {
+                Bot.LOG.debug("adding channel: $it")
                 Channel(it).save()
             }
+        }
 
-            // Update Roles
+        runAsyncTask {
+            if (this.selfMember.hasPermission(Permission.NICKNAME_MANAGE))
+                RealnameHandler(this).update(false)
+        }
+
+        runAsyncTask {
             Model.query(me.mrkirby153.KirBot.database.models.guild.Role::class.java).whereNotIn(
                     "id",
-                    this.roles.map { it.id }.toTypedArray()).where("server_id", this.id).delete()
+                    this.roles.map { it.id }.toTypedArray()
+            ).where("server_id", this.id).delete()
             val storedRoles = Model.where(
                     me.mrkirby153.KirBot.database.models.guild.Role::class.java, "server_id",
                     this.id).get()
             storedRoles.forEach(me.mrkirby153.KirBot.database.models.guild.Role::updateRole)
-            val roleIds = storedRoles.map { it.id }
-            this.roles.filter { it.id !in roleIds }.forEach {
+            this.roles.filter { it.id !in storedRoles.map { it.id } }.forEach {
                 me.mrkirby153.KirBot.database.models.guild.Role(it).save()
             }
+        }
 
-            if (this.selfMember.hasPermission(Permission.NICKNAME_MANAGE))
-                RealnameHandler(this).update(false)
-
-            // Update guild members
+        runAsyncTask {
+            // Update guild members & their roles
             val members = Model.where(GuildMember::class.java, "server_id", this.id).get()
             members.forEach(GuildMember::updateMember)
-            this.members.filter { it.user.id !in members.map { it.userId } }.forEach { m ->
-                GuildMember(m).save()
+            val memberRoles = mutableMapOf<String, MutableList<GuildMemberRole>>()
+            Model.where(GuildMemberRole::class.java, "server_id", this.id).get().forEach {
+                val r = memberRoles.getOrPut(it.id) { mutableListOf() }
+                r.add(it)
             }
-
-            val memberRoles = Model.where(GuildMemberRole::class.java, "server_id", this.id).get()
             this.members.forEach { member ->
-                member.roles.filter { it.id !in memberRoles.filter { it.user?.id == member.user.id }.mapNotNull { it.role?.id } }.forEach { r ->
-                    GuildMemberRole(member, r).save()
+                val currentRoles = memberRoles[member.user.id] ?: return@forEach
+                member.roles.filter { it.id !in currentRoles.map { it.id } }.forEach {
+                    GuildMemberRole(member, it).save()
                 }
+                // Delete roles the user no longer has
                 if (member.roles.isNotEmpty())
                     Model.where(GuildMemberRole::class.java, "user_id", member.user.id).where(
                             "server_id", member.guild.id).whereNotIn("role_id",
                             member.roles.map { it.id }.toTypedArray()).delete()
             }
-            if (!ready)
-                Bot.LOG.debug("Guild $this is ready")
-            ready = true
-            Bot.LOG.debug("Sync complete!")
-        }
-        if (waitFor) {
-            future.get()
         }
     }
 
@@ -262,15 +273,15 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
 
     fun syncSeenUsers() {
         Bot.LOG.debug("Syncing users")
-        lock()
-        val users = Model.query(DiscordUser::class.java).get()
-        users.forEach(DiscordUser::updateUser)
-        val newMembers = this.members.filter { it.user.id !in users.map { it.id } }
-        Bot.LOG.debug("Found ${newMembers.size} new members")
-        newMembers.map { it.user }.forEach { user ->
-            DiscordUser(user).save()
+        runAsyncTask {
+            val users = Model.query(DiscordUser::class.java).get()
+            users.forEach(DiscordUser::updateUser)
+            val newMembers = this.members.filter { it.user.id !in users.map { it.id } }
+            Bot.LOG.debug("Found ${newMembers.size} new members")
+            newMembers.map { it.user }.forEach { user ->
+                DiscordUser(user).save()
+            }
         }
-        unlock()
     }
 
     fun createSelfrole(id: String) {
@@ -359,11 +370,39 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         }
     }
 
+    fun runAsyncTask(task: () -> Unit) {
+        removeCompletedTasks()
+        val future = Bot.scheduler.submit(task)
+        this.runningTasks.add(future)
+    }
+
+    fun hasAsyncTasksPending(): Boolean {
+        removeCompletedTasks()
+        return this.runningTasks.isNotEmpty()
+    }
+
+    fun cancelAllTasks(interrupt: Boolean = true) {
+        removeCompletedTasks()
+        this.runningTasks.forEach { it.cancel(interrupt) }
+        this.runningTasks.clear()
+    }
+
+    private fun removeCompletedTasks() {
+        val it = this.runningTasks.iterator()
+        var count = 0
+        while (it.hasNext()) {
+            val f = it.next()
+            if (f.isDone) {
+                it.remove()
+                count++
+            }
+        }
+        Bot.LOG.debug("Removed $count completed tasks on $this")
+    }
+
     override fun toString(): String {
         return "KirBotGuild(${this.name} - ${this.id})"
     }
-
-    class TooManyRolesException : Exception()
 
     companion object {
         private val guilds = mutableMapOf<String, KirBotGuild>()

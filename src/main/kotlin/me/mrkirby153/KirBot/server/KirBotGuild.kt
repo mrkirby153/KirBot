@@ -397,7 +397,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
                 count++
             }
         }
-        Bot.LOG.debug("Removed $count completed tasks on $this")
+        Bot.LOG.debug("Removed $count completed tasks on $this. (${this.runningTasks.size} still pending)")
     }
 
     override fun toString(): String {

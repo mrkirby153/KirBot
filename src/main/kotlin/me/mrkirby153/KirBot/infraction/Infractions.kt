@@ -237,7 +237,8 @@ object Infractions {
              createInfraction: Boolean = true) {
         if (!guild.selfMember.hasPermission(Permission.MANAGE_ROLES))
             return
-        addMutedRole(guild.getMemberById(user).user, guild)
+        val member = guild.getMemberById(user) ?: return
+        addMutedRole(member.user, guild)
 
         if (createInfraction)
             createInfraction(user, guild, if (issuer == "1") user else issuer, reason,

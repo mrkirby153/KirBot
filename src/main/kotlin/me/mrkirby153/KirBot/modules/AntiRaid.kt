@@ -16,6 +16,7 @@ import me.mrkirby153.KirBot.utils.embed.embed
 import me.mrkirby153.kcutils.Time
 import me.mrkirby153.kcutils.utils.SnowflakeWorker
 import net.dv8tion.jda.core.entities.Guild
+import net.dv8tion.jda.core.entities.Message
 import net.dv8tion.jda.core.entities.Role
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.User
@@ -35,8 +36,9 @@ class AntiRaid : Module("AntiRaid") {
             .build(
                     object : CacheLoader<String, AntiRaidSettings>() {
                         override fun load(key: String): AntiRaidSettings {
-                            val settings = Model.where(AntiRaidSettings::class.java, "id", key).first()
-                            if(settings == null) {
+                            val settings = Model.where(AntiRaidSettings::class.java, "id",
+                                    key).first()
+                            if (settings == null) {
                                 val newSettings = AntiRaidSettings()
                                 newSettings.save()
                                 return newSettings
@@ -63,6 +65,8 @@ class AntiRaid : Module("AntiRaid") {
     private val dismissedGuilds = mutableListOf<String>()
 
     private val lastJoin = ConcurrentHashMap<String, Long>()
+
+    private val statusMessages = ConcurrentHashMap<Guild, Message>()
 
     private val DOOR_EMOJI = "\uD83D\uDEAA"
     private val BOOT_EMOJI = "\uD83D\uDC62"
@@ -136,6 +140,13 @@ class AntiRaid : Module("AntiRaid") {
         }
     }
 
+    @Periodic(5)
+    fun updateStatusMessages() {
+        this.statusMessages.forEach {
+            updateStatusMessage(it.key)
+        }
+    }
+
     private fun scheduleTermination(guild: Guild) {
         this.lastJoin[guild.id] = System.currentTimeMillis()
     }
@@ -206,6 +217,7 @@ class AntiRaid : Module("AntiRaid") {
                 }
             }
         }
+        updateStatusMessage(guild)
     }
 
     private fun getAlertChannel(guild: Guild): TextChannel? {
@@ -218,6 +230,7 @@ class AntiRaid : Module("AntiRaid") {
     private fun terminateRaid(guild: Guild) {
         // Raid has concluded, give the admins options on what to do
         debug("Terminating raid on $guild")
+        statusMessages.remove(guild)
         val raidInfo = this.activeRaids.remove(guild.id) ?: return
         this.guildBucketCache[guild.id].empty()
         if (this.dismissedGuilds.remove(guild.id)) {
@@ -297,6 +310,25 @@ class AntiRaid : Module("AntiRaid") {
             guild.getMemberById(it)
         }.forEach {
             Infractions.unmute(it.user.id, guild, guild.selfMember.user.id, "Raid dismissed")
+        }
+    }
+
+    fun updateStatusMessage(guild: Guild) {
+        val settings = raidSettingsCache[guild.id]
+        val timeLeft = ((this.lastJoin[guild.id] ?: System.currentTimeMillis())
+        +(settings.quietPeriod * 1000)) - System.currentTimeMillis()
+        val members = getRaidMembers(activeRaids[guild.id]!!.id)
+
+        val msg = this.statusMessages[guild]
+        val statusMsg = "Total Raiders: ${members.size}\nTime until reset: ${Time.formatLong(
+                timeLeft)}"
+        if (msg == null) {
+            getAlertChannel(guild)?.sendMessage(
+                    statusMsg)?.queue {
+                this.statusMessages[guild] = it
+            }
+        } else {
+            msg.editMessage(statusMsg).queue()
         }
     }
 

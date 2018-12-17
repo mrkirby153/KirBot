@@ -18,6 +18,8 @@ class ShardManager(val token: String, private val totalShards: Int) {
     val shards = mutableListOf<Shard>()
     private val loadingShards = mutableListOf<Int>()
 
+    private val eventListeners = mutableListOf<Any>()
+
     var playing: String = ""
         set(game) {
             field = game
@@ -73,10 +75,12 @@ class ShardManager(val token: String, private val totalShards: Int) {
     fun addListener(eventListener: Any) {
         Bot.LOG.debug("Adding event listener ${eventListener.javaClass}")
         shards.forEach { it.addEventListener(eventListener) }
+        this.eventListeners.add(eventListener)
     }
 
     fun removeListener(eventListener: Any) {
         shards.forEach { it.removeEventListener(eventListener) }
+        this.eventListeners.remove(eventListener)
     }
 
     fun getShardById(id: Int): Shard {
@@ -135,6 +139,9 @@ class ShardManager(val token: String, private val totalShards: Int) {
         setGame(Game.playing("Starting up..."))
         if (!System.getProperty("os.name").contains("Mac"))
             setAudioSendFactory(NativeAudioSendFactory())
+        eventListeners.forEach {
+            addEventListener(it)
+        }
         addEventListener(object : ListenerAdapter() {
             override fun onReady(event: ReadyEvent?) {
                 Bot.LOG.info("Shard $id is ready!")

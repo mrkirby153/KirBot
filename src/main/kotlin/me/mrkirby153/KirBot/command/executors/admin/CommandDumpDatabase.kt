@@ -4,7 +4,6 @@ import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.args.CommandContext
-import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.AdminControl
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
@@ -22,7 +21,7 @@ class CommandDumpDatabase : BaseCommand(false) {
         Bot.LOG.info(
                 "Taking Database Dump (Requested by ${context.author.nameAndDiscrim} [${context.author.id}])")
 
-        ModuleManager[AdminControl::class.java].logChannel?.sendMessage(":warning: Database backup triggered by ${context.author.nameAndDiscrim}")?.queue()
+        AdminControl.logChannel?.sendMessage(":warning: Database backup triggered by ${context.author.nameAndDiscrim}")?.queue()
         try {
             val dumpCommand = "mysqldump ${Bot.properties.getProperty(
                     "database")} -h ${Bot.properties.getProperty(
@@ -50,11 +49,11 @@ class CommandDumpDatabase : BaseCommand(false) {
             zos.closeEntry()
             zos.close()
 
-            ModuleManager[AdminControl::class.java].logChannel?.sendFile(zip, "$s.sql.zip")?.queue{
+            AdminControl.logChannel?.sendFile(zip, "$s.sql.zip")?.queue{
                 zip.delete() // Delete the file after we've sent it
             }
         } catch (e: Exception) {
-           ModuleManager[AdminControl::class.java].logChannel?.sendMessage(":rotating_light: Database backup failed! `${e.message}`")?.queue()
+            AdminControl.logChannel?.sendMessage(":rotating_light: Database backup failed! `${e.message}`")?.queue()
         }
 
     }

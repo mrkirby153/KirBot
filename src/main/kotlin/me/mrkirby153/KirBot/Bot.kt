@@ -106,6 +106,7 @@ object Bot {
         shardManager = ShardManager(token, numShards)
         shardManager.playing = "Starting up..."
         shardManager.onlineStatus = OnlineStatus.IDLE
+        shardManager.addListener(AdminControl)
         for (i in 0 until numShards) {
             shardManager.addShard(i)
         }
@@ -156,6 +157,7 @@ object Bot {
                 memberSet.add(it.user.id)
         }
         val guildCount = shardManager.shards.flatMap { it.guilds }.count()
+        AdminControl.sendQueuedMessages()
         AdminControl.log("Bot startup complete in ${Time.formatLong(
                 System.currentTimeMillis() - startTime).toLowerCase()}. On $guildCount guilds with ${memberSet.size} users")
     }

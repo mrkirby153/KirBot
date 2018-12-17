@@ -3,7 +3,6 @@ package me.mrkirby153.KirBot.logger
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.AdminControl
 import me.mrkirby153.KirBot.utils.deleteAfter
 import me.mrkirby153.KirBot.utils.embed.b
@@ -27,7 +26,7 @@ object ErrorLogger {
     private val gson = Gson()
 
     private val channel: TextChannel? by lazy {
-         ModuleManager[AdminControl::class.java].logChannel
+         AdminControl.logChannel
     }
 
     init {

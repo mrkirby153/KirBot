@@ -1,6 +1,7 @@
 package me.mrkirby153.KirBot.command.executors.`fun`
 
 import com.mrkirby153.bfs.model.Model
+import com.mrkirby153.bfs.sql.DB
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.CommandDescription
 import me.mrkirby153.KirBot.command.BaseCommand
@@ -35,7 +36,8 @@ class CommandQuote : BaseCommand(false, CommandCategory.FUN) {
         if (q.serverId != context.guild.id) {
             throw CommandException("That quote doesn't exist")
         }
-        context.channel.sendMessage("\"${q.content.escapeMentions()}\" \n - ${q.user}").queue()
+        val user = DB.getFirstColumn<String>("SELECT `username` FROM `seen_users` WHERE `id` = ?", q.user) ?: "Unknown"
+        context.channel.sendMessage("\"${q.content.escapeMentions()}\" \n - $user").queue()
     }
 }
 

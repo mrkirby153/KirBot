@@ -97,7 +97,7 @@ class Quotes : Module("quote") {
             val quote = Quote()
             quote.serverId = event.guild.id
             quote.messageId = event.messageId
-            quote.user = msg.author.name
+            quote.user = msg.author.id
             quote.content = msg.contentDisplay
             quote.save()
 

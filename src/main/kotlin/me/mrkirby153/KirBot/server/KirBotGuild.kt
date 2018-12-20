@@ -13,6 +13,7 @@ import me.mrkirby153.KirBot.database.models.guild.GuildMemberRole
 import me.mrkirby153.KirBot.database.models.guild.GuildMessage
 import me.mrkirby153.KirBot.database.models.guild.MusicSettings
 import me.mrkirby153.KirBot.database.models.guild.ServerSettings
+import me.mrkirby153.KirBot.database.models.guild.starboard.StarboardSettings
 import me.mrkirby153.KirBot.logger.LogManager
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.AntiRaid
@@ -44,6 +45,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
     }
 
     lateinit var settings: ServerSettings
+    lateinit var starboard: StarboardSettings
     lateinit var customCommands: MutableList<CustomCommand>
     lateinit var commandAliases: MutableList<CommandAlias>
     val clearances: MutableMap<String, Int> = mutableMapOf()
@@ -124,6 +126,12 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         val musicSettings = Model.where(MusicSettings::class.java, "id", this.id).first()
                 ?: MusicSettings(this)
         musicSettings.save()
+
+        starboard = Model.where(
+                StarboardSettings::class.java, "id", this.id).first() ?: StarboardSettings().apply {
+            this.id = this@KirBotGuild.id
+            save()
+        }
 
         logManager.reloadLogChannels()
 

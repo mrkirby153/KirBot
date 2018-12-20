@@ -51,7 +51,7 @@ class Quotes : Module("quote") {
 
     @SubscribeEvent
     fun onMessageReactionAdd(event: MessageReactionAddEvent) {
-        if (event.reactionEmote.name != quoteReaction)
+        if (event.reactionEmote.name != quoteReaction || event.guild.kirbotGuild.starboard.enabled)
             return
         event.guild.kirbotGuild.lock()
         debug("Beginning quote sequence")

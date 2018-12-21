@@ -21,6 +21,7 @@ import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import me.mrkirby153.KirBot.utils.promptForConfirmation
 import me.mrkirby153.kcutils.utils.TableBuilder
+import net.dv8tion.jda.core.MessageBuilder
 
 @Command(name = "infractions,infraction,inf", arguments = ["[user:snowflake]"],
         clearance = CLEARANCE_MOD)
@@ -99,7 +100,8 @@ class CommandInfractions : BaseCommand(false, CommandCategory.MODERATION) {
                     inline = true
                 }
                 field {
-                    val user = Model.where(DiscordUser::class.java, "id", infraction.issuerId).first()
+                    val user = Model.where(DiscordUser::class.java, "id",
+                            infraction.issuerId).first()
                     title = "Moderator"
                     description {
                         if (user != null)
@@ -171,5 +173,35 @@ class CommandInfractions : BaseCommand(false, CommandCategory.MODERATION) {
             }
             return@promptForConfirmation true
         })
+    }
+
+    @Command(name = "export", clearance = CLEARANCE_MOD)
+    @LogInModlogs
+    @CommandDescription("Exports a CSV of infractions")
+    fun export(context: Context, cmdContext: CommandContext) {
+        val infractions = Model.where(Infraction::class.java, "guild", context.guild.id).get()
+        val infString = buildString {
+            appendln("id,user,issuer,reason,timestamp")
+            infractions.forEach {
+                append(it.id)
+                append(",")
+                append(it.userId)
+                append(",")
+                append(it.issuerId)
+                append(",")
+                if (it.reason?.contains(",") == true) {
+                    append("\"")
+                    append(it.reason)
+                    append("\"")
+                } else {
+                    append(it.reason ?: "NULL")
+                }
+                append(",")
+                appendln(it.createdAt.toString())
+            }
+        }
+        context.channel.sendFile(infString.toByteArray(), "infractions.csv", MessageBuilder().apply {
+            setContent("Exported ${infractions.size} infractions")
+        }.build()).queue()
     }
 }

@@ -7,6 +7,8 @@ import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.HttpUtils
+import me.mrkirby153.KirBot.utils.escapeMentions
+import me.mrkirby153.KirBot.utils.toTypedArray
 import okhttp3.Request
 import org.json.JSONObject
 import org.json.JSONTokener
@@ -28,11 +30,9 @@ class CommandUrban : BaseCommand(false) {
 
         val json = JSONObject(JSONTokener(body.string()))
 
-        val resultType = json.getString("result_type")
-        if (resultType == "no_results")
-            throw CommandException("No definition found for `$query`")
-
-        context.channel.sendMessage("$query - " +
-                (json.getJSONArray("list")[0] as JSONObject).getString("definition")).queue()
+        val results = json.getJSONArray("list").toTypedArray(JSONObject::class.java)
+        if(results.isEmpty())
+            throw CommandException("No definition for `$query`")
+        context.channel.sendMessage("$query - ${results.first().getString("definition").replace(Regex("\\[([^]]+)]"), "$1")}".escapeMentions()).queue()
     }
 }

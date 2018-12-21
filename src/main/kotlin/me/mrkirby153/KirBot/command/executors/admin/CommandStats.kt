@@ -9,6 +9,7 @@ import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.globalAdmin
 import me.mrkirby153.kcutils.Time
+import net.dv8tion.jda.core.entities.Guild
 import java.awt.Color
 
 @Command(name = "stats")
@@ -45,6 +46,11 @@ class CommandStats : BaseCommand(CommandCategory.ADMIN) {
                     description = users.size.toString()
                 }
                 field {
+                    title = "Messages"
+                    inline = true
+                    description = "${messages.values.sum()} total. ${messages[context.guild.id]} in this server"
+                }
+                field {
                     title = "Uptime"
                     inline = true
                     description = Time.formatLong(System.currentTimeMillis() - Bot.startTime)
@@ -64,7 +70,8 @@ class CommandStats : BaseCommand(CommandCategory.ADMIN) {
                             } else {
                                 append("\n")
                             }
-                            appendln("__Message__: `${Bot.gitProperties["git.commit.message.short"]}`")
+                            appendln(
+                                    "__Message__: `${Bot.gitProperties["git.commit.message.short"]}`")
                         }
                     }
                 }
@@ -75,5 +82,13 @@ class CommandStats : BaseCommand(CommandCategory.ADMIN) {
                 }
             }
         }.rest().queue()
+    }
+
+    companion object {
+        var messages = mutableMapOf<String, Long>()
+
+        fun incMessage(guild: Guild) {
+            messages[guild.id] = (messages[guild.id] ?: 0) + 1
+        }
     }
 }

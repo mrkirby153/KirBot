@@ -3,6 +3,7 @@ package me.mrkirby153.KirBot.listener
 import com.mrkirby153.bfs.model.Model
 import com.mrkirby153.bfs.sql.elements.Pair
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.command.executors.admin.CommandStats
 import me.mrkirby153.KirBot.database.models.DiscordUser
 import me.mrkirby153.KirBot.database.models.guild.GuildMember
 import me.mrkirby153.KirBot.database.models.guild.GuildMemberRole
@@ -32,6 +33,7 @@ import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleRemoveEvent
 import net.dv8tion.jda.core.events.guild.voice.GuildVoiceGuildDeafenEvent
 import net.dv8tion.jda.core.events.guild.voice.GuildVoiceGuildMuteEvent
 import net.dv8tion.jda.core.events.guild.voice.GuildVoiceJoinEvent
+import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent
 import net.dv8tion.jda.core.events.role.RoleCreateEvent
 import net.dv8tion.jda.core.events.role.RoleDeleteEvent
 import net.dv8tion.jda.core.events.role.update.GenericRoleUpdateEvent
@@ -91,6 +93,11 @@ class ShardListener(val shard: Shard, val bot: Bot) : KirBotEventListener() {
     @SubscribeEvent
     fun onGuildVoiceJoin(event: GuildVoiceJoinEvent) {
         UserPersistenceHandler.restoreVoiceState(event.member.user, event.guild)
+    }
+
+    @SubscribeEvent
+    fun onMessage(event: GuildMessageReceivedEvent) {
+        CommandStats.incMessage(event.guild)
     }
 
     @SubscribeEvent

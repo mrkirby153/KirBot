@@ -1,0 +1,16 @@
+site_name: KirBot
+theme:
+  name: 'material'
+nav:
+  - Home: 'index.md'
+  - Adding: 'adding.md'
+  - "Command List": 'commands.md'
+  - Clearance: 'clearance.md'
+  - Admin Panel:
+    - General: 'panel/general.md'
+    - Permissions: 'panel/permissions.md'
+    - Commands: 'panel/commands.md'
+    - Music: 'panel/music.md'
+    - Spam: 'panel/spam.md'
+    - Censor: 'panel/censor.md'
+    - Anti-Raid: 'panel/antiraid.md'

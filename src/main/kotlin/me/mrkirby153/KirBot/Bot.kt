@@ -8,6 +8,7 @@ import com.mrkirby153.bfs.sql.elements.Pair
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers
+import me.mrkirby153.KirBot.command.CommandDocumentationGenerator
 import me.mrkirby153.KirBot.database.DatabaseConnection
 import me.mrkirby153.KirBot.database.models.guild.ServerSettings
 import me.mrkirby153.KirBot.error.UncaughtErrorReporter
@@ -20,6 +21,7 @@ import me.mrkirby153.KirBot.sharding.ShardManager
 import me.mrkirby153.KirBot.utils.HttpUtils
 import me.mrkirby153.KirBot.utils.readProperties
 import me.mrkirby153.kcutils.Time
+import me.mrkirby153.kcutils.child
 import me.mrkirby153.kcutils.readProperties
 import net.dv8tion.jda.core.OnlineStatus
 import okhttp3.Request
@@ -160,6 +162,8 @@ object Bot {
         AdminControl.sendQueuedMessages()
         AdminControl.log("Bot startup complete in ${Time.formatLong(
                 System.currentTimeMillis() - startTime).toLowerCase()}. On $guildCount guilds with ${memberSet.size} users")
+
+        CommandDocumentationGenerator.generate(files.data.child("commands.md"))
     }
 
     fun stop() {

@@ -30,7 +30,7 @@ class InfractionModule : Module("infractions") {
     }
 
     @Periodic(120)
-    fun clearDebouncer(){
+    fun clearDebouncer() {
         debouncer.removeExpired()
     }
 
@@ -40,23 +40,24 @@ class InfractionModule : Module("infractions") {
                         Pair("guild", event.guild.id)))
             return
         // Create an infraction from the audit logs if we can view the banlist
-        if (event.guild.selfMember.hasPermission(Permission.BAN_MEMBERS))
-            event.guild.banList.queue { banList ->
-                val entry = banList.firstOrNull { it.user.id == event.user.id } ?: return@queue
-                val infraction = Infraction()
-                val actor = findBannedUser(event.guild, event.user.id)
-                infraction.issuerId = actor?.id
-                infraction.userId = event.user.id
-                infraction.guild = event.guild.id
-                infraction.createdAt = Timestamp(System.currentTimeMillis())
-                infraction.type = InfractionType.BAN
-                infraction.reason = entry.reason ?: "No reason specified"
-                infraction.create()
-                Bot.LOG.debug("Created infraction ${infraction.id}")
-                event.guild.kirbotGuild.logManager.genericLog(LogEvent.USER_BAN, ":rotating_light:",
-                        "${event.user.nameAndDiscrim} (`${event.user.id}`) was banned by **${actor?.nameAndDiscrim
-                                ?: "Unknown"}** (`${entry.reason}`)")
-            }
+        if (event.guild.selfMember.hasPermission(Permission.BAN_MEMBERS)) {
+            // TODO 1/6/2019 Fix deadlock error where complete() is used
+            val banList = event.guild.banList.complete()
+            val entry = banList.firstOrNull { it.user.id == event.user.id } ?: return
+            val infraction = Infraction()
+            val actor = findBannedUser(event.guild, event.user.id)
+            infraction.issuerId = actor?.id
+            infraction.userId = event.user.id
+            infraction.guild = event.guild.id
+            infraction.createdAt = Timestamp(System.currentTimeMillis())
+            infraction.type = InfractionType.BAN
+            infraction.reason = entry.reason ?: "No reason specified"
+            infraction.create()
+            Bot.LOG.debug("Created infraction ${infraction.id}")
+            event.guild.kirbotGuild.logManager.genericLog(LogEvent.USER_BAN, ":rotating_light:",
+                    "${event.user.nameAndDiscrim} (`${event.user.id}`) was banned by **${actor?.nameAndDiscrim
+                            ?: "Unknown"}** (`${entry.reason}`)")
+        }
     }
 
     @SubscribeEvent

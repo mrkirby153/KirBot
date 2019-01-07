@@ -125,8 +125,9 @@ class Spam : Module("spam") {
             con.setex(key, 60, System.currentTimeMillis().toString())
             if (last + (10 * 1000) < System.currentTimeMillis()) {
                 val settings = getSettings(violation.guild.id)
-                val punishment = settings.optString("punishment") ?: return
-                val duration = settings.optLong("punishment_duration", -1)
+                val rule = getRule(violation.guild.id, violation.level)
+                val punishment = rule?.optString("punishment", settings.optString("punishment")) ?: "NONE"
+                val duration = rule?.optLong("punishment_duration", settings.optLong("punishment_duration", -1)) ?: -1
 
                 // Modlog
                 violation.guild.kirbotGuild.logManager.genericLog(LogEvent.SPAM_VIOLATE,
@@ -171,20 +172,20 @@ class Spam : Module("spam") {
                     }
                 }
 
-                if (settings.has("clean_count") || settings.has("clean_duration")) {
+                if (settings.has("clean_count") || settings.has("clean_duration") || rule?.has("clean_count") == true || rule?.has("clean_duration") == true) {
                     Bot.LOG.debug("Performing clean")
+                    val cleanCount = rule?.optString("clean_count", settings.optString("clean_count", null))
+                    val cleanDuration = rule?.optString("clean_duration", settings.optString("clean_duration", null))
                     Thread.sleep(
                             250) // Wait to make sure in-flight stuff has been committed to the db
                     val messageQuery = Model.query(GuildMessage::class.java).where("author",
                             violation.user.id).where("server_id", violation.guild.id).where(
                             "deleted", false)
-                    if (settings.has("clean_count")) {
-                        val amount = (settings.optString("clean_count") ?: "0").toLong()
-                        messageQuery.limit(amount)
+                    if (cleanCount != null) {
+                        messageQuery.limit(cleanCount.toLong())
                     }
-                    if (settings.has("clean_duration")) {
-                        val instant = Instant.now().minusSeconds((settings.optString(
-                                "clean_duration") ?: "0").toLong())
+                    if (cleanDuration != null) {
+                        val instant = Instant.now().minusSeconds(cleanDuration.toLong())
                         val after = Timestamp(instant.toEpochMilli())
                         messageQuery.where("created_at", ">", after)
                     }

@@ -30,6 +30,8 @@ import net.dv8tion.jda.core.events.guild.member.GuildMemberJoinEvent
 import net.dv8tion.jda.core.events.guild.member.GuildMemberNickChangeEvent
 import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleAddEvent
 import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleRemoveEvent
+import net.dv8tion.jda.core.events.guild.update.GuildUpdateIconEvent
+import net.dv8tion.jda.core.events.guild.update.GuildUpdateNameEvent
 import net.dv8tion.jda.core.events.guild.voice.GuildVoiceGuildDeafenEvent
 import net.dv8tion.jda.core.events.guild.voice.GuildVoiceGuildMuteEvent
 import net.dv8tion.jda.core.events.guild.voice.GuildVoiceJoinEvent
@@ -68,6 +70,20 @@ class ShardListener(val shard: Shard, val bot: Bot) : KirBotEventListener() {
             u.create()
         }
         event.guild.kirbotGuild.unlock()
+    }
+
+    @SubscribeEvent
+    fun onGuildUpdateName(event: GuildUpdateNameEvent) {
+        val guild = event.guild.kirbotGuild
+        guild.settings.name = event.newName
+        guild.settings.save()
+    }
+
+    @SubscribeEvent
+    fun onGuildIconUpdate(event: GuildUpdateIconEvent) {
+        val guild = event.guild.kirbotGuild
+        guild.settings.iconId = event.newIconId
+        guild.settings.save()
     }
 
     @SubscribeEvent

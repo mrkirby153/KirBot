@@ -60,6 +60,7 @@ class MusicManager(val guild: Guild) {
         ModuleManager[Redis::class.java].getConnection().use {
             it.del("music.queue:${this.guild.id}")
             it.del("music.playing:${this.guild.id}")
+            it.del(*it.keys("music:${guild.id}:channel:*").toTypedArray())
         }
     }
 
@@ -152,6 +153,18 @@ class MusicManager(val guild: Guild) {
             val arr = JSONArray()
             queue.forEach { arr.put(it) }
             it.set("music.queue:${guild.id}", arr.toString())
+        }
+    }
+
+    fun updateVoiceState() {
+        ModuleManager[Redis::class.java].getConnection().use { redis ->
+            val keys = redis.keys("music:${guild.id}:channel:*")
+            this.guild.selfMember.voiceState.channel?.members?.forEach {
+                redis.set("music:${guild.id}:channel:${it.user.id}", "true")
+                keys.remove("music:${guild.id}:channel:${it.user.id}")
+            }
+            if (keys.isNotEmpty())
+                redis.del(*keys.toTypedArray())
         }
     }
 

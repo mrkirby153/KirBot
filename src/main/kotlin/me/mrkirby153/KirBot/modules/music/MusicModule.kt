@@ -25,7 +25,10 @@ class MusicModule : Module("music") {
     fun updateQueue() {
         playingGuilds.mapNotNull { Bot.shardManager.getGuild(it) }.map {
             getManager(it)
-        }.forEach { it.updateQueue() }
+        }.forEach {
+            it.updateQueue()
+            it.updateVoiceState()
+        }
     }
 
     /**

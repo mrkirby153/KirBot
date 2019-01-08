@@ -23,8 +23,8 @@ Set the timezone of the logs with the **Log Timezone** field. Most conventional 
 | ROLE_ADD | A role was added to a user |
 | USER_JOIN | A user joined the server |
 | USER_LEAVE | A user left the server |
-| SPAM_VIOLATE | A user has violated any of the [spam](panel/spam.md) rules |
-| MESSAGE_CENSOR | A user has violated any of the [censor](panel/censor.md) rules |
+| SPAM_VIOLATE | A user has violated any of the [spam](spam.md) rules |
+| MESSAGE_CENSOR | A user has violated any of the [censor](censor.md) rules |
 | MESSAGE_EDIT | A user has edited their message |
 | ROLE_CREATE | A Role was created |
 | ADMIN_COMMAND | A moderator or admin used an admin command (Not all commands are logged) |

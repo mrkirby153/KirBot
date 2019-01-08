@@ -9,7 +9,7 @@ You can also add the bot to your server from the web admin panel. Click [here](h
 
 
 ## Server Setup
-After adding the bot a few setup tasks must be perfored.
+After adding the bot a few setup tasks must be performed.
 
 1. Ensure the bot has the neccecary permissions to function (this should automatically be completed when adding the bot)
 2. Positioning KirBot's role such that it can interact with the most users possible

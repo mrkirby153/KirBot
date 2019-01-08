@@ -1,13 +1,13 @@
 package me.mrkirby153.KirBot.redis.commands
 
-import me.mrkirby153.KirBot.Bot
+import net.dv8tion.jda.core.entities.Guild
+import net.dv8tion.jda.core.entities.User
 import org.json.JSONObject
 
 class BotChat: RedisCommandHandler {
-    override fun handle(json: JSONObject) {
-        val server = json.getString("server")
+    override fun handle(guild: Guild?, user: User?, json: JSONObject) {
         val channel = json.getString("channel")
         val msg = json.getString("message")
-        Bot.shardManager.getShard(server)?.getTextChannelById(channel)?.sendMessage(msg)?.queue()
+        guild?.getTextChannelById(channel)?.sendMessage(msg)?.queue()
     }
 }

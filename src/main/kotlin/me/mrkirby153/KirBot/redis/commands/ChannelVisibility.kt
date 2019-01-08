@@ -1,20 +1,20 @@
 package me.mrkirby153.KirBot.redis.commands
 
-import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.utils.hide
 import me.mrkirby153.KirBot.utils.unhide
+import net.dv8tion.jda.core.entities.Guild
+import net.dv8tion.jda.core.entities.User
 import org.json.JSONObject
 
 class ChannelVisibility : RedisCommandHandler {
-    override fun handle(json: JSONObject) {
-        val server = json.getString("server")
+    override fun handle(guild: Guild?, user: User?, json: JSONObject) {
         val chan = json.getString("channel")
         val visible = json.getBoolean("visible")
 
         if (!visible)
-            Bot.shardManager.getGuild(server)?.getTextChannelById(chan)?.hide()
+            guild?.getTextChannelById(chan)?.hide()
         else
-            Bot.shardManager.getGuild(server)?.getTextChannelById(chan)?.unhide()
+            guild?.getTextChannelById(chan)?.unhide()
     }
 
 }

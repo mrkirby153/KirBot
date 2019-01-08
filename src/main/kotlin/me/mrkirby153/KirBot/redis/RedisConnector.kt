@@ -19,7 +19,7 @@ class RedisConnector(val connector: RedisConnection) {
                 try {
                     connector.get().use {
                         retries = 0
-                        it.psubscribe(RedisHandler(), "kirbot:*")
+                        it.subscribe(RedisHandler(), "kirbot")
                     }
                 } catch (e: Exception) {
                     ErrorLogger.logThrowable(e)

@@ -39,11 +39,11 @@ class PlayCommand : MusicBaseCommand() {
         }
         when (manager.settings.whitelistMode) {
             MusicSettings.WhitelistMode.WHITELIST -> {
-                if (context.guild.selfMember.voiceState.channel.id !in manager.settings.channels)
+                if (context.member.voiceState.channel.id !in manager.settings.channels)
                     throw CommandException("I cannot play music in your channel")
             }
             MusicSettings.WhitelistMode.BLACKLIST -> {
-                if (context.guild.selfMember.voiceState.channel.id in manager.settings.channels)
+                if (context.member.voiceState.channel.id in manager.settings.channels)
                     throw CommandException("I cannot play music in your channel")
             }
             MusicSettings.WhitelistMode.OFF -> {

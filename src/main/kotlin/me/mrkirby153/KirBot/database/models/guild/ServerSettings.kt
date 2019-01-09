@@ -32,6 +32,9 @@ class ServerSettings : SoftDeletingModel() {
     @Column("command_discriminator")
     var cmdDiscriminator = "!"
 
+    @Column("command_silent_fail")
+    var failSilently = false
+
     @Column("cmd_whitelist")
     var cmdWhitelistRaw = "[]"
 

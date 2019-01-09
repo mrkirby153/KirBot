@@ -148,8 +148,11 @@ object CommandExecutor {
                 Bot.LOG.debug(
                         "${context.author.id} was denied access to $cmd due to lack of clearance. Required $clearance -- Found: ${context.author.getClearance(
                                 context.guild)}")
-                context.channel.sendMessage(
-                        ":lock: You do not have permission to perform this command").queue()
+                if (!settings.failSilently)
+                    context.channel.sendMessage(
+                            ":lock: You do not have permission to perform this command").queue()
+                else
+                    Bot.LOG.debug("Failing silently")
                 return@submit
             }
 

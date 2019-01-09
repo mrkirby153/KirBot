@@ -38,7 +38,8 @@ object CommandExecutor {
     private val executorThread = Executors.newFixedThreadPool(2,
             ThreadFactoryBuilder().setDaemon(true).setNameFormat(
                     "KirBot Command Executor-%d").build())
-    private val commandWatchdogThread = Executors.newCachedThreadPool(ThreadFactoryBuilder().setDaemon(true).setNameFormat("Command Watchdog-%d").build())
+    private val commandWatchdogThread = Executors.newCachedThreadPool(
+            ThreadFactoryBuilder().setDaemon(true).setNameFormat("Command Watchdog-%d").build())
 
     fun loadAll() {
         Bot.LOG.info("Starting loading of commands, this may take a while")
@@ -95,6 +96,8 @@ object CommandExecutor {
 
             val alias = context.kirbotGuild.commandAliases.firstOrNull { it.command == cmd }
 
+            val defaultAlias = context.kirbotGuild.commandAliases.firstOrNull { it.command == "*" }
+
             if (command == null) {
                 executeCustomCommand(context, cmd, args.toTypedArray())
                 return@submit
@@ -125,13 +128,23 @@ object CommandExecutor {
                 return@submit
             }
 
-            val clearance = if (alias != null && alias.clearance != -1) alias.clearance else annotation?.clearance
-                    ?: 0
-            if(annotation.admin && !context.author.globalAdmin) {
-                Bot.LOG.debug("Attempted to execute an admin command while not being a global admin")
+            var clearance = defaultAlias?.clearance ?: 0 // Start with the minimum clearance
+            if (alias != null && alias.clearance != -1) // Explicitly overridden clearance
+                clearance = alias.clearance
+            else {
+                // Fall back to given clearance iff the given is greater than the default
+                val annotationClearance = annotation?.clearance ?: 0
+                if (annotationClearance > clearance)
+                    clearance = annotationClearance
+            }
+
+            if (annotation.admin && !context.author.globalAdmin) {
+                Bot.LOG.debug(
+                        "Attempted to execute an admin command while not being a global admin")
                 return@submit
             }
-            if (clearance > context.author.getClearance(context.guild) && !context.author.globalAdmin) {
+            if (clearance > context.author.getClearance(
+                            context.guild) && !context.author.globalAdmin) {
                 Bot.LOG.debug(
                         "${context.author.id} was denied access to $cmd due to lack of clearance. Required $clearance -- Found: ${context.author.getClearance(
                                 context.guild)}")
@@ -173,7 +186,7 @@ object CommandExecutor {
                 }
             } catch (e: CommandException) {
                 context.send().error(e.message ?: "An unknown error has occurred!").queue()
-            } catch(e: InterruptedException){
+            } catch (e: InterruptedException) {
                 Bot.LOG.debug("Caught interrupted exception from command. Ignoring")
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -189,7 +202,7 @@ object CommandExecutor {
                 Bot.LOG.debug("Command hit timeout, canceling")
                 future.cancel(true)
                 context.send().error("An unknown error has occurred!").queue()
-            } catch (e: Exception){
+            } catch (e: Exception) {
                 e.printStackTrace()
             }
         }

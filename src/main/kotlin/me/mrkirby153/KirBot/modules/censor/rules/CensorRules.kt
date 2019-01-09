@@ -5,6 +5,7 @@ import net.dv8tion.jda.core.JDA
 import net.dv8tion.jda.core.entities.Invite
 import net.dv8tion.jda.core.entities.Message
 import org.json.JSONObject
+import java.util.regex.Pattern
 
 class ZalgoRule : CensorRule {
     private val zalgo = '\u0300'..'\u036F'
@@ -35,7 +36,7 @@ class WordRule : CensorRule {
         val words = config.optJSONArray("blocked_words")?.toTypedArray(String::class.java)
                 ?: arrayListOf()
         words.forEach {
-            val r = Regex("(^|\\s)${it.toLowerCase()}(\\s|$)")
+            val r = Regex("(^|\\s)${Pattern.quote(it.toLowerCase())}(\\s|$)")
             if (r.containsMatchIn(message.contentRaw.toLowerCase()))
                 throw ViolationException("Found blacklisted word `$it`")
         }

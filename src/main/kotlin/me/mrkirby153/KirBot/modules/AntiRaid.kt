@@ -76,7 +76,8 @@ class AntiRaid : Module("AntiRaid") {
 
     @SubscribeEvent
     fun onJoin(event: GuildMemberJoinEvent) {
-        handleJoin(event.guild, event.user)
+        if (this.raidSettingsCache[event.guild.id].enabled)
+            handleJoin(event.guild, event.user)
     }
 
     fun handleJoin(guild: Guild, user: User) {
@@ -316,7 +317,7 @@ class AntiRaid : Module("AntiRaid") {
     fun updateStatusMessage(guild: Guild) {
         val settings = raidSettingsCache[guild.id]
         val timeLeft = ((this.lastJoin[guild.id] ?: System.currentTimeMillis())
-        +(settings.quietPeriod * 1000)) - System.currentTimeMillis()
+                + (settings.quietPeriod * 1000)) - System.currentTimeMillis()
         val members = getRaidMembers(activeRaids[guild.id]!!.id)
 
         val msg = this.statusMessages[guild]

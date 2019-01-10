@@ -269,6 +269,8 @@ object CommandExecutor {
     }
 
     private fun canExecuteInChannel(command: BaseCommand, channel: Channel): Boolean {
+        if(command.annotation.admin)
+            return true
         val data = channel.guild.kirbotGuild.settings
         return if (command.respectWhitelist) {
             if (data.cmdWhitelist.isEmpty())

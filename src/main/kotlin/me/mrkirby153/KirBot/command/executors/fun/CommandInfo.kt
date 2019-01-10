@@ -59,10 +59,10 @@ class CommandInfo : BaseCommand(CommandCategory.FUN) {
                 user.id, context.guild.id)
 
         val infractions = DB.getFirstColumn<Long>(
-                "SELECT COUNT(*) FROM `infractions` WHERE `user_id` = ? AND `reason` NOT LIKE '[NOTE]%'",
+                "SELECT COUNT(*) FROM `infractions` WHERE `user_id` = ? AND `reason` NOT LIKE '[NOTE]%' AND `type` != 'unban'",
                 user.id)
         val servers = DB.getFirstColumn<Long>(
-                "SELECT COUNT(DISTINCT `guild`) FROM `infractions` WHERE `user_id` = ? AND `reason` NOT LIKE '[NOTE]%'",
+                "SELECT COUNT(DISTINCT `guild`) FROM `infractions` WHERE `user_id` = ? AND `reason` NOT LIKE '[NOTE]%'  AND `type` != 'unban'",
                 user.id)
 
         val jdaMember = user.getMember(context.guild)

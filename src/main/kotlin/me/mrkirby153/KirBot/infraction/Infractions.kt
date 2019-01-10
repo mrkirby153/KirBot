@@ -252,7 +252,7 @@ object Infractions {
         if (!guild.selfMember.hasPermission(Permission.MANAGE_ROLES))
             return Pair(false, DmResult.UNKNOWN)
         val member = guild.getMemberById(user) ?: return Pair(false, DmResult.UNKNOWN)
-        addMutedRole(member.user, guild)
+        addMutedRole(member.user, guild, "Mute by ${lookupUser(issuer)}: ${reason ?: ""}")
 
         var dmResult = DmResult.NOT_SENT
         if (createInfraction) {
@@ -274,7 +274,8 @@ object Infractions {
     fun unmute(user: String, guild: Guild, issuer: String, reason: String? = null): Boolean {
         if (!guild.selfMember.hasPermission(Permission.MANAGE_ROLES))
             return false
-        removeMutedRole(guild.getMemberById(user).user, guild)
+        removeMutedRole(guild.getMemberById(user).user, guild,
+                "Unmute by ${lookupUser(issuer)}: ${reason ?: ""}")
 
         getActiveInfractions(user,
                 guild).filter { it.type == InfractionType.MUTE || it.type == InfractionType.TEMPMUTE }.forEach { ban ->
@@ -295,7 +296,8 @@ object Infractions {
                  reason: String? = null): Pair<Boolean, DmResult> {
         if (!guild.selfMember.hasPermission(Permission.MANAGE_ROLES))
             return Pair(false, DmResult.UNKNOWN)
-        addMutedRole(guild.getMemberById(user).user, guild)
+        addMutedRole(guild.getMemberById(user).user, guild,
+                "Temp mute by ${lookupUser(issuer)}: ${reason ?: ""}")
         val inf = createInfraction(user, guild, if (issuer == "1") user else issuer, reason,
                 InfractionType.TEMPMUTE, Timestamp.from(
                 Instant.now().plusMillis(TimeUnit.MILLISECONDS.convert(duration, units))))
@@ -399,7 +401,7 @@ object Infractions {
         }
     }
 
-    fun addMutedRole(user: User, guild: Guild) {
+    fun addMutedRole(user: User, guild: Guild, reason: String = "") {
         Bot.LOG.debug("Adding muted role to $user in $guild")
         val role = getMutedRole(guild)
         if (role == null) {
@@ -407,15 +409,21 @@ object Infractions {
                     "Cannot assign the muted role to ${user.logName} because the muted role is not configured")
             return
         }
-        guild.controller.addSingleRoleToMember(user.getMember(guild),
-                role).queue()
+        val ra = guild.controller.addSingleRoleToMember(user.getMember(guild),
+                role)
+        if (reason.isNotBlank())
+            ra.reason(reason)
+        ra.queue()
     }
 
-    fun removeMutedRole(user: User, guild: Guild) {
+    fun removeMutedRole(user: User, guild: Guild, reason: String = "") {
         val r = user.getMember(guild)?.roles?.map { it.id } ?: return
         val mutedRole = getMutedRole(guild) ?: return
         if (mutedRole.id in r) {
-            guild.controller.removeSingleRoleFromMember(user.getMember(guild), mutedRole).queue()
+            guild.controller.removeSingleRoleFromMember(user.getMember(guild), mutedRole).apply {
+                if (reason.isNotBlank())
+                    reason(reason)
+            }.queue()
         }
     }
 

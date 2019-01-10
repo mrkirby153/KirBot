@@ -58,6 +58,13 @@ class CommandInfo : BaseCommand(CommandCategory.FUN) {
                 "SELECT id from server_messages WHERE author = ? AND server_id = ? ORDER BY id ASC LIMIT 1",
                 user.id, context.guild.id)
 
+        val infractions = DB.getFirstColumn<Long>(
+                "SELECT COUNT(*) FROM `infractions` WHERE `user_id` = ? AND `reason` NOT LIKE '[NOTE]%'",
+                user.id)
+        val servers = DB.getFirstColumn<Long>(
+                "SELECT COUNT(DISTINCT `guild`) FROM `infractions` WHERE `user_id` = ? AND `reason` NOT LIKE '[NOTE]%'",
+                user.id)
+
         val jdaMember = user.getMember(context.guild)
         context.send().embed {
             thumbnail = user.effectiveAvatarUrl
@@ -93,17 +100,24 @@ class CommandInfo : BaseCommand(CommandCategory.FUN) {
                             lastMessageId) else null
                     val now = Date(System.currentTimeMillis())
                     if (lastMsg != null) {
-                        val lastMsgAgo = if (now.time - lastMsg.time <= 2000) "a few seconds ago" else "${Time.format(
+                        val lastMsgAgo = if (now.time - lastMsg.time <= 1000) "a moment ago" else "${Time.format(
                                 0, now.time - lastMsg.time)} ago"
                         appendln("Last Message: $lastMsgAgo (${sdf.format(lastMsg)})")
                     }
                     if (firstMsg != null) {
-                        val firstMsgAgo = if (now.time - firstMsg.time <= 2000) "a few seconds ago" else "${Time.format(
+                        val firstMsgAgo = if (now.time - firstMsg.time <= 2000) "a moment ago" else "${Time.format(
                                 0, now.time - firstMsg.time)} ago"
                         appendln("First Message: $firstMsgAgo (${sdf.format(firstMsg)})")
                     }
-                    if(lastMsg != null || firstMsg != null)
+                    if (lastMsg != null || firstMsg != null)
                         appendln("")
+                }
+                if(infractions > 0) {
+                    appendln("")
+                    appendln("**> Infractions**")
+                    appendln("Total Infractions: $infractions")
+                    appendln("Servers: $servers")
+                    appendln("")
                 }
                 appendln("Sent Messages: $sentMessages")
                 appendln("Edited Messages: $editedMessages")

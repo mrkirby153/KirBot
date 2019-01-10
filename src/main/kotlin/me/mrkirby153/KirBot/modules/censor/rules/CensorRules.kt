@@ -25,6 +25,11 @@ class TokenRule : CensorRule {
         val tokens = config.optJSONArray("blocked_tokens")?.toTypedArray(String::class.java)
                 ?: arrayListOf()
         tokens.forEach {
+            if (it.startsWith("r:")) {
+                val r = Regex(it.substring(2))
+                if (r.containsMatchIn(message.contentRaw.toLowerCase()))
+                    throw ViolationException("Matched the regex token `${it.substring(2)}`")
+            }
             if (message.contentRaw.toLowerCase().contains(it.toLowerCase()))
                 throw ViolationException("Found blacklisted token `$it`")
         }
@@ -36,9 +41,21 @@ class WordRule : CensorRule {
         val words = config.optJSONArray("blocked_words")?.toTypedArray(String::class.java)
                 ?: arrayListOf()
         words.forEach {
-            val r = Regex("(^|\\s)${Pattern.quote(it.toLowerCase())}(\\s|$)")
-            if (r.containsMatchIn(message.contentRaw.toLowerCase()))
-                throw ViolationException("Found blacklisted word `$it`")
+            var regex = false
+            val pattern = if (it.startsWith("r:")) {
+                // Regex
+                regex = true
+                it.substring(2)
+            } else {
+                Pattern.quote(it.toLowerCase())
+            }
+            val r = Regex("(^|\\s)$pattern(\\s|$)")
+            if (r.containsMatchIn(message.contentRaw.toLowerCase())) {
+                if (!regex)
+                    throw ViolationException("Found blacklisted word `$it`")
+                else
+                    throw ViolationException("Matched the regex word `${it.substring(2)}`")
+            }
         }
     }
 }
@@ -63,7 +80,7 @@ class InviteRule : CensorRule {
             return
         message.invites.forEach { invite ->
             val guild = resolve(message.jda, invite) ?: throw ViolationException("Invite `$invite`")
-            if(guild.id == message.guild.id) // Allow invites to the current server
+            if (guild.id == message.guild.id) // Allow invites to the current server
                 return@forEach
             if ((blacklistedGuilds != null && guild.id in blacklistedGuilds) || (blacklistedInvites != null && invite in blacklistedInvites))
                 throw ViolationException("Invite `$invite` to ${guild.name}")
@@ -76,7 +93,7 @@ class InviteRule : CensorRule {
         try {
             val inv = Invite.resolve(jda, invite).complete()
             return inv.guild
-        } catch(e: Exception){
+        } catch (e: Exception) {
             return null
         }
     }

@@ -18,12 +18,12 @@ class LogPump(private val delay: Long) : Thread() {
     override fun run() {
         Bot.LOG.debug("Log Pump starting up with ($delay ms delay)")
         while (running || shuttingDown) {
-            Bot.shardManager.shards.forEach { shard ->
-                shard.guilds.forEach { guild ->
-                    KirBotGuild[guild].logManager.process()
-                }
-            }
             try {
+                Bot.shardManager.shards.forEach { shard ->
+                    shard.guilds.forEach { guild ->
+                        KirBotGuild[guild].logManager.process()
+                    }
+                }
                 if (running)
                     sleep(delay)
             } catch (e: Exception) {

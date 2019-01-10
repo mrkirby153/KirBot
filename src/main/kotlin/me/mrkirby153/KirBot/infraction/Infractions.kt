@@ -24,6 +24,8 @@ import net.dv8tion.jda.core.events.guild.GuildBanEvent
 import net.dv8tion.jda.core.events.guild.GuildUnbanEvent
 import net.dv8tion.jda.core.events.guild.member.GuildMemberLeaveEvent
 import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleRemoveEvent
+import net.dv8tion.jda.core.exceptions.ErrorResponseException
+import net.dv8tion.jda.core.requests.ErrorResponse
 import java.sql.Timestamp
 import java.time.Instant
 import java.util.concurrent.Executors
@@ -129,16 +131,18 @@ object Infractions {
         infraction.revoke()
     }
 
-    fun kick(user: String, guild: Guild, issuer: String, reason: String? = null) {
+    fun kick(user: String, guild: Guild, issuer: String,
+             reason: String? = null): Pair<Boolean, DmResult> {
         if (!guild.selfMember.hasPermission(Permission.KICK_MEMBERS)) {
-            return
+            return Pair(false, DmResult.UNKNOWN)
         }
         ModuleManager[Logger::class.java].debouncer.create(GuildMemberLeaveEvent::class.java,
                 Pair("user", user))
-        guild.controller.kick(guild.getMemberById(user), reason ?: "").queue()
 
-        createInfraction(user, guild, if (issuer == "1") user else issuer, reason,
+        val inf = createInfraction(user, guild, if (issuer == "1") user else issuer, reason,
                 InfractionType.KICK)
+        val result = dmUser(user, guild, inf)
+        guild.controller.kick(guild.getMemberById(user), reason ?: "").queue()
 
         guild.kirbotGuild.logManager.genericLog(LogEvent.USER_KICK, ":boot:", buildString {
             append(lookupUser(user, true))
@@ -147,10 +151,13 @@ object Infractions {
                 append(": `$reason`")
             }
         })
+        return Pair(true, result)
     }
 
-    fun warn(user: String, guild: Guild, issuer: String, reason: String? = null) {
-        createInfraction(user, guild, issuer, reason, InfractionType.WARN)
+    fun warn(user: String, guild: Guild, issuer: String,
+             reason: String? = null): Pair<Boolean, DmResult> {
+        val inf = createInfraction(user, guild, issuer, reason, InfractionType.WARN)
+        val r = dmUser(user, guild, inf)
         guild.kirbotGuild.logManager.genericLog(LogEvent.USER_WARN, ":warning:", buildString {
             append(lookupUser(user, true))
             append(" Was warned by **${lookupUser(issuer)}**")
@@ -158,20 +165,22 @@ object Infractions {
                 append(": `$reason`")
             }
         })
+        return Pair(true, r)
     }
 
     fun ban(user: String, guild: Guild, issuer: String, reason: String? = null,
-            purgeDays: Int = 0) {
+            purgeDays: Int = 0): Pair<Boolean, DmResult> {
         if (!guild.selfMember.hasPermission(Permission.BAN_MEMBERS))
-            return
+            return Pair(false, DmResult.UNKNOWN)
         ModuleManager[InfractionModule::class.java].debouncer.create(GuildBanEvent::class.java,
                 Pair("user", user), Pair("guild", guild.id))
         ModuleManager[Logger::class.java].debouncer.create(GuildMemberLeaveEvent::class.java,
                 Pair("user", user))
-        guild.controller.ban(user, purgeDays, reason).queue()
 
-        createInfraction(user, guild, if (issuer == "1") user else issuer, reason,
+        val inf = createInfraction(user, guild, if (issuer == "1") user else issuer, reason,
                 InfractionType.BAN)
+        val r = dmUser(user, guild, inf)
+        guild.controller.ban(user, purgeDays, reason).queue()
 
         guild.kirbotGuild.logManager.genericLog(LogEvent.USER_BAN, ":rotating_light:", buildString {
             append(lookupUser(user, true))
@@ -179,35 +188,39 @@ object Infractions {
             if (reason != null)
                 append(": `$reason`")
         })
+        return Pair(true, r)
     }
 
-    fun softban(user: String, guild: Guild, issuer: String, reason: String? = null) {
+    fun softban(user: String, guild: Guild, issuer: String,
+                reason: String? = null): Pair<Boolean, DmResult> {
         if (!guild.selfMember.hasPermission(Permission.BAN_MEMBERS))
-            return
+            return Pair(false, DmResult.UNKNOWN)
         ModuleManager[InfractionModule::class.java].debouncer.create(GuildBanEvent::class.java,
                 Pair("user", user), Pair("guild", guild.id))
         ModuleManager[InfractionModule::class.java].debouncer.create(GuildUnbanEvent::class.java,
                 Pair("user", user), Pair("guild", guild.id))
         ModuleManager[Logger::class.java].debouncer.create(GuildMemberLeaveEvent::class.java,
                 Pair("user", user))
+
+        val inf = createInfraction(user, guild, if (issuer == "1") user else issuer, reason,
+                InfractionType.KICK)
+        val r = dmUser(user, guild, inf)
+
         guild.controller.ban(user, 7, reason).queue {
             guild.controller.unban(user).queue()
         }
-
-        createInfraction(user, guild, if (issuer == "1") user else issuer, reason,
-                InfractionType.KICK)
-
         guild.kirbotGuild.logManager.genericLog(LogEvent.USER_KICK, ":boot:", buildString {
             append(lookupUser(user, true))
             append(" Soft-Banned by **${lookupUser(issuer)}**")
             if (reason != null)
                 append(": `$reason`")
         })
+        return Pair(true, r)
     }
 
-    fun unban(user: String, guild: Guild, issuer: String, reason: String = "") {
+    fun unban(user: String, guild: Guild, issuer: String, reason: String = ""): Boolean {
         if (!guild.selfMember.hasPermission(Permission.BAN_MEMBERS))
-            return
+            return false
         ModuleManager[InfractionModule::class.java].debouncer.create(GuildUnbanEvent::class.java,
                 Pair("user", user), Pair("guild", guild.id))
         guild.banList.queue { banList ->
@@ -231,18 +244,22 @@ object Infractions {
                     if (reason.isNotBlank())
                         append("(`$reason`)")
                 })
+        return true
     }
 
     fun mute(user: String, guild: Guild, issuer: String, reason: String? = null,
-             createInfraction: Boolean = true) {
+             createInfraction: Boolean = true): Pair<Boolean, DmResult> {
         if (!guild.selfMember.hasPermission(Permission.MANAGE_ROLES))
-            return
-        val member = guild.getMemberById(user) ?: return
+            return Pair(false, DmResult.UNKNOWN)
+        val member = guild.getMemberById(user) ?: return Pair(false, DmResult.UNKNOWN)
         addMutedRole(member.user, guild)
 
-        if (createInfraction)
-            createInfraction(user, guild, if (issuer == "1") user else issuer, reason,
+        var dmResult = DmResult.NOT_SENT
+        if (createInfraction) {
+            val inf = createInfraction(user, guild, if (issuer == "1") user else issuer, reason,
                     InfractionType.MUTE)
+            dmResult = dmUser(user, guild, inf)
+        }
 
         guild.kirbotGuild.logManager.genericLog(LogEvent.USER_MUTE, ":zipper_mouth:", buildString {
             append(lookupUser(user, true))
@@ -251,11 +268,12 @@ object Infractions {
                 append(": `$reason`")
             }
         })
+        return Pair(true, dmResult)
     }
 
-    fun unmute(user: String, guild: Guild, issuer: String, reason: String? = null) {
+    fun unmute(user: String, guild: Guild, issuer: String, reason: String? = null): Boolean {
         if (!guild.selfMember.hasPermission(Permission.MANAGE_ROLES))
-            return
+            return false
         removeMutedRole(guild.getMemberById(user).user, guild)
 
         getActiveInfractions(user,
@@ -270,17 +288,18 @@ object Infractions {
                 append(": `$reason`")
             }
         })
+        return true
     }
 
     fun tempMute(user: String, guild: Guild, issuer: String, duration: Long, units: TimeUnit,
-                 reason: String? = null) {
+                 reason: String? = null): Pair<Boolean, DmResult> {
         if (!guild.selfMember.hasPermission(Permission.MANAGE_ROLES))
-            return
+            return Pair(false, DmResult.UNKNOWN)
         addMutedRole(guild.getMemberById(user).user, guild)
         val inf = createInfraction(user, guild, if (issuer == "1") user else issuer, reason,
                 InfractionType.TEMPMUTE, Timestamp.from(
                 Instant.now().plusMillis(TimeUnit.MILLISECONDS.convert(duration, units))))
-
+        val r = dmUser(user, guild, inf)
         waitForInfraction()
 
         guild.kirbotGuild.logManager.genericLog(LogEvent.USER_MUTE, ":zipper_mouth:", buildString {
@@ -291,20 +310,23 @@ object Infractions {
                 append(": `$reason`")
             }
         })
+        return Pair(true, r)
     }
 
     fun tempban(user: String, guild: Guild, issuer: String, duration: Long, units: TimeUnit,
-                reason: String? = null, purgeDays: Int = 0) {
+                reason: String? = null, purgeDays: Int = 0): Pair<Boolean, DmResult> {
         if (!guild.selfMember.hasPermission(Permission.BAN_MEMBERS))
-            return
+            return Pair(false, DmResult.UNKNOWN)
         ModuleManager[InfractionModule::class.java].ignoreBans.add(user)
+        val inf = createInfraction(user, guild, issuer, reason, InfractionType.TEMPBAN,
+                Timestamp.from(
+                        Instant.now().plusMillis(TimeUnit.MILLISECONDS.convert(duration, units))))
+        val r = dmUser(user, guild, inf)
+
         guild.banList.queue { banList ->
             if (user !in banList.map { it.user.id })
                 guild.controller.ban(user, purgeDays, reason).queue()
         }
-        val inf = createInfraction(user, guild, issuer, reason, InfractionType.TEMPBAN,
-                Timestamp.from(
-                        Instant.now().plusMillis(TimeUnit.MILLISECONDS.convert(duration, units))))
         waitForInfraction()
         guild.kirbotGuild.logManager.genericLog(LogEvent.USER_BAN, ":rotating_light:", buildString {
             append(lookupUser(user, true))
@@ -313,6 +335,7 @@ object Infractions {
             if (reason != null)
                 append(": `$reason`")
         })
+        return Pair(true, r)
     }
 
     fun createInfraction(user: String, guild: Guild, issuer: String, reason: String?,
@@ -423,5 +446,64 @@ object Infractions {
 
     fun getMutedRole(guild: Guild): Role? {
         return guild.kirbotGuild.settings.mutedRole
+    }
+
+    fun dmUser(user: String, guild: Guild, infraction: Infraction): DmResult {
+        val u = Bot.shardManager.getUser(user)
+        if (u != null)
+            return dmUser(u, guild, infraction)
+        val reason = infraction.reason ?: return DmResult.NOT_SENT
+        if (!reason.startsWith("[DM]") && !reason.startsWith("[ADM]"))
+            return DmResult.NOT_SENT
+        else
+            return DmResult.SEND_ERROR
+    }
+
+    fun dmUser(user: User, guild: Guild, infraction: Infraction): DmResult {
+        var reason = infraction.reason ?: return DmResult.NOT_SENT
+        if (!reason.startsWith("[DM]") && !reason.startsWith("[ADM]"))
+            return DmResult.NOT_SENT
+        val anonymous = reason.startsWith("[ADM]")
+        reason = reason.replace(Regex("\\[A?DM]"), "")
+        try {
+            val channel = user.openPrivateChannel().complete()
+            val action = when (infraction.type) {
+                InfractionType.WARNING -> "warned"
+                InfractionType.KICK -> "kicked"
+                InfractionType.BAN -> "banned"
+                InfractionType.UNBAN -> "unbanned"
+                InfractionType.MUTE -> "muted"
+                InfractionType.TEMPMUTE -> "temporarily muted"
+                InfractionType.UNKNOWN -> ""
+                InfractionType.WARN -> "warned"
+                InfractionType.TEMPBAN -> "temporarily banned"
+                InfractionType.TEMPROLE -> ""
+            }
+            channel.sendMessage(buildString {
+                append("You have been ")
+                append(action)
+                append(" in **")
+                append(guild.name)
+                append("**")
+                if (!anonymous) {
+                    append(" by ${lookupUser(infraction.issuerId!!, true)}")
+                }
+                if (reason.isNotBlank())
+                    append(": `$reason`")
+            }).complete()
+            return DmResult.SENT
+        } catch (e: ErrorResponseException) {
+            if (e.errorResponse == ErrorResponse.CANNOT_SEND_TO_USER) {
+                return DmResult.NOT_SENT
+            }
+        }
+        return DmResult.UNKNOWN
+    }
+
+    enum class DmResult {
+        SENT,
+        SEND_ERROR,
+        NOT_SENT,
+        UNKNOWN
     }
 }

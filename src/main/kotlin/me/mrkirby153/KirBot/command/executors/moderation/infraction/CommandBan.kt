@@ -1,6 +1,5 @@
 package me.mrkirby153.KirBot.command.executors.moderation.infraction
 
-import com.sun.org.glassfish.gmbal.Description
 import me.mrkirby153.KirBot.CommandDescription
 import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.Command
@@ -36,11 +35,22 @@ class CommandBan : BaseCommand(false, CommandCategory.MODERATION) {
             throw CommandException("I cannot ban this user")
         if (!context.author.canInteractWith(context.guild, user))
             throw CommandException("Missing permissions")
-        Infractions.ban(user.id, context.guild, context.author.id, reason, 0)
+        val r = Infractions.ban(user.id, context.guild, context.author.id, reason, 0)
+        if (!r.first)
+            throw CommandException("An error occurred when banning that user")
+
         context.send().success(
                 "Banned **${user.name}#${user.discriminator}** (`${user.id}`)" + buildString {
                     if (reason != null)
                         append(" (`$reason`)")
+                    when (r.second) {
+                        Infractions.DmResult.SENT ->
+                            append(" _Successfully messaged the user_")
+                        Infractions.DmResult.SEND_ERROR ->
+                            append(" _Could not send DM to user._")
+                        else -> {
+                        }
+                    }
                 }, true).queue()
     }
 }
@@ -60,10 +70,20 @@ class CommandForceBan : BaseCommand(false, CommandCategory.MODERATION) {
             if (!context.author.canInteractWith(context.guild, resolvedUser))
                 throw CommandException("Missing permissions")
         }
-        Infractions.ban(user, context.guild, context.author.id, reason, 0)
+        val r = Infractions.ban(user, context.guild, context.author.id, reason, 0)
+        if (!r.first)
+            throw CommandException("An error occurred when banning the user")
         context.send().success("Banned `$user` ${buildString {
             if (reason != null)
                 append("(`$reason`)")
+            when (r.second) {
+                Infractions.DmResult.SENT ->
+                    append(" _Successfully messaged the user_")
+                Infractions.DmResult.SEND_ERROR ->
+                    append(" _Could not send DM to user._")
+                else -> {
+                }
+            }
         }}", true).queue()
     }
 }
@@ -76,7 +96,9 @@ class CommandUnban : BaseCommand(false, CommandCategory.MODERATION) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val user = cmdContext.get<String>("user") ?: throw CommandException("Please specify a user")
         val reason = cmdContext.get<String>("reason") ?: ""
-        Infractions.unban(user, context.guild, context.author.id, reason)
+       val r = Infractions.unban(user, context.guild, context.author.id, reason)
+        if(!r)
+            throw CommandException("An error occurred when unbanning the user")
         context.send().success("Unbanned `$user`", true).queue()
     }
 }
@@ -99,18 +121,31 @@ class CommandTempban : BaseCommand(false, CommandCategory.MODERATION) {
             if (!context.author.canInteractWith(context.guild, resolvedUser))
                 throw CommandException("Missing permissions")
         }
-        Infractions.tempban(user, context.guild, context.author.id, time, TimeUnit.MILLISECONDS,
+       val r =  Infractions.tempban(user, context.guild, context.author.id, time, TimeUnit.MILLISECONDS,
                 reason)
-        context.send().success(
-                "${resolvedUser?.logName ?: user} has been temp-banned for ${Time.format(1, time)}", true).queue()
+        if(!r.first)
+            throw CommandException("An error occurred when tempbanning the user")
+        context.send().success(buildString {
+            append(resolvedUser?.logName ?: user)
+            append(" has been temp-banned for ${Time.format(1, time)}: ")
+            append("`$reason`")
+            when(r.second) {
+                Infractions.DmResult.SENT ->
+                    append(" _Successfully messaged the user_")
+                Infractions.DmResult.SEND_ERROR ->
+                    append(" _Could not send DM to user._")
+                else -> {}
+            }
+        }, true).queue()
     }
 
 }
 
-@Command(name = "softban", arguments = ["<user:snowflake>", "[reason:string...]"], clearance = CLEARANCE_MOD, permissions = [Permission.BAN_MEMBERS])
+@Command(name = "softban", arguments = ["<user:snowflake>", "[reason:string...]"],
+        clearance = CLEARANCE_MOD, permissions = [Permission.BAN_MEMBERS])
 @LogInModlogs
 @CommandDescription("Soft-bans (kicks and deletes the last 7 days) a user")
-class CommandSoftban: BaseCommand(false, CommandCategory.MODERATION){
+class CommandSoftban : BaseCommand(false, CommandCategory.MODERATION) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val user = cmdContext.get<String>("user")!!
         val reason = cmdContext.get<String>("reason")
@@ -119,10 +154,19 @@ class CommandSoftban: BaseCommand(false, CommandCategory.MODERATION){
             if (!context.author.canInteractWith(context.guild, resolvedUser))
                 throw CommandException("Missing permissions")
         }
-        Infractions.softban(user, context.guild, context.author.id)
+       val r = Infractions.softban(user, context.guild, context.author.id)
+        if(!r.first)
+            throw CommandException("An error occurred when softbanning")
         context.send().success("Soft-banned ${resolvedUser?.logName ?: user}" + buildString {
-            if(reason != null)
+            if (reason != null)
                 append(": `$reason`")
+            when(r.second) {
+                Infractions.DmResult.SENT ->
+                    append(" _Successfully messaged the user_")
+                Infractions.DmResult.SEND_ERROR ->
+                    append(" _Could not send DM to user._")
+                else -> {}
+            }
         }, true).queue()
     }
 

@@ -24,8 +24,18 @@ class CommandWarn : BaseCommand(false, CommandCategory.MODERATION) {
             if (!context.author.canInteractWith(context.guild, member.user))
                 throw CommandException("Missing permissions")
         }
-        Infractions.warn(userId, context.guild, context.author.id, reason)
-        context.send().success(
-                "Warned user ${Infractions.lookupUser(userId, true)} (`$reason`)", true).queue()
+        val r = Infractions.warn(userId, context.guild, context.author.id, reason)
+        context.send().success(buildString {
+            append("Warned user ")
+            append(Infractions.lookupUser(userId, true))
+            append(" (`$reason`)")
+            when(r.second) {
+                Infractions.DmResult.SENT ->
+                    append(" _Successfully messaged the user_")
+                Infractions.DmResult.SEND_ERROR ->
+                    append(" _Could not send DM to user._")
+                else -> {}
+            }
+        }, true).queue()
     }
 }

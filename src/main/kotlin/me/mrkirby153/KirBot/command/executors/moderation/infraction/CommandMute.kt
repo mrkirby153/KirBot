@@ -12,7 +12,7 @@ import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.canInteractWith
 import me.mrkirby153.KirBot.utils.getMember
-import me.mrkirby153.KirBot.utils.nameAndDiscrim
+import me.mrkirby153.KirBot.utils.logName
 import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.TextChannel
@@ -53,19 +53,44 @@ class CommandMute : BaseCommand(false, CommandCategory.MODERATION) {
                         throw CommandException("Please specify a duration greater than zero")
                     val r = if (split.size > 1) split.drop(1).joinToString(" ") else null
 
-                    Infractions.tempMute(user.id, context.guild, context.author.id, time,
+                    val res = Infractions.tempMute(user.id, context.guild, context.author.id, time,
                             TimeUnit.MILLISECONDS, r)
-                    context.send().success("Muted **${user.nameAndDiscrim}** for ${Time.format(1,
-                            time)}" + (if (r != null) " (`$r`)" else ""), true).queue()
+                    context.send().success(buildString {
+                        append("Muted **")
+                        append(user.logName)
+                        append("** for ")
+                        append(Time.format(1, time))
+                        if(r != null)
+                            append(" (`$r`)")
+                        when(res.second) {
+                            Infractions.DmResult.SENT ->
+                                append(" _Successfully messaged the user_")
+                            Infractions.DmResult.SEND_ERROR ->
+                                append(" _Could not send DM to user._")
+                            else -> {}
+                        }
+                    }, true).queue()
                 } catch (e: IllegalArgumentException) {
                     throw CommandException(e.message ?: "An unknown error occurred")
                 }
                 return
             }
         }
-        Infractions.mute(user.id, context.guild, context.author.id, reason)
-        context.send().success(
-                "Muted **${user.name}#${user.discriminator}**" + (if (reason != null) "(`$reason`)" else ""),
-                true).queue()
+        val r = Infractions.mute(user.id, context.guild, context.author.id, reason)
+        if(!r.first)
+            throw CommandException("An error occurred when muting")
+        context.send().success(buildString {
+            append("Muted ${user.logName}")
+            if (reason != null)
+                append(": `$reason`")
+            when (r.second) {
+                Infractions.DmResult.SENT ->
+                    append(" _Successfully messaged the user_")
+                Infractions.DmResult.SEND_ERROR ->
+                    append(" _Could not send DM to user._")
+                else -> {
+                }
+            }
+        }, true).queue()
     }
 }

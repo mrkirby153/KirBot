@@ -56,14 +56,22 @@ class TempMute : BaseCommand(false, CommandCategory.MODERATION) {
         if (mutedRole.position > highest)
             throw CommandException("cannot assign the muted role")
 
+        val r = Infractions.tempMute(user.id, context.guild, context.author.id, timeParsed,
+                TimeUnit.MILLISECONDS, reason)
         context.send().success(
                 "Muted ${user.nameAndDiscrim} for ${Time.format(1, timeParsed)}" + buildString {
                     if (reason != null) {
                         append(" (`$reason`)")
                     }
+                    when (r.second) {
+                        Infractions.DmResult.SENT ->
+                            append(" _Successfully messaged the user_")
+                        Infractions.DmResult.SEND_ERROR ->
+                            append(" _Could not send DM to user._")
+                        else -> {
+                        }
+                    }
                 }, true).queue()
-        Infractions.tempMute(user.id, context.guild, context.author.id, timeParsed,
-                TimeUnit.MILLISECONDS, reason)
     }
 
     class UnmuteScheduler(val infId: String, val userId: String, val guild: String) : Schedulable {

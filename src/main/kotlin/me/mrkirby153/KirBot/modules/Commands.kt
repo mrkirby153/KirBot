@@ -17,7 +17,7 @@ class Commands : Module("commands") {
 
     @SubscribeEvent
     fun onMessageReceived(event: MessageReceivedEvent) {
-        if (event.author == Bot.shardManager.getShard(event.guild)!!.selfUser)
+        if (event.author == event.jda.selfUser)
             return
 
         val context = Context(event)

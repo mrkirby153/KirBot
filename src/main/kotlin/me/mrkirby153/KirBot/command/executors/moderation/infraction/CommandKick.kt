@@ -29,11 +29,19 @@ class CommandKick : BaseCommand(false, CommandCategory.MODERATION) {
             throw CommandException("I cannot kick this user")
         if (!context.author.canInteractWith(context.guild, user))
             throw CommandException("Missing permissions")
-        Infractions.kick(user.id, context.guild, context.author.id, reason)
+       val r = Infractions.kick(user.id, context.guild, context.author.id, reason)
+        if(!r.first)
+            throw CommandException("An error occurred when kicking the user")
         context.send().success("Kicked **${user.name}#${user.discriminator}** ${buildString {
             if (reason != null)
                 append("(`$reason`)")
-        }}",
-                true).queue()
+            when(r.second) {
+                Infractions.DmResult.SENT ->
+                    append(" _Successfully messaged the user_")
+                Infractions.DmResult.SEND_ERROR ->
+                    append(" _Could not send DM to user._")
+                else -> {}
+            }
+        }}", true).queue()
     }
 }

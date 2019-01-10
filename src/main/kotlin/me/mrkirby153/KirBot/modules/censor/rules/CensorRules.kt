@@ -5,6 +5,8 @@ import net.dv8tion.jda.core.JDA
 import net.dv8tion.jda.core.entities.Invite
 import net.dv8tion.jda.core.entities.Message
 import org.json.JSONObject
+import java.net.MalformedURLException
+import java.net.URL
 import java.util.regex.Pattern
 
 class ZalgoRule : CensorRule {
@@ -104,17 +106,27 @@ class DomainRule : CensorRule {
     private val domainRegex = Regex(
             "([a-zA-Z0-9_]+\\.)*[a-zA-Z0-9][a-zA-Z0-9_-]+\\.[a-zA-z]{2,11}")
 
+    private val urlRegex = Regex("(https?://[^\\s]+)")
+
     override fun check(message: Message, config: JSONObject) {
         val domainSettings = config.optJSONObject("domains") ?: return
         if (!domainSettings.optBoolean("enabled", false))
             return
+
         val whitelist = domainSettings.optJSONArray("whitelist")?.toTypedArray(String::class.java)
         val blacklist = domainSettings.optJSONArray("blacklist")?.toTypedArray(String::class.java)
-
-        val domains = domainRegex.findAll(message.contentRaw).map { it.value }
-        domains.forEach { domain ->
-            if ((whitelist != null && domain !in whitelist) || (blacklist != null && domain in blacklist))
-                throw ViolationException("Blacklisted domain `$domain`")
+        urlRegex.findAll(message.contentRaw).map { it.value }.forEach {
+            try {
+                val url = URL(it)
+                val domain = url.host
+                if (whitelist != null && domain !in whitelist) {
+                    throw ViolationException("Not whitelisted domain: `$domain`")
+                } else if (blacklist != null && domain in blacklist) {
+                    throw ViolationException("Blacklisted domain: `$domain`")
+                }
+            } catch (ignored: MalformedURLException) {
+                // Ignore invalid URLs
+            }
         }
     }
 }

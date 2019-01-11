@@ -26,8 +26,8 @@ class TextBuilder {
     val length: Int
         get() = builder.length
 
-    fun appendln(string: String): TextBuilder {
-        builder.append("$string\n")
+    fun appendln(string: String? = null): TextBuilder {
+        builder.append("${string ?: ""}\n")
         return this
     }
 

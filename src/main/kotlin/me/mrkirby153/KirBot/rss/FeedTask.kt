@@ -1,17 +1,10 @@
 package me.mrkirby153.KirBot.rss
 
 import com.mrkirby153.bfs.model.Model
-import com.rometools.rome.io.SyndFeedInput
-import com.rometools.rome.io.XmlReader
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.database.models.rss.FeedItem
 import me.mrkirby153.KirBot.database.models.rss.RssFeed
-import me.mrkirby153.KirBot.utils.embed.embed
-import me.mrkirby153.KirBot.utils.embed.inlineCode
-import me.mrkirby153.kcutils.utils.IdGenerator
+import me.mrkirby153.KirBot.utils.embed.b
 import net.dv8tion.jda.core.entities.Guild
-import java.awt.Color
-import java.net.URL
 import java.sql.Timestamp
 
 class FeedTask : Runnable {
@@ -27,51 +20,41 @@ class FeedTask : Runnable {
     }
 
     companion object {
-
-        private val idGenerator = IdGenerator(IdGenerator.ALPHA + IdGenerator.NUMBERS)
-
         fun checkFeeds(guild: Guild, ignoreFailed: Boolean = false) {
-            val feeds = Model.where(RssFeed::class.java, "server_id", guild.id).get()
-            feeds.filter { ignoreFailed || !it.failed }.forEach {
-                checkFeed(it)
-            }
+            val builder = Model.where(RssFeed::class.java, "server_id", guild.id)
+            if (!ignoreFailed)
+                builder.where("failed", false)
+            builder.get().forEach { checkFeed(it) }
         }
 
-        fun checkFeed(feed: RssFeed) {
+        fun checkFeed(feed: RssFeed): Boolean {
             try {
-                val url = URL(feed.url)
+                val unposted = FeedManager.getUnpostedFeedEntries(feed)
+                Bot.LOG.debug("Feed ${feed.id} has ${unposted.size} entries that need to be posted")
 
-                val input = SyndFeedInput()
-                val f = input.build(XmlReader(url))
-
-                val posted = Model.where(FeedItem::class.java, "rss_feed_id", feed.id).get().map { it.guid }
-                f.entries.filter { it.uri !in posted }.forEach {
-                    feed.channel?.sendMessage(it.link)?.queue()
-                    val item = FeedItem()
-                    item.id = this.idGenerator.generate(10)
-                    item.feedId = feed.id
-                    item.guid = it.uri
-                    item.save()
+                unposted.forEach {
+                    feed.channel?.sendMessage(it.entry.link)?.queue()
+                    it.markPosted()
                 }
-                feed.failed = false
+
                 feed.lastCheck = Timestamp(System.currentTimeMillis())
+                feed.failed = false
                 feed.save()
             } catch (e: Exception) {
-                e.printStackTrace()
-                feed.channel?.sendMessage(embed("Feed Error") {
-                    color = Color.RED
-                    description {
-                        +"There was an error processing the feed "
-                        +inlineCode { feed.url }
-                        +". It will not be checked automatically again and will need to be manually refreshed"
-                        +"\n\n"
-                        +"```$e```"
-                    }
-                }.build())?.queue()
+                // An error occurred
+                feed.channel?.sendMessage(buildString {
+                    appendln(b("> FEED ERROR <"))
+                    appendln(
+                            "There was an error processing the feed `${feed.url}` (${feed.id}): `$e`")
+                    appendln(
+                            "It will not be checked automatically again and will need to be manually refreshed.")
+                })?.queue()
                 feed.failed = true
                 feed.lastCheck = Timestamp(System.currentTimeMillis())
                 feed.save()
+                return false
             }
+            return true
         }
     }
 }

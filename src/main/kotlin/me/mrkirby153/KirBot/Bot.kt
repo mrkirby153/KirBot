@@ -146,7 +146,7 @@ object Bot {
 
         HttpUtils.clearCache()
 
-        scheduler.scheduleAtFixedRate(FeedTask(), 0, 1, TimeUnit.HOURS)
+        scheduler.scheduleAtFixedRate(FeedTask(), 0, 15, TimeUnit.MINUTES)
         ModuleManager.startScheduler()
         Infractions.waitForInfraction()
 

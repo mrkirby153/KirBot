@@ -7,9 +7,13 @@ import me.mrkirby153.KirBot.modules.Redis
 import me.mrkirby153.kcutils.Time
 import me.xdrop.fuzzywuzzy.FuzzySearch
 import net.dv8tion.jda.core.events.message.react.MessageReactionAddEvent
+import okhttp3.Request
+import java.awt.Color
+import java.awt.image.BufferedImage
 import java.util.Calendar
 import java.util.Date
 import java.util.UUID
+import javax.imageio.ImageIO
 
 /**
  * Uploads a string to the bot archive
@@ -126,6 +130,47 @@ fun <T> fuzzyMatch(items: List<T>, query: String, mapper: (T) -> String = { it.t
             else -> throw FuzzyMatchException.TooManyMatchesException()
         }
     }
+}
+
+
+/**
+ * Gets the primary color in an image
+ *
+ * @param url The url
+ * @return The primary color
+ */
+fun getPrimaryColor(url: String): Color {
+    val req = Request.Builder().url(url).build()
+    val resp = HttpUtils.CLIENT.newCall(req).execute()
+    if (resp.code() != 200)
+        throw IllegalArgumentException("Received non-success response code ${resp.code()}")
+    val img = ImageIO.read(resp.body()!!.byteStream())
+    return getPrimaryColor(img)
+}
+
+/**
+ * Gets the primary color in an image
+ *
+ * @param image The imag
+ * @return The primary color
+ */
+fun getPrimaryColor(image: BufferedImage): Color {
+    val freq = mutableMapOf<Int, Int>()
+    for (x in 0 until image.width) {
+        for (y in 0 until image.height) {
+            val f = freq[image.getRGB(x, y)] ?: 0
+            freq[image.getRGB(x, y)] = f + 1
+        }
+    }
+    var max = freq.entries.first().key
+    var cnt = freq.entries.first().value
+    freq.forEach { k, v ->
+        if (v > cnt) {
+            max = k
+            cnt = v
+        }
+    }
+    return Color(max)
 }
 
 /**

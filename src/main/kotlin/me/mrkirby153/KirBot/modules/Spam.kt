@@ -6,6 +6,7 @@ import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.models.guild.GuildMessage
 import me.mrkirby153.KirBot.database.models.guild.SpamSettings
+import me.mrkirby153.KirBot.event.Subscribe
 import me.mrkirby153.KirBot.infraction.Infractions
 import me.mrkirby153.KirBot.logger.LogEvent
 import me.mrkirby153.KirBot.module.Module
@@ -23,7 +24,6 @@ import net.dv8tion.jda.core.entities.Message
 import net.dv8tion.jda.core.entities.MessageChannel
 import net.dv8tion.jda.core.entities.User
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent
-import net.dv8tion.jda.core.hooks.SubscribeEvent
 import org.json.JSONObject
 import java.sql.Timestamp
 import java.time.Instant
@@ -45,7 +45,7 @@ class Spam : Module("spam") {
 
     }
 
-    @SubscribeEvent
+    @Subscribe
     fun onGuildMessageReceived(event: GuildMessageReceivedEvent) {
         if (event.author.id == event.guild.selfMember.user.id)
             return // Ignore ourselves

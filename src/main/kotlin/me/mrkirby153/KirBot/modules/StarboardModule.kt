@@ -5,6 +5,7 @@ import com.mrkirby153.bfs.sql.DB
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.models.guild.GuildMessage
 import me.mrkirby153.KirBot.database.models.guild.starboard.StarboardEntry
+import me.mrkirby153.KirBot.event.Subscribe
 import me.mrkirby153.KirBot.module.Module
 import me.mrkirby153.KirBot.utils.embed.embed
 import me.mrkirby153.KirBot.utils.kirbotGuild
@@ -16,7 +17,6 @@ import net.dv8tion.jda.core.entities.User
 import net.dv8tion.jda.core.events.message.MessageDeleteEvent
 import net.dv8tion.jda.core.events.message.react.MessageReactionAddEvent
 import net.dv8tion.jda.core.events.message.react.MessageReactionRemoveEvent
-import net.dv8tion.jda.core.hooks.SubscribeEvent
 import org.json.JSONArray
 import java.sql.Timestamp
 import java.time.Instant
@@ -53,7 +53,7 @@ class StarboardModule : Module("starboard") {
     private fun getStarboardEntry(mid: String) = Model.query(StarboardEntry::class.java).where("id",
             mid).first()
 
-    @SubscribeEvent
+    @Subscribe
     fun onReactionAdd(event: MessageReactionAddEvent) {
         if (event.reactionEmote.name == STAR) {
             if (!event.guild.kirbotGuild.starboard.enabled)
@@ -85,7 +85,7 @@ class StarboardModule : Module("starboard") {
         }
     }
 
-    @SubscribeEvent
+    @Subscribe
     fun onReactionRemove(event: MessageReactionRemoveEvent) {
         if (event.reactionEmote.name == STAR) {
             if (!event.guild.kirbotGuild.starboard.enabled)
@@ -97,7 +97,7 @@ class StarboardModule : Module("starboard") {
         }
     }
 
-    @SubscribeEvent
+    @Subscribe
     fun onMessageDelete(event: MessageDeleteEvent) {
         if (!event.guild.kirbotGuild.starboard.enabled)
             return

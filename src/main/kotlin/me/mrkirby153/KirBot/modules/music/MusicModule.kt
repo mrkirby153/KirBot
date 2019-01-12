@@ -1,6 +1,7 @@
 package me.mrkirby153.KirBot.modules.music
 
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.event.Subscribe
 import me.mrkirby153.KirBot.module.Module
 import net.dv8tion.jda.core.entities.Channel
 import net.dv8tion.jda.core.entities.Guild
@@ -56,19 +57,19 @@ class MusicModule : Module("music") {
         }
     }
 
-    @SubscribeEvent
+    @Subscribe
     fun onGuildLeave(event: GuildLeaveEvent) {
         managers.remove(event.guild.id)
         stopPlaying(event.guild)
     }
 
-    @SubscribeEvent
+    @Subscribe
     fun onGuildVoiceJoin(event: GuildVoiceJoinEvent) {
         if (getCurrentChannel(event.guild) == event.channelJoined)
             getManager(event.guild).resume(true)
     }
 
-    @SubscribeEvent
+    @Subscribe
     fun onGuildVoiceLeave(event: GuildVoiceLeaveEvent) {
         if (getCurrentChannel(event.guild) == event.channelLeft && isChannelEmpty(
                         event.channelLeft))

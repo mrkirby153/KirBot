@@ -3,6 +3,7 @@ package me.mrkirby153.KirBot.modules.censor
 import com.google.common.cache.CacheBuilder
 import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.database.models.guild.CensorSettings
+import me.mrkirby153.KirBot.event.Subscribe
 import me.mrkirby153.KirBot.logger.LogEvent
 import me.mrkirby153.KirBot.module.Module
 import me.mrkirby153.KirBot.modules.censor.rules.CensorRule
@@ -20,7 +21,6 @@ import net.dv8tion.jda.core.entities.Message
 import net.dv8tion.jda.core.entities.User
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent
 import net.dv8tion.jda.core.events.message.guild.GuildMessageUpdateEvent
-import net.dv8tion.jda.core.hooks.SubscribeEvent
 import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 
@@ -44,14 +44,14 @@ class Censor : Module("censor") {
         censorRules.add(DomainRule())
     }
 
-    @SubscribeEvent
+    @Subscribe
     fun onGuildMessageReceived(event: GuildMessageReceivedEvent) {
         if (event.author == event.jda.selfUser)
             return
         process(event.message)
     }
 
-    @SubscribeEvent
+    @Subscribe
      fun onGuildMessageUpdate(event: GuildMessageUpdateEvent) {
         if (event.author == event.jda.selfUser)
             return

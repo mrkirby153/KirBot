@@ -2,6 +2,7 @@ package me.mrkirby153.KirBot.modules
 
 import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.database.models.Quote
+import me.mrkirby153.KirBot.event.Subscribe
 import me.mrkirby153.KirBot.module.Module
 import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.utils.GREEN_TICK
@@ -11,7 +12,6 @@ import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import me.mrkirby153.KirBot.utils.removeReaction
 import net.dv8tion.jda.core.events.message.react.MessageReactionAddEvent
-import net.dv8tion.jda.core.hooks.SubscribeEvent
 import java.awt.Color
 import java.util.concurrent.TimeUnit
 
@@ -49,7 +49,7 @@ class Quotes : Module("quote") {
         guild.saveData()
     }
 
-    @SubscribeEvent
+    @Subscribe
     fun onMessageReactionAdd(event: MessageReactionAddEvent) {
         if (event.reactionEmote.name != quoteReaction || event.guild.kirbotGuild.starboard.enabled)
             return

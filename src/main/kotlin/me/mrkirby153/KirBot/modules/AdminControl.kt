@@ -1,16 +1,16 @@
 package me.mrkirby153.KirBot.modules
 
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.event.Subscribe
 import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.core.JDA
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.events.DisconnectEvent
 import net.dv8tion.jda.core.events.ResumedEvent
-import net.dv8tion.jda.core.hooks.ListenerAdapter
 import java.text.SimpleDateFormat
 import java.util.LinkedList
 
-object AdminControl : ListenerAdapter() {
+object AdminControl {
 
     val logChannel: TextChannel?
         get() {
@@ -65,7 +65,8 @@ object AdminControl : ListenerAdapter() {
         this.connected = true
     }
 
-    override fun onResume(event: ResumedEvent) {
+    @Subscribe
+     fun onResume(event: ResumedEvent) {
         val dcTime = System.currentTimeMillis() - (this.disconnectedAt.remove(event.jda)
                 ?: System.currentTimeMillis())
         log(":e_mail: Received RESUME. Was disconnected for ${Time.format(1, dcTime)}", event.jda)
@@ -74,7 +75,8 @@ object AdminControl : ListenerAdapter() {
         }
     }
 
-    override fun onDisconnect(event: DisconnectEvent) {
+    @Subscribe
+    fun onDisconnect(event: DisconnectEvent) {
         if (event.jda.shardInfo?.shardId ?: shardId == shardId) {
             this.connected = false
         }

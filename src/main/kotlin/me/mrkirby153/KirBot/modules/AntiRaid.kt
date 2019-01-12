@@ -6,6 +6,7 @@ import com.google.common.cache.LoadingCache
 import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.models.guild.AntiRaidSettings
+import me.mrkirby153.KirBot.event.Subscribe
 import me.mrkirby153.KirBot.infraction.Infractions
 import me.mrkirby153.KirBot.listener.WaitUtils
 import me.mrkirby153.KirBot.module.Module
@@ -22,7 +23,6 @@ import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.User
 import net.dv8tion.jda.core.events.guild.member.GuildMemberJoinEvent
 import net.dv8tion.jda.core.events.message.react.MessageReactionAddEvent
-import net.dv8tion.jda.core.hooks.SubscribeEvent
 import java.util.concurrent.ConcurrentHashMap
 
 class AntiRaid : Module("AntiRaid") {
@@ -74,7 +74,7 @@ class AntiRaid : Module("AntiRaid") {
     override fun onLoad() {
     }
 
-    @SubscribeEvent
+    @Subscribe
     fun onJoin(event: GuildMemberJoinEvent) {
         if (this.raidSettingsCache[event.guild.id].enabled)
             handleJoin(event.guild, event.user)

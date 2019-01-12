@@ -2,11 +2,11 @@ package me.mrkirby153.KirBot.modules
 
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.CommandExecutor
+import me.mrkirby153.KirBot.event.Subscribe
 import me.mrkirby153.KirBot.module.Module
 import me.mrkirby153.KirBot.utils.Context
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent
 import net.dv8tion.jda.core.events.message.MessageUpdateEvent
-import net.dv8tion.jda.core.hooks.SubscribeEvent
 
 class Commands : Module("commands") {
 
@@ -15,7 +15,7 @@ class Commands : Module("commands") {
         CommandExecutor.helpManager.load()
     }
 
-    @SubscribeEvent
+    @Subscribe
     fun onMessageReceived(event: MessageReceivedEvent) {
         if (event.author == event.jda.selfUser)
             return
@@ -25,7 +25,7 @@ class Commands : Module("commands") {
         CommandExecutor.execute(context)
     }
 
-    @SubscribeEvent
+    @Subscribe
     fun onMessageUpdate(event: MessageUpdateEvent) {
         // If the message was edited
         if (event.channel.hasLatestMessage())

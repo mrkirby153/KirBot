@@ -4,6 +4,8 @@ import com.mrkirby153.bfs.model.Model
 import com.mrkirby153.bfs.sql.DB
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.models.guild.GuildMessage
+import me.mrkirby153.KirBot.event.EventPriority
+import me.mrkirby153.KirBot.event.Subscribe
 import me.mrkirby153.KirBot.logger.LogEvent
 import me.mrkirby153.KirBot.logger.LogManager
 import me.mrkirby153.KirBot.logger.LogPump
@@ -31,7 +33,6 @@ import net.dv8tion.jda.core.events.role.RoleCreateEvent
 import net.dv8tion.jda.core.events.role.RoleDeleteEvent
 import net.dv8tion.jda.core.events.role.update.RoleUpdateNameEvent
 import net.dv8tion.jda.core.events.user.update.UserUpdateNameEvent
-import net.dv8tion.jda.core.hooks.SubscribeEvent
 import org.json.JSONObject
 
 class Logger : Module("logging") {
@@ -59,12 +60,12 @@ class Logger : Module("logging") {
         debouncer.removeExpired()
     }
 
-    @SubscribeEvent
+    @Subscribe
     fun onShutdown(event: ShutdownEvent?) {
         logPump.shutdown()
     }
 
-    @SubscribeEvent
+    @Subscribe
     fun onGuildMessageDelete(event: GuildMessageDeleteEvent) {
         event.guild.kirbotGuild.logManager.logMessageDelete(event.messageId)
         val msg = Model.where(GuildMessage::class.java, "id", event.messageId).first() ?: return
@@ -72,7 +73,7 @@ class Logger : Module("logging") {
         msg.save()
     }
 
-    @SubscribeEvent
+    @Subscribe
     fun onMessageBulkDelete(event: MessageBulkDeleteEvent) {
         event.guild.kirbotGuild.logManager.logBulkDelete(event.channel, event.messageIds)
         val selector = "?, ".repeat(event.messageIds.size)
@@ -81,7 +82,7 @@ class Logger : Module("logging") {
                         0, selector.lastIndexOf(","))})", *(event.messageIds.toTypedArray()))
     }
 
-    @SubscribeEvent
+    @Subscribe
     fun onGuildMemberRoleAdd(event: GuildMemberRoleAddEvent) {
         val roles = event.roles.filter {
             !debouncer.find(GuildMemberRoleAddEvent::class.java, Pair("user", event.user.id),
@@ -93,7 +94,7 @@ class Logger : Module("logging") {
                             ", ") { it.name }}** to ${event.user.logName}")
     }
 
-    @SubscribeEvent
+    @Subscribe
     fun onGuildMemberRoleRemove(event: GuildMemberRoleRemoveEvent) {
         val roles = event.roles.filter {
             !debouncer.find(GuildMemberRoleRemoveEvent::class.java, Pair("user", event.user.id),
@@ -105,14 +106,14 @@ class Logger : Module("logging") {
                             ", ") { it.name }}** from ${event.user.logName}")
     }
 
-    @SubscribeEvent
+    @Subscribe
     fun onGuildMemberJoin(event: GuildMemberJoinEvent) {
         event.guild.kirbotGuild.logManager.genericLog(LogEvent.USER_JOIN, ":inbox_tray:",
                 "${event.user.logName} Joined (Created ${Time.formatLong(
                         System.currentTimeMillis() - (event.user.creationTime.toEpochSecond() * 1000))} ago)")
     }
 
-    @SubscribeEvent
+    @Subscribe
     fun onGuildMemberLeave(event: GuildMemberLeaveEvent) {
         if (debouncer.find(GuildMemberLeaveEvent::class.java, Pair("user", event.user.id)))
             return
@@ -120,25 +121,25 @@ class Logger : Module("logging") {
                 "${event.user.logName} left")
     }
 
-    @SubscribeEvent
+    @Subscribe
     fun onRoleCreate(event: RoleCreateEvent) {
         event.guild.kirbotGuild.logManager.genericLog(LogEvent.ROLE_CREATE, ":hammer_pick:",
                 "Role **${event.role.name}** (`${event.role.id}`) created")
     }
 
-    @SubscribeEvent
+    @Subscribe
     fun onRoleDelete(event: RoleDeleteEvent) {
         event.guild.kirbotGuild.logManager.genericLog(LogEvent.ROLE_DELETE, ":bomb:",
                 "Role **${event.role.name}** (`${event.role.id}`) deleted")
     }
 
-    @SubscribeEvent
+    @Subscribe
     fun onRoleUpdateName(event: RoleUpdateNameEvent) {
         event.guild.kirbotGuild.logManager.genericLog(LogEvent.ROLE_UPDATE, ":wrench:",
                 "Role **${event.oldName}** (`${event.role.id}`) renamed to **${event.role.name}**")
     }
 
-    @SubscribeEvent
+    @Subscribe
     fun onGuildMemberNickChange(event: GuildMemberNickChangeEvent) {
         if (debouncer.find(GuildMemberNickChangeEvent::class.java, Pair("id", event.user.id)))
             return
@@ -158,7 +159,7 @@ class Logger : Module("logging") {
         }
     }
 
-    @SubscribeEvent
+    @Subscribe
     fun onUserUpdateName(event: UserUpdateNameEvent) {
         Bot.shardManager.shards.forEach { shard ->
             shard.guilds.forEach { guild ->
@@ -170,7 +171,7 @@ class Logger : Module("logging") {
         }
     }
 
-    @SubscribeEvent
+    @Subscribe
     fun onGuildMessageUpdate(event: GuildMessageUpdateEvent) {
         if (event.message.contentDisplay.isEmpty())
             return
@@ -181,7 +182,7 @@ class Logger : Module("logging") {
         msg.save()
     }
 
-    @SubscribeEvent
+    @Subscribe(priority = EventPriority.HIGHEST)
     fun onGuildMessageReceived(event: GuildMessageReceivedEvent) {
         if (!event.guild.kirbotGuild.ready)
             return
@@ -196,19 +197,19 @@ class Logger : Module("logging") {
         msg.save()
     }
 
-    @SubscribeEvent
+    @Subscribe
     fun onGuildVoiceJoin(event: GuildVoiceJoinEvent) {
         event.guild.kirbotGuild.logManager.genericLog(LogEvent.VOICE_ACTION, ":telephone:",
                 "${event.member.user.logName} joined **${event.channelJoined.name}**")
     }
 
-    @SubscribeEvent
+    @Subscribe
     fun onGuildVoiceLeave(event: GuildVoiceLeaveEvent) {
         event.guild.kirbotGuild.logManager.genericLog(LogEvent.VOICE_ACTION, ":telephone:",
                 "${event.member.user.logName} left **${event.channelLeft.name}**")
     }
 
-    @SubscribeEvent
+    @Subscribe
     fun onGuildVoiceMove(event: GuildVoiceMoveEvent) {
         event.guild.kirbotGuild.logManager.genericLog(LogEvent.VOICE_ACTION, ":telephone:",
                 "${event.member.user.logName} moved from **${event.channelLeft.name}** to **${event.channelJoined.name}**")

@@ -35,7 +35,6 @@ import net.dv8tion.jda.core.entities.User
 import org.json.JSONObject
 import org.json.JSONTokener
 import java.util.concurrent.Future
-import java.util.concurrent.Semaphore
 import java.util.stream.Collectors
 
 class KirBotGuild(val guild: Guild) : Guild by guild {
@@ -57,48 +56,11 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
     private val dataFile = Bot.files.data.child("servers").mkdirIfNotExist().child(
             "${this.id}.json")
 
-    private val lock = Semaphore(1, true)
-    private var lockedAt: Long = -1
-    private var lockedThread: Thread? = null
-    private var lockDump: Array<StackTraceElement> = arrayOf()
-    private var lockDumped = false
-
     private val visibleChannelCache = mutableMapOf<String, Boolean>()
 
     var ready = false
 
     private val runningTasks = mutableListOf<Future<*>>()
-
-    fun lock() {
-        Bot.LOG.debug("[LOCK] Lock on ${this.id} aquired by ${Thread.currentThread().name}")
-        lock.acquire()
-        lockedAt = System.currentTimeMillis()
-        lockedThread = Thread.currentThread()
-        lockDumped = false
-        val stack = Thread.currentThread().stackTrace.toMutableList()
-        stack.drop(2)
-        lockDump = stack.toTypedArray()
-    }
-
-    fun unlock() {
-        Bot.LOG.debug(
-                "[LOCK] Lock on ${this.id} released after ${System.currentTimeMillis() - lockedAt} ms")
-        lockedAt = -1
-        lockedThread = null
-        lock.release()
-    }
-
-    fun checkLeak() {
-        if (lockedAt + leakThreshold < System.currentTimeMillis() && !lockDumped && lockedThread != null) {
-            Bot.LOG.debug(
-                    "[LEAK] Access to guild [${this.id}] may have leaked! (Locked $leakThreshold ms ago by \"${lockedThread?.name}\")")
-            Bot.LOG.debug("Trace:")
-            lockDump.forEach {
-                Bot.LOG.debug("\t$it")
-            }
-            lockDumped = true
-        }
-    }
 
     /**
      * Load guild-specific settings
@@ -260,13 +222,10 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
     }
 
     fun getClearance(member: Member): Int {
-        lock()
         if (member.user.id in overriddenUsers) {
-            unlock()
             return Integer.MAX_VALUE
         }
         if (member.isOwner) {
-            unlock()
             return CLEARANCE_ADMIN
         }
         var clearance = 0
@@ -275,7 +234,6 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
             if (clearance < roleClearance)
                 clearance = roleClearance
         }
-        unlock()
         return clearance
     }
 
@@ -436,20 +394,6 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
             synchronized(guilds) {
                 guilds.remove(id)
             }
-        }
-
-        fun startLeakMonitor() {
-            leakDetectorThread = Thread {
-                Bot.LOG.debug("Starting Guild lock leak monitor")
-                while (true) {
-                    guilds.values.forEach { it.checkLeak() }
-                    Thread.sleep(10)
-                }
-            }.apply {
-                name = "LeakDetector"
-                isDaemon = true
-            }
-            leakDetectorThread.start()
         }
 
         fun setOverride(user: User, value: Boolean) {

@@ -48,7 +48,6 @@ class ShardListener(val shard: Shard, val bot: Bot) {
 
     @Subscribe
     fun onGuildMemberJoin(event: GuildMemberJoinEvent) {
-        event.guild.kirbotGuild.lock()
         UserPersistenceHandler.restore(event.user, event.guild)
         val member = Model.where(GuildMember::class.java, "server_id", event.guild.id).where(
                 "user_id", event.user.id).first()
@@ -68,7 +67,6 @@ class ShardListener(val shard: Shard, val bot: Bot) {
             u.discriminator = event.user.discriminator.toInt()
             u.create()
         }
-        event.guild.kirbotGuild.unlock()
     }
 
     @Subscribe

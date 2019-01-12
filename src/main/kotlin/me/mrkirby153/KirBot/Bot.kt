@@ -78,7 +78,6 @@ object Bot {
             (LOG as? Logger)?.let { logger ->
                 logger.level = Level.DEBUG
             }
-            KirBotGuild.startLeakMonitor()
             QueryBuilder.logQueries = System.getProperty("kirbot.logQueries",
                     "false")?.toBoolean() ?: false
             if (QueryBuilder.logQueries) {

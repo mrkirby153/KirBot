@@ -53,7 +53,6 @@ class Quotes : Module("quote") {
     fun onMessageReactionAdd(event: MessageReactionAddEvent) {
         if (event.reactionEmote.name != quoteReaction || event.guild.kirbotGuild.starboard.enabled)
             return
-        event.guild.kirbotGuild.lock()
         debug("Beginning quote sequence")
         event.channel.getMessageById(event.messageId).queue { msg ->
             if (msg == null)
@@ -71,26 +70,22 @@ class Quotes : Module("quote") {
             if (event.user.id in getBlockedUsers(event.guild.kirbotGuild)) {
                 debug("Denied, user is blocked from quoting")
                 msg.removeReaction(event.user, quoteReaction)
-                event.guild.kirbotGuild.unlock()
                 return@queue
             }
             if (msg.author.id == event.guild.selfMember.user.id) {
                 debug("Denied, cannot quote KirBot")
                 msg.removeReaction(event.user, quoteReaction)
-                event.guild.kirbotGuild.unlock()
                 return@queue
             }
             if (msg.contentDisplay.isEmpty()) {
                 debug("Denied, quote is an empty message")
                 msg.removeReaction(event.user, quoteReaction)
-                event.guild.kirbotGuild.unlock()
                 return@queue
             }
             // Create the quote
             val q = Model.where(Quote::class.java, "message_id", event.messageId).first()
             if (q != null) {
                 debug("Denied, quote already exists")
-                event.guild.kirbotGuild.unlock()
                 return@queue
             }
 
@@ -127,7 +122,6 @@ class Quotes : Module("quote") {
                     timestamp = msg.creationTime.toInstant()
                 }
             }.build()).queue()
-            event.guild.kirbotGuild.unlock()
         }
     }
 }

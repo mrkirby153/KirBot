@@ -2,6 +2,8 @@ package me.mrkirby153.KirBot.sharding
 
 import com.sedmelluq.discord.lavaplayer.jdaudp.NativeAudioSendFactory
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.event.PriorityEventManager
+import me.mrkirby153.KirBot.event.Subscribe
 import net.dv8tion.jda.core.AccountType
 import net.dv8tion.jda.core.JDA
 import net.dv8tion.jda.core.JDABuilder
@@ -11,7 +13,6 @@ import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.User
 import net.dv8tion.jda.core.events.ReadyEvent
-import net.dv8tion.jda.core.hooks.ListenerAdapter
 
 class ShardManager(val token: String, private val totalShards: Int) {
 
@@ -133,6 +134,7 @@ class ShardManager(val token: String, private val totalShards: Int) {
         setAutoReconnect(true)
         setStatus(OnlineStatus.IDLE)
         setBulkDeleteSplittingEnabled(false)
+        setEventManager(PriorityEventManager())
         if (totalShards > 1) {
             useSharding(id, totalShards)
         }
@@ -142,14 +144,13 @@ class ShardManager(val token: String, private val totalShards: Int) {
         eventListeners.forEach {
             addEventListener(it)
         }
-        addEventListener(object : ListenerAdapter() {
-            override fun onReady(event: ReadyEvent?) {
+        addEventListener(object {
+            @Subscribe
+            fun onReady(event: ReadyEvent) {
                 Bot.LOG.info("Shard $id is ready!")
                 loadingShards.remove(id)
-                event?.jda?.let {
-                    removeEventListener(this);
-                    updatePresence(it)
-                }
+                event.jda.removeEventListener(this)
+                updatePresence(event.jda)
             }
         })
         build()

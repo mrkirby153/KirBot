@@ -43,6 +43,8 @@ object Bot {
 
     var initialized = false
 
+    var state = BotState.UNKNOWN
+
     val startTime = System.currentTimeMillis()
     val scheduler: ScheduledExecutorService = Executors.newScheduledThreadPool(5)
 
@@ -71,6 +73,7 @@ object Bot {
 
     fun start(token: String) {
         val startupTime = System.currentTimeMillis()
+        state = BotState.INITIALIZING
         if (debug) {
             (LOG as? Logger)?.let { logger ->
                 logger.level = Level.DEBUG
@@ -109,12 +112,15 @@ object Bot {
         shardManager.playing = "Starting up..."
         shardManager.onlineStatus = OnlineStatus.IDLE
         shardManager.addListener(AdminControl)
+        state = BotState.CONNECTING
         for (i in 0 until numShards) {
             shardManager.addShard(i)
         }
 
         val endTime = System.currentTimeMillis()
         LOG.info("\n\n\nSHARDS INITIALIZED! (${Time.format(1, endTime - startTime)})")
+
+        state = BotState.LOADING
 
         // Boot the modules
         ModuleManager.load(true)
@@ -164,13 +170,16 @@ object Bot {
                 System.currentTimeMillis() - startTime).toLowerCase()}. On $guildCount guilds with ${memberSet.size} users")
 
         CommandDocumentationGenerator.generate(files.data.child("commands.md"))
+        state = BotState.RUNNING
     }
 
     fun stop() {
+        state = BotState.SHUTTING_DOWN
         AdminControl.log("Bot shutting down...")
         shardManager.shutdown()
         ModuleManager.loadedModules.forEach { it.unload(true) }
         LOG.info("Bot is disconnecting from Discord")
+        state = BotState.SHUT_DOWN
         System.exit(0)
     }
 

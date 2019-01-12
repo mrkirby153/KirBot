@@ -67,7 +67,7 @@ class LogManager(private val guild: KirBotGuild) {
             return // The user is in the ignored log array
 
         this.genericLog(LogEvent.MESSAGE_DELETE, ":wastebasket:",
-                "${author.logName} Message deleted in **#${chan.name}** \n ${msg.message.resolveMentions().escapeMentions().urlEscape()}" + buildString {
+                "${author.logName} message deleted in **#${chan.name}** \n ${msg.message.resolveMentions().escapeMentions().urlEscape()}" + buildString {
                     val attachments = msg.attachments
                     if (attachments != null) {
                         val split = attachments.split(",")
@@ -128,7 +128,7 @@ class LogManager(private val guild: KirBotGuild) {
         }
 
         this.genericLog(LogEvent.MESSAGE_EDIT, ":pencil:",
-                "${user.logName} Message edited in **#${message.textChannel.name}** \n **B:** ${oldMessage.resolveMentions().escapeMentions().urlEscape()} \n **A:** ${message.contentRaw.resolveMentions().escapeMentions().urlEscape()}")
+                "${user.logName} message edited in **#${message.textChannel.name}** \n **B:** ${oldMessage.resolveMentions().escapeMentions().urlEscape()} \n **A:** ${message.contentRaw.resolveMentions().escapeMentions().urlEscape()}")
     }
 
     fun genericLog(logEvent: LogEvent, emoji: CustomEmoji,

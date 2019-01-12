@@ -99,7 +99,7 @@ object Infractions {
                 guild.kirbotGuild.logManager.genericLog(LogEvent.USER_UNBAN, ":rotating_light:",
                         buildString {
                             append(lookupUser(infraction.userId, true))
-                            append(" Unbanned by **${lookupUser(guild.selfMember.user.id)}**")
+                            append(" unbanned by **${lookupUser(guild.selfMember.user.id)}**")
                             append(" (`Timed ban expired`)")
                         })
             }
@@ -146,7 +146,7 @@ object Infractions {
 
         guild.kirbotGuild.logManager.genericLog(LogEvent.USER_KICK, ":boot:", buildString {
             append(lookupUser(user, true))
-            append(" Kicked by **${lookupUser(issuer)}**")
+            append(" kicked by **${lookupUser(issuer)}**")
             if (reason != null) {
                 append(": `$reason`")
             }
@@ -160,7 +160,7 @@ object Infractions {
         val r = dmUser(user, guild, inf)
         guild.kirbotGuild.logManager.genericLog(LogEvent.USER_WARN, ":warning:", buildString {
             append(lookupUser(user, true))
-            append(" Was warned by **${lookupUser(issuer)}**")
+            append(" was warned by **${lookupUser(issuer)}**")
             if (reason != null) {
                 append(": `$reason`")
             }
@@ -184,7 +184,7 @@ object Infractions {
 
         guild.kirbotGuild.logManager.genericLog(LogEvent.USER_BAN, ":rotating_light:", buildString {
             append(lookupUser(user, true))
-            append(" Banned by **${lookupUser(issuer)}**")
+            append(" banned by **${lookupUser(issuer)}**")
             if (reason != null)
                 append(": `$reason`")
         })
@@ -211,7 +211,7 @@ object Infractions {
         }
         guild.kirbotGuild.logManager.genericLog(LogEvent.USER_KICK, ":boot:", buildString {
             append(lookupUser(user, true))
-            append(" Soft-Banned by **${lookupUser(issuer)}**")
+            append(" soft-banned by **${lookupUser(issuer)}**")
             if (reason != null)
                 append(": `$reason`")
         })
@@ -240,7 +240,7 @@ object Infractions {
         guild.kirbotGuild.logManager.genericLog(LogEvent.USER_UNBAN, ":rotating_light:",
                 buildString {
                     append(lookupUser(user, true))
-                    append(" Unbanned by **${lookupUser(issuer)}**")
+                    append(" unbanned by **${lookupUser(issuer)}**")
                     if (reason.isNotBlank())
                         append("(`$reason`)")
                 })
@@ -263,7 +263,7 @@ object Infractions {
 
         guild.kirbotGuild.logManager.genericLog(LogEvent.USER_MUTE, ":zipper_mouth:", buildString {
             append(lookupUser(user, true))
-            append(" Muted by **${lookupUser(issuer)}**")
+            append(" muted by **${lookupUser(issuer)}**")
             if (reason != null) {
                 append(": `$reason`")
             }
@@ -284,7 +284,7 @@ object Infractions {
 
         guild.kirbotGuild.logManager.genericLog(LogEvent.USER_UNMUTE, ":open_mouth:", buildString {
             append(lookupUser(user, true))
-            append(" Unmuted by **${lookupUser(issuer)}**")
+            append(" unmuted by **${lookupUser(issuer)}**")
             if (reason != null) {
                 append(": `$reason`")
             }
@@ -306,7 +306,7 @@ object Infractions {
 
         guild.kirbotGuild.logManager.genericLog(LogEvent.USER_MUTE, ":zipper_mouth:", buildString {
             append(lookupUser(user, true))
-            append(" Temp muted by **${lookupUser(issuer)}** for ${Time.formatLong(
+            append(" temp muted by **${lookupUser(issuer)}** for ${Time.formatLong(
                     TimeUnit.MILLISECONDS.convert(duration, units), Time.TimeUnit.SECONDS)}")
             if (reason != null) {
                 append(": `$reason`")
@@ -332,7 +332,7 @@ object Infractions {
         waitForInfraction()
         guild.kirbotGuild.logManager.genericLog(LogEvent.USER_BAN, ":rotating_light:", buildString {
             append(lookupUser(user, true))
-            append(" Temp-banned for ${Time.formatLong(
+            append(" temp-banned for ${Time.formatLong(
                     TimeUnit.MILLISECONDS.convert(duration, units))} by **${lookupUser(issuer)}**")
             if (reason != null)
                 append(": `$reason`")

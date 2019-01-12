@@ -65,7 +65,7 @@ class Logger : Module("logging") {
         logPump.shutdown()
     }
 
-    @Subscribe
+    @Subscribe(priority = EventPriority.HIGHEST)
     fun onGuildMessageDelete(event: GuildMessageDeleteEvent) {
         event.guild.kirbotGuild.logManager.logMessageDelete(event.messageId)
         val msg = Model.where(GuildMessage::class.java, "id", event.messageId).first() ?: return
@@ -73,7 +73,7 @@ class Logger : Module("logging") {
         msg.save()
     }
 
-    @Subscribe
+    @Subscribe(priority = EventPriority.HIGHEST)
     fun onMessageBulkDelete(event: MessageBulkDeleteEvent) {
         event.guild.kirbotGuild.logManager.logBulkDelete(event.channel, event.messageIds)
         val selector = "?, ".repeat(event.messageIds.size)
@@ -109,7 +109,7 @@ class Logger : Module("logging") {
     @Subscribe
     fun onGuildMemberJoin(event: GuildMemberJoinEvent) {
         event.guild.kirbotGuild.logManager.genericLog(LogEvent.USER_JOIN, ":inbox_tray:",
-                "${event.user.logName} Joined (Created ${Time.formatLong(
+                "${event.user.logName} joined (Created ${Time.formatLong(
                         System.currentTimeMillis() - (event.user.creationTime.toEpochSecond() * 1000))} ago)")
     }
 
@@ -117,8 +117,10 @@ class Logger : Module("logging") {
     fun onGuildMemberLeave(event: GuildMemberLeaveEvent) {
         if (debouncer.find(GuildMemberLeaveEvent::class.java, Pair("user", event.user.id)))
             return
+        val t = System.currentTimeMillis() - (event.member.joinDate.toEpochSecond() * 1000)
+        val joinString = if(t < 1000) { "a moment ago" } else "${Time.formatLong(t)} ago"
         event.guild.kirbotGuild.logManager.genericLog(LogEvent.USER_LEAVE, ":outbox_tray:",
-                "${event.user.logName} left")
+                "${event.user.logName} left (Joined $joinString)")
     }
 
     @Subscribe
@@ -147,12 +149,12 @@ class Logger : Module("logging") {
             event.prevNick == null -> {
                 event.guild.kirbotGuild.logManager.genericLog(LogEvent.USER_NICKNAME_CHANGE,
                         ":name_badge:",
-                        "${event.user.logName} Set nickname `${event.newNick}`")
+                        "${event.user.logName} set nickname `${event.newNick}`")
                 return
             }
             event.newNick == null -> event.guild.kirbotGuild.logManager.genericLog(
                     LogEvent.USER_NICKNAME_CHANGE, ":name_badge:",
-                    "${event.user.logName} Removed nickname `${event.prevNick}`")
+                    "${event.user.logName} removed nickname `${event.prevNick}`")
             else -> event.guild.kirbotGuild.logManager.genericLog(LogEvent.USER_NICKNAME_CHANGE,
                     ":name_badge:",
                     "${event.user.logName} changed nick from `${event.prevNick}` to `${event.newNick}`")
@@ -171,7 +173,7 @@ class Logger : Module("logging") {
         }
     }
 
-    @Subscribe
+    @Subscribe(priority = EventPriority.HIGHEST)
     fun onGuildMessageUpdate(event: GuildMessageUpdateEvent) {
         if (event.message.contentDisplay.isEmpty())
             return

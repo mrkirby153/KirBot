@@ -51,7 +51,11 @@ enum class LogEvent {
 
     VOICE_ACTION,
 
-    MEMBER_RESTORE;
+    MEMBER_RESTORE,
+
+    CHANNEL_CREATE,
+    CHANNEL_MODIFY,
+    CHANNEL_DELETE;
 
     val permission = 1L.shl(this.ordinal)
 

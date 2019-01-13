@@ -7,6 +7,9 @@ Sets the command prefix. All commands on the server will then use the prefix. Th
 
 **Note:** Leading and trailing whitespace will be removed in the prefix.
 
+### Silent Fail
+By default, KirBot sends a message alerting when a user attempts to run a command they don't have permission to run. By enabling this toggle, that message will be suppressed and commands will fail silently if the user doesn't have permission to perform the command
+
 ## Custom Commands
 KirBot supports custom commands and these can be configured using the table below.
 

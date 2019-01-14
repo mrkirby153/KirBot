@@ -3,6 +3,7 @@ package me.mrkirby153.KirBot
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
 import com.mrkirby153.bfs.model.Model
+import com.mrkirby153.bfs.model.SoftDeletingModel
 import com.mrkirby153.bfs.sql.QueryBuilder
 import com.mrkirby153.bfs.sql.elements.Pair
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager
@@ -127,8 +128,8 @@ object Bot {
         // Remove old guilds
         Bot.LOG.info("Purging old guilds...")
         // Remove guilds whose time has passed
-        Model.query(ServerSettings::class.java).where("deleted_at", "<",
-                Timestamp.from(Instant.now().minus(Duration.ofDays(30)))).delete()
+        SoftDeletingModel.trashed(ServerSettings::class.java).where("deleted_at", "<",
+                Timestamp.from(Instant.now().minus(Duration.ofDays(30)))).get().forEach { it.forceDelete() }
         val guildList = shardManager.shards.flatMap { it.guilds }
         Model.query(ServerSettings::class.java).whereNotIn("id",
                 guildList.map { it.id }.toTypedArray()).whereNull("deleted_at").update(

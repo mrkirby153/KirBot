@@ -18,7 +18,6 @@ import me.mrkirby153.KirBot.logger.LogManager
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.AntiRaid
 import me.mrkirby153.KirBot.modules.Redis
-import me.mrkirby153.KirBot.realname.RealnameHandler
 import me.mrkirby153.KirBot.user.CLEARANCE_ADMIN
 import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.KirBot.utils.fuzzyMatch
@@ -144,11 +143,6 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
                 Bot.LOG.debug("adding channel: $it")
                 Channel(it).save()
             }
-        }
-
-        runAsyncTask {
-            if (this.selfMember.hasPermission(Permission.NICKNAME_MANAGE))
-                RealnameHandler(this).update(false)
         }
 
         runAsyncTask {

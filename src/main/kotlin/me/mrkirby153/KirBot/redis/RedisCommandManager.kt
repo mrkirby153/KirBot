@@ -5,8 +5,6 @@ import me.mrkirby153.KirBot.redis.commands.ChannelVisibility
 import me.mrkirby153.KirBot.redis.commands.RedisCommandHandler
 import me.mrkirby153.KirBot.redis.commands.SetNickname
 import me.mrkirby153.KirBot.redis.commands.SyncCommand
-import me.mrkirby153.KirBot.redis.commands.UpdateAllServerNames
-import me.mrkirby153.KirBot.redis.commands.UpdateNames
 
 object RedisCommandManager {
 
@@ -14,9 +12,7 @@ object RedisCommandManager {
 
 
     init {
-        register("update-name", UpdateNames())
         register("channel-visibility", ChannelVisibility())
-        register("update-names", UpdateAllServerNames())
         register("botchat", BotChat())
         register("nickname", SetNickname())
         register("sync", SyncCommand())

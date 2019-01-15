@@ -5,7 +5,6 @@ import com.mrkirby153.bfs.annotations.PrimaryKey
 import com.mrkirby153.bfs.annotations.Table
 import com.mrkirby153.bfs.model.SoftDeletingModel
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.realname.RealnameSetting
 import me.mrkirby153.KirBot.utils.toTypedArray
 import net.dv8tion.jda.core.entities.Role
 import org.json.JSONArray
@@ -22,12 +21,6 @@ class ServerSettings : SoftDeletingModel() {
     var id = ""
 
     var name = ""
-
-    @Column("realname")
-    private var realnameRaw = "OFF"
-
-    @Column("require_realname")
-    var requireRealname = false
 
     @Column("command_discriminator")
     var cmdDiscriminator = "!"
@@ -81,11 +74,5 @@ class ServerSettings : SoftDeletingModel() {
                 this.mutedRoleId) else null
         set(setting) {
             this.mutedRoleId = setting?.id
-        }
-
-    var realname: RealnameSetting
-        get() = RealnameSetting.valueOf(realnameRaw)
-        set(value) {
-            this.realnameRaw = value.toString()
         }
 }

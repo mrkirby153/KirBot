@@ -7,6 +7,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.GREEN_TICK
 import me.mrkirby153.KirBot.utils.RED_TICK
+import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.core.entities.Message
 
@@ -19,11 +20,12 @@ class TrackLoader(val manager: MusicManager, val context: Context, val msg: Mess
     }
 
     override fun trackLoaded(track: AudioTrack) {
-        if (manager.settings.maxSongLength != -1) {
-            if (track.duration / (60 * 1000) > manager.settings.maxSongLength) {
+        val maxSongLength = SettingsRepository.get(context.guild, "music_max_song_length", "-1")!!.toInt()
+        if (maxSongLength != -1) {
+            if (track.duration / (60 * 1000) > maxSongLength) {
                 msg.editMessage(
                         "$RED_TICK The requested song is too long. The maximum song length is **${Time.format(
-                                1, manager.settings.maxSongLength * 60 * 1000L)}**").queue()
+                                1, maxSongLength * 60 * 1000L)}**").queue()
             }
         }
         manager.queue(track, context.author)
@@ -40,8 +42,9 @@ class TrackLoader(val manager: MusicManager, val context: Context, val msg: Mess
     }
 
     override fun playlistLoaded(playlist: AudioPlaylist) {
-        if (!manager.settings.playlists) {
+        if (SettingsRepository.get(context.guild, "music_playlists", "0") == "0") {
             msg.editMessage("$RED_TICK Queueing playlists are disabled! Please queue songs individually").queue()
+            return
         }
         playlist.tracks.forEach {
             manager.queue(it, context.author)

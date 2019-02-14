@@ -38,7 +38,7 @@ class CommandUnmute : BaseCommand(false, CommandCategory.MODERATION) {
                 "could not get the muted role")
         if (mutedRole.position > highest)
             throw CommandException("cannot un-assign the muted role")
-        if (context.kirbotGuild.settings.mutedRole !in member.roles)
+        if (mutedRole !in member.roles)
             throw CommandException("That user isn't muted!")
         Infractions.unmute(user.id, context.guild, context.author.id, cmdContext.get("reason"))
         context.send().success("Unmuted **${user.name}#${user.discriminator}**", true).queue()

@@ -7,6 +7,7 @@ import me.mrkirby153.KirBot.module.Module
 import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.utils.GREEN_TICK
 import me.mrkirby153.KirBot.utils.RED_TICK
+import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.embed.embed
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
@@ -51,7 +52,7 @@ class Quotes : Module("quote") {
 
     @Subscribe
     fun onMessageReactionAdd(event: MessageReactionAddEvent) {
-        if (event.reactionEmote.name != quoteReaction || event.guild.kirbotGuild.starboard.enabled)
+        if (event.reactionEmote.name != quoteReaction || SettingsRepository.get(event.guild,"starboard_enabled", "0") == "1")
             return
         debug("Beginning quote sequence")
         event.channel.getMessageById(event.messageId).queue { msg ->
@@ -104,7 +105,8 @@ class Quotes : Module("quote") {
                     user(msg.author)
                 }
                 description {
-                    +"A new quote has been created by `${event.user.nameAndDiscrim}`! \nType `${event.guild.kirbotGuild.settings.cmdDiscriminator}quote ${quote.id}` to retrive the quote"
+                    val cmdDiscrim = SettingsRepository.get(event.guild, "command_discriminator", "!")
+                    +"A new quote has been created by `${event.user.nameAndDiscrim}`! \nType `${cmdDiscrim}quote ${quote.id}` to retrive the quote"
                 }
                 fields {
                     field {

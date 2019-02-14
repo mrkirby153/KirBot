@@ -7,6 +7,7 @@ import me.mrkirby153.KirBot.database.models.guild.GuildMessage
 import me.mrkirby153.KirBot.database.models.guild.starboard.StarboardEntry
 import me.mrkirby153.KirBot.event.Subscribe
 import me.mrkirby153.KirBot.module.Module
+import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.embed.embed
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.toTypedArray
@@ -33,7 +34,7 @@ class StarboardModule : Module("starboard") {
     }
 
     private fun getStarboardChannel(guild: Guild): TextChannel? {
-        return guild.getTextChannelById(guild.kirbotGuild.starboard.channelId)
+        return guild.getTextChannelById(SettingsRepository.get(guild, "starboard_channel_id", "0"))
     }
 
     private fun incrementStar(mid: String) {
@@ -56,7 +57,7 @@ class StarboardModule : Module("starboard") {
     @Subscribe
     fun onReactionAdd(event: MessageReactionAddEvent) {
         if (event.reactionEmote.name == STAR) {
-            if (!event.guild.kirbotGuild.starboard.enabled)
+            if (SettingsRepository.get(event.guild, "starboard_enabled", "0") == "0")
                 return
             debug("Incrementing star on ${event.messageId}")
             val msg = event.textChannel.getMessageById(event.messageId).complete()
@@ -73,7 +74,7 @@ class StarboardModule : Module("starboard") {
                 return
             }
             if (msg.author == event.user)
-                if (event.guild.kirbotGuild.starboard.selfStar)
+                if (SettingsRepository.get(event.guild, "starboard_self_star", "0") == "1")
                     incrementStar(event.messageId)
                 else {
                     event.reaction.removeReaction(event.user).queueAfter(100, TimeUnit.MILLISECONDS)
@@ -88,7 +89,7 @@ class StarboardModule : Module("starboard") {
     @Subscribe
     fun onReactionRemove(event: MessageReactionRemoveEvent) {
         if (event.reactionEmote.name == STAR) {
-            if (!event.guild.kirbotGuild.starboard.enabled)
+            if (SettingsRepository.get(event.guild, "starboard_enabled", "0") == "0")
                 return
             debug("Decrementing star on ${event.messageId}")
             decrementStar(event.messageId)
@@ -99,7 +100,7 @@ class StarboardModule : Module("starboard") {
 
     @Subscribe
     fun onMessageDelete(event: MessageDeleteEvent) {
-        if (!event.guild.kirbotGuild.starboard.enabled)
+        if (SettingsRepository.get(event.guild, "starboard_enabled", "0") == "0")
             return
         val entry = getStarboardEntry(event.messageId) ?: return
         if (entry.starboardMid != null)
@@ -131,7 +132,8 @@ class StarboardModule : Module("starboard") {
                 entry?.delete()
             }
         }
-        if (entry.hidden || apiMsg == null || entry.count < guild.kirbotGuild.starboard.starCount) {
+        if (entry.hidden || apiMsg == null || entry.count < SettingsRepository.get(guild,
+                        "starboard_star_count", "0")!!.toInt()) {
             // Delete the star from the board if it's hidden or the original message was deleted or it's fallen below the star count
             // TODO 12/19/2018 Make the latter configurable
             if (entry.starboardMid != null) {
@@ -149,7 +151,8 @@ class StarboardModule : Module("starboard") {
         // Construct the star message
         val msg = MessageBuilder()
         msg.setContent(
-                "${if (entry.count < guild.kirbotGuild.starboard.gildCount) STAR else GILD_STAR} ${entry.count} <#${apiMsg.channel.id}> $mid")
+                "${if (entry.count < SettingsRepository.get(guild, "starboard_gild_count",
+                                "0")!!.toInt()) STAR else GILD_STAR} ${entry.count} <#${apiMsg.channel.id}> $mid")
         msg.setEmbed(embed {
             description {
                 +message.message

@@ -9,6 +9,7 @@ import me.mrkirby153.KirBot.modules.music.MusicBaseCommand
 import me.mrkirby153.KirBot.modules.music.MusicManager
 import me.mrkirby153.KirBot.modules.music.MusicModule
 import me.mrkirby153.KirBot.utils.Context
+import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.embed.b
 import me.mrkirby153.KirBot.utils.embed.embed
 import me.mrkirby153.KirBot.utils.embed.link
@@ -25,8 +26,6 @@ class CommandSkip : MusicBaseCommand() {
     private val skipCooldown = mutableMapOf<String, Long>()
 
     override fun execute(context: Context, cmdContext: CommandContext, manager: MusicManager) {
-        val musicSettings = manager.settings
-
         if (!manager.playing) {
             throw CommandException("I am not playing anything right now")
         }
@@ -43,7 +42,7 @@ class CommandSkip : MusicBaseCommand() {
         }
 
         val currentlyPlaying = manager.nowPlaying ?: throw CommandException("Nothing playing!")
-        val skipTimer = musicSettings.skipTimer
+        val skipTimer = SettingsRepository.get(context.guild, "music_skip_timer", "30")!!.toInt()
         if (alone(context.member)) {
             context.send().success("Playing next song").queue()
             manager.playNextTrack()
@@ -63,9 +62,10 @@ class CommandSkip : MusicBaseCommand() {
             }
         }.rest().queue { m ->
             skipCooldown[context.author.id] = System.currentTimeMillis() + (skipTimer * 1000) + 1500
-            if (musicSettings.skipCooldown > 0)
+            val cd = SettingsRepository.get(context.guild, "music_skip_cooldown", "0")!!.toInt()
+            if (cd > 0)
                 skipCooldown[context.author.id] = (skipCooldown[context.author.id]
-                        ?: 0) + (musicSettings.skipCooldown * 1000).toLong()
+                        ?: 0) + (cd * 1000).toLong()
             m.addReaction("\uD83D\uDC4D").queue() // Thumbs up
             m.addReaction("\uD83D\uDC4E").queue() // Thumbs down
             m.editMessage(embed("Music") {

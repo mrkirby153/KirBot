@@ -6,10 +6,12 @@ import me.mrkirby153.KirBot.database.models.guild.GuildMember
 import me.mrkirby153.KirBot.logger.LogEvent
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.Logger
+import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.checkPermission
 import me.mrkirby153.KirBot.utils.getMember
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.logName
+import me.mrkirby153.KirBot.utils.toTypedArray
 import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.entities.User
@@ -20,7 +22,8 @@ object UserPersistenceHandler {
 
     fun restore(user: User, guild: Guild) {
         Bot.LOG.debug("Restoring user $user on $guild")
-        val mode = Mode.decode(guild.kirbotGuild.settings.persistence.toInt())
+        val persistenceMoede = SettingsRepository.get(guild, "user_persistence", "0")!!.toInt()
+        val mode = Mode.decode(persistenceMoede)
         if (Mode.ENABLED !in mode) {
             Bot.LOG.debug("Persistence is disabled.")
             return
@@ -43,7 +46,8 @@ object UserPersistenceHandler {
         // Restore roles
         if (Mode.ROLES in mode) {
             val rolesToRestore = settings.roles.filter { role ->
-                val persistRoles = guild.kirbotGuild.settings.persistRoles
+                val persistRoles = SettingsRepository.getAsJsonArray(guild,
+                        "persist_roles")?.toTypedArray(String::class.java) ?: emptyList()
                 if (persistRoles.isEmpty())
                     return@filter true
                 role.role != null && role.role!!.id in persistRoles
@@ -67,7 +71,8 @@ object UserPersistenceHandler {
 
     fun restoreVoiceState(user: User, guild: Guild) {
         Bot.LOG.debug("Restoring voice state for $user on $guild")
-        val mode = Mode.decode(guild.kirbotGuild.settings.persistence.toInt())
+        val persistenceMoede = SettingsRepository.get(guild, "user_persistence", "0")!!.toInt()
+        val mode = Mode.decode(persistenceMoede)
         if (Mode.ENABLED !in mode) {
             Bot.LOG.debug("Persistence is disabled.")
             return

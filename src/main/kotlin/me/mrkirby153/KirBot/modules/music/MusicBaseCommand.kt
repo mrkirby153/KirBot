@@ -6,6 +6,7 @@ import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
+import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.getClearance
 import net.dv8tion.jda.core.entities.Member
 
@@ -13,7 +14,7 @@ abstract class MusicBaseCommand : BaseCommand(CommandCategory.MUSIC) {
 
     override fun execute(context: Context, cmdContext: CommandContext) {
         val manager = ModuleManager[MusicModule::class.java].getManager(context.guild)
-        if (!manager.settings.enabled)
+        if (SettingsRepository.get(context.guild, "music_enabled", "0") == "0")
             return
         execute(context, cmdContext, manager)
     }

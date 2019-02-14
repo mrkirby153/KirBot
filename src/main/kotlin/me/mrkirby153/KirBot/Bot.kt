@@ -11,7 +11,7 @@ import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers
 import me.mrkirby153.KirBot.command.CommandDocumentationGenerator
 import me.mrkirby153.KirBot.database.DatabaseConnection
-import me.mrkirby153.KirBot.database.models.guild.ServerSettings
+import me.mrkirby153.KirBot.database.models.guild.DiscordGuild
 import me.mrkirby153.KirBot.error.UncaughtErrorReporter
 import me.mrkirby153.KirBot.infraction.Infractions
 import me.mrkirby153.KirBot.module.ModuleManager
@@ -20,6 +20,7 @@ import me.mrkirby153.KirBot.rss.FeedTask
 import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.sharding.ShardManager
 import me.mrkirby153.KirBot.utils.HttpUtils
+import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.readProperties
 import me.mrkirby153.kcutils.Time
 import me.mrkirby153.kcutils.child
@@ -128,10 +129,10 @@ object Bot {
         // Remove old guilds
         Bot.LOG.info("Purging old guilds...")
         // Remove guilds whose time has passed
-        SoftDeletingModel.trashed(ServerSettings::class.java).where("deleted_at", "<",
+        SoftDeletingModel.trashed(DiscordGuild::class.java).where("deleted_at", "<",
                 Timestamp.from(Instant.now().minus(Duration.ofDays(30)))).get().forEach { it.forceDelete() }
         val guildList = shardManager.shards.flatMap { it.guilds }
-        Model.query(ServerSettings::class.java).whereNotIn("id",
+        Model.query(DiscordGuild::class.java).whereNotIn("id",
                 guildList.map { it.id }.toTypedArray()).whereNull("deleted_at").update(
                 Pair("deleted_at", Timestamp(System.currentTimeMillis())))
 
@@ -155,6 +156,11 @@ object Bot {
         scheduler.scheduleAtFixedRate(FeedTask(), 0, 15, TimeUnit.MINUTES)
         ModuleManager.startScheduler()
         Infractions.waitForInfraction()
+
+        // Register listener for nick changes
+        SettingsRepository.registerSettingListener("bot_nick") { guild, value ->
+            guild.controller.setNickname(guild.selfMember, value).queue()
+        }
 
         shardManager.onlineStatus = OnlineStatus.ONLINE
         shardManager.playing = properties.getOrDefault("playing-message", "!help").toString()

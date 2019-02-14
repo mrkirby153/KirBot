@@ -9,6 +9,7 @@ import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.InfractionModule
 import me.mrkirby153.KirBot.modules.Logger
 import me.mrkirby153.KirBot.server.KirBotGuild
+import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.canAssign
 import me.mrkirby153.KirBot.utils.checkPermission
 import me.mrkirby153.KirBot.utils.getMember
@@ -453,7 +454,8 @@ object Infractions {
     }
 
     fun getMutedRole(guild: Guild): Role? {
-        return guild.kirbotGuild.settings.mutedRole
+        val roleId = SettingsRepository.get(guild, "muted_role") ?: return null
+        return guild.getRoleById(roleId)
     }
 
     fun dmUser(user: String, guild: Guild, infraction: Infraction): DmResult {

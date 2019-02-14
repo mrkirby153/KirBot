@@ -1,11 +1,8 @@
 package me.mrkirby153.KirBot.modules
 
-import com.google.common.cache.Cache
-import com.google.common.cache.CacheBuilder
 import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.models.guild.GuildMessage
-import me.mrkirby153.KirBot.database.models.guild.SpamSettings
 import me.mrkirby153.KirBot.event.Subscribe
 import me.mrkirby153.KirBot.infraction.Infractions
 import me.mrkirby153.KirBot.logger.LogEvent
@@ -13,6 +10,7 @@ import me.mrkirby153.KirBot.module.Module
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.utils.Bucket
 import me.mrkirby153.KirBot.utils.EMOJI_RE
+import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.KirBot.utils.getClearance
 import me.mrkirby153.KirBot.utils.isNumber
@@ -33,9 +31,6 @@ import java.util.concurrent.TimeUnit
 class Spam : Module("spam") {
 
     private val locks = mutableMapOf<String, Semaphore>()
-
-    private val settingsCache: Cache<String, SpamSettings> = CacheBuilder.newBuilder().expireAfterWrite(
-            1, TimeUnit.SECONDS).build()
 
     init {
         dependencies.add(Redis::class.java)
@@ -126,8 +121,10 @@ class Spam : Module("spam") {
             if (last + (10 * 1000) < System.currentTimeMillis()) {
                 val settings = getSettings(violation.guild.id)
                 val rule = getRule(violation.guild.id, violation.level)
-                val punishment = rule?.optString("punishment", settings.optString("punishment")) ?: "NONE"
-                val duration = rule?.optLong("punishment_duration", settings.optLong("punishment_duration", -1)) ?: -1
+                val punishment = rule?.optString("punishment", settings.optString("punishment"))
+                        ?: "NONE"
+                val duration = rule?.optLong("punishment_duration",
+                        settings.optLong("punishment_duration", -1)) ?: -1
 
                 // Modlog
                 violation.guild.kirbotGuild.logManager.genericLog(LogEvent.SPAM_VIOLATE,
@@ -172,10 +169,13 @@ class Spam : Module("spam") {
                     }
                 }
 
-                if (settings.has("clean_count") || settings.has("clean_duration") || rule?.has("clean_count") == true || rule?.has("clean_duration") == true) {
+                if (settings.has("clean_count") || settings.has("clean_duration") || rule?.has(
+                                "clean_count") == true || rule?.has("clean_duration") == true) {
                     Bot.LOG.debug("Performing clean")
-                    val cleanCount = rule?.optString("clean_count", settings.optString("clean_count", null))
-                    val cleanDuration = rule?.optString("clean_duration", settings.optString("clean_duration", null))
+                    val cleanCount = rule?.optString("clean_count",
+                            settings.optString("clean_count", null))
+                    val cleanDuration = rule?.optString("clean_duration",
+                            settings.optString("clean_duration", null))
                     Thread.sleep(
                             250) // Wait to make sure in-flight stuff has been committed to the db
                     val messageQuery = Model.query(GuildMessage::class.java).where("author",
@@ -236,14 +236,8 @@ class Spam : Module("spam") {
     }
 
     private fun getSettings(guild: String): JSONObject {
-        val cached = settingsCache.getIfPresent(guild)
-        if (cached != null) {
-            return cached.settings
-        }
-        val model = Model.where(SpamSettings::class.java, "id", guild).first()
-                ?: SpamSettings().apply { id = guild }
-        settingsCache.put(guild, model)
-        return model.settings
+        return SettingsRepository.getAsJsonObject(Bot.shardManager.getGuild(guild)!!,
+                "spam_settings", JSONObject(), true)!!
     }
 
     private fun getRule(guild: String, level: Int): JSONObject? {

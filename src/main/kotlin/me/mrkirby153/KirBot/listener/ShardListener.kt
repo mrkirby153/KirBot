@@ -5,16 +5,17 @@ import com.mrkirby153.bfs.sql.elements.Pair
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.executors.admin.CommandStats
 import me.mrkirby153.KirBot.database.models.DiscordUser
+import me.mrkirby153.KirBot.database.models.guild.DiscordGuild
 import me.mrkirby153.KirBot.database.models.guild.GuildMember
 import me.mrkirby153.KirBot.database.models.guild.GuildMemberRole
 import me.mrkirby153.KirBot.database.models.guild.Role
-import me.mrkirby153.KirBot.database.models.guild.ServerSettings
 import me.mrkirby153.KirBot.event.Subscribe
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.AdminControl
 import me.mrkirby153.KirBot.modules.Redis
 import me.mrkirby153.KirBot.server.UserPersistenceHandler
 import me.mrkirby153.KirBot.sharding.Shard
+import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.kcutils.utils.IdGenerator
 import net.dv8tion.jda.core.events.channel.text.TextChannelCreateEvent
@@ -71,16 +72,16 @@ class ShardListener(val shard: Shard, val bot: Bot) {
 
     @Subscribe
     fun onGuildUpdateName(event: GuildUpdateNameEvent) {
-        val guild = event.guild.kirbotGuild
-        guild.settings.name = event.newName
-        guild.settings.save()
+        val g = event.guild.kirbotGuild.discordGuild
+        g.name = event.newName
+        g.save()
     }
 
     @Subscribe
     fun onGuildIconUpdate(event: GuildUpdateIconEvent) {
-        val guild = event.guild.kirbotGuild
-        guild.settings.iconId = event.newIconId
-        guild.settings.save()
+        val g = event.guild.kirbotGuild.discordGuild
+        g.iconId = event.newIconId
+        g.save()
     }
 
     @Subscribe
@@ -154,7 +155,7 @@ class ShardListener(val shard: Shard, val bot: Bot) {
     fun onGuildLeave(event: GuildLeaveEvent) {
         val guild = event.guild
         AdminControl.log("Left guild ${guild.name} (`${guild.id}`)")
-        Model.where(ServerSettings::class.java, "id", event.guild.id).first().delete()
+        Model.where(DiscordGuild::class.java, "id", event.guild.id).first().delete()
         event.guild.kirbotGuild.onPart()
     }
 
@@ -262,10 +263,9 @@ class ShardListener(val shard: Shard, val bot: Bot) {
             event.guild.kirbotGuild.removeSelfrole(event.role.id)
         Model.where(Role::class.java, "id", event.role.id).delete()
         // If the role is the muted role, delete it
-        val settings = event.guild.kirbotGuild.settings
-        if (settings.mutedRoleId == event.role.id) {
-            settings.mutedRole = null
-            settings.save()
+        val mutedRole = SettingsRepository.get(event.guild, "muted_role")
+        if(mutedRole != null && event.role.id == mutedRole) {
+            SettingsRepository.set(event.guild, "muted_role", null)
         }
     }
 }

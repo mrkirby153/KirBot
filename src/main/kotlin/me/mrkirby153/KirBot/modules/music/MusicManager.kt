@@ -1,9 +1,7 @@
 package me.mrkirby153.KirBot.modules.music
 
-import com.mrkirby153.bfs.model.Model
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.database.models.guild.MusicSettings
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.Redis
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
@@ -34,9 +32,6 @@ class MusicManager(val guild: Guild) {
 
     val boundChannel: TextChannel?
         get() = guild.getTextChannelById(boundChannelId)
-
-    val settings: MusicSettings
-        get() = Model.where(MusicSettings::class.java, "id", this.guild.id).first()
 
     var connected = false
 

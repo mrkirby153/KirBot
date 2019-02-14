@@ -1,8 +1,5 @@
 package me.mrkirby153.KirBot.modules.censor
 
-import com.google.common.cache.CacheBuilder
-import com.mrkirby153.bfs.model.Model
-import me.mrkirby153.KirBot.database.models.guild.CensorSettings
 import me.mrkirby153.KirBot.event.Subscribe
 import me.mrkirby153.KirBot.logger.LogEvent
 import me.mrkirby153.KirBot.module.Module
@@ -13,6 +10,7 @@ import me.mrkirby153.KirBot.modules.censor.rules.TokenRule
 import me.mrkirby153.KirBot.modules.censor.rules.ViolationException
 import me.mrkirby153.KirBot.modules.censor.rules.WordRule
 import me.mrkirby153.KirBot.modules.censor.rules.ZalgoRule
+import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.getClearance
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
@@ -22,7 +20,6 @@ import net.dv8tion.jda.core.entities.User
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent
 import net.dv8tion.jda.core.events.message.guild.GuildMessageUpdateEvent
 import org.json.JSONObject
-import java.util.concurrent.TimeUnit
 
 class Censor : Module("censor") {
 
@@ -30,9 +27,6 @@ class Censor : Module("censor") {
 
     private val invitePattern = "(discord\\.gg|discordapp.com/invite)/([A-Za-z0-9\\-]+)"
     private val inviteRegex = Regex(invitePattern)
-
-    private val cache = CacheBuilder.newBuilder().expireAfterWrite(2,
-            TimeUnit.SECONDS).build<String, CensorSettings>()
 
 
     override fun onLoad() {
@@ -73,21 +67,14 @@ class Censor : Module("censor") {
         }
     }
 
-    private fun getSettings(guild: Guild): CensorSettings {
-        val settings = cache.getIfPresent(guild.id)
-        return if (settings == null) {
-            val s = Model.where(CensorSettings::class.java, "id", guild.id).first()
-                    ?: CensorSettings().apply { this.id = guild.id }
-            s
-        } else {
-            settings
-        }
+    private fun getSettings(guild: Guild): JSONObject {
+        return SettingsRepository.getAsJsonObject(guild, "censor_settings", JSONObject(), true)!!
     }
 
     private fun getEffectiveSettings(user: User, guild: Guild): Array<JSONObject> {
         val clearance = user.getClearance(guild)
 
-        val settings = getSettings(guild).settings
+        val settings = getSettings(guild)
 
         val effectiveCats = settings.keySet().map { it.toInt() }.filter { it >= clearance }
 

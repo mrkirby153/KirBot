@@ -7,6 +7,7 @@ import me.mrkirby153.KirBot.database.models.guild.GuildMessage
 import me.mrkirby153.KirBot.database.models.guild.LogSettings
 import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.utils.CustomEmoji
+import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.convertSnowflake
 import me.mrkirby153.KirBot.utils.crypto.AesCrypto
 import me.mrkirby153.KirBot.utils.escapeMentions
@@ -140,7 +141,7 @@ class LogManager(private val guild: KirBotGuild) {
         if (!guild.ready)
             return
         val sdf = SimpleDateFormat("HH:mm:ss", Locale.ENGLISH)
-        sdf.timeZone = TimeZone.getTimeZone(this.guild.settings.logTimezone)
+        sdf.timeZone = TimeZone.getTimeZone(SettingsRepository.get(guild, "log_timezone", "UTC"))
         val m = buildString {
             append("`[")
             append(sdf.format(System.currentTimeMillis()))

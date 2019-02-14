@@ -32,10 +32,27 @@ class GuildMessage(message: Message? = null) : Model() {
     @Column("edit_count")
     var editCount = 0
 
-    var attachments: String? = null
-        get() = if (field != null) LogManager.decrypt(field!!) else null
+    var attachments: String?
+        get() {
+            return Model.where(MessageAttachments::class.java, "id", this.id).first()?.attachments
+        }
         set(value) {
-            field = if (value != null) LogManager.encrypt(value) else null
+            val existing = Model.where(MessageAttachments::class.java, "id", this.id).first()
+            if (existing != null) {
+                if (value == null) {
+                    existing.delete()
+                } else {
+                    existing.attachments = value
+                    existing.save()
+                }
+            } else {
+                if (value != null) {
+                    val newAttachments = MessageAttachments()
+                    newAttachments.id = this.id
+                    newAttachments.attachments = value
+                    newAttachments.save()
+                }
+            }
         }
 
 
@@ -47,7 +64,8 @@ class GuildMessage(message: Message? = null) : Model() {
             this.author = message.author.id
             this.channel = message.channel.id
             this.message = message.contentRaw
-            this.attachments = if(message.attachments.size > 0) message.attachments.joinToString(",") { it.url } else null
+            this.attachments = if (message.attachments.size > 0) message.attachments.joinToString(
+                    ",") { it.url } else null
             this.createdAt = Timestamp.from(message.creationTime.toInstant())
             this.updatedAt = this.createdAt
         }

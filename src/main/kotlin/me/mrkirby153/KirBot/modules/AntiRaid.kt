@@ -2,10 +2,7 @@ package me.mrkirby153.KirBot.modules
 
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
-import com.google.common.cache.LoadingCache
-import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.database.models.guild.AntiRaidSettings
 import me.mrkirby153.KirBot.event.Subscribe
 import me.mrkirby153.KirBot.infraction.Infractions
 import me.mrkirby153.KirBot.listener.WaitUtils
@@ -13,6 +10,7 @@ import me.mrkirby153.KirBot.module.Module
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.utils.RED_CROSS
 import me.mrkirby153.KirBot.utils.RED_TICK
+import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.embed.embed
 import me.mrkirby153.kcutils.Time
 import me.mrkirby153.kcutils.utils.SnowflakeWorker
@@ -27,33 +25,13 @@ import java.util.concurrent.ConcurrentHashMap
 
 class AntiRaid : Module("AntiRaid") {
 
-    val raidSettingsCache: LoadingCache<String, AntiRaidSettings> = CacheBuilder.newBuilder()
-            .maximumSize(100)
-            .removalListener<String, AntiRaidSettings> {
-                debug("${it.key} has been evicted: ${it.cause} -- Purging guild bucket")
-                this.guildBucketCache.invalidate(it.key)
-            }
-            .build(
-                    object : CacheLoader<String, AntiRaidSettings>() {
-                        override fun load(key: String): AntiRaidSettings {
-                            val settings = Model.where(AntiRaidSettings::class.java, "id",
-                                    key).first()
-                            if (settings == null) {
-                                val newSettings = AntiRaidSettings()
-                                newSettings.save()
-                                return newSettings
-                            }
-                            return settings
-                        }
-                    }
-            )
-
     private val guildBucketCache = CacheBuilder.newBuilder().maximumSize(100).build(
             object : CacheLoader<String, LeakyBucket>() {
                 override fun load(key: String): LeakyBucket {
-                    val settings = raidSettingsCache[key]
-                    return LeakyBucket("antiraid:join:$key", settings.count.toInt(),
-                            settings.period.toInt() * 1000)
+                    val g = Bot.shardManager.getGuild(key)!!
+                    return LeakyBucket("antiraid:join:$key",
+                            SettingsRepository.get(g, "anti_raid_count", "0")!!.toInt(),
+                            SettingsRepository.get(g, "anti_raid_period", "0")!!.toInt() * 1000)
                 }
             }
     )
@@ -72,24 +50,31 @@ class AntiRaid : Module("AntiRaid") {
     private val BOOT_EMOJI = "\uD83D\uDC62"
 
     override fun onLoad() {
+        val listener: (Guild, String?) -> Unit = { guild, _ ->
+            Bot.LOG.debug("raid settings changed on ${guild.name}, evicting cache")
+            guildBucketCache.invalidate(guild.id)
+        }
+        SettingsRepository.registerSettingListener("anti_raid_count", listener)
+        SettingsRepository.registerSettingListener("anti_raid_period", listener)
     }
 
     @Subscribe
     fun onJoin(event: GuildMemberJoinEvent) {
-        if (this.raidSettingsCache[event.guild.id].enabled)
+        if (SettingsRepository.get(event.guild, "anti_raid_enabled", "0") == "1")
             handleJoin(event.guild, event.user)
     }
 
     fun handleJoin(guild: Guild, user: User) {
         debug("Processing join for $user on $guild")
-        val raidSettings = this.raidSettingsCache[guild.id]
+//        val raidSettings = this.raidSettingsCache[guild.id]
         val joinBucket = this.guildBucketCache[guild.id]
+        val action = SettingsRepository.get(guild, "anti_raid_action", "NONE")!!
         if (guild.id in this.dismissedGuilds)
             return // The raid has been dismissed, we don't want to do anything
         if (activeRaids.containsKey(guild.id)) {
             // A raid is in process, perform the action
             recordRaidMember(guild, user.id)
-            punishRaider(guild, user, raidSettings.action)
+            punishRaider(guild, user, action)
             scheduleTermination(guild)
         } else {
             if (joinBucket.insert(user.id)) {
@@ -104,7 +89,7 @@ class AntiRaid : Module("AntiRaid") {
                 joinBucket.get().map { guild.getMemberById(it).user }.forEach {
                     debug("Taking action on $it")
                     recordRaidMember(guild, it.id)
-                    punishRaider(guild, it, raidSettings.action)
+                    punishRaider(guild, it, action)
                 }
             }
         }
@@ -129,8 +114,9 @@ class AntiRaid : Module("AntiRaid") {
     fun terminateRaids() {
         val terminated = mutableListOf<String>()
         this.lastJoin.forEach {
-            val settings = this.raidSettingsCache[it.key]
-            if (it.value + settings.quietPeriod * 1000 < System.currentTimeMillis()) {
+            if (it.value + SettingsRepository.get(Bot.shardManager.getGuild(it.key)!!,
+                            "anti_raid_quiet_period",
+                            "0")!!.toInt() * 1000 < System.currentTimeMillis()) {
                 val guild = Bot.shardManager.getGuild(it.key) ?: return@forEach
                 terminateRaid(guild)
                 terminated.add(it.key)
@@ -174,58 +160,44 @@ class AntiRaid : Module("AntiRaid") {
     }
 
     fun alertStaff(guild: Guild) {
-        val settings = this.raidSettingsCache[guild.id]
-        if (settings.alertChannel == null)
-            return
-        val roleToPing: Role? = if (settings.alertRole != null && (settings.alertRole == "@everyone" || settings.alertRole == "@here")) null else guild.getRoleById(
-                settings.alertRole)
-        val channel = guild.getTextChannelById(settings.alertChannel) ?: return
+        val alertRole = SettingsRepository.get(guild, "anti_raid_alert_role")
+        val alertChannel = getAlertChannel(guild) ?: return
+        val roleToPing: Role? = if (alertRole != null && (alertRole == "@everyone" || alertRole == "@here")) null else guild.getRoleById(
+                alertRole)
         val msg = buildString {
             if (roleToPing != null) {
                 append(roleToPing.asMention)
             } else {
-                if (settings.alertRole == "@everyone" || settings.alertRole == "@here") {
-                    append(settings.alertRole)
+                if (alertRole == "@everyone" || alertRole == "@here") {
+                    append(alertRole)
                 }
             }
             append(" ")
             append("A raid has been detected (${this@AntiRaid.activeRaids[guild.id]?.id})\n\n$RED_TICK - Dismiss raid as false alarm")
         }
+        var prev = false
         if (roleToPing != null) {
-            val prev = roleToPing.isMentionable
+            prev = roleToPing.isMentionable
             roleToPing.manager.setMentionable(true).complete()
-            val m = channel.sendMessage(msg).complete()
-            m.addReaction(RED_TICK.emote).complete()
-            WaitUtils.waitFor(MessageReactionAddEvent::class.java) { evt ->
-                if (evt.member == evt.guild.selfMember || evt.messageId != m.id)
-                    return@waitFor
-                if (evt.reactionEmote.emote == RED_TICK.emote) {
-                    dismissRaid(guild)
-                    scheduleTermination(guild)
-                    cancel()
-                }
-            }
-            roleToPing.manager.setMentionable(prev).complete()
-        } else {
-            val m = channel.sendMessage(msg).complete()
-            m.addReaction(RED_TICK.emote).complete()
-            WaitUtils.waitFor(MessageReactionAddEvent::class.java) { evt ->
-                if (evt.member == evt.guild.selfMember || evt.messageId != m.id)
-                    return@waitFor
-                if (evt.reactionEmote.emote == RED_TICK.emote) {
-                    dismissRaid(guild)
-                    cancel()
-                }
+        }
+        val m = alertChannel.sendMessage(msg).complete()
+        m.addReaction(RED_TICK.emote).complete()
+        WaitUtils.waitFor(MessageReactionAddEvent::class.java) { evt ->
+            if (evt.member == evt.guild.selfMember || evt.messageId != m.id)
+                return@waitFor
+            if (evt.reactionEmote.emote == RED_TICK.emote) {
+                dismissRaid(guild)
+                scheduleTermination(guild)
+                cancel()
             }
         }
+        roleToPing?.manager?.setMentionable(prev)?.queue()
         updateStatusMessage(guild)
     }
 
     private fun getAlertChannel(guild: Guild): TextChannel? {
-        val settings = this.raidSettingsCache[guild.id]
-        if (settings.alertChannel == null)
-            return null
-        return guild.getTextChannelById(settings.alertChannel)
+        return guild.getTextChannelById(
+                SettingsRepository.get(guild, "anti_raid_alert_channel", "0"))
     }
 
     private fun terminateRaid(guild: Guild) {
@@ -252,14 +224,14 @@ class AntiRaid : Module("AntiRaid") {
                 +"**${members.size - currentMembers.size}** users are no longer in the server\n"
                 +"Total Duration: ${Time.format(1,
                         System.currentTimeMillis() - raidInfo.startTime)}"
-                if (this@AntiRaid.raidSettingsCache[guild.id].action == "MUTE") {
+                if (SettingsRepository.get(guild, "anti_raid_action", "NONE") == "MUTE") {
                     +"\n\n$DOOR_EMOJI - Ban all raiders"
                     +"\n\n$BOOT_EMOJI - Kick all raiders"
                     +"\n\n$RED_CROSS - Dismiss raid as false alarm and unmute"
                 }
             }
         }.build()).queue { msg ->
-            if (this.raidSettingsCache[guild.id].action == "MUTE") {
+            if (SettingsRepository.get(guild, "anti_raid_action", "NONE") == "MUTE") {
                 msg.addReaction(DOOR_EMOJI).queue()
                 msg.addReaction(BOOT_EMOJI).queue()
                 msg.addReaction(RED_CROSS).queue()
@@ -303,7 +275,7 @@ class AntiRaid : Module("AntiRaid") {
         this.dismissedGuilds.add(guild.id)
         getAlertChannel(guild)?.sendMessage(buildString {
             append("Raid dismissed as a false alarm.")
-            if (this@AntiRaid.raidSettingsCache[guild.id].action == "MUTE") {
+            if (SettingsRepository.get(guild, "anti_raid_action", "NONE") == "MUTE") {
                 append(" Unmuting all members")
             }
         })?.queue()
@@ -315,9 +287,10 @@ class AntiRaid : Module("AntiRaid") {
     }
 
     fun updateStatusMessage(guild: Guild) {
-        val settings = raidSettingsCache[guild.id]
+//        val settings = raidSettingsCache[guild.id]
         val timeLeft = ((this.lastJoin[guild.id] ?: System.currentTimeMillis())
-                + (settings.quietPeriod * 1000)) - System.currentTimeMillis()
+                + (SettingsRepository.get(guild, "anti_raid_quiet_period",
+                "0")!!.toInt() * 1000)) - System.currentTimeMillis()
         val members = getRaidMembers(activeRaids[guild.id]!!.id)
 
         val msg = this.statusMessages[guild]

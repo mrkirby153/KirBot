@@ -10,16 +10,19 @@ import me.mrkirby153.KirBot.database.models.CustomCommand
 import me.mrkirby153.KirBot.logger.ErrorLogger
 import me.mrkirby153.KirBot.logger.LogEvent
 import me.mrkirby153.KirBot.utils.Context
+import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.KirBot.utils.deleteAfter
 import me.mrkirby153.KirBot.utils.getClearance
 import me.mrkirby153.KirBot.utils.globalAdmin
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.logName
+import me.mrkirby153.KirBot.utils.toTypedArray
 import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.core.entities.Channel
 import net.dv8tion.jda.core.entities.ChannelType
 import net.dv8tion.jda.core.entities.Guild
+import org.json.JSONArray
 import org.reflections.Reflections
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
@@ -64,8 +67,7 @@ object CommandExecutor {
             if (message.isEmpty())
                 return@submit
 
-            val settings = context.kirbotGuild.settings
-            val prefix = settings.cmdDiscriminator
+            val prefix = SettingsRepository.get(context.guild, "command_discriminator", "!", true)!!
 
             val botId = context.guild.selfMember.user.id
 
@@ -148,7 +150,8 @@ object CommandExecutor {
                 Bot.LOG.debug(
                         "${context.author.id} was denied access to $cmd due to lack of clearance. Required $clearance -- Found: ${context.author.getClearance(
                                 context.guild)}")
-                if (!settings.failSilently)
+                val silentRaw = SettingsRepository.get(context.guild, "command_silent_fail", "0")!!
+                if (silentRaw == "0")
                     context.channel.sendMessage(
                             ":lock: You do not have permission to perform this command").queue()
                 else
@@ -269,24 +272,24 @@ object CommandExecutor {
     }
 
     private fun canExecuteInChannel(command: BaseCommand, channel: Channel): Boolean {
-        if(command.annotation.admin)
-            return true
-        val data = channel.guild.kirbotGuild.settings
+        val channels = SettingsRepository.getAsJsonArray(channel.guild, "cmd_whitelist",
+                JSONArray())!!.toTypedArray(String::class.java)
         return if (command.respectWhitelist) {
-            if (data.cmdWhitelist.isEmpty())
+            if(channels.isEmpty())
                 return true
-            data.cmdWhitelist.any { it == channel.id }
+            channels.any { it == channel.id }
         } else {
             true
         }
     }
 
     private fun canExecuteInChannel(command: CustomCommand, channel: Channel): Boolean {
-        val data = channel.guild.kirbotGuild.settings
+        val channels = SettingsRepository.getAsJsonArray(channel.guild, "cmd_whitelist",
+                JSONArray())!!.toTypedArray(String::class.java)
         return if (command.respectWhitelist) {
-            if (data.cmdWhitelist.isEmpty())
-                return true
-            data.cmdWhitelist.any { it == channel.id }
+           if(channels.isEmpty())
+               return true
+            channels.any { it == channel.id }
         } else {
             true
         }

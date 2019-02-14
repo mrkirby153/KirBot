@@ -8,17 +8,15 @@ import me.mrkirby153.KirBot.database.models.CustomCommand
 import me.mrkirby153.KirBot.database.models.DiscordUser
 import me.mrkirby153.KirBot.database.models.RoleClearance
 import me.mrkirby153.KirBot.database.models.guild.CommandAlias
+import me.mrkirby153.KirBot.database.models.guild.DiscordGuild
 import me.mrkirby153.KirBot.database.models.guild.GuildMember
 import me.mrkirby153.KirBot.database.models.guild.GuildMemberRole
 import me.mrkirby153.KirBot.database.models.guild.GuildMessage
-import me.mrkirby153.KirBot.database.models.guild.MusicSettings
-import me.mrkirby153.KirBot.database.models.guild.ServerSettings
-import me.mrkirby153.KirBot.database.models.guild.starboard.StarboardSettings
 import me.mrkirby153.KirBot.logger.LogManager
 import me.mrkirby153.KirBot.module.ModuleManager
-import me.mrkirby153.KirBot.modules.AntiRaid
 import me.mrkirby153.KirBot.modules.Redis
 import me.mrkirby153.KirBot.user.CLEARANCE_ADMIN
+import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.KirBot.utils.fuzzyMatch
 import me.mrkirby153.KirBot.utils.toTypedArray
@@ -42,14 +40,16 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         Bot.LOG.debug("Constructing KirBotGuild for $guild")
     }
 
-    lateinit var settings: ServerSettings
-    lateinit var starboard: StarboardSettings
     lateinit var customCommands: MutableList<CustomCommand>
     lateinit var commandAliases: MutableList<CommandAlias>
     val clearances: MutableMap<String, Int> = mutableMapOf()
 
 
     val logManager = LogManager(this)
+
+    val discordGuild: DiscordGuild by lazy {
+        Model.where(DiscordGuild::class.java, "id", this.id).first()
+    }
 
     var extraData = JSONObject()
     private val dataFile = Bot.files.data.child("servers").mkdirIfNotExist().child(
@@ -67,37 +67,24 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
     fun loadSettings() {
         Bot.LOG.debug("Loading settings for ${this}")
         // Load settings
-        settings = SoftDeletingModel.withTrashed(ServerSettings::class.java).where("id",
-                this.id).first() ?: ServerSettings()
-        if (settings.isTrashed) {
-            Bot.LOG.debug("Restoring trashed guild settings on $this")
-            settings.restore()
+        val dg = SoftDeletingModel.withTrashed(DiscordGuild::class.java).where("id",
+                this.id).first() ?: DiscordGuild(this)
+        if(dg.isTrashed) {
+            Bot.LOG.debug("Restoring trashed guild $dg")
+            dg.restore()
         }
-        settings.id = this.id
-        settings.name = this.name
-        settings.iconId = this.iconId
-        settings.save()
+        dg.id = this.id
+        dg.name = this.name
+        dg.iconId = this.iconId
+        dg.save()
 
         customCommands = Model.where(CustomCommand::class.java,
                 "server", this.id).get().toMutableList()
         commandAliases = Model.where(CommandAlias::class.java, "server_id",
                 this.id).get().toMutableList()
 
-        // Ensure music settings exist
-        val musicSettings = Model.where(MusicSettings::class.java, "id", this.id).first()
-                ?: MusicSettings(this)
-        musicSettings.save()
-
-        starboard = Model.where(
-                StarboardSettings::class.java, "id", this.id).first() ?: StarboardSettings().apply {
-            this.id = this@KirBotGuild.id
-            save()
-        }
 
         logManager.reloadLogChannels()
-
-        // Purge anti-raid cache
-        ModuleManager.getLoadedModule(AntiRaid::class.java)?.raidSettingsCache?.invalidate(this.id)
 
         loadData()
 
@@ -125,9 +112,10 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         loadSettings()
 
         runAsyncTask {
-            if (this.selfMember.nickname != settings.botNick) {
+            val botNick = SettingsRepository.get(guild, "bot_nick")
+            if (this.selfMember.nickname != botNick) {
                 this.controller.setNickname(this.selfMember,
-                        if (settings.botNick?.isEmpty() == true) null else settings.botNick).queue()
+                        if (botNick?.isEmpty() == true) null else botNick).queue()
             }
         }
 
@@ -357,7 +345,8 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
                 count++
             }
         }
-        Bot.LOG.debug("Removed $count completed tasks on $this. (${this.runningTasks.size} still pending)")
+        Bot.LOG.debug(
+                "Removed $count completed tasks on $this. (${this.runningTasks.size} still pending)")
     }
 
     override fun toString(): String {

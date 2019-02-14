@@ -4,6 +4,8 @@ import me.mrkirby153.KirBot.redis.commands.BotChat
 import me.mrkirby153.KirBot.redis.commands.ChannelVisibility
 import me.mrkirby153.KirBot.redis.commands.RedisCommandHandler
 import me.mrkirby153.KirBot.redis.commands.SetNickname
+import me.mrkirby153.KirBot.redis.commands.SettingChange
+import me.mrkirby153.KirBot.redis.commands.SettingDelete
 import me.mrkirby153.KirBot.redis.commands.SyncCommand
 
 object RedisCommandManager {
@@ -16,6 +18,8 @@ object RedisCommandManager {
         register("botchat", BotChat())
         register("nickname", SetNickname())
         register("sync", SyncCommand())
+        register("setting-update", SettingChange())
+        register("settings-delete", SettingDelete())
     }
 
     fun getCommand(name: String): RedisCommandHandler? {

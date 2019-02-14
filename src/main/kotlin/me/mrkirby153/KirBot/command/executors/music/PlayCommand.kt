@@ -5,15 +5,17 @@ import me.mrkirby153.KirBot.CommandDescription
 import me.mrkirby153.KirBot.command.Command
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.args.CommandContext
-import me.mrkirby153.KirBot.database.models.guild.MusicSettings
 import me.mrkirby153.KirBot.google.YoutubeSearch
 import me.mrkirby153.KirBot.modules.music.MusicBaseCommand
 import me.mrkirby153.KirBot.modules.music.MusicManager
 import me.mrkirby153.KirBot.modules.music.TrackLoader
 import me.mrkirby153.KirBot.utils.Context
+import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.checkPermissions
+import me.mrkirby153.KirBot.utils.toTypedArray
 import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.TextChannel
+import org.json.JSONArray
 
 @Command(name = "play", arguments = ["[query/url:string...]"],
         permissions = [Permission.MESSAGE_EMBED_LINKS])
@@ -37,17 +39,22 @@ class PlayCommand : MusicBaseCommand() {
                 throw CommandException(
                         "I am already playing music in **${context.guild.selfMember.voiceState.channel.name}**. Join me there or use `${cmdPrefix}summon` to summon me to your current channel")
         }
-        when (manager.settings.whitelistMode) {
-            MusicSettings.WhitelistMode.WHITELIST -> {
-                if (context.member.voiceState.channel.id !in manager.settings.channels)
+        val whitelistChannels = SettingsRepository.getAsJsonArray(context.guild, "music_channels",
+                JSONArray())!!.toTypedArray(String::class.java)
+        when (SettingsRepository.get(context.guild, "music_mode", "OFF")) {
+            "WHITELIST" -> {
+                if (context.member.voiceState.channel.id !in whitelistChannels)
                     throw CommandException("I cannot play music in your channel")
             }
-            MusicSettings.WhitelistMode.BLACKLIST -> {
-                if (context.member.voiceState.channel.id in manager.settings.channels)
+            "BLACKLIST" -> {
+                if (context.member.voiceState.channel.id in whitelistChannels)
                     throw CommandException("I cannot play music in your channel")
             }
-            MusicSettings.WhitelistMode.OFF -> {
+            "OFF" -> {
                 // Do nothing, whitelisting is disabled
+            }
+            else -> {
+                throw CommandException("Whitelist is in an unknown state!")
             }
         }
 
@@ -65,7 +72,8 @@ class PlayCommand : MusicBaseCommand() {
         if (ytSearch) {
             url = YoutubeSearch(url).execute()
         }
-        if (manager.settings.maxQueueLength != -1 && manager.queueLength() / (60 * 1000) >= manager.settings.maxQueueLength) {
+        val maxQueueLength = SettingsRepository.get(context.guild, "music_max_queue_length", "-1")!!.toInt()
+        if (maxQueueLength != -1 && manager.queueLength() / (60 * 1000) >= maxQueueLength) {
             throw CommandException(
                     "The queue is too long right now, please try again when it is shorter")
         }

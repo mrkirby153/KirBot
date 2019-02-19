@@ -76,6 +76,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         dg.id = this.id
         dg.name = this.name
         dg.iconId = this.iconId
+        dg.owner = this.ownerId
         dg.save()
 
         customCommands = Model.where(CustomCommand::class.java,

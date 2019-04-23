@@ -32,11 +32,20 @@ class GuildMessage(message: Message? = null) : Model() {
     @Column("edit_count")
     var editCount = 0
 
+
+    @Transient
+    var pendingAttachments: String? = null
+
     var attachments: String?
         get() {
             return Model.where(MessageAttachments::class.java, "id", this.id).first()?.attachments
         }
         set(value) {
+            // TODO 2019-03-31 Fix bug where these are inserted before the modal actually exists
+            if(!this.exists) {
+                this.pendingAttachments = value
+                return;
+            }
             val existing = Model.where(MessageAttachments::class.java, "id", this.id).first()
             if (existing != null) {
                 if (value == null) {
@@ -68,6 +77,13 @@ class GuildMessage(message: Message? = null) : Model() {
                     ",") { it.url } else null
             this.createdAt = Timestamp.from(message.creationTime.toInstant())
             this.updatedAt = this.createdAt
+        }
+    }
+
+    override fun save() {
+        super.save()
+        if(this.pendingAttachments != null) {
+            this.attachments = this.pendingAttachments
         }
     }
 }

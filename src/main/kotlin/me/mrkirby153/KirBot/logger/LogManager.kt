@@ -92,7 +92,7 @@ class LogManager(private val guild: KirBotGuild) {
         val selector = "?, ".repeat(messages.size)
         val realString = selector.substring(
                 0, selector.lastIndexOf(","))
-        val query = "SELECT `server_messages`.`id` as `message_id`, `server_messages`.`server_id`, `author` as 'author_id', `channel`, `message`, `username`, `discriminator`, `attachments` FROM `server_messages` LEFT JOIN `seen_users` ON `server_messages`.`author` = `seen_users`.`id` WHERE `server_messages`.`id` IN ($realString)"
+        val query = "SELECT `server_messages`.`id` as `message_id`, `server_messages`.`server_id`, `author` as 'author_id', `channel`, `message`, `username`, `discriminator`, `attachments` FROM `server_messages` LEFT JOIN `seen_users` ON `server_messages`.`author` = `seen_users`.`id` LEFT JOIN `attachments` ON `server_messages`.`id` = `attachments`.`id` WHERE `server_messages`.`id` IN ($realString)"
         val results = DB.getResults(query, *(messages.toTypedArray()))
         val msgs = mutableListOf<String>()
         results.forEach { result ->

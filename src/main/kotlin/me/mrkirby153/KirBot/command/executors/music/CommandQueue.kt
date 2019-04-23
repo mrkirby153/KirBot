@@ -6,7 +6,6 @@ import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.modules.music.MusicBaseCommand
 import me.mrkirby153.KirBot.modules.music.MusicManager
 import me.mrkirby153.KirBot.utils.Context
-import me.mrkirby153.KirBot.utils.botUrl
 import me.mrkirby153.KirBot.utils.embed.link
 import me.mrkirby153.KirBot.utils.mdEscape
 import net.dv8tion.jda.core.Permission
@@ -76,8 +75,6 @@ class CommandQueue : MusicBaseCommand() {
                                     " " + (index + 1) + ". " + (track.info.title link track.info.uri) + " (${MusicManager.parseMS(
                                             track.duration)})")
                     }
-                +"\n\n"
-                +("**View The Full Queue**" link botUrl("server/${context.guild.id}/queue"))
             }
             timestamp {
                 now()

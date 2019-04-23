@@ -14,7 +14,6 @@ import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.Quotes
 import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
-import me.mrkirby153.KirBot.utils.botUrl
 import me.mrkirby153.KirBot.utils.escapeMentions
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 
@@ -47,8 +46,7 @@ class CommandQuotes : BaseCommand(false, CommandCategory.FUN) {
     override fun execute(context: Context, cmdContext: CommandContext) {
         val quoteCount =  Model.where(Quote::class.java, "server_id", context.guild.id).get().size
         context.channel.sendMessage(
-                ":left_speech_bubble: **Quotes**\n\n Total: $quoteCount \n\n Full List: " + botUrl(
-                        "server/${context.guild.id}/quotes")).queue()
+                ":left_speech_bubble: **Quotes**\n\n Total: $quoteCount").queue()
     }
 
     @Command(name = "block", arguments = ["<user:snowflake>"], clearance = CLEARANCE_MOD)

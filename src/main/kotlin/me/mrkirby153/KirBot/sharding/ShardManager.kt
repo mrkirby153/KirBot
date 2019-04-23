@@ -21,6 +21,8 @@ class ShardManager(val token: String, private val totalShards: Int) {
 
     private val eventListeners = mutableListOf<Any>()
 
+    private val eventManagers = mutableMapOf<JDA, PriorityEventManager>()
+
     var playing: String = ""
         set(game) {
             field = game
@@ -127,33 +129,42 @@ class ShardManager(val token: String, private val totalShards: Int) {
         return getShard(guild.id)
     }
 
+    fun getEventManager(guild: Guild): PriorityEventManager {
+        return this.eventManagers[guild.jda]!!
+    }
+
     fun isLoading() = this.loadingShards.size > 0
 
-    private fun buildJDA(id: Int = 0) = JDABuilder(AccountType.BOT).run {
-        setToken(this@ShardManager.token)
-        setAutoReconnect(true)
-        setStatus(OnlineStatus.IDLE)
-        setBulkDeleteSplittingEnabled(false)
-        setEventManager(PriorityEventManager())
-        if (totalShards > 1) {
-            useSharding(id, totalShards)
-        }
-        setGame(Game.playing("Starting up..."))
-        if (!System.getProperty("os.name").contains("Mac"))
-            setAudioSendFactory(NativeAudioSendFactory())
-        eventListeners.forEach {
-            addEventListener(it)
-        }
-        addEventListener(object {
-            @Subscribe
-            fun onReady(event: ReadyEvent) {
-                Bot.LOG.info("Shard $id is ready!")
-                loadingShards.remove(id)
-                event.jda.removeEventListener(this)
-                updatePresence(event.jda)
+    private fun buildJDA(id: Int = 0): JDA {
+        val priorityEventManager = PriorityEventManager()
+        val jda = JDABuilder(AccountType.BOT).run {
+            setToken(this@ShardManager.token)
+            setAutoReconnect(true)
+            setStatus(OnlineStatus.IDLE)
+            setBulkDeleteSplittingEnabled(false)
+            setEventManager(priorityEventManager)
+            if (totalShards > 1) {
+                useSharding(id, totalShards)
             }
-        })
-        build()
+            setGame(Game.playing("Starting up..."))
+            if (!System.getProperty("os.name").contains("Mac"))
+                setAudioSendFactory(NativeAudioSendFactory())
+            eventListeners.forEach {
+                addEventListener(it)
+            }
+            addEventListener(object {
+                @Subscribe
+                fun onReady(event: ReadyEvent) {
+                    Bot.LOG.info("Shard $id is ready!")
+                    loadingShards.remove(id)
+                    event.jda.removeEventListener(this)
+                    updatePresence(event.jda)
+                }
+            })
+            build()
+        }
+        this.eventManagers[jda] = priorityEventManager
+        return jda
     }
 
     fun getTextChannel(id: String): TextChannel? {

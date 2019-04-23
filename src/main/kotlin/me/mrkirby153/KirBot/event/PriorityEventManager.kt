@@ -3,8 +3,10 @@ package me.mrkirby153.KirBot.event
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.BotState
 import me.mrkirby153.KirBot.utils.kirbotGuild
+import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.events.Event
 import net.dv8tion.jda.core.events.guild.GenericGuildEvent
+import net.dv8tion.jda.core.events.guild.GuildJoinEvent
 import net.dv8tion.jda.core.hooks.IEventManager
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
@@ -22,11 +24,21 @@ class PriorityEventManager : IEventManager {
     private val classMethods: ConcurrentHashMap<Any, CopyOnWriteArrayList<Method>> = ConcurrentHashMap()
     private val eventMethods: ConcurrentHashMap<Class<Event>, CopyOnWriteArrayList<EventListenerMethod>> = ConcurrentHashMap()
 
+    private val queuedEvents: ConcurrentHashMap<String, CopyOnWriteArrayList<Event>> = ConcurrentHashMap()
+
     override fun handle(event: Event) {
         if (event is GenericGuildEvent && Bot.state == BotState.RUNNING) {
-            // If the event is a guild event, check if the guild is ready
-            if (!event.guild.kirbotGuild.ready)
-                return // Drop the event because the guild isn't ready yet
+            if(event !is GuildJoinEvent) { // Ensure the guild join event is passed through
+                // If the event is a guild event, check if the guild is ready
+                if (!event.guild.kirbotGuild.ready) {
+                    val arrayList = queuedEvents.computeIfAbsent(
+                            event.guild.id) { CopyOnWriteArrayList() }
+                    arrayList.add(event)
+                    Bot.LOG.debug(
+                            "Queueing ${event.javaClass} for guild ${event.guild}. Reason: Guild not ready")
+                    return
+                }
+            }
         }
 
         // Walk up the hierarchy
@@ -34,6 +46,14 @@ class PriorityEventManager : IEventManager {
         while (current != null && current != Object::class.java) {
             dispatch(event, current)
             current = current.superclass as Class<Event>?
+        }
+    }
+
+    fun onGuildReady(guild: Guild) {
+        val queuedEvents = this.queuedEvents[guild.id] ?: return
+        Bot.LOG.debug("Firing ${queuedEvents.size} queued events on $guild")
+        queuedEvents.forEach {
+            handle(it)
         }
     }
 

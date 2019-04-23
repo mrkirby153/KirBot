@@ -9,6 +9,7 @@ import me.mrkirby153.KirBot.database.models.guild.DiscordGuild
 import me.mrkirby153.KirBot.database.models.guild.GuildMember
 import me.mrkirby153.KirBot.database.models.guild.GuildMemberRole
 import me.mrkirby153.KirBot.database.models.guild.Role
+import me.mrkirby153.KirBot.event.EventPriority
 import me.mrkirby153.KirBot.event.Subscribe
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.AdminControl
@@ -159,7 +160,7 @@ class ShardListener(val shard: Shard, val bot: Bot) {
         event.guild.kirbotGuild.onPart()
     }
 
-    @Subscribe
+    @Subscribe(priority = EventPriority.HIGHEST)
     fun onGuildJoin(event: GuildJoinEvent) {
         // Check the guild whitelist
         if (Bot.properties.getOrDefault("guild-whitelist", "false").toString().toBoolean()) {
@@ -178,6 +179,7 @@ class ShardListener(val shard: Shard, val bot: Bot) {
         }
         AdminControl.log(
                 "Joined guild ${event.guild.name} (`${event.guild.id}`) [${event.guild.members.size} members]")
+        event.guild.kirbotGuild.loadSettings()
         Bot.scheduler.schedule({
             event.guild.kirbotGuild.sync()
             event.guild.kirbotGuild.dispatchBackfill()

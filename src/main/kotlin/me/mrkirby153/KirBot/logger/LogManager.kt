@@ -52,6 +52,9 @@ class LogManager(private val guild: KirBotGuild) {
                         LogEvent.has(settings.included, it)
                     }
                 }.toTypedArray())
+            else {
+                channelLoggers.remove(chan.id)
+            }
         }
     }
 

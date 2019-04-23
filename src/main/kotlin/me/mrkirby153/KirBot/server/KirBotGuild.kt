@@ -94,8 +94,6 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         Model.where(RoleClearance::class.java, "server_id", this.id).get().forEach {
             clearances[it.roleId] = it.permission
         }
-        // The guild is ready to process events even though stuff may still be loading
-        this.ready = true
     }
 
     fun onPart() {
@@ -168,6 +166,9 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
                             "server_id", member.guild.id).whereNotIn("role_id",
                             member.roles.map { it.id }.toTypedArray()).delete()
             }
+
+            this.ready = true
+            Bot.shardManager.getEventManager(this).onGuildReady(this)
         }
     }
 

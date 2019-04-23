@@ -23,6 +23,7 @@ class DiscordGuild(guild: Guild? = null) : SoftDeletingModel() {
 
 
     init {
+        incrementing = false
         if (guild != null) {
             this.id = guild.id
             this.name = guild.name

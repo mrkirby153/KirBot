@@ -25,6 +25,7 @@ import me.mrkirby153.KirBot.utils.readProperties
 import me.mrkirby153.kcutils.Time
 import me.mrkirby153.kcutils.child
 import me.mrkirby153.kcutils.readProperties
+import me.mrkirby153.kcutils.utils.SnowflakeWorker
 import net.dv8tion.jda.core.OnlineStatus
 import okhttp3.Request
 import org.json.JSONObject
@@ -66,6 +67,8 @@ object Bot {
     }
 
     val debug = properties.getProperty("debug", "false").toBoolean()
+
+    val idGenerator = SnowflakeWorker(1, 1)
 
     lateinit var shardManager: ShardManager
 

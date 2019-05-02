@@ -67,7 +67,7 @@ object CommandExecutor {
             if (message.isEmpty())
                 return@submit
 
-            val prefix = SettingsRepository.get(context.guild, "command_discriminator", "!", true)!!
+            val prefix = SettingsRepository.get(context.guild, "command_prefix", "!", true)!!
 
             val botId = context.guild.selfMember.user.id
 

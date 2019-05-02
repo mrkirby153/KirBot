@@ -2,6 +2,7 @@ package me.mrkirby153.KirBot.event
 
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.BotState
+import me.mrkirby153.KirBot.stats.Statistics
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.events.Event
@@ -27,6 +28,7 @@ class PriorityEventManager : IEventManager {
     private val queuedEvents: ConcurrentHashMap<String, CopyOnWriteArrayList<Event>> = ConcurrentHashMap()
 
     override fun handle(event: Event) {
+        Statistics.eventType.labels(event.javaClass.name).inc()
         if (event is GenericGuildEvent && Bot.state == BotState.RUNNING) {
             if(event !is GuildJoinEvent) { // Ensure the guild join event is passed through
                 // If the event is a guild event, check if the guild is ready
@@ -44,7 +46,10 @@ class PriorityEventManager : IEventManager {
         // Walk up the hierarchy
         var current: Class<Event>? = event.javaClass
         while (current != null && current != Object::class.java) {
+            val start = System.currentTimeMillis()
             dispatch(event, current)
+            val end = System.currentTimeMillis()
+            Statistics.eventDuration.labels(current.name).observe((end - start).toDouble())
             current = current.superclass as Class<Event>?
         }
     }

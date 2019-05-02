@@ -19,6 +19,7 @@ import me.mrkirby153.KirBot.modules.AdminControl
 import me.mrkirby153.KirBot.rss.FeedTask
 import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.sharding.ShardManager
+import me.mrkirby153.KirBot.stats.Statistics
 import me.mrkirby153.KirBot.utils.HttpUtils
 import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.readProperties
@@ -77,6 +78,7 @@ object Bot {
 
 
     fun start(token: String) {
+        Statistics.export()
         val startupTime = System.currentTimeMillis()
         state = BotState.INITIALIZING
         if (debug) {

@@ -9,6 +9,7 @@ import me.mrkirby153.KirBot.command.help.HelpManager
 import me.mrkirby153.KirBot.database.models.CustomCommand
 import me.mrkirby153.KirBot.logger.ErrorLogger
 import me.mrkirby153.KirBot.logger.LogEvent
+import me.mrkirby153.KirBot.stats.Statistics
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.checkPermissions
@@ -179,6 +180,7 @@ object CommandExecutor {
                 return@submit
             }
 
+            Statistics.commandsRan.labels(command.aliases[0], context.guild.id.toString()).inc()
             try {
                 command.aliasUsed = cmd
                 command.cmdPrefix = prefix
@@ -186,7 +188,10 @@ object CommandExecutor {
                     if (logInModLogs)
                         context.kirbotGuild.logManager.genericLog(LogEvent.ADMIN_COMMAND, ":tools:",
                                 "${context.author.logName} Executed `${context.message.contentRaw}` in **#${context.channel.name}**")
-                    cmdMethod.invoke(command, context, cmdContext)
+                    val ms = measureTimeMillis {
+                        cmdMethod.invoke(command, context, cmdContext)
+                    }
+                    Statistics.commandDuration.labels(command.aliases[0]).observe(ms.toDouble())
                 } catch (e: InvocationTargetException) {
                     throw e.targetException
                 }
@@ -275,7 +280,7 @@ object CommandExecutor {
         val channels = SettingsRepository.getAsJsonArray(channel.guild, "cmd_whitelist",
                 JSONArray())!!.toTypedArray(String::class.java)
         return if (command.respectWhitelist) {
-            if(channels.isEmpty())
+            if (channels.isEmpty())
                 return true
             channels.any { it == channel.id }
         } else {
@@ -287,8 +292,8 @@ object CommandExecutor {
         val channels = SettingsRepository.getAsJsonArray(channel.guild, "cmd_whitelist",
                 JSONArray())!!.toTypedArray(String::class.java)
         return if (command.respectWhitelist) {
-           if(channels.isEmpty())
-               return true
+            if (channels.isEmpty())
+                return true
             channels.any { it == channel.id }
         } else {
             true

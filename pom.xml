@@ -256,11 +256,23 @@
             <artifactId>bug-free-spork</artifactId>
             <version>1.2-SNAPSHOT</version>
         </dependency>
+        <!-- The client -->
         <dependency>
-            <groupId>org.jetbrains.kotlin</groupId>
-            <artifactId>kotlin-stdlib-jdk8</artifactId>
-            <version>${kotlin.version}</version>
+            <groupId>io.prometheus</groupId>
+            <artifactId>simpleclient</artifactId>
+            <version>0.6.0</version>
         </dependency>
-
+        <!-- Hotspot JVM metrics-->
+        <dependency>
+            <groupId>io.prometheus</groupId>
+            <artifactId>simpleclient_hotspot</artifactId>
+            <version>0.6.0</version>
+        </dependency>
+        <!-- Exposition HTTPServer-->
+        <dependency>
+            <groupId>io.prometheus</groupId>
+            <artifactId>simpleclient_httpserver</artifactId>
+            <version>0.6.0</version>
+        </dependency>
     </dependencies>
 </project>

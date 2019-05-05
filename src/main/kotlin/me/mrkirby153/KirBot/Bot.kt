@@ -33,6 +33,7 @@ import org.json.JSONObject
 import org.json.JSONTokener
 import org.slf4j.LoggerFactory
 import java.sql.Timestamp
+import java.text.SimpleDateFormat
 import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.Executors
@@ -81,18 +82,7 @@ object Bot {
         Statistics.export()
         val startupTime = System.currentTimeMillis()
         state = BotState.INITIALIZING
-        if (debug) {
-            (LOG as? Logger)?.let { logger ->
-                logger.level = Level.DEBUG
-            }
-            QueryBuilder.logQueries = System.getProperty("kirbot.logQueries",
-                    "false")?.toBoolean() ?: false
-            if (QueryBuilder.logQueries) {
-                LOG.warn("Query logging is enabled. This will generate a lot of console output!")
-            }
-        }
-        (LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME) as? Logger)?.level = Level.valueOf(
-                System.getProperty("kirbot.global_log", "INFO"))
+        configureLogging()
         Bot.LOG.info("Starting KirBot ${constants.getProperty("bot-version")}")
         Bot.LOG.debug("\t + Base URL: ${constants.getProperty("bot-base-url")}")
 
@@ -132,14 +122,7 @@ object Bot {
         ModuleManager.load(true)
 
         // Remove old guilds
-        Bot.LOG.info("Purging old guilds...")
-        // Remove guilds whose time has passed
-        SoftDeletingModel.trashed(DiscordGuild::class.java).where("deleted_at", "<",
-                Timestamp.from(Instant.now().minus(Duration.ofDays(30)))).get().forEach { it.forceDelete() }
-        val guildList = shardManager.shards.flatMap { it.guilds }
-        Model.query(DiscordGuild::class.java).whereNotIn("id",
-                guildList.map { it.id }.toTypedArray()).whereNull("deleted_at").update(
-                Pair("deleted_at", Timestamp(System.currentTimeMillis())))
+        purgeSoftDeletedGuilds()
 
 
         val guilds = shardManager.shards.flatMap { it.guilds }
@@ -182,6 +165,37 @@ object Bot {
 
         CommandDocumentationGenerator.generate(files.data.child("commands.md"))
         state = BotState.RUNNING
+    }
+
+    private fun purgeSoftDeletedGuilds() {
+        LOG.info("Purging old guilds...")
+        // Remove guilds whose time has passed
+        val threshold = Instant.now().minus(Duration.ofDays(30))
+        LOG.info("Removing guilds that we left before ${SimpleDateFormat(
+                Time.DATE_FORMAT_NOW).format(threshold.toEpochMilli())}")
+        val guilds = SoftDeletingModel.trashed(DiscordGuild::class.java).where("deleted_at", "<",
+                Timestamp.from(threshold)).get()
+        LOG.info("${guilds.size} guilds being purged")
+        guilds.forEach { it.forceDelete() }
+        val guildList = shardManager.shards.flatMap { it.guilds }
+        Model.query(DiscordGuild::class.java).whereNotIn("id",
+                guildList.map { it.id }.toTypedArray()).whereNull("deleted_at").update(
+                Pair("deleted_at", Timestamp(System.currentTimeMillis())))
+    }
+
+    private fun configureLogging() {
+        if (debug) {
+            (LOG as? Logger)?.let { logger ->
+                logger.level = Level.DEBUG
+            }
+            QueryBuilder.logQueries = System.getProperty("kirbot.logQueries",
+                    "false")?.toBoolean() ?: false
+            if (QueryBuilder.logQueries) {
+                LOG.warn("Query logging is enabled. This will generate a lot of console output!")
+            }
+        }
+        (LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME) as? Logger)?.level = Level.valueOf(
+                System.getProperty("kirbot.global_log", "INFO"))
     }
 
     fun stop() {

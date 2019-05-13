@@ -1,6 +1,7 @@
 package me.mrkirby153.KirBot.modules
 
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.database.MessageConcurrencyManager
 import me.mrkirby153.KirBot.event.Subscribe
 import me.mrkirby153.KirBot.module.Module
 import me.mrkirby153.KirBot.stats.Statistics
@@ -30,6 +31,9 @@ class StatisticModule : Module("stats") {
             val shardNumber = shard.shardInfo?.shardId ?: 0
             Statistics.websocketPing.labels(shardNumber.toString()).set(shard.ping.toDouble())
         }
+        Statistics.pendingMessageJobs.set(MessageConcurrencyManager.queueSize().toDouble())
+        Statistics.pendingMessages.set(MessageConcurrencyManager.messageCount().toDouble())
+        Statistics.runningMessageJobs.set(MessageConcurrencyManager.runningJobs().toDouble())
     }
 
 

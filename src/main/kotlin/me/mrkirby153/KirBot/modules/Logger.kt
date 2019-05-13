@@ -1,13 +1,11 @@
 package me.mrkirby153.KirBot.modules
 
-import com.mrkirby153.bfs.model.Model
 import com.mrkirby153.bfs.sql.DB
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.database.models.guild.GuildMessage
+import me.mrkirby153.KirBot.database.MessageConcurrencyManager
 import me.mrkirby153.KirBot.event.EventPriority
 import me.mrkirby153.KirBot.event.Subscribe
 import me.mrkirby153.KirBot.logger.LogEvent
-import me.mrkirby153.KirBot.logger.LogManager
 import me.mrkirby153.KirBot.logger.LogPump
 import me.mrkirby153.KirBot.module.Module
 import me.mrkirby153.KirBot.module.ModuleManager
@@ -78,9 +76,7 @@ class Logger : Module("logging") {
     @Subscribe(priority = EventPriority.HIGHEST)
     fun onGuildMessageDelete(event: GuildMessageDeleteEvent) {
         event.guild.kirbotGuild.logManager.logMessageDelete(event.messageId)
-        val msg = Model.where(GuildMessage::class.java, "id", event.messageId).first() ?: return
-        msg.deleted = true
-        msg.save()
+        MessageConcurrencyManager.delete(event.messageId)
     }
 
     @Subscribe(priority = EventPriority.HIGHEST)
@@ -277,25 +273,14 @@ class Logger : Module("logging") {
         if (event.message.contentDisplay.isEmpty())
             return
         event.guild.kirbotGuild.logManager.logEdit(event.message)
-        val msg = Model.where(GuildMessage::class.java, "id", event.messageId).first() ?: return
-        msg.message = LogManager.encrypt(event.message.contentRaw)
-        msg.editCount++
-        msg.save()
+        MessageConcurrencyManager.update(event.message)
     }
 
     @Subscribe(priority = EventPriority.HIGHEST)
     fun onGuildMessageReceived(event: GuildMessageReceivedEvent) {
         if (!event.guild.kirbotGuild.ready)
             return
-        val msg = GuildMessage()
-        msg.id = event.message.id
-        msg.serverId = event.guild.id
-        msg.author = event.author.id
-        msg.channel = event.channel.id
-        msg.message = LogManager.encrypt(event.message.contentRaw)
-        if (event.message.attachments.size > 0)
-            msg.attachments = event.message.attachments.joinToString(", ") { it.url }
-        msg.save()
+        MessageConcurrencyManager.insert(event.message)
     }
 
     @Subscribe

@@ -3,6 +3,7 @@ package me.mrkirby153.KirBot.server
 import com.mrkirby153.bfs.model.Model
 import com.mrkirby153.bfs.model.SoftDeletingModel
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.database.MessageConcurrencyManager
 import me.mrkirby153.KirBot.database.models.Channel
 import me.mrkirby153.KirBot.database.models.CustomCommand
 import me.mrkirby153.KirBot.database.models.DiscordUser
@@ -26,6 +27,7 @@ import me.mrkirby153.kcutils.use
 import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.entities.Member
+import net.dv8tion.jda.core.entities.Message
 import net.dv8tion.jda.core.entities.Role
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.User
@@ -69,7 +71,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         // Load settings
         val dg = SoftDeletingModel.withTrashed(DiscordGuild::class.java).where("id",
                 this.id).first() ?: DiscordGuild(this)
-        if(dg.isTrashed) {
+        if (dg.isTrashed) {
             Bot.LOG.debug("Restoring trashed guild $dg")
             dg.restore()
         }
@@ -299,20 +301,23 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
                     history.map { it.id }.toTypedArray()).get() else listOf()
             var new = 0
             var updated = 0
+            val toInsert = mutableListOf<Message>()
+            val toUpdate = mutableListOf<Message>()
             history.forEach { message ->
                 val stored = storedMessages.firstOrNull { it.id == message.id }
                 if (stored == null) {
-                    GuildMessage(message).save()
+                    toInsert.add(message)
                     new++
                 } else {
                     if (stored.message != message.contentRaw) {
-                        stored.message = message.contentRaw
-                        stored.editCount++
-                        updated++
-                        stored.save()
+                        toUpdate.add(message)
                     }
                 }
             }
+            if (toInsert.isNotEmpty())
+                MessageConcurrencyManager.insert(*toInsert.toTypedArray())
+            if (toUpdate.isNotEmpty())
+                MessageConcurrencyManager.update(*toUpdate.toTypedArray())
             Bot.LOG.debug(
                     "Backfilled ${channel.name}: $new new, $updated updated out of ${history.size} total")
         } else {

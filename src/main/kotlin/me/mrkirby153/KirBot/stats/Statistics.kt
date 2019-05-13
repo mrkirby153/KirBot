@@ -35,6 +35,10 @@ object Statistics {
     val websocketPing = Gauge.build().name("websocket_ping").help(
             "Current websocket ping").labelNames("shard").register()
 
+    val pendingMessageJobs = Gauge.build().name("pending_message_jobs").help("Jobs waiting to be committed to the database").register()
+    val pendingMessages = Gauge.build().name("pending_messages").help("Messages waiting to be committed to the database").register()
+    val runningMessageJobs = Gauge.build().name("running_message_jobs").help("Message jobs that are running").register()
+
     init {
         DefaultExports.initialize()
     }

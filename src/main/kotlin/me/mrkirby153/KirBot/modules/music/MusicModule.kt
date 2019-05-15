@@ -3,8 +3,11 @@ package me.mrkirby153.KirBot.modules.music
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.event.Subscribe
 import me.mrkirby153.KirBot.module.Module
+import me.mrkirby153.KirBot.user.CLEARANCE_MOD
+import me.mrkirby153.KirBot.utils.getClearance
 import net.dv8tion.jda.core.entities.Channel
 import net.dv8tion.jda.core.entities.Guild
+import net.dv8tion.jda.core.entities.Member
 import net.dv8tion.jda.core.entities.VoiceChannel
 import net.dv8tion.jda.core.events.guild.GuildLeaveEvent
 import net.dv8tion.jda.core.events.guild.voice.GuildVoiceJoinEvent
@@ -91,5 +94,19 @@ class MusicModule : Module("music") {
 
     private fun getCurrentChannel(guild: Guild): VoiceChannel? {
         return guild.selfMember.voiceState.channel
+    }
+
+    companion object {
+        fun isDJ(member: Member): Boolean {
+            if (member.user.getClearance(member.guild) > CLEARANCE_MOD)
+                return true
+            return member.roles.map { it.name }.firstOrNull { it.equals("DJ", true) } != null
+        }
+
+        fun alone(member: Member): Boolean {
+            if (!member.voiceState.inVoiceChannel())
+                return false
+            return member.voiceState.channel.members.filter { it != member.guild.selfMember }.size == 1
+        }
     }
 }

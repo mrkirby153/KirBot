@@ -2,17 +2,19 @@ package me.mrkirby153.KirBot.command.control
 
 import me.mrkirby153.KirBot.backfill.BackfillJob
 import me.mrkirby153.KirBot.backfill.BackfillManager
-import me.mrkirby153.KirBot.command.BaseCommand
-import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.CommandException
+import me.mrkirby153.KirBot.command.annotations.AdminCommand
+import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.kcutils.Time
 
-@Command(name = "backfill", admin = true, arguments = ["<type:string>", "<id:snowflake>"])
-class CommandBackfill : BaseCommand() {
 
-    override fun execute(context: Context, cmdContext: CommandContext) {
+class CommandBackfill {
+
+    @AdminCommand
+    @Command(name = "backfill", arguments = ["<type:string>", "<id:snowflake>"])
+    fun execute(context: Context, cmdContext: CommandContext) {
         val type = cmdContext.getNotNull<String>("type")
         val id = cmdContext.getNotNull<String>("id")
 
@@ -33,14 +35,16 @@ class CommandBackfill : BaseCommand() {
                 "Starting backfill of ${backfillType.name.toLowerCase().capitalize()} $id -- ${job.jobId}").queue()
     }
 
-    @Command(name = "cancel", admin = true, arguments = ["<job:string>"])
+    @AdminCommand
+    @Command(name = "cancel", arguments = ["<job:string>"], parent="backfill")
     fun cancel(context: Context, cmdContext: CommandContext) {
         val job = cmdContext.getNotNull<String>("job")
         BackfillManager.cancel(job)
         context.send().success("Sent interrupt to $job").queue()
     }
 
-    @Command(name = "status", admin = true)
+    @AdminCommand
+    @Command(name = "status", parent="backfill")
     fun status(context: Context, cmdContext: CommandContext) {
         val jobs = BackfillManager.getRunningJobs()
         context.channel.sendMessage(buildString {
@@ -55,7 +59,8 @@ class CommandBackfill : BaseCommand() {
         }).queue()
     }
 
-    @Command(name = "logs", admin = true, arguments = ["<job:string>"])
+    @AdminCommand
+    @Command(name = "logs", arguments = ["<job:string>"], parent="backfill")
     fun logs(context: Context, cmdContext: CommandContext) {
         val job = cmdContext.getNotNull<String>("job")
         val backfillJob = BackfillManager.getJob(job) ?: throw CommandException(

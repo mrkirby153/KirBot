@@ -1,18 +1,24 @@
 package me.mrkirby153.KirBot.command.executors.music
 
 import me.mrkirby153.KirBot.CommandDescription
+import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.args.CommandContext
-import me.mrkirby153.KirBot.modules.music.MusicBaseCommand
-import me.mrkirby153.KirBot.modules.music.MusicManager
+import me.mrkirby153.KirBot.module.ModuleManager
+import me.mrkirby153.KirBot.modules.music.MusicModule
 import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
+import me.mrkirby153.KirBot.utils.SettingsRepository
 
-@Command(name = "volume", clearance = CLEARANCE_MOD, arguments = ["[volume:string]"])
-@CommandDescription("Sets the bot's volume")
-class CommandVolume : MusicBaseCommand() {
 
-    override fun execute(context: Context, cmdContext: CommandContext, manager: MusicManager) {
+class CommandVolume {
+
+    @Command(name = "volume", clearance = CLEARANCE_MOD, arguments = ["[volume:string]"], category = CommandCategory.MUSIC)
+    @CommandDescription("Sets the bot's volume")
+    fun execute(context: Context, cmdContext: CommandContext) {
+        val manager = ModuleManager[MusicModule::class.java].getManager(context.guild)
+        if (SettingsRepository.get(context.guild, "music_enabled", "0") == "0")
+            return
         val audioPlayer = manager.audioPlayer
 
         if (!cmdContext.has("volume")) {

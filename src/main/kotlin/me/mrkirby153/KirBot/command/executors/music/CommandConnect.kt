@@ -1,23 +1,30 @@
 package me.mrkirby153.KirBot.command.executors.music
 
 import me.mrkirby153.KirBot.CommandDescription
-import me.mrkirby153.KirBot.command.annotations.Command
+import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
+import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.args.CommandContext
-import me.mrkirby153.KirBot.modules.music.MusicBaseCommand
-import me.mrkirby153.KirBot.modules.music.MusicManager
+import me.mrkirby153.KirBot.module.ModuleManager
+import me.mrkirby153.KirBot.modules.music.MusicModule
+import me.mrkirby153.KirBot.modules.music.MusicModule.Companion.isDJ
 import me.mrkirby153.KirBot.utils.Context
+import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.checkPermissions
 import me.xdrop.fuzzywuzzy.FuzzySearch
 import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.Channel
 import net.dv8tion.jda.core.entities.VoiceChannel
 
-@Command(name = "connect,summon", arguments = ["[channel:string...]"])
-@CommandDescription("Connects the bot to the voice channel")
-class CommandConnect : MusicBaseCommand() {
-    
-    override fun execute(context: Context, cmdContext: CommandContext, manager: MusicManager) {
+
+class CommandConnect{
+
+    @Command(name = "connect", arguments = ["[channel:string...]"], category = CommandCategory.MUSIC)
+    @CommandDescription("Connects the bot to the voice channel")
+    fun execute(context: Context, cmdContext: CommandContext) {
+        val manager = ModuleManager[MusicModule::class.java].getManager(context.guild)
+        if (SettingsRepository.get(context.guild, "music_enabled", "0") == "0")
+            return
         val chanName = cmdContext.get<String>("channel")
         val channel = if (chanName != null) fuzzyMatchChannel(chanName,
                 context.guild.voiceChannels) as VoiceChannel else context.member.voiceState.channel

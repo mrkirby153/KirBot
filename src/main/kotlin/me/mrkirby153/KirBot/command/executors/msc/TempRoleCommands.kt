@@ -1,9 +1,9 @@
 package me.mrkirby153.KirBot.command.executors.msc
 
 import com.sun.org.glassfish.gmbal.Description
-import me.mrkirby153.KirBot.command.BaseCommand
-import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.CommandException
+import me.mrkirby153.KirBot.command.annotations.Command
+import me.mrkirby153.KirBot.command.annotations.IgnoreWhitelist
 import me.mrkirby153.KirBot.command.annotations.LogInModlogs
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.infraction.InfractionType
@@ -19,14 +19,16 @@ import net.dv8tion.jda.core.Permission
 import java.sql.Timestamp
 import java.time.Instant
 
-@Command(name = "temprole",
-        arguments = ["<user:snowflake>", "<role:string>", "<duration:string>", "[reason:string...]"],
-        clearance = CLEARANCE_ADMIN, permissions = [Permission.MANAGE_ROLES])
-@LogInModlogs
-@Description("Temporarily assign a role to a user")
-class TempRoleCommands : BaseCommand(false) {
 
-    override fun execute(context: Context, cmdContext: CommandContext) {
+class TempRoleCommands {
+
+    @Command(name = "temprole",
+            arguments = ["<user:snowflake>", "<role:string>", "<duration:string>", "[reason:string...]"],
+            clearance = CLEARANCE_ADMIN, permissions = [Permission.MANAGE_ROLES])
+    @LogInModlogs
+    @Description("Temporarily assign a role to a user")
+    @IgnoreWhitelist
+    fun execute(context: Context, cmdContext: CommandContext) {
         val userId = cmdContext.get<String>("user")!!
         val durationRaw = cmdContext.get<String>("duration")!!
         val reason = cmdContext.get<String>("reason")
@@ -57,11 +59,12 @@ class TempRoleCommands : BaseCommand(false) {
         if (!context.guild.selfMember.canAssign(role))
             throw CommandException("I cannot assign that role")
 
-        if(role in target.roles)
+        if (role in target.roles)
             throw CommandException("${target.user.nameAndDiscrim} is already in that role")
 
         context.guild.controller.addSingleRoleToMember(target, role).queue {
-            Infractions.createInfraction(userId, context.guild, context.author.id, "${role.name} - $reason",
+            Infractions.createInfraction(userId, context.guild, context.author.id,
+                    "${role.name} - $reason",
                     InfractionType.TEMPROLE, Timestamp.from(timestamp), role.id)
             context.send().success(
                     "${target.user.logName} is now in ${role.name} for ${Time.format(1,

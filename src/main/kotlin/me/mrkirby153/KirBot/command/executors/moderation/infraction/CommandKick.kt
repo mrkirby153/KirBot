@@ -1,10 +1,10 @@
 package me.mrkirby153.KirBot.command.executors.moderation.infraction
 
 import me.mrkirby153.KirBot.CommandDescription
-import me.mrkirby153.KirBot.command.BaseCommand
-import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
+import me.mrkirby153.KirBot.command.annotations.Command
+import me.mrkirby153.KirBot.command.annotations.IgnoreWhitelist
 import me.mrkirby153.KirBot.command.annotations.LogInModlogs
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.infraction.Infractions
@@ -15,12 +15,15 @@ import me.mrkirby153.KirBot.utils.getMember
 import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.User
 
-@Command(name = "kick", arguments = ["<user:user>", "[reason:string...]"],
-        clearance = CLEARANCE_MOD, permissions = [Permission.KICK_MEMBERS])
-@LogInModlogs
-@CommandDescription("Kick a user")
-class CommandKick : BaseCommand(false, CommandCategory.MODERATION) {
-    override fun execute(context: Context, cmdContext: CommandContext) {
+
+class CommandKick {
+
+    @Command(name = "kick", arguments = ["<user:user>", "[reason:string...]"],
+            clearance = CLEARANCE_MOD, permissions = [Permission.KICK_MEMBERS], category = CommandCategory.MODERATION)
+    @LogInModlogs
+    @IgnoreWhitelist
+    @CommandDescription("Kick a user")
+    fun execute(context: Context, cmdContext: CommandContext) {
         val user = cmdContext.get<User>("user") ?: throw CommandException("Please specify a user")
 
         val reason = cmdContext.get<String>("reason")

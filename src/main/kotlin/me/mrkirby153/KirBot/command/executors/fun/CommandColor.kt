@@ -1,9 +1,8 @@
 package me.mrkirby153.KirBot.command.executors.`fun`
 
 import me.mrkirby153.KirBot.CommandDescription
-import me.mrkirby153.KirBot.command.BaseCommand
-import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.CommandCategory
+import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.getMember
@@ -11,11 +10,12 @@ import net.dv8tion.jda.core.entities.Member
 import net.dv8tion.jda.core.entities.Role
 import java.awt.Color
 
-@Command(name = "color", arguments = ["<color:string>"])
-@CommandDescription("Sets a user's color in the member list")
-class CommandColor : BaseCommand(CommandCategory.FUN) {
 
-    override fun execute(context: Context, cmdContext: CommandContext) {
+class CommandColor {
+
+    @Command(name = "color", arguments = ["<color:string>"], category = CommandCategory.FUN)
+    @CommandDescription("Sets a user's color in the member list")
+    fun execute(context: Context, cmdContext: CommandContext) {
         val colorString = cmdContext.get<String>("color")
 
         val member = context.author.getMember(context.guild) ?: return

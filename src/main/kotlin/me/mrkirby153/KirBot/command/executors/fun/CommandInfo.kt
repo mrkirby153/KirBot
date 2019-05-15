@@ -3,9 +3,7 @@ package me.mrkirby153.KirBot.command.executors.`fun`
 import com.mrkirby153.bfs.model.Model
 import com.mrkirby153.bfs.sql.DB
 import me.mrkirby153.KirBot.CommandDescription
-import me.mrkirby153.KirBot.command.BaseCommand
 import me.mrkirby153.KirBot.command.annotations.Command
-import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.models.guild.GuildMember
 import me.mrkirby153.KirBot.utils.Context
@@ -30,13 +28,14 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import javax.imageio.ImageIO
 
-@Command(name = "info", arguments = ["[user:user]"])
-@CommandDescription("Retrieves information about a user")
-class CommandInfo : BaseCommand(CommandCategory.FUN) {
+
+class CommandInfo {
 
     private val sdf = SimpleDateFormat("YYYY-MM-dd HH:mm:ss")
 
-    override fun execute(context: Context, cmdContext: CommandContext) {
+    @Command(name = "info", arguments = ["[user:user]"])
+    @CommandDescription("Retrieves information about a user")
+    fun execute(context: Context, cmdContext: CommandContext) {
         val user = cmdContext.get<User>("user") ?: context.author
         val onlineStatus = user.getOnlineStats()
 

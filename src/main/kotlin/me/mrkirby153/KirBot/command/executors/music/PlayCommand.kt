@@ -2,12 +2,13 @@ package me.mrkirby153.KirBot.command.executors.music
 
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.CommandDescription
-import me.mrkirby153.KirBot.command.annotations.Command
+import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
+import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.google.YoutubeSearch
-import me.mrkirby153.KirBot.modules.music.MusicBaseCommand
-import me.mrkirby153.KirBot.modules.music.MusicManager
+import me.mrkirby153.KirBot.module.ModuleManager
+import me.mrkirby153.KirBot.modules.music.MusicModule
 import me.mrkirby153.KirBot.modules.music.TrackLoader
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.SettingsRepository
@@ -17,11 +18,16 @@ import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.TextChannel
 import org.json.JSONArray
 
-@Command(name = "play", arguments = ["[query/url:string...]"],
-        permissions = [Permission.MESSAGE_EMBED_LINKS])
-@CommandDescription("Play music")
-class PlayCommand : MusicBaseCommand() {
-    override fun execute(context: Context, cmdContext: CommandContext, manager: MusicManager) {
+
+class PlayCommand {
+    @Command(name = "play", arguments = ["[query/url:string...]"],
+            permissions = [Permission.MESSAGE_EMBED_LINKS], category = CommandCategory.MUSIC)
+    @CommandDescription("Play music")
+    fun execute(context: Context, cmdContext: CommandContext) {
+        val manager = ModuleManager[MusicModule::class.java].getManager(context.guild)
+        if (SettingsRepository.get(context.guild, "music_enabled", "0") == "0")
+            return
+        val cmdPrefix = SettingsRepository.get(context.guild, "cmd_prefix", "!")
         val data = cmdContext.get<String>("query/url")
 
         if (data == null) {
@@ -72,7 +78,8 @@ class PlayCommand : MusicBaseCommand() {
         if (ytSearch) {
             url = YoutubeSearch(url).execute()
         }
-        val maxQueueLength = SettingsRepository.get(context.guild, "music_max_queue_length", "-1")!!.toInt()
+        val maxQueueLength = SettingsRepository.get(context.guild, "music_max_queue_length",
+                "-1")!!.toInt()
         if (maxQueueLength != -1 && manager.queueLength() / (60 * 1000) >= maxQueueLength) {
             throw CommandException(
                     "The queue is too long right now, please try again when it is shorter")

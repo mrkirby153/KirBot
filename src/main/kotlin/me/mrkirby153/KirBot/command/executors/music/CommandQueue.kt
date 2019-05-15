@@ -1,23 +1,30 @@
 package me.mrkirby153.KirBot.command.executors.music
 
 import me.mrkirby153.KirBot.CommandDescription
+import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.args.CommandContext
-import me.mrkirby153.KirBot.modules.music.MusicBaseCommand
+import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.music.MusicManager
+import me.mrkirby153.KirBot.modules.music.MusicModule
 import me.mrkirby153.KirBot.utils.Context
+import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.embed.link
 import me.mrkirby153.KirBot.utils.mdEscape
 import net.dv8tion.jda.core.Permission
 import java.util.Random
 import kotlin.math.roundToInt
 
-@Command(name = "queue,np,nowplaying", arguments = ["[option:string]"],
-        permissions = [Permission.MESSAGE_EMBED_LINKS])
-@CommandDescription("Shows the current queue")
-class CommandQueue : MusicBaseCommand() {
 
-    override fun execute(context: Context, cmdContext: CommandContext, manager: MusicManager) {
+class CommandQueue {
+
+    @Command(name = "queue", arguments = ["[option:string]"],
+            permissions = [Permission.MESSAGE_EMBED_LINKS], category = CommandCategory.MUSIC)
+    @CommandDescription("Shows the current queue")
+    fun execute(context: Context, cmdContext: CommandContext) {
+        val manager = ModuleManager[MusicModule::class.java].getManager(context.guild)
+        if (SettingsRepository.get(context.guild, "music_enabled", "0") == "0")
+            return
         if (cmdContext.has("option")) {
             when (cmdContext.get<String>("option")!!.toLowerCase()) {
                 "clear" -> {

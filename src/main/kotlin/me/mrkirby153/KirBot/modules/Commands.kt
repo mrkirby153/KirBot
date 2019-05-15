@@ -12,7 +12,6 @@ class Commands : Module("commands") {
 
     override fun onLoad() {
         CommandExecutor.loadAll()
-        CommandExecutor.helpManager.load()
     }
 
     @Subscribe

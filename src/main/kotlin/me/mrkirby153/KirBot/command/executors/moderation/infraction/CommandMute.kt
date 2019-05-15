@@ -1,10 +1,10 @@
 package me.mrkirby153.KirBot.command.executors.moderation.infraction
 
 import me.mrkirby153.KirBot.CommandDescription
-import me.mrkirby153.KirBot.command.BaseCommand
-import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
+import me.mrkirby153.KirBot.command.annotations.Command
+import me.mrkirby153.KirBot.command.annotations.IgnoreWhitelist
 import me.mrkirby153.KirBot.command.annotations.LogInModlogs
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.infraction.Infractions
@@ -19,12 +19,15 @@ import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.User
 import java.util.concurrent.TimeUnit
 
-@Command(name = "mute,shutup,quiet", arguments = ["<user:user>", "[reason:string...]"],
-        clearance = CLEARANCE_MOD, permissions = [Permission.MANAGE_ROLES])
-@LogInModlogs
-@CommandDescription("Mute a user (Assign the set muted role)")
-class CommandMute : BaseCommand(false, CommandCategory.MODERATION) {
-    override fun execute(context: Context, cmdContext: CommandContext) {
+
+class CommandMute {
+    @Command(name = "mute", arguments = ["<user:user>", "[reason:string...]"],
+            clearance = CLEARANCE_MOD, permissions = [Permission.MANAGE_ROLES],
+            category = CommandCategory.MODERATION)
+    @LogInModlogs
+    @CommandDescription("Mute a user (Assign the set muted role)")
+    @IgnoreWhitelist
+    fun execute(context: Context, cmdContext: CommandContext) {
         val user = cmdContext.get<User>("user") ?: throw CommandException(
                 "Please specify a user to mute")
         val reason = cmdContext.get<String>("reason")
@@ -60,14 +63,15 @@ class CommandMute : BaseCommand(false, CommandCategory.MODERATION) {
                         append(user.logName)
                         append("** for ")
                         append(Time.format(1, time))
-                        if(r != null)
+                        if (r != null)
                             append(" (`$r`)")
-                        when(res.second) {
+                        when (res.second) {
                             Infractions.DmResult.SENT ->
                                 append(" _Successfully messaged the user_")
                             Infractions.DmResult.SEND_ERROR ->
                                 append(" _Could not send DM to user._")
-                            else -> {}
+                            else -> {
+                            }
                         }
                     }, true).queue()
                 } catch (e: IllegalArgumentException) {
@@ -77,7 +81,7 @@ class CommandMute : BaseCommand(false, CommandCategory.MODERATION) {
             }
         }
         val r = Infractions.mute(user.id, context.guild, context.author.id, reason)
-        if(!r.first)
+        if (!r.first)
             throw CommandException("An error occurred when muting")
         context.send().success(buildString {
             append("Muted ${user.logName}")

@@ -3,10 +3,10 @@ package me.mrkirby153.KirBot.command.executors.moderation.infraction
 import com.mrkirby153.bfs.model.Model
 import com.mrkirby153.bfs.sql.DB
 import me.mrkirby153.KirBot.CommandDescription
-import me.mrkirby153.KirBot.command.BaseCommand
-import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
+import me.mrkirby153.KirBot.command.annotations.Command
+import me.mrkirby153.KirBot.command.annotations.IgnoreWhitelist
 import me.mrkirby153.KirBot.command.annotations.LogInModlogs
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.models.DiscordUser
@@ -23,19 +23,12 @@ import me.mrkirby153.KirBot.utils.promptForConfirmation
 import me.mrkirby153.kcutils.utils.TableBuilder
 import net.dv8tion.jda.core.MessageBuilder
 
-@Command(name = "infractions,infraction,inf", arguments = ["[user:snowflake]"],
-        clearance = CLEARANCE_MOD)
-@LogInModlogs
-@CommandDescription("Infraction related commands")
-class CommandInfractions : BaseCommand(false, CommandCategory.MODERATION) {
+class CommandInfractions {
 
-    override fun execute(context: Context, cmdContext: CommandContext) {
-        throw CommandException("Please provide a sub-command")
-    }
-
-    @Command(name = "search", clearance = CLEARANCE_MOD, arguments = ["[query:string...]"])
+    @Command(name = "search", clearance = CLEARANCE_MOD, arguments = ["[query:string...]"], parent="infraction", category = CommandCategory.MODERATION)
     @LogInModlogs
     @CommandDescription("Search for an infraction with the given query")
+    @IgnoreWhitelist
     fun search(context: Context, cmdContext: CommandContext) {
         val query = cmdContext.get<String>("query") ?: ""
 
@@ -59,9 +52,9 @@ class CommandInfractions : BaseCommand(false, CommandCategory.MODERATION) {
                     it.issuerId!!) {
                 Model.where(DiscordUser::class.java, "id", it).first()?.nameAndDiscrim ?: it
             }
-            val username = users.computeIfAbsent(it.userId, {
+            val username = users.computeIfAbsent(it.userId) {
                 Model.where(DiscordUser::class.java, "id", it).first()?.nameAndDiscrim ?: it
-            })
+            }
             val reason = if (it.reason != null) if (it.reason!!.length >= 256) it.reason!!.substring(
                     0..255) + "..." else it.reason else ""
             table.addRow(
@@ -78,9 +71,10 @@ class CommandInfractions : BaseCommand(false, CommandCategory.MODERATION) {
         }
     }
 
-    @Command(name = "info", clearance = CLEARANCE_MOD, arguments = ["<id:int>"])
+    @Command(name = "info", clearance = CLEARANCE_MOD, arguments = ["<id:int>"], parent = "infraction", category = CommandCategory.MODERATION)
     @LogInModlogs
     @CommandDescription("Gets detailed information about an infraction")
+    @IgnoreWhitelist
     fun info(context: Context, cmdContext: CommandContext) {
         val id = cmdContext.get<Int>("id")!!
         val infraction = Model.where(Infraction::class.java, "id", id).first()
@@ -120,9 +114,10 @@ class CommandInfractions : BaseCommand(false, CommandCategory.MODERATION) {
     }
 
     @Command(name = "clear", clearance = CLEARANCE_MOD,
-            arguments = ["<id:int>", "[reason:string...]"])
+            arguments = ["<id:int>", "[reason:string...]"], category = CommandCategory.MODERATION, parent = "infraction")
     @LogInModlogs
     @CommandDescription("Clears an infraction (Deletes it from the database)")
+    @IgnoreWhitelist
     fun clearInfraction(context: Context, cmdContext: CommandContext) {
         val id = cmdContext.get<Int>("id")!!
         val reason = cmdContext.get<String>("reason") ?: "No reason specified"
@@ -146,9 +141,10 @@ class CommandInfractions : BaseCommand(false, CommandCategory.MODERATION) {
     }
 
     @Command(name = "reason", clearance = CLEARANCE_MOD,
-            arguments = ["<id:number>", "<reason:string...>"])
+            arguments = ["<id:number>", "<reason:string...>"], category = CommandCategory.MODERATION, parent = "infraction")
     @LogInModlogs
     @CommandDescription("Sets the reason of an infraction")
+    @IgnoreWhitelist
     fun reason(context: Context, cmdContext: CommandContext) {
         val id = cmdContext.get<Int>("id")!!
         val reason = cmdContext.get<String>("reason")!!
@@ -162,9 +158,10 @@ class CommandInfractions : BaseCommand(false, CommandCategory.MODERATION) {
         context.send().success("Updated reason of `$id`").queue()
     }
 
-    @Command(name = "import-banlist", clearance = CLEARANCE_ADMIN)
+    @Command(name = "import-banlist", clearance = CLEARANCE_ADMIN, category = CommandCategory.MODERATION, parent = "infraction")
     @LogInModlogs
     @CommandDescription("Imports the banlist as infractions")
+    @IgnoreWhitelist
     fun importBanlist(context: Context, cmdContext: CommandContext) {
         promptForConfirmation(context, "Are you sure you want to import the banlist?", onConfirm = {
             context.channel.sendMessage(":timer: Importing from the banlist...").queue {
@@ -175,8 +172,9 @@ class CommandInfractions : BaseCommand(false, CommandCategory.MODERATION) {
         })
     }
 
-    @Command(name = "export", clearance = CLEARANCE_MOD)
+    @Command(name = "export", clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION, parent = "infraction")
     @LogInModlogs
+    @IgnoreWhitelist
     @CommandDescription("Exports a CSV of infractions")
     fun export(context: Context, cmdContext: CommandContext) {
         val infractions = Model.where(Infraction::class.java, "guild", context.guild.id).get()

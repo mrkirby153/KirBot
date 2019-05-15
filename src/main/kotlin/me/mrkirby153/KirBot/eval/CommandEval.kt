@@ -1,9 +1,8 @@
 package me.mrkirby153.KirBot.eval
 
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.command.BaseCommand
+import me.mrkirby153.KirBot.command.annotations.AdminCommand
 import me.mrkirby153.KirBot.command.annotations.Command
-import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.GREEN_TICK
@@ -17,9 +16,12 @@ import java.net.URL
 const val CHECKBOX = "\u2705"
 const val ARROWS = "\uD83D\uDD04"
 
-@Command(name = "eval,run", arguments = ["<eval:string...>"], admin = true)
-class CommandEval : BaseCommand(CommandCategory.MISCELLANEOUS) {
-    override fun execute(context: Context, cmdContext: CommandContext) {
+
+class CommandEval {
+
+    @Command(name = "eval", arguments = ["<eval:string...>"])
+    @AdminCommand
+    fun execute(context: Context, cmdContext: CommandContext) {
         val toEval = cmdContext.get<String>("eval") ?: return
 
         val shortcuts = mutableMapOf<String, Any>()

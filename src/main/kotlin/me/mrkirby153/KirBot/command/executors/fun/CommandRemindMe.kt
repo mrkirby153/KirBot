@@ -2,10 +2,10 @@ package me.mrkirby153.KirBot.command.executors.`fun`
 
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.CommandDescription
-import me.mrkirby153.KirBot.command.BaseCommand
-import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
+import me.mrkirby153.KirBot.command.annotations.Command
+import me.mrkirby153.KirBot.command.annotations.IgnoreWhitelist
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.listener.WaitUtils
 import me.mrkirby153.KirBot.module.ModuleManager
@@ -21,11 +21,14 @@ import net.dv8tion.jda.core.events.message.guild.react.GuildMessageReactionAddEv
 import java.text.SimpleDateFormat
 import java.util.concurrent.TimeUnit
 
-@Command(name = "remindMe,remind", arguments = ["<time:string>", "<query:string...>"])
-@CommandDescription("Set reminders")
-class CommandRemindMe : BaseCommand(false, CommandCategory.FUN) {
 
-    override fun execute(context: Context, cmdContext: CommandContext) {
+class CommandRemindMe {
+
+    @Command(name = "remind", arguments = ["<time:string>", "<query:string...>"],
+            category = CommandCategory.FUN)
+    @CommandDescription("Set reminders")
+    @IgnoreWhitelist
+    fun execute(context: Context, cmdContext: CommandContext) {
         val time = Time.parse(cmdContext.get<String>("time")!!)
         val query = cmdContext.get<String>("query")!!
 

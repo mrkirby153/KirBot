@@ -3,10 +3,9 @@ package me.mrkirby153.KirBot.command.executors.rss
 import com.mrkirby153.bfs.model.Model
 import com.rometools.rome.io.FeedException
 import me.mrkirby153.KirBot.CommandDescription
-import me.mrkirby153.KirBot.command.BaseCommand
-import me.mrkirby153.KirBot.command.annotations.Command
-import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
+import me.mrkirby153.KirBot.command.annotations.Command
+import me.mrkirby153.KirBot.command.annotations.IgnoreWhitelist
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.models.rss.RssFeed
 import me.mrkirby153.KirBot.rss.FeedManager
@@ -16,23 +15,28 @@ import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.GREEN_TICK
 import me.mrkirby153.KirBot.utils.HttpUtils
 import me.mrkirby153.KirBot.utils.RED_TICK
+import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.TextChannel
 import okhttp3.Request
 
-@Command(name = "rss", clearance = CLEARANCE_MOD)
-@CommandDescription("Shows a list of RSS feeds currently being monitored")
-class CommandRss : BaseCommand(false, CommandCategory.MISCELLANEOUS) {
 
-    override fun execute(context: Context, cmdContext: CommandContext) {
+class CommandRss {
+
+    @Command(name = "rss", clearance = CLEARANCE_MOD)
+    @CommandDescription("Shows a list of RSS feeds currently being monitored")
+    @IgnoreWhitelist
+    fun execute(context: Context, cmdContext: CommandContext) {
         listFeeds(context, cmdContext)
     }
 
     @Command(name = "list", clearance = CLEARANCE_MOD,
-            permissions = [Permission.MESSAGE_EMBED_LINKS])
+            permissions = [Permission.MESSAGE_EMBED_LINKS], parent = "rss")
     @CommandDescription("Show a list of RSS feeds being monitored")
+    @IgnoreWhitelist
     fun listFeeds(context: Context, cmdContext: CommandContext) {
+        val cmdPrefix = SettingsRepository.get(context.guild, "cmd_prefix", "!")
         val feeds = Model.where(RssFeed::class.java, "server_id", context.guild.id).get()
 
         context.channel.sendMessage(buildString {
@@ -62,8 +66,9 @@ class CommandRss : BaseCommand(false, CommandCategory.MISCELLANEOUS) {
         }).queue()
     }
 
-    @Command(name = "add", arguments = ["<url:string>"], clearance = CLEARANCE_MOD)
+    @Command(name = "add", arguments = ["<url:string>"], clearance = CLEARANCE_MOD, parent = "rss")
     @CommandDescription("Adds a feed to be watched")
+    @IgnoreWhitelist
     fun addFeed(context: Context, cmdContext: CommandContext) {
         val url = cmdContext.get<String>("url") ?: throw CommandException("Please provide a URL")
 
@@ -102,8 +107,9 @@ class CommandRss : BaseCommand(false, CommandCategory.MISCELLANEOUS) {
         }
     }
 
-    @Command(name = "remove", arguments = ["<id:string>"], clearance = CLEARANCE_MOD)
+    @Command(name = "remove", arguments = ["<id:string>"], clearance = CLEARANCE_MOD, parent = "rss")
     @CommandDescription("Removes a feed from the watch list")
+    @IgnoreWhitelist
     fun removeFeed(context: Context, cmdContext: CommandContext) {
         val id = cmdContext.get<String>("id") ?: throw CommandException("Please provide a feed Id")
 
@@ -114,8 +120,9 @@ class CommandRss : BaseCommand(false, CommandCategory.MISCELLANEOUS) {
         context.send().success("Deleted RSS Feed!").queue()
     }
 
-    @Command(name = "refresh", arguments = ["[id:string]"], clearance = CLEARANCE_MOD)
+    @Command(name = "refresh", arguments = ["[id:string]"], clearance = CLEARANCE_MOD, parent = "rss")
     @CommandDescription("Refresh a feed")
+    @IgnoreWhitelist
     fun refreshFeed(context: Context, cmdContext: CommandContext) {
         if (!cmdContext.has("id")) {
             FeedTask.checkFeeds(context.guild)

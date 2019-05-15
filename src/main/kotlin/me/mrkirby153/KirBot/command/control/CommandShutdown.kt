@@ -1,16 +1,17 @@
 package me.mrkirby153.KirBot.command.control
 
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.command.BaseCommand
+import me.mrkirby153.KirBot.command.annotations.AdminCommand
 import me.mrkirby153.KirBot.command.annotations.Command
-import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.utils.Context
 
-@Command(name = "shutdown", admin = true)
-class CommandShutdown : BaseCommand(false, CommandCategory.ADMIN) {
 
-    override fun execute(context: Context, cmdContext: CommandContext) {
+class CommandShutdown{
+
+    @Command(name = "shutdown")
+    @AdminCommand
+    fun execute(context: Context, cmdContext: CommandContext) {
         context.send().success("Shutting down...", true).queue{ Bot.stop() }
     }
 }

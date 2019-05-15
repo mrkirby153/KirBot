@@ -1,9 +1,10 @@
 package me.mrkirby153.KirBot.command.executors.moderation
 
-import me.mrkirby153.KirBot.command.BaseCommand
-import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
+import me.mrkirby153.KirBot.command.annotations.Command
+import me.mrkirby153.KirBot.command.annotations.IgnoreWhitelist
+import me.mrkirby153.KirBot.command.annotations.LogInModlogs
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.AntiRaid
@@ -12,12 +13,10 @@ import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.embed.b
 import net.dv8tion.jda.core.MessageBuilder
 
-@Command(name = "raid", clearance = CLEARANCE_MOD)
-class CommandRaid : BaseCommand(false, CommandCategory.MODERATION) {
-    override fun execute(context: Context, cmdContext: CommandContext) {
-    }
+class CommandRaid {
 
-    @Command(name = "info", arguments = ["<id:string>"])
+    @Command(name = "info", arguments = ["<id:string>"], clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION, parent = "raid")
+    @IgnoreWhitelist
     fun raidInfo(context: Context, cmdContext: CommandContext) {
         val raid = ModuleManager[AntiRaid::class.java].getRaid(context.guild,
                 cmdContext.getNotNull("id")) ?: throw CommandException("Raid not found")
@@ -41,7 +40,9 @@ class CommandRaid : BaseCommand(false, CommandCategory.MODERATION) {
                 MessageBuilder(msg).build()).queue()
     }
 
-    @Command(name = "ban", arguments = ["<id:string>"])
+    @Command(name = "ban", arguments = ["<id:string>"], parent = "raid", clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION)
+    @LogInModlogs
+    @IgnoreWhitelist
     fun raidBan(context: Context, cmdContext: CommandContext) {
         val raid = ModuleManager[AntiRaid::class.java].getRaid(context.guild,
                 cmdContext.getNotNull("id")) ?: throw CommandException("Raid not found")
@@ -50,7 +51,9 @@ class CommandRaid : BaseCommand(false, CommandCategory.MODERATION) {
         context.send().success("Banning ${raid.members.size} raiders").queue()
     }
 
-    @Command(name = "kick", arguments = ["<id:string>"])
+    @Command(name = "kick", arguments = ["<id:string>"], parent = "raid", clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION)
+    @LogInModlogs
+    @IgnoreWhitelist
     fun raidKick(context: Context, cmdContext: CommandContext) {
         val raid = ModuleManager[AntiRaid::class.java].getRaid(context.guild,
                 cmdContext.getNotNull("id")) ?: throw CommandException("Raid not found")
@@ -59,7 +62,9 @@ class CommandRaid : BaseCommand(false, CommandCategory.MODERATION) {
         context.send().success("Kicking ${raid.members.size} raiders").queue()
     }
 
-    @Command(name = "unmute", arguments = ["<id:string>"])
+    @Command(name = "unmute", arguments = ["<id:string>"], parent = "raid", clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION)
+    @LogInModlogs
+    @IgnoreWhitelist
     fun raidUnmute(context: Context, cmdContext: CommandContext) {
         val raid = ModuleManager[AntiRaid::class.java].getRaid(context.guild,
                 cmdContext.getNotNull("id")) ?: throw CommandException("Raid not found")
@@ -67,7 +72,9 @@ class CommandRaid : BaseCommand(false, CommandCategory.MODERATION) {
         context.send().success("Unmuting ${raid.members.size} raiders").queue()
     }
 
-    @Command(name = "dismiss")
+    @Command(name = "dismiss", parent = "raid", clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION)
+    @LogInModlogs
+    @IgnoreWhitelist
     fun dismiss(context: Context, cmdContext: CommandContext) {
         val antiRaid = ModuleManager[AntiRaid::class.java]
         val raid = antiRaid.activeRaids[context.guild.id]

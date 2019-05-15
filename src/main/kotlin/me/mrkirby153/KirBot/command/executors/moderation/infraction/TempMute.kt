@@ -3,16 +3,17 @@ package me.mrkirby153.KirBot.command.executors.moderation.infraction
 import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.CommandDescription
-import me.mrkirby153.KirBot.command.BaseCommand
-import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
+import me.mrkirby153.KirBot.command.annotations.Command
+import me.mrkirby153.KirBot.command.annotations.IgnoreWhitelist
 import me.mrkirby153.KirBot.command.annotations.LogInModlogs
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.infraction.Infraction
 import me.mrkirby153.KirBot.infraction.Infractions
 import me.mrkirby153.KirBot.logger.LogEvent
 import me.mrkirby153.KirBot.scheduler.Schedulable
+import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.canInteractWith
 import me.mrkirby153.KirBot.utils.getMember
@@ -24,12 +25,15 @@ import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.entities.User
 import java.util.concurrent.TimeUnit
 
-@Command(name = "tempmute", arguments = ["<user:user>", "<time:string>", "[reason:string...]"],
-        permissions = [Permission.MANAGE_ROLES])
-@LogInModlogs
-@CommandDescription("Temporarily mute the given user")
-class TempMute : BaseCommand(false, CommandCategory.MODERATION) {
-    override fun execute(context: Context, cmdContext: CommandContext) {
+
+class TempMute {
+
+    @Command(name = "tempmute", arguments = ["<user:user>", "<time:string>", "[reason:string...]"],
+            permissions = [Permission.MANAGE_ROLES], clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION)
+    @LogInModlogs
+    @CommandDescription("Temporarily mute the given user")
+    @IgnoreWhitelist
+    fun execute(context: Context, cmdContext: CommandContext) {
         val user = cmdContext.get<User>("user")!!
         val member = user.getMember(context.guild) ?: throw CommandException(
                 "This user isn't a part of the guild!")

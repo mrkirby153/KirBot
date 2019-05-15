@@ -2,9 +2,9 @@ package me.mrkirby153.KirBot.command.control
 
 import com.mrkirby153.bfs.sql.DB
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.command.BaseCommand
-import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.CommandException
+import me.mrkirby153.KirBot.command.annotations.AdminCommand
+import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.logger.LogManager
 import me.mrkirby153.KirBot.utils.Context
@@ -16,12 +16,14 @@ import java.util.Random
 import java.util.Vector
 import kotlin.system.measureTimeMillis
 
-@Command(name = "markov", admin = true, arguments = ["<user:snowflake>", "[amount:int]"])
-class MarkovCommand : BaseCommand() {
+
+class MarkovCommand {
 
     private val chains = mutableMapOf<String, MarkovChain>()
 
-    override fun execute(context: Context, cmdContext: CommandContext) {
+    @Command(name = "markov", arguments = ["<user:snowflake>", "[amount:int]"])
+    @AdminCommand
+    fun execute(context: Context, cmdContext: CommandContext) {
         val userChain = chains[cmdContext.get<String>("user")!!] ?: throw CommandException(
                 "No chain found. Did you generate one?")
         val user = Bot.shardManager.getUser(cmdContext.get<String>("user")!!)?.nameAndDiscrim
@@ -33,7 +35,8 @@ class MarkovCommand : BaseCommand() {
         context.channel.sendMessage("```$chain\n - $user```").queue()
     }
 
-    @Command(name = "generate", admin = true, arguments = ["<user:snowflake>", "[limit:int]"])
+    @Command(name = "generate", arguments = ["<user:snowflake>", "[limit:int]"], parent = "markov")
+    @AdminCommand
     fun generateChain(context: Context, cmdContext: CommandContext) {
         val limit = cmdContext.get<Int>("limit") ?: -1
         val msg = context.channel.sendMessage(
@@ -63,7 +66,8 @@ class MarkovCommand : BaseCommand() {
         }
     }
 
-    @Command(name = "delete", admin = true, arguments = ["<user:snowflake>"])
+    @Command(name = "delete", arguments = ["<user:snowflake>"], parent = "markov")
+    @AdminCommand
     fun deleteChain(context: Context, cmdContext: CommandContext) {
         chains.remove(cmdContext.get<String>("user")!!)
         context.success()

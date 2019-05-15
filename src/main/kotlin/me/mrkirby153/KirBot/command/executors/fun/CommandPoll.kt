@@ -2,10 +2,10 @@ package me.mrkirby153.KirBot.command.executors.`fun`
 
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.CommandDescription
-import me.mrkirby153.KirBot.command.BaseCommand
-import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
+import me.mrkirby153.KirBot.command.annotations.Command
+import me.mrkirby153.KirBot.command.annotations.IgnoreWhitelist
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.Scheduler
@@ -20,10 +20,8 @@ import java.awt.Color
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 
-@Command(name = "poll",
-        arguments = ["<duration:string>", "<question:string>", "<options:string...>"])
-@CommandDescription("Create polls")
-class CommandPoll : BaseCommand(false, CommandCategory.FUN) {
+
+class CommandPoll {
     val time = mutableMapOf<String, Int>()
 
     init {
@@ -35,8 +33,11 @@ class CommandPoll : BaseCommand(false, CommandCategory.FUN) {
         time.put("w", 604800)
     }
 
-
-    override fun execute(context: Context, cmdContext: CommandContext) {
+    @Command(name = "poll",
+            arguments = ["<duration:string>", "<question:string>", "<options:string...>"], category = CommandCategory.FUN)
+    @CommandDescription("Create polls")
+    @IgnoreWhitelist
+    fun execute(context: Context, cmdContext: CommandContext) {
         val timeString = cmdContext.get<String>("duration") ?: "0s"
         val duration = try {
             Time.parse(timeString)

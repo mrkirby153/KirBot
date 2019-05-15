@@ -1,13 +1,14 @@
 package me.mrkirby153.KirBot.command.executors.music
 
 import me.mrkirby153.KirBot.CommandDescription
-import me.mrkirby153.KirBot.command.annotations.Command
+import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
+import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.module.ModuleManager
-import me.mrkirby153.KirBot.modules.music.MusicBaseCommand
-import me.mrkirby153.KirBot.modules.music.MusicManager
 import me.mrkirby153.KirBot.modules.music.MusicModule
+import me.mrkirby153.KirBot.modules.music.MusicModule.Companion.alone
+import me.mrkirby153.KirBot.modules.music.MusicModule.Companion.isDJ
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.embed.b
@@ -19,13 +20,17 @@ import net.dv8tion.jda.core.Permission
 import java.awt.Color
 import java.util.concurrent.TimeUnit
 
-@Command(name = "skip,next",
-        permissions = [Permission.MESSAGE_ADD_REACTION, Permission.MESSAGE_EMBED_LINKS])
-@CommandDescription("Skips the currently playing song")
-class CommandSkip : MusicBaseCommand() {
+
+class CommandSkip {
     private val skipCooldown = mutableMapOf<String, Long>()
 
-    override fun execute(context: Context, cmdContext: CommandContext, manager: MusicManager) {
+    @Command(name = "skip",
+            permissions = [Permission.MESSAGE_ADD_REACTION, Permission.MESSAGE_EMBED_LINKS], category = CommandCategory.MUSIC)
+    @CommandDescription("Skips the currently playing song")
+    fun execute(context: Context, cmdContext: CommandContext) {
+        val manager = ModuleManager[MusicModule::class.java].getManager(context.guild)
+        if (SettingsRepository.get(context.guild, "music_enabled", "0") == "0")
+            return
         if (!manager.playing) {
             throw CommandException("I am not playing anything right now")
         }

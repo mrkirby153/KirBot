@@ -1,4 +1,4 @@
 package me.mrkirby153.KirBot.command.annotations
 
-@Target(AnnotationTarget.FIELD)
+@Target(AnnotationTarget.FUNCTION)
 annotation class IgnoreWhitelist

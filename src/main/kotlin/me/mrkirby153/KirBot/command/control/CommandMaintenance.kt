@@ -1,9 +1,9 @@
 package me.mrkirby153.KirBot.command.control
 
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.command.BaseCommand
-import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.CommandException
+import me.mrkirby153.KirBot.command.annotations.AdminCommand
+import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.Redis
@@ -14,10 +14,12 @@ import net.dv8tion.jda.core.OnlineStatus
 import net.dv8tion.jda.core.entities.Game
 import java.util.concurrent.TimeUnit
 
-@Command(name = "clear-archives", admin = true)
-class CommandClearArchives : BaseCommand() {
 
-    override fun execute(context: Context, cmdContext: CommandContext) {
+class CommandClearArchives {
+
+    @Command(name = "clear-archives")
+    @AdminCommand
+    fun execute(context: Context, cmdContext: CommandContext) {
         promptForConfirmation(context,
                 ":warning: Are you sure you want to delete **all** archives? This cannot be undone.",
                 {
@@ -45,10 +47,12 @@ class CommandClearArchives : BaseCommand() {
     }
 }
 
-@Command(name = "setstatus", admin = true,
-        arguments = ["<status:string>", "<type:string>", "<game:string...>"])
-class CommandSetStatus : BaseCommand() {
-    override fun execute(context: Context, cmdContext: CommandContext) {
+
+class CommandSetStatus {
+    @Command(name = "setstatus",
+            arguments = ["<status:string>", "<type:string>", "<game:string...>"])
+    @AdminCommand
+    fun execute(context: Context, cmdContext: CommandContext) {
         val onlineStatus = try {
             OnlineStatus.valueOf(cmdContext.get<String>("status")!!.toUpperCase())
         } catch (e: IllegalArgumentException) {

@@ -2,7 +2,7 @@ package me.mrkirby153.KirBot.modules
 
 import com.google.gson.GsonBuilder
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.command.BaseCommand
+import me.mrkirby153.KirBot.command.annotations.AdminCommand
 import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.module.Module
@@ -142,10 +142,12 @@ class Scheduler : Module("scheduler") {
     data class ScheduledItem(val id: String, val schedulable: Schedulable)
 }
 
-@Command(name = "sstats", admin = true)
-class SchedulerStats : BaseCommand() {
 
-    override fun execute(context: Context, cmdContext: CommandContext) {
+class SchedulerStats{
+
+    @Command(name = "sstats")
+    @AdminCommand
+    fun execute(context: Context, cmdContext: CommandContext) {
         context.send().embed("Scheduler Statistics") {
             description {
                 +"Current scheduler statistics"

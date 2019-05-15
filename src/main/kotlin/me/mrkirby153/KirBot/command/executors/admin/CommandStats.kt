@@ -2,9 +2,8 @@ package me.mrkirby153.KirBot.command.executors.admin
 
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.CommandDescription
-import me.mrkirby153.KirBot.command.BaseCommand
-import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.CommandCategory
+import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.globalAdmin
@@ -12,11 +11,12 @@ import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.core.entities.Guild
 import java.awt.Color
 
-@Command(name = "stats")
-@CommandDescription("Displays statistics about the bot")
-class CommandStats : BaseCommand(CommandCategory.ADMIN) {
 
-    override fun execute(context: Context, cmdContext: CommandContext) {
+class CommandStats {
+
+    @Command(name = "stats", category = CommandCategory.ADMIN)
+    @CommandDescription("Displays statistics about the bot")
+    fun execute(context: Context, cmdContext: CommandContext) {
         var guilds = 0
         val users = mutableSetOf<String>()
 

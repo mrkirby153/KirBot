@@ -3,9 +3,8 @@ package me.mrkirby153.KirBot.command.executors.`fun`
 import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.CommandDescription
-import me.mrkirby153.KirBot.command.BaseCommand
-import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.CommandException
+import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.annotations.LogInModlogs
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.models.guild.starboard.StarboardEntry
@@ -15,14 +14,9 @@ import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 
-@Command(name = "star", clearance = CLEARANCE_MOD)
-@CommandDescription("Starboard related commands")
-class CommandStarboard : BaseCommand() {
-    override fun execute(context: Context, cmdContext: CommandContext) {
-        throw CommandException("Invalid sub-command")
-    }
+class CommandStarboard {
 
-    @Command(name = "update", clearance = CLEARANCE_MOD, arguments = ["<mid:snowflake>"])
+    @Command(name = "update", clearance = CLEARANCE_MOD, arguments = ["<mid:snowflake>"], parent="starboard")
     @LogInModlogs
     @CommandDescription("Forces an update of the starboard message")
     fun update(context: Context, cmdContext: CommandContext) {
@@ -32,7 +26,7 @@ class CommandStarboard : BaseCommand() {
                 cmdContext.getNotNull("mid"))
     }
 
-    @Command(name = "hide", clearance = CLEARANCE_MOD, arguments = ["<mid:snowflake>"])
+    @Command(name = "hide", clearance = CLEARANCE_MOD, arguments = ["<mid:snowflake>"], parent="starboard")
     @LogInModlogs
     @CommandDescription("Hides an entry from the starboard")
     fun hide(context: Context, cmdContext: CommandContext) {
@@ -46,7 +40,7 @@ class CommandStarboard : BaseCommand() {
                 hand = true).queue()
     }
 
-    @Command(name = "unhide", clearance = CLEARANCE_MOD, arguments = ["<mid:snowflake>"])
+    @Command(name = "unhide", clearance = CLEARANCE_MOD, arguments = ["<mid:snowflake>"], parent="starboard")
     @LogInModlogs
     @CommandDescription("Unhides an entry from the starboard")
     fun unhide(context: Context, cmdContext: CommandContext) {
@@ -60,7 +54,7 @@ class CommandStarboard : BaseCommand() {
                 hand = true).queue()
     }
 
-    @Command(name = "block", clearance = CLEARANCE_MOD, arguments = ["<user:snowflake>"])
+    @Command(name = "block", clearance = CLEARANCE_MOD, arguments = ["<user:snowflake>"], parent="starboard")
     @LogInModlogs
     @CommandDescription("Blocks a user from the starboard. They cannot star messages and their messages cannot be starred")
     fun blockUser(context: Context, cmdContext: CommandContext) {
@@ -69,7 +63,7 @@ class CommandStarboard : BaseCommand() {
         context.send().success("Blocked ${user.nameAndDiscrim} from the starboard", true).queue()
     }
 
-    @Command(name = "unblock", clearance = CLEARANCE_MOD, arguments = ["<user:snowflake>"])
+    @Command(name = "unblock", clearance = CLEARANCE_MOD, arguments = ["<user:snowflake>"], parent="starboard")
     @LogInModlogs
     @CommandDescription("Unblocks a user from the starboard")
     fun unblockUser(context: Context, cmdContext: CommandContext) {

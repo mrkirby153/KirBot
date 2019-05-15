@@ -1,9 +1,9 @@
 package me.mrkirby153.KirBot.command.executors.msc
 
 import me.mrkirby153.KirBot.CommandDescription
-import me.mrkirby153.KirBot.command.BaseCommand
-import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.CommandException
+import me.mrkirby153.KirBot.command.annotations.Command
+import me.mrkirby153.KirBot.command.annotations.IgnoreWhitelist
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.logger.LogEvent
 import me.mrkirby153.KirBot.module.ModuleManager
@@ -22,11 +22,13 @@ import net.dv8tion.jda.core.entities.Role
 import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleAddEvent
 import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleRemoveEvent
 
-@Command(name = "role,r,roles", clearance = CLEARANCE_MOD)
-@CommandDescription("List all the roles and their IDs")
-class RoleCommands : BaseCommand(false) {
 
-    override fun execute(context: Context, cmdContext: CommandContext) {
+class RoleCommands {
+
+    @Command(name = "role", clearance = CLEARANCE_MOD)
+    @CommandDescription("List all the roles and their IDs")
+    @IgnoreWhitelist
+    fun execute(context: Context, cmdContext: CommandContext) {
         var msg = "```"
         context.guild.roles.forEach {
             if (msg.length >= 1900) {
@@ -40,8 +42,9 @@ class RoleCommands : BaseCommand(false) {
 
     @Command(name = "add", clearance = CLEARANCE_MOD,
             arguments = ["<user:snowflake>", "<role:string>", "[reason:string...]"],
-            permissions = [Permission.MANAGE_ROLES])
+            permissions = [Permission.MANAGE_ROLES], parent = "role")
     @CommandDescription("Add a role to the given user")
+    @IgnoreWhitelist
     fun addRole(context: Context, cmdContext: CommandContext) {
         val roleString = cmdContext.get<String>("role")!!
         val reason = cmdContext.get<String>("reason") ?: "No reason specified"
@@ -77,10 +80,11 @@ class RoleCommands : BaseCommand(false) {
                 true).queue()
     }
 
-    @Command(name = "remove,rem", clearance = CLEARANCE_MOD,
+    @Command(name = "remove", clearance = CLEARANCE_MOD,
             arguments = ["<user:snowflake>", "<role:string>", "[reason:string...]"],
-            permissions = [Permission.MANAGE_ROLES])
+            permissions = [Permission.MANAGE_ROLES], parent = "role")
     @CommandDescription("Remove a role from the given user")
+    @IgnoreWhitelist
     fun removeRole(context: Context, cmdContext: CommandContext) {
         val roleString = cmdContext.get<String>("role")!!
         val reason = cmdContext.get<String>("reason") ?: "No reason specified"

@@ -2,13 +2,13 @@ package me.mrkirby153.KirBot.command
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.CommandDescription
 import me.mrkirby153.KirBot.command.annotations.AdminCommand
 import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.annotations.IgnoreWhitelist
 import me.mrkirby153.KirBot.command.annotations.LogInModlogs
 import me.mrkirby153.KirBot.command.args.ArgumentParseException
 import me.mrkirby153.KirBot.command.args.ArgumentParser
-import me.mrkirby153.KirBot.command.help.HelpManager
 import me.mrkirby153.KirBot.command.tree.CommandNode
 import me.mrkirby153.KirBot.command.tree.CommandNodeMetadata
 import me.mrkirby153.KirBot.database.models.CustomCommand
@@ -20,15 +20,14 @@ import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.KirBot.utils.getClearance
 import me.mrkirby153.KirBot.utils.globalAdmin
-import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.logName
 import me.mrkirby153.KirBot.utils.toTypedArray
 import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.core.entities.Channel
 import net.dv8tion.jda.core.entities.ChannelType
-import net.dv8tion.jda.core.entities.Guild
 import org.json.JSONArray
 import org.reflections.Reflections
+import org.reflections.scanners.MethodAnnotationsScanner
 import java.lang.reflect.InvocationTargetException
 import java.util.LinkedList
 import java.util.concurrent.Executors
@@ -38,12 +37,9 @@ import kotlin.system.measureTimeMillis
 
 object CommandExecutor {
 
-    @Deprecated("")
-    val commands = mutableListOf<BaseCommand>()
-
-    val helpManager = HelpManager()
-
-    private val rootNode = CommandNode("<<ROOT>>")
+    private val rootNode = CommandNode("<<ROOT>>").apply {
+        rootNode = true
+    }
 
     private val executorThread = Executors.newFixedThreadPool(2,
             ThreadFactoryBuilder().setDaemon(true).setNameFormat(
@@ -54,7 +50,7 @@ object CommandExecutor {
     fun loadAll() {
         Bot.LOG.info("Starting loading of commands, this may take a while")
         val time = measureTimeMillis {
-            val reflections = Reflections("me.mrkirby153.KirBot")
+            val reflections = Reflections("me.mrkirby153.KirBot", MethodAnnotationsScanner())
 
             val commands = reflections.getMethodsAnnotatedWith(
                     Command::class.java).map { it.declaringClass }.toSet()
@@ -79,9 +75,11 @@ object CommandExecutor {
             val ignoreWhitelist = method.isAnnotationPresent(IgnoreWhitelist::class.java)
             val admin = method.isAnnotationPresent(AdminCommand::class.java)
 
+            val descriptionAnnotation = method.getAnnotation(CommandDescription::class.java)
+
             val metadata = CommandNodeMetadata(commandAnnotation.arguments.toList(),
                     commandAnnotation.clearance, commandAnnotation.permissions, admin,
-                    ignoreWhitelist, log)
+                    ignoreWhitelist, log, descriptionAnnotation?.value, commandAnnotation.category)
 
             var parentNode = if (commandAnnotation.parent.isNotBlank()) this.rootNode.getChild(
                     commandAnnotation.parent) else this.rootNode
@@ -306,43 +304,11 @@ object CommandExecutor {
         context.channel.sendMessage(response).queue()
     }
 
-    fun registerCommand(clazz: Class<*>) {
-        Bot.LOG.debug("Registering command ${clazz.canonicalName}")
-        try {
-            val instance = clazz.newInstance() as? BaseCommand ?: return
-            commands.add(instance)
-        } catch (e: Exception) {
-            ErrorLogger.logThrowable(e)
-            Bot.LOG.error("An error occurred when registering ${clazz.canonicalName}")
-        }
-    }
-
-    fun getCommandsByCategory(): Map<CommandCategory, List<BaseCommand>> {
-        val categories = mutableMapOf<CommandCategory, MutableList<BaseCommand>>()
-        this.commands.forEach {
-            if (!categories.containsKey(it.category))
-                categories[it.category] = mutableListOf()
-            categories[it.category]?.add(it)
-        }
-        return categories
-    }
-
-    private fun getCommand(name: String) = this.commands.firstOrNull {
-        it.aliases.map { it.toLowerCase() }.contains(name.toLowerCase())
-    }
-
-    private fun getCommandByAlias(name: String, guild: Guild): BaseCommand? {
-        val alias = guild.kirbotGuild.commandAliases.firstOrNull { it.command == name }
-                ?: return null
-        if (alias.alias != null) {
-            return getCommand(alias.alias!!)
-        }
-        return null
-    }
-
     private fun canExecuteInChannel(command: CommandNode, channel: Channel): Boolean {
         val channels = SettingsRepository.getAsJsonArray(channel.guild, "cmd_whitelist",
                 JSONArray())!!.toTypedArray(String::class.java)
+        if (command.metadata?.admin == true)
+            return true
         return if (command.metadata?.ignoreWhitelist == false) {
             if (channels.isEmpty())
                 return true
@@ -362,6 +328,10 @@ object CommandExecutor {
         } else {
             true
         }
+    }
+
+    fun getAllLeaves(): List<CommandNode> {
+        return this.rootNode.getLeaves()
     }
 
 }

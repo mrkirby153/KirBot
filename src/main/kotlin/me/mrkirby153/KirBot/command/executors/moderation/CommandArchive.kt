@@ -3,9 +3,10 @@ package me.mrkirby153.KirBot.command.executors.moderation
 import com.mrkirby153.bfs.sql.DB
 import com.mrkirby153.bfs.sql.DbRow
 import me.mrkirby153.KirBot.CommandDescription
-import me.mrkirby153.KirBot.command.BaseCommand
-import me.mrkirby153.KirBot.command.annotations.Command
+import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
+import me.mrkirby153.KirBot.command.annotations.Command
+import me.mrkirby153.KirBot.command.annotations.IgnoreWhitelist
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.models.guild.GuildMessage
 import me.mrkirby153.KirBot.logger.LogManager
@@ -15,15 +16,13 @@ import me.mrkirby153.KirBot.utils.convertSnowflake
 import me.mrkirby153.KirBot.utils.uploadToArchive
 import java.text.SimpleDateFormat
 
-@Command(name = "archive", clearance = CLEARANCE_MOD)
-@CommandDescription("Create an archive")
-class CommandArchive : BaseCommand(false) {
-    override fun execute(context: Context, cmdContext: CommandContext) {
-    }
+
+class CommandArchive{
 
     @Command(name = "user", clearance = CLEARANCE_MOD,
-            arguments = ["<user:snowflake>", "[amount:int]"])
+            arguments = ["<user:snowflake>", "[amount:int]"], category = CommandCategory.MODERATION, parent = "archive")
     @CommandDescription("Create an archive of messages that a user has sent")
+    @IgnoreWhitelist
     fun archiveUser(context: Context, cmdContext: CommandContext) {
         val amount = cmdContext.get<Int>("amount") ?: 50
         val user = cmdContext.get<String>("user")!!
@@ -35,8 +34,9 @@ class CommandArchive : BaseCommand(false) {
     }
 
     @Command(name = "channel", clearance = CLEARANCE_MOD,
-            arguments = ["<channel:snowflake>", "[amount:int]"])
+            arguments = ["<channel:snowflake>", "[amount:int]"], category = CommandCategory.MODERATION, parent = "archive")
     @CommandDescription("Creates an archive of messages sent in a channel")
+    @IgnoreWhitelist
     fun archiveChannel(context: Context, cmdContext: CommandContext) {
         val amount = cmdContext.get<Int>("amount") ?: 50
         val chan = cmdContext.get<String>("channel")!!

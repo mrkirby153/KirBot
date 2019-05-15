@@ -1,9 +1,10 @@
 package me.mrkirby153.KirBot.command.executors.moderation
 
-import me.mrkirby153.KirBot.command.BaseCommand
-import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
+import me.mrkirby153.KirBot.command.annotations.Command
+import me.mrkirby153.KirBot.command.annotations.IgnoreWhitelist
+import me.mrkirby153.KirBot.command.annotations.LogInModlogs
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
@@ -15,10 +16,14 @@ import net.dv8tion.jda.core.entities.TextChannel
 
 private val lockdownMessages = mutableMapOf<String, String>()
 
-@Command(name = "lock", clearance = CLEARANCE_MOD, arguments = ["[msg:string...]"])
-class CommandLockdown : BaseCommand(false, CommandCategory.MODERATION) {
 
-    override fun execute(context: Context, cmdContext: CommandContext) {
+class CommandLockdown {
+
+    @Command(name = "lock", clearance = CLEARANCE_MOD, arguments = ["[msg:string...]"],
+            category = CommandCategory.MODERATION)
+    @LogInModlogs
+    @IgnoreWhitelist
+    fun execute(context: Context, cmdContext: CommandContext) {
         val msg = cmdContext.get<String>("msg") ?: "No reason given"
 
         val chan = context.channel as TextChannel
@@ -37,9 +42,12 @@ class CommandLockdown : BaseCommand(false, CommandCategory.MODERATION) {
     }
 }
 
-@Command(name = "unlock", clearance = CLEARANCE_MOD)
-class CommandUnlock : BaseCommand(false, CommandCategory.MODERATION) {
-    override fun execute(context: Context, cmdContext: CommandContext) {
+
+class CommandUnlock {
+    @Command(name = "unlock", clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION)
+    @LogInModlogs
+    @IgnoreWhitelist
+    fun execute(context: Context, cmdContext: CommandContext) {
         val chan = context.channel as TextChannel
 
         val override = chan.getPermissionOverride(context.guild.publicRole)

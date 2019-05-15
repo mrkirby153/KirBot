@@ -1,9 +1,9 @@
 package me.mrkirby153.KirBot.command.executors.`fun`
 
 import me.mrkirby153.KirBot.CommandDescription
-import me.mrkirby153.KirBot.command.BaseCommand
-import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.CommandException
+import me.mrkirby153.KirBot.command.annotations.Command
+import me.mrkirby153.KirBot.command.annotations.IgnoreWhitelist
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.EMOJI_RE
@@ -17,10 +17,13 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import javax.imageio.ImageIO
 
-@Command(name = "jumbo", arguments = ["<emojis:string...>"])
-@CommandDescription("Sends a bigger version of the given emojis")
-class CommandJumbo : BaseCommand(false) {
-    override fun execute(context: Context, cmdContext: CommandContext) {
+
+class CommandJumbo {
+
+    @Command(name = "jumbo", arguments = ["<emojis:string...>"])
+    @CommandDescription("Sends a bigger version of the given emojis")
+    @IgnoreWhitelist
+    fun execute(context: Context, cmdContext: CommandContext) {
         val emojis = cmdContext.get<String>("emojis")!!
 
         val urls = mutableListOf<String>()

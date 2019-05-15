@@ -1,20 +1,21 @@
 package me.mrkirby153.KirBot.command.executors.`fun`
 
 import me.mrkirby153.KirBot.CommandDescription
-import me.mrkirby153.KirBot.command.BaseCommand
-import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.CommandException
+import me.mrkirby153.KirBot.command.annotations.Command
+import me.mrkirby153.KirBot.command.annotations.IgnoreWhitelist
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.user.CLEARANCE_ADMIN
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.FuzzyMatchException
 import net.dv8tion.jda.core.entities.Role
 
-@Command(name = "selfrole,selfroles")
-@CommandDescription("Displays a list of self-assignable roles")
-class CommandSelfroles : BaseCommand() {
 
-    override fun execute(context: Context, cmdContext: CommandContext) {
+class CommandSelfroles {
+
+    @Command(name = "selfrole")
+    @CommandDescription("Displays a list of self-assignable roles")
+    fun execute(context: Context, cmdContext: CommandContext) {
         var msg = "Self-assignable roles are:\n```\n"
         val selfroles = context.kirbotGuild.getSelfroles()
         selfroles.mapNotNull {
@@ -31,7 +32,7 @@ class CommandSelfroles : BaseCommand() {
         context.channel.sendMessage(msg).queue()
     }
 
-    @Command(name = "join", arguments = ["<role:string...>"])
+    @Command(name = "join", arguments = ["<role:string...>"], parent = "selfrole")
     @CommandDescription("Join a self-assignable role")
     fun join(context: Context, cmdContext: CommandContext) {
         val role = cmdContext.get<String>("role")!!
@@ -45,7 +46,7 @@ class CommandSelfroles : BaseCommand() {
         context.send().success("Joined role `${foundRole.name}`", true).queue()
     }
 
-    @Command(name = "leave", arguments = ["<role:string...>"])
+    @Command(name = "leave", arguments = ["<role:string...>"], parent = "selfrole")
     @CommandDescription("Leave a self-assignable role")
     fun leave(context: Context, cmdContext: CommandContext) {
         val role = cmdContext.get<String>("role")!!
@@ -59,8 +60,10 @@ class CommandSelfroles : BaseCommand() {
         context.send().success("Left role `${foundRole.name}`", true).queue()
     }
 
-    @Command(name = "add", arguments = ["<role:string...>"], clearance = CLEARANCE_ADMIN)
+    @Command(name = "add", arguments = ["<role:string...>"], clearance = CLEARANCE_ADMIN,
+            parent = "selfrole")
     @CommandDescription("Add a role to the list of self-assignable roles")
+    @IgnoreWhitelist
     fun add(context: Context, cmdContext: CommandContext) {
         try {
             val role = cmdContext.get<String>("role")!!
@@ -79,8 +82,10 @@ class CommandSelfroles : BaseCommand() {
         }
     }
 
-    @Command(name = "remove", arguments = ["<role:string...>"], clearance = CLEARANCE_ADMIN)
+    @Command(name = "remove", arguments = ["<role:string...>"], clearance = CLEARANCE_ADMIN,
+            parent = "selfrole")
     @CommandDescription("Removes a role from the list of self-assignable roles")
+    @IgnoreWhitelist
     fun remove(context: Context, cmdContext: CommandContext) {
         val role = cmdContext.get<String>("role")!!
         try {

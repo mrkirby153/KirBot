@@ -2,21 +2,22 @@ package me.mrkirby153.KirBot.command.executors.admin
 
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.CommandDescription
-import me.mrkirby153.KirBot.command.BaseCommand
-import me.mrkirby153.KirBot.command.annotations.Command
-import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandExecutor
+import me.mrkirby153.KirBot.command.annotations.AdminCommand
+import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.sharding.Shard
 import me.mrkirby153.KirBot.utils.Context
 import net.dv8tion.jda.core.entities.Message
 import net.dv8tion.jda.core.entities.User
 
-@Command(name = "sudo", arguments = ["<user:user>", "<command:string...>"], admin = true)
-@CommandDescription("Runs commands as other users")
-class CommandSu : BaseCommand(CommandCategory.ADMIN) {
 
-    override fun execute(context: Context, cmdContext: CommandContext) {
+class CommandSu {
+
+    @Command(name = "sudo", arguments = ["<user:user>", "<command:string...>"])
+    @AdminCommand
+    @CommandDescription("Runs commands as other users")
+    fun execute(context: Context, cmdContext: CommandContext) {
         val user = cmdContext.get<User>("user")
         val command = cmdContext.get<String>("command")
 

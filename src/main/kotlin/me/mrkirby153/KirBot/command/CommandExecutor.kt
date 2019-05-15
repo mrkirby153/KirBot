@@ -155,16 +155,19 @@ object CommandExecutor {
                 return
             }
         }
-        val node = resolve(args)
+        var node = resolve(args)
+        val alias = context.kirbotGuild.commandAliases.firstOrNull { it.command == rootCommandName }
+        if(alias != null && alias.alias?.isNotEmpty() == true) {
+            // An alias exists for this command
+            args[0] = alias.alias
+            node = resolve(args)
+        }
         if (node == null || node.isSkeleton()) {
-            // TODO 5/14/2019 Execute custom command
             val parts = strippedMessage.split(" ")
             executeCustomCommand(context, parts[0], parts.drop(1).toTypedArray())
             return
         }
         val metadata = node.metadata!!
-
-        // TODO 5/14/2019 Parse user defined aliases
 
         val defaultAlias = context.kirbotGuild.commandAliases.firstOrNull { it.command == "*" }
 
@@ -174,10 +177,11 @@ object CommandExecutor {
         }
 
         var clearance = defaultAlias?.clearance ?: 0
+        val cmdClearance = if (alias == null || alias.clearance == -1) metadata.clearance else alias.clearance
 
-        if (metadata.clearance > clearance) {
+        if (cmdClearance > clearance) {
             // The node's clearance is higher than the default, escalate it
-            clearance = metadata.clearance
+            clearance = cmdClearance
         }
 
         if (metadata.admin && !context.author.globalAdmin) {
@@ -268,12 +272,14 @@ object CommandExecutor {
                 return null
             return parent
         }
-        val childName = arguments.pop()
+        val childName = arguments.peek()
         val childNode = parent.getChild(childName)
         if (childNode == null) {
             if (rootNode == parent)
                 return null
             return parent
+        } else {
+            arguments.pop()
         }
         if (arguments.peek() != null && childNode.getChild(arguments.peek()) == null)
             return childNode

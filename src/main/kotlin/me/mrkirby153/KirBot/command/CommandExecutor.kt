@@ -2,10 +2,15 @@ package me.mrkirby153.KirBot.command
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.command.annotations.AdminCommand
+import me.mrkirby153.KirBot.command.annotations.Command
+import me.mrkirby153.KirBot.command.annotations.IgnoreWhitelist
+import me.mrkirby153.KirBot.command.annotations.LogInModlogs
 import me.mrkirby153.KirBot.command.args.ArgumentParseException
 import me.mrkirby153.KirBot.command.args.ArgumentParser
-import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.command.help.HelpManager
+import me.mrkirby153.KirBot.command.tree.CommandNode
+import me.mrkirby153.KirBot.command.tree.CommandNodeMetadata
 import me.mrkirby153.KirBot.database.models.CustomCommand
 import me.mrkirby153.KirBot.logger.ErrorLogger
 import me.mrkirby153.KirBot.logger.LogEvent
@@ -13,7 +18,6 @@ import me.mrkirby153.KirBot.stats.Statistics
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.checkPermissions
-import me.mrkirby153.KirBot.utils.deleteAfter
 import me.mrkirby153.KirBot.utils.getClearance
 import me.mrkirby153.KirBot.utils.globalAdmin
 import me.mrkirby153.KirBot.utils.kirbotGuild
@@ -26,7 +30,6 @@ import net.dv8tion.jda.core.entities.Guild
 import org.json.JSONArray
 import org.reflections.Reflections
 import java.lang.reflect.InvocationTargetException
-import java.lang.reflect.Method
 import java.util.LinkedList
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -35,9 +38,12 @@ import kotlin.system.measureTimeMillis
 
 object CommandExecutor {
 
+    @Deprecated("")
     val commands = mutableListOf<BaseCommand>()
 
     val helpManager = HelpManager()
+
+    private val rootNode = CommandNode("<<ROOT>>")
 
     private val executorThread = Executors.newFixedThreadPool(2,
             ThreadFactoryBuilder().setDaemon(true).setNameFormat(
@@ -50,173 +56,231 @@ object CommandExecutor {
         val time = measureTimeMillis {
             val reflections = Reflections("me.mrkirby153.KirBot")
 
-            val commands = reflections.getTypesAnnotatedWith(Command::class.java)
+            val commands = reflections.getMethodsAnnotatedWith(
+                    Command::class.java).map { it.declaringClass }.toSet()
 
-            Bot.LOG.info("Found ${commands.size} commands")
+            Bot.LOG.info("Found ${commands.size} classes")
 
-            commands.forEach(CommandExecutor::registerCommand)
+            val instances = commands.map { it.newInstance() }
+
+            instances.forEach(CommandExecutor::register)
         }
         Bot.LOG.info("Commands registered in ${Time.format(1, time, Time.TimeUnit.FIT)}")
     }
 
-    fun execute(context: Context) {
-        val future = this.executorThread.submit {
-            if (context.channel.type == ChannelType.PRIVATE)
-                return@submit
+    fun register(instance: Any) {
+        val methods = instance.javaClass.declaredMethods.filter { method ->
+            method.isAnnotationPresent(Command::class.java)
+        }
 
-            var message = context.contentRaw
-            if (message.isEmpty())
-                return@submit
+        methods.forEach { method ->
+            val commandAnnotation = method.getAnnotation(Command::class.java)
+            val log = method.isAnnotationPresent(LogInModlogs::class.java)
+            val ignoreWhitelist = method.isAnnotationPresent(IgnoreWhitelist::class.java)
+            val admin = method.isAnnotationPresent(AdminCommand::class.java)
 
-            val prefix = SettingsRepository.get(context.guild, "command_prefix", "!", true)!!
+            val metadata = CommandNodeMetadata(commandAnnotation.arguments.toList(),
+                    commandAnnotation.clearance, commandAnnotation.permissions, admin,
+                    ignoreWhitelist, log)
 
-            val botId = context.guild.selfMember.user.id
-
-            val isMention = message.matches(Regex("^<@!?$botId>.*"))
-
-            if (!message.startsWith(prefix)) {
-                if (!isMention)
-                    return@submit
+            var parentNode = if (commandAnnotation.parent.isNotBlank()) this.rootNode.getChild(
+                    commandAnnotation.parent) else this.rootNode
+            if (parentNode == null) {
+                val node = CommandNode(commandAnnotation.parent)
+                this.rootNode.addChild(node)
+                parentNode = node
             }
-            Bot.LOG.debug("Processing message \"$message\"")
 
-            message = if (isMention) message.replace(Regex("^<@!?$botId>\\s?"),
-                    "") else message.substring(prefix.length)
-            val parts = message.split(" ").toTypedArray()
-            if ((parts.isEmpty() || message.isEmpty()) && isMention) {
+            var p = parentNode
+            commandAnnotation.name.split(" ").forEachIndexed { i, cmd ->
+                val child = p?.getChild(cmd)
+                if (child != null) {
+                    if (i == commandAnnotation.name.split(" ").size - 1) {
+                        // We're at the end of the chain, insert the node
+                        if (child.isSkeleton()) {
+                            child.instance = instance
+                            child.method = method
+                            child.metadata = metadata
+                        } else {
+                            throw IllegalArgumentException(
+                                    "Attempting to register a command that already exists: ${commandAnnotation.name}")
+                        }
+                    }
+                    p = child
+                } else {
+                    val node = if (i == commandAnnotation.name.split(" ").size - 1) {
+                        CommandNode(cmd, method, instance, metadata)
+                    } else {
+                        CommandNode(cmd)
+                    }
+                    p?.addChild(node)
+                    p = node
+                }
+            }
+        }
+    }
+
+    fun printCommandTree(parent: CommandNode = rootNode, depth: Int = 0) {
+        print(" ".repeat(depth * 5))
+        println(parent.name)
+        parent.getChildren().forEach { child ->
+            printCommandTree(child, depth + 1)
+        }
+    }
+
+    fun execute(context: Context) {
+        if (context.channel.type == ChannelType.PRIVATE)
+            return // Ignore DMs
+        val message = context.contentRaw
+
+        val prefix = SettingsRepository.get(context.guild, "command_prefix", "!", true)!!
+        val mention = isMention(message)
+        if (!message.startsWith(prefix) && !mention)
+            return
+        Bot.LOG.debug("Processing command \"$message\"")
+
+        // Strip the command prefix from the message
+        val strippedMessage = if (mention) message.replace(Regex("^<#!?\\d{17,18}>\\s?"),
+                "") else message.substring(prefix.length)
+
+
+        val args = LinkedList(strippedMessage.split(" "))
+        val rootCommandName = args[0]
+
+        if (args.isEmpty() || strippedMessage.isEmpty()) {
+            if (mention) {
                 context.channel.sendMessage(
                         "The command prefix on this server is `$prefix`").queue()
-                return@submit
+                return
             }
-            val cmd = parts[0].toLowerCase()
-            Bot.LOG.debug("Looking up $cmd on ${context.guild.id}")
+        }
+        val node = resolve(args)
+        if (node == null || node.isSkeleton()) {
+            // TODO 5/14/2019 Execute custom command
+            val parts = strippedMessage.split(" ")
+            executeCustomCommand(context, parts[0], parts.drop(1).toTypedArray())
+            return
+        }
+        val metadata = node.metadata!!
 
-            val a = if (parts.isNotEmpty()) parts.drop(1).toTypedArray() else emptyArray()
-            val args = LinkedList<String>()
-            args.addAll(a)
+        // TODO 5/14/2019 Parse user defined aliases
 
-            val command = getCommand(cmd) ?: getCommandByAlias(cmd, context.guild)
+        val defaultAlias = context.kirbotGuild.commandAliases.firstOrNull { it.command == "*" }
 
-            val alias = context.kirbotGuild.commandAliases.firstOrNull { it.command == cmd }
+        if (!canExecuteInChannel(node, context.channel as Channel)) {
+            Bot.LOG.debug("Ignoring because whitelist")
+            return
+        }
 
-            val defaultAlias = context.kirbotGuild.commandAliases.firstOrNull { it.command == "*" }
+        var clearance = defaultAlias?.clearance ?: 0
 
-            if (command == null) {
-                executeCustomCommand(context, cmd, args.toTypedArray())
-                return@submit
+        if (metadata.clearance > clearance) {
+            // The node's clearance is higher than the default, escalate it
+            clearance = metadata.clearance
+        }
+
+        if (metadata.admin && !context.author.globalAdmin) {
+            Bot.LOG.debug("Attempting to execute an admin command while not being a global admin")
+            return
+        }
+
+        if (clearance > context.author.getClearance(context.guild)) {
+            Bot.LOG.debug(
+                    "${context.author} was denied access due to lack of clearance. Required $clearance -- Found ${context.author.getClearance(
+                            context.guild)}")
+            if (SettingsRepository.get(context.guild, "command_silent_fail", "0") == "0") {
+                context.channel.sendMessage(
+                        ":lock: You do not have permission to perform this command").queue()
             }
+            return
+        }
+        Bot.LOG.debug("Beginning parsing of arguments: [${args.joinToString(", ")}]")
+        val parser = ArgumentParser(args.toTypedArray())
 
-            if (!canExecuteInChannel(command, context.channel as Channel)) {
-                Bot.LOG.debug("Ignoring because whitelist")
-                return@submit
-            }
+        val cmdContext = try {
+            parser.parse(metadata.arguments.toTypedArray())
+        } catch (e: ArgumentParseException) {
+            context.send().error(e.message ?: "An unknown error occurred").queue()
+            return
+        }
 
-            val cmdMethod: Method
-            val annotation: Command
-            val logInModLogs: Boolean
-            if (args.isNotEmpty() && command.hasSubCommand(args[0])) {
-                cmdMethod = command.getSubCommand(args[0])!!
-                annotation = cmdMethod.getAnnotation(Command::class.java)
-                logInModLogs = cmdMethod.getAnnotation(LogInModlogs::class.java) != null
-                args.pop()
-            } else {
-                cmdMethod = command.javaClass.getMethod("execute", Context::class.java,
-                        CommandContext::class.java)
-                annotation = command.javaClass.getAnnotation(Command::class.java)
-                logInModLogs = command.javaClass.getAnnotation(LogInModlogs::class.java) != null
-            }
+        Bot.LOG.debug("Parsed $cmdContext")
 
-            if (cmdMethod == null) {
-                Bot.LOG.debug("No command method found!")
-                return@submit
-            }
+        val missingPermissions = metadata.permissions.filter {
+            !context.channel.checkPermissions(it)
+        }
+        if (missingPermissions.isNotEmpty()) {
+            context.send().error(
+                    "Missing the required permissions: `${missingPermissions.joinToString(", ")}`")
+            return
+        }
 
-            var clearance = defaultAlias?.clearance ?: 0 // Start with the minimum clearance
-            if (alias != null && alias.clearance != -1) // Explicitly overridden clearance
-                clearance = alias.clearance
-            else {
-                // Fall back to given clearance iff the given is greater than the default
-                val annotationClearance = annotation?.clearance ?: 0
-                if (annotationClearance > clearance)
-                    clearance = annotationClearance
-            }
+        Statistics.commandsRan.labels(rootCommandName, context.guild.id.toString()).inc()
 
-            if (annotation.admin && !context.author.globalAdmin) {
-                Bot.LOG.debug(
-                        "Attempted to execute an admin command while not being a global admin")
-                return@submit
-            }
-            if (clearance > context.author.getClearance(
-                            context.guild) && !context.author.globalAdmin) {
-                Bot.LOG.debug(
-                        "${context.author.id} was denied access to $cmd due to lack of clearance. Required $clearance -- Found: ${context.author.getClearance(
-                                context.guild)}")
-                val silentRaw = SettingsRepository.get(context.guild, "command_silent_fail", "0")!!
-                if (silentRaw == "0")
-                    context.channel.sendMessage(
-                            ":lock: You do not have permission to perform this command").queue()
-                else
-                    Bot.LOG.debug("Failing silently")
-                return@submit
-            }
-
-            Bot.LOG.debug("Beginning parsing of arguments: [${args.joinToString(", ")}")
-            val parser = ArgumentParser(args.toTypedArray())
-
-            val cmdContext = try {
-                parser.parse(annotation.arguments)
-            } catch (e: ArgumentParseException) {
-                context.send().error(e.message ?: "An unknown error occurred").queue()
-                return@submit
-            }
-
-            Bot.LOG.debug("Parsed: $cmdContext")
-            Bot.LOG.debug("Executing command: $cmd")
-
-            val missing = annotation.permissions.filter { !context.channel.checkPermissions(it) }
-            if (missing.isNotEmpty()) {
-                context.send().error(
-                        "Missing the required permissions `${missing.joinToString(", ")}`").queue()
-                return@submit
-            }
-
-            Statistics.commandsRan.labels(command.aliases[0], context.guild.id.toString()).inc()
+        try {
             try {
-                command.aliasUsed = cmd
-                command.cmdPrefix = prefix
-                try {
-                    if (logInModLogs)
-                        context.kirbotGuild.logManager.genericLog(LogEvent.ADMIN_COMMAND, ":tools:",
-                                "${context.author.logName} Executed `${context.message.contentRaw}` in **#${context.channel.name}**")
-                    val ms = measureTimeMillis {
-                        cmdMethod.invoke(command, context, cmdContext)
-                    }
-                    Statistics.commandDuration.labels(command.aliases[0]).observe(ms.toDouble())
-                } catch (e: InvocationTargetException) {
-                    throw e.targetException
+                val runtime = measureTimeMillis {
+                    node.method!!.invoke(node.instance, context, cmdContext)
                 }
-            } catch (e: CommandException) {
-                context.send().error(e.message ?: "An unknown error has occurred!").queue()
-            } catch (e: InterruptedException) {
-                Bot.LOG.debug("Caught interrupted exception from command. Ignoring")
-            } catch (e: Exception) {
-                e.printStackTrace()
-                ErrorLogger.logThrowable(e, context.guild, context.author)
-                context.send().error("An unknown error occurred!").queue()
+                Statistics.commandDuration.labels(rootCommandName).observe(runtime.toDouble())
+            } catch (e: InvocationTargetException) {
+                throw e.targetException
+            } finally {
+                if (metadata.log) {
+                    context.kirbotGuild.logManager.genericLog(LogEvent.ADMIN_COMMAND, ":tools:",
+                            "${context.author.logName} Executed `${context.message.contentRaw}` in **#${context.channel.name}**")
+                }
             }
-            Bot.LOG.debug("Command execution finished")
+        } catch (e: CommandException) {
+            context.send().error(e.message ?: "An unknown error has occurred!").queue()
+        } catch (e: InterruptedException) {
+            // Ignore
+        } catch (e: java.lang.Exception) {
+            e.printStackTrace()
+            ErrorLogger.logThrowable(e, context.guild, context.author)
+            context.send().error("An unknown error occurred!").queue()
+        }
+        Bot.LOG.debug("Command execution finished")
+    }
+
+    fun executeAsync(context: Context) {
+        val future = this.executorThread.submit {
+            execute(context)
         }
         commandWatchdogThread.submit {
             try {
                 future.get(10, TimeUnit.SECONDS)
             } catch (e: TimeoutException) {
                 Bot.LOG.debug("Command hit timeout, canceling")
-                future.cancel(true)
-                context.send().error("An unknown error has occurred!").queue()
-            } catch (e: Exception) {
-                e.printStackTrace()
+                if (!future.cancel(true)) {
+                    Bot.LOG.warn("Could not interrupt command: ${context.message.contentRaw}")
+                }
+                context.send().error("Your command timed out").queue()
             }
         }
+    }
+
+    private tailrec fun resolve(arguments: LinkedList<String>,
+                                parent: CommandNode = rootNode): CommandNode? {
+        if (arguments.peek() == null) {
+            if (parent == rootNode)
+                return null
+            return parent
+        }
+        val childName = arguments.pop()
+        val childNode = parent.getChild(childName)
+        if (childNode == null) {
+            if (rootNode == parent)
+                return null
+            return parent
+        }
+        if (arguments.peek() != null && childNode.getChild(arguments.peek()) == null)
+            return childNode
+        return resolve(arguments, childNode)
+    }
+
+    private fun isMention(message: String): Boolean {
+        return message.matches(Regex("^<@!?${Bot.shardManager.getShardById(0).selfUser.id}>.*"))
     }
 
     fun executeCustomCommand(context: Context, command: String, args: Array<String>) {
@@ -224,9 +288,9 @@ object CommandExecutor {
             it.name.equals(command, true)
         } ?: return
         if (customCommand.clearance > context.author.getClearance(context.guild)) {
-            context.send().error("You do not have permission to perform that command").queue {
-                context.deleteAfter(10, TimeUnit.SECONDS)
-                it.deleteAfter(10, TimeUnit.SECONDS)
+            if (SettingsRepository.get(context.guild, "command_silent_fail", "0") == "0") {
+                context.channel.sendMessage(
+                        ":lock: You do not have permission to perform this command").queue()
             }
             return
         }
@@ -276,10 +340,10 @@ object CommandExecutor {
         return null
     }
 
-    private fun canExecuteInChannel(command: BaseCommand, channel: Channel): Boolean {
+    private fun canExecuteInChannel(command: CommandNode, channel: Channel): Boolean {
         val channels = SettingsRepository.getAsJsonArray(channel.guild, "cmd_whitelist",
                 JSONArray())!!.toTypedArray(String::class.java)
-        return if (command.respectWhitelist) {
+        return if (command.metadata?.ignoreWhitelist == false) {
             if (channels.isEmpty())
                 return true
             channels.any { it == channel.id }

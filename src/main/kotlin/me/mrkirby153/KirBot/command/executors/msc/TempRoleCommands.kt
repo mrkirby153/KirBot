@@ -2,9 +2,9 @@ package me.mrkirby153.KirBot.command.executors.msc
 
 import com.sun.org.glassfish.gmbal.Description
 import me.mrkirby153.KirBot.command.BaseCommand
-import me.mrkirby153.KirBot.command.Command
+import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.CommandException
-import me.mrkirby153.KirBot.command.LogInModlogs
+import me.mrkirby153.KirBot.command.annotations.LogInModlogs
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.infraction.InfractionType
 import me.mrkirby153.KirBot.infraction.Infractions

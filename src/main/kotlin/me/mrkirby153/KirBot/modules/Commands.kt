@@ -22,7 +22,7 @@ class Commands : Module("commands") {
 
         val context = Context(event)
 
-        CommandExecutor.execute(context)
+        CommandExecutor.executeAsync(context)
     }
 
     @Subscribe
@@ -35,7 +35,7 @@ class Commands : Module("commands") {
                     return
 
                 val context = Context(Bot.shardManager.getShard(event.guild)!!, event.message)
-                CommandExecutor.execute(context)
+                CommandExecutor.executeAsync(context)
             }
     }
 }

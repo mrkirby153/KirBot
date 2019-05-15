@@ -1,6 +1,7 @@
 package me.mrkirby153.KirBot.command
 
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.command.annotations.Command
 import java.io.File
 
 object CommandDocumentationGenerator {

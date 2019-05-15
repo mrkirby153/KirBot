@@ -4,7 +4,7 @@ import com.mrkirby153.bfs.model.Model
 import com.mrkirby153.bfs.sql.DB
 import me.mrkirby153.KirBot.CommandDescription
 import me.mrkirby153.KirBot.command.BaseCommand
-import me.mrkirby153.KirBot.command.Command
+import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.models.guild.GuildMember

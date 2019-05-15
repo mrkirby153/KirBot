@@ -3,7 +3,7 @@ package me.mrkirby153.KirBot.command.executors.admin
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.CommandDescription
 import me.mrkirby153.KirBot.command.BaseCommand
-import me.mrkirby153.KirBot.command.Command
+import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandExecutor
 import me.mrkirby153.KirBot.command.args.CommandContext

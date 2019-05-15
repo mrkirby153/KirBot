@@ -2,7 +2,7 @@ package me.mrkirby153.KirBot.command.help
 
 import me.mrkirby153.KirBot.CommandDescription
 import me.mrkirby153.KirBot.command.BaseCommand
-import me.mrkirby153.KirBot.command.Command
+import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.CommandCategory
 import org.reflections.Reflections
 
@@ -15,16 +15,19 @@ class HelpManager {
         helpTree.clear()
         val reflections = Reflections("me.mrkirby153.KirBot")
 
-        val commands = reflections.getTypesAnnotatedWith(Command::class.java)
+        val commands = reflections.getTypesAnnotatedWith(
+                Command::class.java)
 
         commands.forEach { clazz ->
-            val cmdAnnotation = clazz.getAnnotation(Command::class.java)
+            val cmdAnnotation = clazz.getAnnotation(
+                    Command::class.java)
             if(cmdAnnotation.admin)
                 return@forEach
             val description = clazz.getAnnotation(CommandDescription::class.java)?.value
                     ?: "No description provided"
 
-            val children = clazz.methods.filter { it.getAnnotation(Command::class.java) != null }
+            val children = clazz.methods.filter { it.getAnnotation(
+                    Command::class.java) != null }
 
             val instance = clazz.newInstance()
             cmdAnnotation.name.split(",").forEach { cmd ->
@@ -32,7 +35,8 @@ class HelpManager {
                         (instance as BaseCommand).category, cmdAnnotation.arguments.joinToString(" "))
 
                 children.forEach { method ->
-                    val annotation = method.getAnnotation(Command::class.java)
+                    val annotation = method.getAnnotation(
+                            Command::class.java)
                     val d = method.getAnnotation(CommandDescription::class.java)?.value
                             ?: "No description provided"
                     val id = "${clazz.canonicalName}${method.toGenericString()}"

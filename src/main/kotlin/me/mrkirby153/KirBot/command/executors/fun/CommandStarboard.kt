@@ -4,9 +4,9 @@ import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.CommandDescription
 import me.mrkirby153.KirBot.command.BaseCommand
-import me.mrkirby153.KirBot.command.Command
+import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.CommandException
-import me.mrkirby153.KirBot.command.LogInModlogs
+import me.mrkirby153.KirBot.command.annotations.LogInModlogs
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.models.guild.starboard.StarboardEntry
 import me.mrkirby153.KirBot.module.ModuleManager

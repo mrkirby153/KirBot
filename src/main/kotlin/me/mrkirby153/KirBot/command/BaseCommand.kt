@@ -1,6 +1,7 @@
 package me.mrkirby153.KirBot.command
 
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.user.CLEARANCE_DEFAULT
 import me.mrkirby153.KirBot.utils.Context
@@ -32,7 +33,8 @@ abstract class BaseCommand(val respectWhitelist: Boolean = true,
         get() = this.javaClass.getAnnotation(Command::class.java)!!
 
     init {
-        val annotation = this.javaClass.getAnnotation(Command::class.java)
+        val annotation = this.javaClass.getAnnotation(
+                Command::class.java)
                 ?: throw RuntimeException("${this.javaClass} is missing the @Command annotation")
         clearance = annotation.clearance
         argumentList = annotation.arguments

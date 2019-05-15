@@ -22,7 +22,8 @@ class CommandNode(val name: String, var method: Method? = null,
 
     fun getChild(name: String): CommandNode? {
         return children.firstOrNull {
-            it.name.equals(name, true) ||  name.toLowerCase() in it.aliases.map { alias -> alias.toLowerCase() }
+            it.name.equals(name,
+                    true) || name.toLowerCase() in it.aliases.map { alias -> alias.toLowerCase() }
         }
     }
 
@@ -46,12 +47,11 @@ class CommandNode(val name: String, var method: Method? = null,
 
     fun getLeaves(): List<CommandNode> {
         val l = mutableListOf<CommandNode>()
-        if (this.children.isEmpty()) {
+        if (!this.isSkeleton()) {
             l.add(this)
-        } else {
-            this.children.forEach { child ->
-                l.addAll(child.getLeaves())
-            }
+        }
+        this.children.forEach { child ->
+            l.addAll(child.getLeaves())
         }
         return l
     }

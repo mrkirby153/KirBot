@@ -2,10 +2,12 @@
 ## Utility
 | Command | Clearance Level | Description |
 |---------|-----------------|-------------|
+| ` rss ` | 50 | Shows a list of RSS feeds currently being monitored |
 | ` rss refresh [id:string]` | 50 | Refresh a feed |
 | ` rss add <url:string>` | 50 | Adds a feed to be watched |
 | ` rss remove <id:string>` | 50 | Removes a feed from the watch list |
 | ` rss list ` | 50 | Show a list of RSS feeds being monitored |
+| ` selfrole ` | 0 | Displays a list of self-assignable roles |
 | ` selfrole add <role:string...>` | 100 | Add a role to the list of self-assignable roles |
 | ` selfrole remove <role:string...>` | 100 | Removes a role from the list of self-assignable roles |
 | ` selfrole join <role:string...>` | 0 | Join a self-assignable role |
@@ -23,6 +25,7 @@
 | ` jumbo <emojis:string...>` | 0 | Sends a bigger version of the given emojis |
 | ` remind <time:string> <query:string...>` | 0 | Set reminders |
 | ` server [server:snowflake]` | 50 | No description provided |
+| ` quotes ` | 0 | Show quote help |
 | ` quotes block <user:snowflake>` | 50 | Blocks a user from being quoted |
 | ` quotes unblock <user:snowflake>` | 50 | Unblocks a user that was previously blocked, allowing them to quote again |
 | ` quote [id:int]` | 0 | Displays a quote previously taken |
@@ -63,6 +66,7 @@
 | ` archive channel <channel:snowflake> [amount:int]` | 50 | Creates an archive of messages sent in a channel |
 | ` kick <user:user> [reason:string...]` | 50 | Kick a user |
 | ` forceban <user:snowflake> [reason:string...]` | 50 | Force bans a user |
+| ` role ` | 50 | List all the roles and their IDs |
 | ` role add <user:snowflake> <role:string> [reason:string...]` | 50 | Add a role to the given user |
 | ` role remove <user:snowflake> <role:string> [reason:string...]` | 50 | Remove a role from the given user |
 | ` tempban <user:snowflake> <time:string> [reason:string...]` | 50 | Temporarily bans a user |
@@ -76,6 +80,7 @@
 | ` disconnect ` | 0 | Disconnects the bot from the current voice channel |
 | ` pause ` | 50 | Pause the music that is currently playing |
 | ` move <from:int> [to:int]` | 0 | Move songs around in the queue |
+| ` skip ` | 0 | Skips the currently playing song |
 | ` skip force ` | 0 | No description provided |
 | ` dequeue <position:int>` | 0 | Removes a previously queued song from the queue |
 | ` queue [option:string]` | 0 | Shows the current queue |
@@ -96,6 +101,7 @@
 |---------|-----------------|-------------|
 | ` permissions ` | 100 | Displays all the permissions the bot currently has in the current channel |
 | ` clearance [user:user]` | 0 | Displays the user's clearance |
+| ` help [command:string...]` | 0 | Display help for a command |
 | ` ping ` | 0 | Check the bot's ping |
 | ` charinfo ` | 0 | Get information about a string of characters |
 

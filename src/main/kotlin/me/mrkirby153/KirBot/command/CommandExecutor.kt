@@ -265,7 +265,7 @@ object CommandExecutor {
         }
     }
 
-    private tailrec fun resolve(arguments: LinkedList<String>,
+    tailrec fun resolve(arguments: LinkedList<String>,
                                 parent: CommandNode = rootNode): CommandNode? {
         if (arguments.peek() == null) {
             if (parent == rootNode)
@@ -341,6 +341,10 @@ object CommandExecutor {
 
     fun getAllLeaves(): List<CommandNode> {
         return this.rootNode.getLeaves()
+    }
+
+    fun getRoot(): CommandNode {
+        return this.rootNode
     }
 
 }

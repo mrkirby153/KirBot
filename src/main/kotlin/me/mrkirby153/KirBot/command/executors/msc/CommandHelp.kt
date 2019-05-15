@@ -4,18 +4,25 @@ import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.CommandDescription
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandDocumentationGenerator
+import me.mrkirby153.KirBot.command.CommandException
+import me.mrkirby153.KirBot.command.CommandExecutor
 import me.mrkirby153.KirBot.command.annotations.AdminCommand
 import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.utils.Context
+import me.mrkirby153.KirBot.utils.SettingsRepository
+import me.mrkirby153.KirBot.utils.embed.embed
 import me.mrkirby153.kcutils.child
 import net.dv8tion.jda.core.Permission
+import java.awt.Color
+import java.util.LinkedList
 
 
 class CommandHelp {
 
     @Command(name = "help", arguments = ["[command:string...]"],
-            permissions = [Permission.MESSAGE_EMBED_LINKS], category = CommandCategory.MISCELLANEOUS)
+            permissions = [Permission.MESSAGE_EMBED_LINKS],
+            category = CommandCategory.MISCELLANEOUS)
     @CommandDescription("Display help for a command")
     fun execute(context: Context, cmdContext: CommandContext) {
         if (!cmdContext.has("command")) {
@@ -35,52 +42,44 @@ class CommandHelp {
     }
 
     private fun displayAllCommands(context: Context) {
-//        val cmdPrefix = SettingsRepository.get(context.guild, "cmd_prefix", "!")!!
-//        val help = CommandExecutor.helpManager.getDedupedHelp()
-//        val categorized = mutableMapOf<CommandCategory, List<HelpNode>>()
-//        CommandCategory.values().forEach { cat ->
-//            categorized[cat] = help.filter { it.category == cat }
-//        }
-//        var msg = ""
-//        CommandCategory.values().forEach {
-//            if (checkAppend(msg, "\n__${it.friendlyName}__\n")) {
-//                msg += "\n__${it.friendlyName}__\n"
-//            } else {
-//                context.channel.sendMessage(embed {
-//                    description { +msg }
-//                    color = Color.BLUE
-//                }.build()).queue()
-//                msg = ""
-//            }
-//            categorized[it]?.forEach { help ->
-//                var line = "    "
-//                line += "**$cmdPrefix${help.command}**"
-//                line += " - ${help.help}\n"
-//                if (checkAppend(msg, line)) {
-//                    msg += line
-//                } else {
-//                    context.channel.sendMessage(embed {
-//                        description { +msg }
-//                        color = Color.BLUE
-//                    }.build()).queue()
-//                    msg = ""
-//                }
-//            }
-//        }
-//        val helpInfo = "\nUse `${cmdPrefix}help <command>` for more information about a command"
-//        if (!checkAppend(msg, helpInfo)) {
-//            context.channel.sendMessage(embed {
-//                description { +msg }
-//                color = Color.BLUE
-//            }.build()).queue()
-//            msg = ""
-//        } else {
-//            msg += helpInfo
-//        }
-//        context.channel.sendMessage(embed {
-//            description { +msg }
-//            color = Color.BLUE
-//        }.build()).queue()
+        val cmdPrefix = SettingsRepository.get(context.guild, "cmd_prefix", "!")!!
+        val root = CommandExecutor.getRoot()
+        val categorized = root.getChildren().filter { it.metadata != null && it.metadata?.admin == false }.groupBy { it.metadata!!.category }
+        var msg = ""
+        fun sendHelp() {
+            context.channel.sendMessage(embed {
+                description { +msg }
+                color = Color.BLUE
+            }.build()).queue()
+            msg = ""
+        }
+        categorized.forEach { category, commands ->
+            if (checkAppend(msg, "\n__${category.friendlyName}__\n")) {
+                msg += "\n__${category.friendlyName}__\n"
+            } else {
+                sendHelp()
+                msg += "\n__${category.friendlyName}__\n"
+            }
+            commands.forEach { help ->
+                var line = "    "
+                line += "**$cmdPrefix${help.parentString} ${help.name}**"
+                line += " - ${help.metadata!!.description ?: "No help provided"}\n"
+                if (checkAppend(msg, line)) {
+                    msg += line
+                } else {
+                    sendHelp()
+                    msg += line
+                }
+            }
+        }
+        val helpInfo = "\nUse `${cmdPrefix}help <command>` for more information about a command"
+        if (!checkAppend(msg, helpInfo)) {
+            sendHelp()
+            msg += helpInfo
+        } else {
+            msg += helpInfo
+        }
+        sendHelp()
     }
 
     private fun checkAppend(msg: String, text: String): Boolean {
@@ -88,31 +87,27 @@ class CommandHelp {
     }
 
     private fun displayHelpForCommand(context: Context, args: Array<String>) {
-//        val cmdPrefix = SettingsRepository.get(context.guild, "cmd_prefix", "!")!!
-//        var index = 0
-//        var cmd = CommandExecutor.helpManager.getHelp(args[index++])
-//        while (index < args.size) {
-//            if (cmd == null)
-//                break
-//            cmd = cmd.getChild(args[index++])
-//        }
-//        if (cmd == null)
-//            throw CommandException("No command was found")
-//        val cmdString = args.joinToString(" ")
-//        context.channel.sendMessage(embed {
-//            description {
-//                +"__$cmdPrefix${cmdString}__\n"
-//                appendln("\n${cmd.help}")
-//                appendln("\nUsage: ")
-//                appendln("    $cmdPrefix$cmdString ${cmd.args}")
-//                if (cmd.children.size > 0) {
-//                    appendln("\nSub-Commands: ")
-//                    cmd.children.forEach {
-//                        appendln("    **$cmdPrefix$cmdString ${it.command}** - ${it.help}")
-//                    }
-//                }
-//            }
-//            color = Color.BLUE
-//        }.build()).queue()
+        val cmdPrefix = SettingsRepository.get(context.guild, "cmd_prefix", "!")!!
+        val node = CommandExecutor.resolve(LinkedList(args.toList())) ?: throw CommandException(
+                "No command was found")
+        val cmdString = "$cmdPrefix${node.parentString.trim()} ${node.name}"
+        context.channel.sendMessage(embed {
+            description {
+                +"__${cmdString}__\n"
+                if(!node.isSkeleton()) {
+                    appendln("\n${node.metadata?.description}")
+                    appendln("\nUsage: ")
+                    appendln("    $cmdString ${node.metadata?.arguments?.joinToString(" ")}")
+                }
+                if (node.getChildren().isNotEmpty()) {
+                    appendln("\nSub-Commands: ")
+                    node.getChildren().flatMap { it.getLeaves() }.filter { !it.isSkeleton() }.forEach { child ->
+                        appendln(
+                                "    **$cmdPrefix${child.parentString} ${child.name}** - ${child.metadata?.description}")
+                    }
+                }
+            }
+            color = Color.BLUE
+        }.build()).queue()
     }
 }

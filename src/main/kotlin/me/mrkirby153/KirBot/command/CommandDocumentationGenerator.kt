@@ -11,12 +11,16 @@ object CommandDocumentationGenerator {
         val commands = CommandExecutor.getAllLeaves()
 
         val builder = StringBuilder()
+        builder.appendln("# Command List")
         val byCategory = mutableMapOf<CommandCategory, MutableList<CommandNode>>()
         commands.forEach {
             byCategory.getOrPut(it.metadata!!.category) { mutableListOf() }.add(it)
         }
         byCategory.forEach { category, cmds ->
-            builder.appendln("# ${category.friendlyName}")
+            if(cmds.none { it.metadata?.admin == false }) {
+                return@forEach
+            }
+            builder.appendln("## ${category.friendlyName}")
             builder.append(getHeader())
             for(c in cmds) {
                 if(c.metadata?.admin == true)

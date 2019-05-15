@@ -25,7 +25,7 @@ import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleRemoveEvent
 
 class RoleCommands {
 
-    @Command(name = "role", clearance = CLEARANCE_MOD)
+    @Command(name = "role", clearance = CLEARANCE_MOD, aliases = ["roles", "r"])
     @CommandDescription("List all the roles and their IDs")
     @IgnoreWhitelist
     fun execute(context: Context, cmdContext: CommandContext) {

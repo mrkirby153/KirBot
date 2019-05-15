@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit
 class CommandSkip {
     private val skipCooldown = mutableMapOf<String, Long>()
 
-    @Command(name = "skip",
+    @Command(name = "skip", aliases = ["next"],
             permissions = [Permission.MESSAGE_ADD_REACTION, Permission.MESSAGE_EMBED_LINKS], category = CommandCategory.MUSIC)
     @CommandDescription("Skips the currently playing song")
     fun execute(context: Context, cmdContext: CommandContext) {

@@ -14,12 +14,16 @@ class CommandNode(val name: String, var method: Method? = null,
 
     var rootNode = false
 
+    val aliases = mutableListOf<String>()
+
     fun isSkeleton(): Boolean {
         return method == null
     }
 
     fun getChild(name: String): CommandNode? {
-        return children.firstOrNull { it.name == name }
+        return children.firstOrNull {
+            it.name.equals(name, true) ||  name.toLowerCase() in it.aliases.map { alias -> alias.toLowerCase() }
+        }
     }
 
     fun addChild(node: CommandNode) {
@@ -33,7 +37,7 @@ class CommandNode(val name: String, var method: Method? = null,
     }
 
     fun removeChild(name: String) {
-        this.children.removeIf { it.name == name }
+        this.children.removeIf { it.name.equals(name, true) }
     }
 
     fun getChildren(): List<CommandNode> {
@@ -51,6 +55,13 @@ class CommandNode(val name: String, var method: Method? = null,
         }
         return l
     }
+
+    override fun toString(): String {
+        val name = "$name/${this.aliases.joinToString("/")}"
+        return "CommandNode(name='$name', parentString='$parentString')"
+    }
+
+
 }
 
 data class CommandNodeMetadata(val arguments: List<String>, val clearance: Int,

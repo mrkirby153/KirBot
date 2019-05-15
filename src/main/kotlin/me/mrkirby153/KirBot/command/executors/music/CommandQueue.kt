@@ -18,7 +18,7 @@ import kotlin.math.roundToInt
 
 class CommandQueue {
 
-    @Command(name = "queue", arguments = ["[option:string]"],
+    @Command(name = "queue", arguments = ["[option:string]"], aliases = ["np", "nowplaying"],
             permissions = [Permission.MESSAGE_EMBED_LINKS], category = CommandCategory.MUSIC)
     @CommandDescription("Shows the current queue")
     fun execute(context: Context, cmdContext: CommandContext) {

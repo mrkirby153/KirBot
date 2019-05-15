@@ -19,7 +19,7 @@ import net.dv8tion.jda.core.entities.VoiceChannel
 
 class CommandConnect{
 
-    @Command(name = "connect", arguments = ["[channel:string...]"], category = CommandCategory.MUSIC)
+    @Command(name = "connect", arguments = ["[channel:string...]"], category = CommandCategory.MUSIC, aliases = ["summon"])
     @CommandDescription("Connects the bot to the voice channel")
     fun execute(context: Context, cmdContext: CommandContext) {
         val manager = ModuleManager[MusicModule::class.java].getManager(context.guild)

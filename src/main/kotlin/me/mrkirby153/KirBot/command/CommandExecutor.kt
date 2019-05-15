@@ -99,6 +99,7 @@ object CommandExecutor {
                             child.instance = instance
                             child.method = method
                             child.metadata = metadata
+                            child.aliases.addAll(commandAnnotation.aliases)
                         } else {
                             throw IllegalArgumentException(
                                     "Attempting to register a command that already exists: ${commandAnnotation.name}")
@@ -107,7 +108,9 @@ object CommandExecutor {
                     p = child
                 } else {
                     val node = if (i == commandAnnotation.name.split(" ").size - 1) {
-                        CommandNode(cmd, method, instance, metadata)
+                        CommandNode(cmd, method, instance, metadata).apply {
+                            aliases.addAll(commandAnnotation.aliases)
+                        }
                     } else {
                         CommandNode(cmd)
                     }

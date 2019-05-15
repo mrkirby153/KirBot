@@ -137,7 +137,7 @@ class MusicManager(val guild: Guild) {
     }
 
     fun updateQueue() {
-        if (playing) {
+        if (playing && this.nowPlaying != null) {
             ModuleManager[Redis::class.java].getConnection().use {
                 it.set("music.playing:${guild.id}",
                         serializeQueuedSong(this.nowPlaying!!, null).toString())

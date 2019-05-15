@@ -107,6 +107,14 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         KirBotGuild.remove(this)
     }
 
+    fun updateRoleClearance(role: String, clearance: Int) {
+        clearances[role] = clearance
+    }
+
+    fun deleteRoleClearance(role: String) {
+        clearances.remove(role)
+    }
+
     fun sync() {
         Bot.LOG.debug("STARTING SYNC FOR $this")
         cacheVisibilities(false)
@@ -146,6 +154,12 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
             this.roles.filter { it.id !in storedRoles.map { it.id } }.forEach {
                 me.mrkirby153.KirBot.database.models.guild.Role(it).save()
             }
+        }
+
+        // TODO 5/15/2019 Sync guild members & roles??
+
+        runAsyncTask {
+            syncSeenUsers()
         }
 
         runAsyncTask {

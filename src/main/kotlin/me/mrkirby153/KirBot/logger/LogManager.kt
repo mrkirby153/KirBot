@@ -34,7 +34,28 @@ class LogManager(private val guild: KirBotGuild) {
         updateLoggers()
     }
 
+    fun updateLogSettings(id: String, included: Long, excluded: Long) {
+        val chan = logChannels.firstOrNull { it.id == id }
+        if(chan == null) {
+            Bot.LOG.debug("New log settings $id")
+            val element = Model.where(LogSettings::class.java, "id", id).first() ?: return
+            this.logChannels.add(element)
+        } else {
+            Bot.LOG.debug("Updated log settings $id - I:$included E:$excluded")
+            chan.included = included
+            chan.excluded = excluded
+        }
+        updateLoggers()
+    }
+
+    fun deleteLogSettings(id: String) {
+        Bot.LOG.debug("Deleted log settings $id")
+        this.logChannels.removeIf{ it.id == id}
+        updateLoggers()
+    }
+
     private fun updateLoggers() {
+        Bot.LOG.debug("Updating loggers")
         channelLoggers.entries.removeIf { it.key !in this.guild.textChannels.map { it.id } }
         this.guild.textChannels.forEach { chan ->
             val logger = channelLoggers.getOrPut(chan.id) { ChannelLogger(this.guild, chan.id) }

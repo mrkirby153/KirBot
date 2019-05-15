@@ -1,6 +1,7 @@
 package me.mrkirby153.KirBot.command.executors.admin
 
 import me.mrkirby153.KirBot.CommandDescription
+import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.user.CLEARANCE_DEFAULT
@@ -14,7 +15,7 @@ import java.util.concurrent.TimeUnit
 
 class CommandClearance {
 
-    @Command(name = "clearance", arguments = ["[user:user]"], clearance = CLEARANCE_DEFAULT)
+    @Command(name = "clearance", arguments = ["[user:user]"], clearance = CLEARANCE_DEFAULT, category = CommandCategory.MISCELLANEOUS)
     @CommandDescription("Displays the user's clearance")
     fun execute(context: Context, cmdContext: CommandContext) {
         val user = cmdContext.get<User>("user") ?: context.author

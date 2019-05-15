@@ -1,6 +1,7 @@
 package me.mrkirby153.KirBot.command.executors.msc
 
 import com.sun.org.glassfish.gmbal.Description
+import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.annotations.IgnoreWhitelist
@@ -24,7 +25,7 @@ class TempRoleCommands {
 
     @Command(name = "temprole",
             arguments = ["<user:snowflake>", "<role:string>", "<duration:string>", "[reason:string...]"],
-            clearance = CLEARANCE_ADMIN, permissions = [Permission.MANAGE_ROLES])
+            clearance = CLEARANCE_ADMIN, permissions = [Permission.MANAGE_ROLES], category = CommandCategory.MODERATION)
     @LogInModlogs
     @Description("Temporarily assign a role to a user")
     @IgnoreWhitelist

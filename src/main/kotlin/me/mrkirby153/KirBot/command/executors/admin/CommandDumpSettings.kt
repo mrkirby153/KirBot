@@ -2,6 +2,7 @@ package me.mrkirby153.KirBot.command.executors.admin
 
 import com.mrkirby153.bfs.sql.DB
 import me.mrkirby153.KirBot.CommandDescription
+import me.mrkirby153.KirBot.command.annotations.AdminCommand
 import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.user.CLEARANCE_ADMIN
@@ -13,6 +14,7 @@ class CommandDumpSettings {
 
     @Command(name = "dumpSettings", clearance = CLEARANCE_ADMIN)
     @CommandDescription("Dump the raw guild settings")
+    @AdminCommand
     fun execute(context: Context, cmdContext: CommandContext) {
         val keys = DB.getFirstColumnValues<String>(
                 "SELECT DISTINCT `key` FROM `guild_settings` WHERE guild = ?", context.guild.id)

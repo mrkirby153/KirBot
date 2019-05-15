@@ -1,6 +1,7 @@
 package me.mrkirby153.KirBot.command.executors.`fun`
 
 import me.mrkirby153.KirBot.CommandDescription
+import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.annotations.IgnoreWhitelist
@@ -13,7 +14,7 @@ import net.dv8tion.jda.core.entities.Role
 
 class CommandSelfroles {
 
-    @Command(name = "selfrole")
+    @Command(name = "selfrole", category = CommandCategory.UTILITY)
     @CommandDescription("Displays a list of self-assignable roles")
     fun execute(context: Context, cmdContext: CommandContext) {
         var msg = "Self-assignable roles are:\n```\n"
@@ -32,7 +33,7 @@ class CommandSelfroles {
         context.channel.sendMessage(msg).queue()
     }
 
-    @Command(name = "join", arguments = ["<role:string...>"], parent = "selfrole")
+    @Command(name = "join", arguments = ["<role:string...>"], parent = "selfrole", category = CommandCategory.UTILITY)
     @CommandDescription("Join a self-assignable role")
     fun join(context: Context, cmdContext: CommandContext) {
         val role = cmdContext.get<String>("role")!!
@@ -46,7 +47,7 @@ class CommandSelfroles {
         context.send().success("Joined role `${foundRole.name}`", true).queue()
     }
 
-    @Command(name = "leave", arguments = ["<role:string...>"], parent = "selfrole")
+    @Command(name = "leave", arguments = ["<role:string...>"], parent = "selfrole", category = CommandCategory.UTILITY)
     @CommandDescription("Leave a self-assignable role")
     fun leave(context: Context, cmdContext: CommandContext) {
         val role = cmdContext.get<String>("role")!!
@@ -61,7 +62,7 @@ class CommandSelfroles {
     }
 
     @Command(name = "add", arguments = ["<role:string...>"], clearance = CLEARANCE_ADMIN,
-            parent = "selfrole")
+            parent = "selfrole", category = CommandCategory.UTILITY)
     @CommandDescription("Add a role to the list of self-assignable roles")
     @IgnoreWhitelist
     fun add(context: Context, cmdContext: CommandContext) {
@@ -83,7 +84,7 @@ class CommandSelfroles {
     }
 
     @Command(name = "remove", arguments = ["<role:string...>"], clearance = CLEARANCE_ADMIN,
-            parent = "selfrole")
+            parent = "selfrole", category = CommandCategory.UTILITY)
     @CommandDescription("Removes a role from the list of self-assignable roles")
     @IgnoreWhitelist
     fun remove(context: Context, cmdContext: CommandContext) {

@@ -2,6 +2,7 @@ package me.mrkirby153.KirBot.command.executors.msc
 
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.CommandDescription
+import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandDocumentationGenerator
 import me.mrkirby153.KirBot.command.annotations.AdminCommand
 import me.mrkirby153.KirBot.command.annotations.Command
@@ -14,7 +15,7 @@ import net.dv8tion.jda.core.Permission
 class CommandHelp {
 
     @Command(name = "help", arguments = ["[command:string...]"],
-            permissions = [Permission.MESSAGE_EMBED_LINKS])
+            permissions = [Permission.MESSAGE_EMBED_LINKS], category = CommandCategory.MISCELLANEOUS)
     @CommandDescription("Display help for a command")
     fun execute(context: Context, cmdContext: CommandContext) {
         if (!cmdContext.has("command")) {
@@ -26,7 +27,7 @@ class CommandHelp {
         }
     }
 
-    @Command(name = "regen-docs")
+    @Command(name = "regen-docs", parent = "help")
     @AdminCommand
     fun regenerateDocs(context: Context, cmdContext: CommandContext) {
         CommandDocumentationGenerator.generate(Bot.files.data.child("commands.md"))

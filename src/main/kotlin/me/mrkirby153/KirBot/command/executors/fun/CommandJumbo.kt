@@ -1,6 +1,7 @@
 package me.mrkirby153.KirBot.command.executors.`fun`
 
 import me.mrkirby153.KirBot.CommandDescription
+import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.annotations.IgnoreWhitelist
@@ -20,7 +21,7 @@ import javax.imageio.ImageIO
 
 class CommandJumbo {
 
-    @Command(name = "jumbo", arguments = ["<emojis:string...>"])
+    @Command(name = "jumbo", arguments = ["<emojis:string...>"], category = CommandCategory.FUN)
     @CommandDescription("Sends a bigger version of the given emojis")
     @IgnoreWhitelist
     fun execute(context: Context, cmdContext: CommandContext) {

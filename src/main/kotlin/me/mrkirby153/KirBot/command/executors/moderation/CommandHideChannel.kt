@@ -1,5 +1,6 @@
 package me.mrkirby153.KirBot.command.executors.moderation
 
+import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.annotations.IgnoreWhitelist
 import me.mrkirby153.KirBot.command.annotations.LogInModlogs
@@ -13,7 +14,8 @@ import net.dv8tion.jda.core.entities.TextChannel
 
 
 class CommandHideChannel {
-    @Command(name = "hide", clearance = CLEARANCE_ADMIN, permissions = [Permission.MANAGE_CHANNEL])
+    @Command(name = "hide", clearance = CLEARANCE_ADMIN, permissions = [Permission.MANAGE_CHANNEL],
+            category = CommandCategory.MODERATION)
     @LogInModlogs
     @IgnoreWhitelist
     fun execute(context: Context, cmdContext: CommandContext) {
@@ -27,7 +29,7 @@ class CommandHideChannel {
 class UnhideChannel {
 
     @Command(name = "unhide", clearance = CLEARANCE_ADMIN,
-            permissions = [Permission.MANAGE_CHANNEL])
+            permissions = [Permission.MANAGE_CHANNEL], category = CommandCategory.MODERATION)
     @LogInModlogs
     @IgnoreWhitelist
     fun execute(context: Context, cmdContext: CommandContext) {

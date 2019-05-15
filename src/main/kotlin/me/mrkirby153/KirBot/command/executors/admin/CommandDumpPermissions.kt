@@ -1,6 +1,7 @@
 package me.mrkirby153.KirBot.command.executors.admin
 
 import me.mrkirby153.KirBot.CommandDescription
+import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.annotations.IgnoreWhitelist
 import me.mrkirby153.KirBot.command.args.CommandContext
@@ -16,7 +17,7 @@ import java.util.concurrent.TimeUnit
 
 class CommandDumpPermissions {
 
-    @Command(name = "permissions", clearance = CLEARANCE_ADMIN)
+    @Command(name = "permissions", clearance = CLEARANCE_ADMIN, category = CommandCategory.MISCELLANEOUS)
     @CommandDescription("Displays all the permissions the bot currently has in the current channel")
     @IgnoreWhitelist
     fun execute(context: Context, cmdContext: CommandContext) {

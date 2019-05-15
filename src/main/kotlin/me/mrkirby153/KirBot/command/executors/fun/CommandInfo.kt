@@ -3,9 +3,11 @@ package me.mrkirby153.KirBot.command.executors.`fun`
 import com.mrkirby153.bfs.model.Model
 import com.mrkirby153.bfs.sql.DB
 import me.mrkirby153.KirBot.CommandDescription
+import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.models.guild.GuildMember
+import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.CustomEmoji
 import me.mrkirby153.KirBot.utils.HttpUtils
@@ -33,7 +35,7 @@ class CommandInfo {
 
     private val sdf = SimpleDateFormat("YYYY-MM-dd HH:mm:ss")
 
-    @Command(name = "info", arguments = ["[user:user]"])
+    @Command(name = "info", arguments = ["[user:user]"], category = CommandCategory.MODERATION, clearance = CLEARANCE_MOD)
     @CommandDescription("Retrieves information about a user")
     fun execute(context: Context, cmdContext: CommandContext) {
         val user = cmdContext.get<User>("user") ?: context.author

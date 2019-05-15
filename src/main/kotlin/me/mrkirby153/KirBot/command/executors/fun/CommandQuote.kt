@@ -50,7 +50,7 @@ class CommandQuote {
 
 class CommandQuotes {
 
-    @Command(name = "quotes")
+    @Command(name = "quotes", category = CommandCategory.FUN)
     @CommandDescription("Show quote help")
     @IgnoreWhitelist
     fun execute(context: Context, cmdContext: CommandContext) {
@@ -60,7 +60,7 @@ class CommandQuotes {
     }
 
     @Command(name = "block", arguments = ["<user:snowflake>"], clearance = CLEARANCE_MOD,
-            parent = "quotes")
+            parent = "quotes", category = CommandCategory.FUN)
     @CommandDescription("Blocks a user from being quoted")
     @IgnoreWhitelist
     fun block(context: Context, cmdContext: CommandContext) {
@@ -72,7 +72,7 @@ class CommandQuotes {
     }
 
     @Command(name = "unblock", arguments = ["<user:snowflake>"], clearance = CLEARANCE_MOD,
-            parent = "quotes")
+            parent = "quotes", category = CommandCategory.FUN)
     @CommandDescription("Unblocks a user that was previously blocked, allowing them to quote again")
     @IgnoreWhitelist
     fun unblock(context: Context, cmdContext: CommandContext) {

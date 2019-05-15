@@ -25,7 +25,8 @@ class CommandSkip {
     private val skipCooldown = mutableMapOf<String, Long>()
 
     @Command(name = "skip", aliases = ["next"],
-            permissions = [Permission.MESSAGE_ADD_REACTION, Permission.MESSAGE_EMBED_LINKS], category = CommandCategory.MUSIC)
+            permissions = [Permission.MESSAGE_ADD_REACTION, Permission.MESSAGE_EMBED_LINKS],
+            category = CommandCategory.MUSIC)
     @CommandDescription("Skips the currently playing song")
     fun execute(context: Context, cmdContext: CommandContext) {
         val manager = ModuleManager[MusicModule::class.java].getManager(context.guild)
@@ -110,7 +111,7 @@ class CommandSkip {
         }
     }
 
-    @Command(name = "force", clearance = 0)
+    @Command(name = "force", clearance = 0, parent = "skip", category = CommandCategory.MUSIC)
     fun forceSkip(context: Context, cmdContext: CommandContext) {
         if (!isDJ(context.member))
             throw CommandException("You must be a DJ to use this command! (Have a role named `DJ`)")

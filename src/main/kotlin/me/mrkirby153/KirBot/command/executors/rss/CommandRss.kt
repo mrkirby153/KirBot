@@ -3,6 +3,7 @@ package me.mrkirby153.KirBot.command.executors.rss
 import com.mrkirby153.bfs.model.Model
 import com.rometools.rome.io.FeedException
 import me.mrkirby153.KirBot.CommandDescription
+import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.annotations.IgnoreWhitelist
@@ -24,7 +25,7 @@ import okhttp3.Request
 
 class CommandRss {
 
-    @Command(name = "rss", clearance = CLEARANCE_MOD)
+    @Command(name = "rss", clearance = CLEARANCE_MOD, category = CommandCategory.UTILITY)
     @CommandDescription("Shows a list of RSS feeds currently being monitored")
     @IgnoreWhitelist
     fun execute(context: Context, cmdContext: CommandContext) {
@@ -32,7 +33,7 @@ class CommandRss {
     }
 
     @Command(name = "list", clearance = CLEARANCE_MOD,
-            permissions = [Permission.MESSAGE_EMBED_LINKS], parent = "rss")
+            permissions = [Permission.MESSAGE_EMBED_LINKS], parent = "rss", category = CommandCategory.UTILITY)
     @CommandDescription("Show a list of RSS feeds being monitored")
     @IgnoreWhitelist
     fun listFeeds(context: Context, cmdContext: CommandContext) {
@@ -66,7 +67,7 @@ class CommandRss {
         }).queue()
     }
 
-    @Command(name = "add", arguments = ["<url:string>"], clearance = CLEARANCE_MOD, parent = "rss")
+    @Command(name = "add", arguments = ["<url:string>"], clearance = CLEARANCE_MOD, parent = "rss", category = CommandCategory.UTILITY)
     @CommandDescription("Adds a feed to be watched")
     @IgnoreWhitelist
     fun addFeed(context: Context, cmdContext: CommandContext) {
@@ -107,7 +108,7 @@ class CommandRss {
         }
     }
 
-    @Command(name = "remove", arguments = ["<id:string>"], clearance = CLEARANCE_MOD, parent = "rss")
+    @Command(name = "remove", arguments = ["<id:string>"], clearance = CLEARANCE_MOD, parent = "rss", category = CommandCategory.UTILITY)
     @CommandDescription("Removes a feed from the watch list")
     @IgnoreWhitelist
     fun removeFeed(context: Context, cmdContext: CommandContext) {
@@ -120,7 +121,7 @@ class CommandRss {
         context.send().success("Deleted RSS Feed!").queue()
     }
 
-    @Command(name = "refresh", arguments = ["[id:string]"], clearance = CLEARANCE_MOD, parent = "rss")
+    @Command(name = "refresh", arguments = ["[id:string]"], clearance = CLEARANCE_MOD, parent = "rss", category = CommandCategory.UTILITY)
     @CommandDescription("Refresh a feed")
     @IgnoreWhitelist
     fun refreshFeed(context: Context, cmdContext: CommandContext) {

@@ -14,7 +14,7 @@ import java.awt.Color
 
 class CommandStats {
 
-    @Command(name = "stats", category = CommandCategory.ADMIN)
+    @Command(name = "stats", category = CommandCategory.UTILITY)
     @CommandDescription("Displays statistics about the bot")
     fun execute(context: Context, cmdContext: CommandContext) {
         var guilds = 0

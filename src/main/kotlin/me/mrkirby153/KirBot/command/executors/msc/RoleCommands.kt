@@ -1,6 +1,7 @@
 package me.mrkirby153.KirBot.command.executors.msc
 
 import me.mrkirby153.KirBot.CommandDescription
+import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.annotations.IgnoreWhitelist
@@ -25,7 +26,7 @@ import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleRemoveEvent
 
 class RoleCommands {
 
-    @Command(name = "role", clearance = CLEARANCE_MOD, aliases = ["roles", "r"])
+    @Command(name = "role", clearance = CLEARANCE_MOD, aliases = ["roles", "r"], category = CommandCategory.MODERATION)
     @CommandDescription("List all the roles and their IDs")
     @IgnoreWhitelist
     fun execute(context: Context, cmdContext: CommandContext) {
@@ -42,7 +43,7 @@ class RoleCommands {
 
     @Command(name = "add", clearance = CLEARANCE_MOD,
             arguments = ["<user:snowflake>", "<role:string>", "[reason:string...]"],
-            permissions = [Permission.MANAGE_ROLES], parent = "role")
+            permissions = [Permission.MANAGE_ROLES], parent = "role", category = CommandCategory.MODERATION)
     @CommandDescription("Add a role to the given user")
     @IgnoreWhitelist
     fun addRole(context: Context, cmdContext: CommandContext) {
@@ -82,7 +83,7 @@ class RoleCommands {
 
     @Command(name = "remove", clearance = CLEARANCE_MOD,
             arguments = ["<user:snowflake>", "<role:string>", "[reason:string...]"],
-            permissions = [Permission.MANAGE_ROLES], parent = "role")
+            permissions = [Permission.MANAGE_ROLES], parent = "role", category = CommandCategory.MODERATION)
     @CommandDescription("Remove a role from the given user")
     @IgnoreWhitelist
     fun removeRole(context: Context, cmdContext: CommandContext) {

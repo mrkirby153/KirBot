@@ -2,6 +2,7 @@ package me.mrkirby153.KirBot.command.executors.msc
 
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.CommandDescription
+import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.utils.Context
@@ -11,7 +12,7 @@ import me.mrkirby153.kcutils.Time
 
 class CommandPing {
 
-    @Command(name = "ping")
+    @Command(name = "ping", category = CommandCategory.MISCELLANEOUS)
     @CommandDescription("Check the bot's ping")
     fun execute(context: Context, cmdContext: CommandContext) {
         val start = System.currentTimeMillis()

@@ -1,13 +1,10 @@
 package me.mrkirby153.KirBot.listener
 
 import com.mrkirby153.bfs.model.Model
-import com.mrkirby153.bfs.sql.elements.Pair
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.executors.admin.CommandStats
 import me.mrkirby153.KirBot.database.models.DiscordUser
 import me.mrkirby153.KirBot.database.models.guild.DiscordGuild
-import me.mrkirby153.KirBot.database.models.guild.GuildMember
-import me.mrkirby153.KirBot.database.models.guild.GuildMemberRole
 import me.mrkirby153.KirBot.database.models.guild.Role
 import me.mrkirby153.KirBot.event.EventPriority
 import me.mrkirby153.KirBot.event.Subscribe
@@ -29,13 +26,11 @@ import net.dv8tion.jda.core.events.channel.voice.update.GenericVoiceChannelUpdat
 import net.dv8tion.jda.core.events.guild.GuildJoinEvent
 import net.dv8tion.jda.core.events.guild.GuildLeaveEvent
 import net.dv8tion.jda.core.events.guild.member.GuildMemberJoinEvent
-import net.dv8tion.jda.core.events.guild.member.GuildMemberNickChangeEvent
+import net.dv8tion.jda.core.events.guild.member.GuildMemberLeaveEvent
 import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleAddEvent
 import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleRemoveEvent
 import net.dv8tion.jda.core.events.guild.update.GuildUpdateIconEvent
 import net.dv8tion.jda.core.events.guild.update.GuildUpdateNameEvent
-import net.dv8tion.jda.core.events.guild.voice.GuildVoiceGuildDeafenEvent
-import net.dv8tion.jda.core.events.guild.voice.GuildVoiceGuildMuteEvent
 import net.dv8tion.jda.core.events.guild.voice.GuildVoiceJoinEvent
 import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent
 import net.dv8tion.jda.core.events.role.RoleCreateEvent
@@ -51,16 +46,7 @@ class ShardListener(val shard: Shard, val bot: Bot) {
     @Subscribe
     fun onGuildMemberJoin(event: GuildMemberJoinEvent) {
         UserPersistenceHandler.restore(event.user, event.guild)
-        val member = Model.where(GuildMember::class.java, "server_id", event.guild.id).where(
-                "user_id", event.user.id).first()
-        if (member == null) {
-            GuildMember(event.member).save()
-        } else {
-            member.user = event.member.user
-            member.nick = event.member.nickname
-            member.save()
-        }
-
+        UserPersistenceHandler.deleteBackup(event.member)
         val user = Model.where(DiscordUser::class.java, "id", event.user.id).first()
         if (user == null) {
             val u = DiscordUser()
@@ -69,6 +55,11 @@ class ShardListener(val shard: Shard, val bot: Bot) {
             u.discriminator = event.user.discriminator.toInt()
             u.create()
         }
+    }
+
+    @Subscribe
+    fun onGuildMemberLeave(event: GuildMemberLeaveEvent) {
+        UserPersistenceHandler.createBackup(event.member)
     }
 
     @Subscribe
@@ -92,22 +83,11 @@ class ShardListener(val shard: Shard, val bot: Bot) {
         user.discriminator = event.user.discriminator.toInt()
         user.save()
     }
-
-    @Subscribe
-    fun onGuildVoiceGuildDeafen(event: GuildVoiceGuildDeafenEvent) {
-        Model.where(GuildMember::class.java, "server_id", event.guild.id).where("user_id",
-                event.member.user.id).update(Pair("deafened", event.isGuildDeafened))
-    }
-
-    @Subscribe
-    fun onGuildVoiceGuildMute(event: GuildVoiceGuildMuteEvent) {
-        Model.where(GuildMember::class.java, "server_id", event.guild.id).where("user_id",
-                event.member.user.id).update(Pair("muted", event.isGuildMuted))
-    }
-
+    
     @Subscribe
     fun onGuildVoiceJoin(event: GuildVoiceJoinEvent) {
         UserPersistenceHandler.restoreVoiceState(event.member.user, event.guild)
+        UserPersistenceHandler.deleteBackup(event.member)
     }
 
     @Subscribe
@@ -117,14 +97,6 @@ class ShardListener(val shard: Shard, val bot: Bot) {
 
     @Subscribe
     fun onGuildMemberRoleAdd(event: GuildMemberRoleAddEvent) {
-        event.roles.forEach {
-            Bot.LOG.debug("Adding role ${it.name}(${it.id}) to ${event.user} ")
-            val role = GuildMemberRole()
-            role.id = this.idGenerator.generate(10)
-            role.role = it
-            role.user = event.user
-            role.save()
-        }
         if (event.member == event.guild.selfMember) {
             Bot.LOG.debug("We had a role added, re-caching visibilities")
             event.guild.kirbotGuild.cacheVisibilities()
@@ -133,22 +105,9 @@ class ShardListener(val shard: Shard, val bot: Bot) {
 
     @Subscribe
     fun onGuildMemberRoleRemove(event: GuildMemberRoleRemoveEvent) {
-        event.roles.forEach {
-            Model.where(GuildMemberRole::class.java, "server_id", event.guild.id).where("user_id",
-                    event.user.id).where("role_id", it.id).get().forEach { it.delete() }
-        }
         if (event.member == event.guild.selfMember) {
             Bot.LOG.debug("We had a role removed, re-caching visibilities")
             event.guild.kirbotGuild.cacheVisibilities()
-        }
-    }
-
-    @Subscribe
-    fun onGuildMemberNickChange(event: GuildMemberNickChangeEvent) {
-        Model.where(GuildMember::class.java, "server_id", event.guild.id).where("user_id",
-                event.user.id).first()?.run {
-            nick = event.newNick
-            save()
         }
     }
 

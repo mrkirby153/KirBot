@@ -21,10 +21,10 @@ class GuildMemberRole(member: Member? = null, role: Role? = null) : Model() {
     private var serverId = ""
 
     @Column("user_id")
-    private var userId = ""
+    var userId = ""
 
     @Column("role_id")
-    private var roleId = ""
+    var roleId = ""
 
 
     var server: Guild?
@@ -50,7 +50,7 @@ class GuildMemberRole(member: Member? = null, role: Role? = null) : Model() {
     init {
         this.incrementing = false
         if(member != null && role != null){
-            this.id = idGenerator.generate()
+            this.id = idGenerator.generate(10)
             this.serverId = member.guild.id
             this.userId = member.user.id
             this.roleId = role.id

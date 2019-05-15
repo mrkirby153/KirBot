@@ -10,8 +10,6 @@ import me.mrkirby153.KirBot.database.models.DiscordUser
 import me.mrkirby153.KirBot.database.models.RoleClearance
 import me.mrkirby153.KirBot.database.models.guild.CommandAlias
 import me.mrkirby153.KirBot.database.models.guild.DiscordGuild
-import me.mrkirby153.KirBot.database.models.guild.GuildMember
-import me.mrkirby153.KirBot.database.models.guild.GuildMemberRole
 import me.mrkirby153.KirBot.database.models.guild.GuildMessage
 import me.mrkirby153.KirBot.logger.LogManager
 import me.mrkirby153.KirBot.module.ModuleManager
@@ -163,26 +161,6 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         }
 
         runAsyncTask {
-            // Update guild members & their roles
-            val members = Model.where(GuildMember::class.java, "server_id", this.id).get()
-            members.forEach(GuildMember::updateMember)
-            val memberRoles = mutableMapOf<String, MutableList<GuildMemberRole>>()
-            Model.where(GuildMemberRole::class.java, "server_id", this.id).get().forEach {
-                val r = memberRoles.getOrPut(it.id) { mutableListOf() }
-                r.add(it)
-            }
-            this.members.forEach { member ->
-                val currentRoles = memberRoles[member.user.id] ?: return@forEach
-                member.roles.filter { it.id !in currentRoles.map { it.id } }.forEach {
-                    GuildMemberRole(member, it).save()
-                }
-                // Delete roles the user no longer has
-                if (member.roles.isNotEmpty())
-                    Model.where(GuildMemberRole::class.java, "user_id", member.user.id).where(
-                            "server_id", member.guild.id).whereNotIn("role_id",
-                            member.roles.map { it.id }.toTypedArray()).delete()
-            }
-
             this.ready = true
             Bot.shardManager.getEventManager(this).onGuildReady(this)
         }

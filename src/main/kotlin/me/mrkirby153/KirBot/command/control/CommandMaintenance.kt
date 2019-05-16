@@ -50,25 +50,32 @@ class CommandClearArchives {
 
 class CommandSetStatus {
     @Command(name = "setstatus",
-            arguments = ["<status:string>", "<type:string>", "<game:string...>"])
+            arguments = ["<status:string>", "[type:string]", "[game:string...]"])
     @AdminCommand
     fun execute(context: Context, cmdContext: CommandContext) {
         val onlineStatus = try {
-            OnlineStatus.valueOf(cmdContext.get<String>("status")!!.toUpperCase())
+            OnlineStatus.valueOf(cmdContext.getNotNull<String>("status").toUpperCase())
         } catch (e: IllegalArgumentException) {
             throw CommandException("The online status `${cmdContext.get<String>(
                     "status")}` was not found. Valid values are `${OnlineStatus.values().joinToString(
                     ", ")}`")
         }
-        val gameType = try {
-            Game.GameType.valueOf(cmdContext.get<String>("type")!!.toUpperCase())
-        } catch (e: IllegalArgumentException) {
-            throw CommandException("The game type `${cmdContext.get<String>(
-                    "type")}` was not found. Valid values are `${Game.GameType.values().joinToString(
-                    ", ")}`")
+        val gameTypeRaw = cmdContext.get<String>("type")
+        val gameString = cmdContext.get<String>("game")
+        if (gameTypeRaw != null) {
+            val gameType = try {
+                Game.GameType.valueOf(gameTypeRaw.toUpperCase())
+            } catch (e: IllegalArgumentException) {
+                throw CommandException("The game type `${cmdContext.get<String>(
+                        "type")}` was not found. Valid values are `${Game.GameType.values().joinToString(
+                        ", ")}`")
+            }
+            Bot.shardManager.setGame(Game.of(gameType, gameString))
+        }
+        if(gameTypeRaw == null && gameString == null) {
+            Bot.shardManager.setGame(null)
         }
         Bot.shardManager.setStatus(onlineStatus)
-        Bot.shardManager.setGame(Game.of(gameType, cmdContext.getNotNull("game")))
         context.send().success("Presence has been updated!").queue()
     }
 

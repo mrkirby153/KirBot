@@ -8,6 +8,7 @@ import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.events.Event
 import net.dv8tion.jda.core.events.guild.GenericGuildEvent
 import net.dv8tion.jda.core.events.guild.GuildJoinEvent
+import net.dv8tion.jda.core.events.http.HttpRequestEvent
 import net.dv8tion.jda.core.hooks.IEventManager
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
@@ -28,7 +29,9 @@ class PriorityEventManager : IEventManager {
     private val queuedEvents: ConcurrentHashMap<String, CopyOnWriteArrayList<Event>> = ConcurrentHashMap()
 
     override fun handle(event: Event) {
-        Statistics.eventType.labels(event.javaClass.name).inc()
+        if(event !is HttpRequestEvent) {
+            Statistics.eventType.labels(event.javaClass.name).inc()
+        }
         if (event is GenericGuildEvent && Bot.state == BotState.RUNNING) {
             if(event !is GuildJoinEvent) { // Ensure the guild join event is passed through
                 // If the event is a guild event, check if the guild is ready

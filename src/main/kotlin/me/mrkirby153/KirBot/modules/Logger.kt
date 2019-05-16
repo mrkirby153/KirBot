@@ -13,6 +13,7 @@ import me.mrkirby153.KirBot.utils.Debouncer
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.logName
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
+import me.mrkirby153.KirBot.utils.sanitize
 import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.core.events.ShutdownEvent
 import net.dv8tion.jda.core.events.channel.text.TextChannelCreateEvent
@@ -184,56 +185,58 @@ class Logger : Module("logging") {
 
     @Subscribe
     fun onRoleUpdatePermissions(event: RoleUpdatePermissionsEvent) {
-        event.guild.kirbotGuild.logManager.genericLog(LogEvent.ROLE_UPDATE, ":wrench:",
-                buildString {
-                    append("Role **${event.role.name}** (`${event.role.id}`)")
-                    val granted = event.newPermissions.filter { it !in event.oldPermissions }.map { it.getName() }
-                    val revoked = event.oldPermissions.filter { it !in event.newPermissions }.map { it.getName() }
-                    if (granted.isNotEmpty()) {
-                        append(" was granted `${granted.joinToString(", ")}`")
-                    }
-                    if (granted.isNotEmpty() && revoked.isNotEmpty())
-                        append(" and")
-                    if (revoked.isNotEmpty()) {
-                        append(" had `${revoked.joinToString(", ")}` revoked")
-                    }
-                })
+        val granted = event.newPermissions.filter { it !in event.oldPermissions }.map { it.getName() }
+        val revoked = event.oldPermissions.filter { it !in event.newPermissions }.map { it.getName() }
+        if (granted.isNotEmpty() || revoked.isNotEmpty()) {
+            event.guild.kirbotGuild.logManager.genericLog(LogEvent.ROLE_UPDATE, ":wrench:",
+                    buildString {
+                        append("Role **${event.role.name.sanitize()}** (`${event.role.id}`)")
+                        if (granted.isNotEmpty()) {
+                            append(" was granted `${granted.joinToString(", ")}`")
+                        }
+                        if (granted.isNotEmpty() && revoked.isNotEmpty())
+                            append(" and")
+                        if (revoked.isNotEmpty()) {
+                            append(" had `${revoked.joinToString(", ")}` revoked")
+                        }
+                    })
+        }
     }
 
     @Subscribe
     fun onTextChannelCreate(event: TextChannelCreateEvent) {
         event.guild.kirbotGuild.logManager.genericLog(LogEvent.CHANNEL_CREATE, ":pencil:",
-                "Text channel #${event.channel.name} (`${event.channel.id}`) was created")
+                "Text channel #${event.channel.name.sanitize()} (`${event.channel.id}`) was created")
     }
 
     @Subscribe
     fun onVoiceChannelCreate(event: VoiceChannelCreateEvent) {
         event.guild.kirbotGuild.logManager.genericLog(LogEvent.CHANNEL_CREATE, ":pencil:",
-                "Voice channel ${event.channel.name} (`${event.channel.id}`) was created")
+                "Voice channel ${event.channel.name.sanitize()} (`${event.channel.id}`) was created")
     }
 
     @Subscribe
     fun onTextChannelDelete(event: TextChannelDeleteEvent) {
         event.guild.kirbotGuild.logManager.genericLog(LogEvent.CHANNEL_DELETE, ":wastebasket:",
-                "Text channel #${event.channel.name} (`${event.channel.id}`) was deleted")
+                "Text channel #${event.channel.name.sanitize()} (`${event.channel.id}`) was deleted")
     }
 
     @Subscribe
     fun onVoiceChannelDelete(event: VoiceChannelDeleteEvent) {
         event.guild.kirbotGuild.logManager.genericLog(LogEvent.CHANNEL_DELETE, ":wastebasket:",
-                "Voice channel ${event.channel.name} (`${event.channel.id}`) was deleted")
+                "Voice channel ${event.channel.name.sanitize()} (`${event.channel.id}`) was deleted")
     }
 
     @Subscribe
     fun onTextRename(event: TextChannelUpdateNameEvent) {
         event.guild.kirbotGuild.logManager.genericLog(LogEvent.CHANNEL_MODIFY, ":pencil:",
-                "#${event.oldName} (`${event.channel.id}`) was renamed to #${event.newName}")
+                "#${event.oldName.sanitize()} (`${event.channel.id}`) was renamed to #${event.newName.sanitize()}")
     }
 
     @Subscribe
     fun onVoiceRename(event: VoiceChannelUpdateNameEvent) {
         event.guild.kirbotGuild.logManager.genericLog(LogEvent.CHANNEL_MODIFY, ":pencil:",
-                "${event.oldName} (`${event.channel.id}`) was renamed to ${event.newName}")
+                "${event.oldName.sanitize()} (`${event.channel.id}`) was renamed to ${event.newName.sanitize()}")
     }
 
     @Subscribe

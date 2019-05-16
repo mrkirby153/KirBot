@@ -372,4 +372,4 @@ val User.nameAndDiscrim
  * The user's name for logging in modlogs
  */
 val User.logName
-    get() = "${this.name}#${this.discriminator} (`${this.id}`)"
+    get() = "${this.name.sanitize()}#${this.discriminator.sanitize()} (`${this.id}`)"

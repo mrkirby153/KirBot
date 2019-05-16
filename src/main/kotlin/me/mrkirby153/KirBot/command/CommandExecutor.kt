@@ -18,6 +18,7 @@ import me.mrkirby153.KirBot.stats.Statistics
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.checkPermissions
+import me.mrkirby153.KirBot.utils.escapeMentions
 import me.mrkirby153.KirBot.utils.getClearance
 import me.mrkirby153.KirBot.utils.globalAdmin
 import me.mrkirby153.KirBot.utils.logName
@@ -205,7 +206,7 @@ object CommandExecutor {
         val cmdContext = try {
             parser.parse(metadata.arguments.toTypedArray())
         } catch (e: ArgumentParseException) {
-            context.send().error(e.message ?: "An unknown error occurred").queue()
+            context.send().error(e.message?.escapeMentions() ?: "An unknown error occurred").queue()
             return
         }
 

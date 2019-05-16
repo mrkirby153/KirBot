@@ -7,7 +7,6 @@ import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.modules.AdminControl
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
-import me.mrkirby153.kcutils.Time
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
@@ -29,7 +28,7 @@ class CommandDumpDatabase {
                     "database")} -h ${Bot.properties.getProperty(
                     "database-host")} --user=${Bot.properties.getProperty("database-username")} --password=${Bot.properties.getProperty("database-password")}"
 
-            val s = "mysqldump-${SimpleDateFormat(Time.DATE_FORMAT_NOW).format(
+            val s = "mysqldump-${SimpleDateFormat("MM-dd-yy HH:mm:ss").format(
                     System.currentTimeMillis())}"
 
             val proc = ProcessBuilder(dumpCommand.split(" ")).apply { redirectErrorStream(true) }.start()

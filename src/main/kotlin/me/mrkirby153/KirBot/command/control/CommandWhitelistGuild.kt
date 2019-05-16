@@ -7,7 +7,6 @@ import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.Redis
 import me.mrkirby153.KirBot.utils.Context
-import me.mrkirby153.kcutils.Time
 import java.text.SimpleDateFormat
 
 
@@ -28,7 +27,7 @@ class CommandWhitelistGuild {
 
             context.send().success(
                     "Whitelisted `$guild` for 24 hours. (Expires at ${SimpleDateFormat(
-                            Time.DATE_FORMAT_NOW).format(time)})").queue()
+                            "MM-dd-yy HH:mm:ss").format(time)})").queue()
         }
     }
 }

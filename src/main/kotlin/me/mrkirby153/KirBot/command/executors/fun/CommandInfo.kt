@@ -90,7 +90,7 @@ class CommandInfo {
                     appendln("Joined: ${Time.formatLong(
                             System.currentTimeMillis() - joinTime,
                             Time.TimeUnit.MINUTES).toLowerCase()} ago (${SimpleDateFormat(
-                            Time.DATE_FORMAT_NOW).format(joinTime)})")
+                            "MM-dd-yy HH:mm:ss").format(joinTime)})")
                 }
                 if (member != null) {
                     appendln("")

@@ -82,7 +82,7 @@ object AdminControl {
         }
         this.disconnectedAt[event.jda] = event.disconnectTime.toEpochSecond() * 1000
         log(":e_mail: :warning: Disconnected from the websocket at ${SimpleDateFormat(
-                Time.DATE_FORMAT_NOW).format(
+                "MM-dd-yy HH:mm:ss").format(
                 event.disconnectTime.toEpochSecond())} (${event.closeCode})", event.jda)
     }
 }

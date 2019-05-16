@@ -42,7 +42,7 @@ class CommandRemindMe {
                         query), time, TimeUnit.MILLISECONDS)
         val newTime = System.currentTimeMillis() + time
         context.send().success(
-                "Ok, I will remind you at ${SimpleDateFormat(Time.DATE_FORMAT_NOW).format(
+                "Ok, I will remind you at ${SimpleDateFormat("MM-dd-yy HH:mm:ss").format(
                         newTime)} (${Time.format(0, time,
                         smallest = Time.TimeUnit.SECONDS).toLowerCase()} from now) about `$query`",
                 true).queue {

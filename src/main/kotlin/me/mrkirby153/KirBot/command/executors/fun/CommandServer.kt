@@ -37,7 +37,7 @@ class CommandServer {
             description {
                 appendln("Created: ${Time.format(1,
                         System.currentTimeMillis() - (server.creationTime.toEpochSecond() * 1000))} ago (${SimpleDateFormat(
-                        Time.DATE_FORMAT_NOW).format(server.creationTime.toEpochSecond() * 1000)})")
+                        "MM-dd-yy HH:mm:ss").format(server.creationTime.toEpochSecond() * 1000)})")
                 appendln("Members: ${server.members.size}")
                 if (server.features.isNotEmpty())
                     appendln("Features: ${server.features.joinToString(", ")}")

@@ -64,7 +64,7 @@ class CommandModlogs {
         context.send().text(buildString {
             appendln("The following users are hidden from the logs: ```")
             currentlyHidden.forEach {
-                val user = Bot.shardManager.getUser(it)
+                val user = Bot.shardManager.getUserById(it)
                 if (user != null) {
                     appendln(user.nameAndDiscrim)
                 } else {

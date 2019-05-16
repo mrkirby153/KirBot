@@ -19,7 +19,7 @@ class DiscordGuild(guild: Guild? = null) : SoftDeletingModel() {
     var owner = ""
 
     val ownerUser
-        get() = Bot.shardManager.getUser(this.owner)
+        get() = Bot.shardManager.getUserById(this.owner)
 
 
     init {

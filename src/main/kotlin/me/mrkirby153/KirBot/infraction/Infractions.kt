@@ -83,8 +83,8 @@ object Infractions {
 
 
     private fun onInfractionExpire(infraction: Infraction) {
-        val guild = Bot.shardManager.getGuild(infraction.guild) ?: return
-        val user = Bot.shardManager.getUser(infraction.userId) ?: return
+        val guild = Bot.shardManager.getGuildById(infraction.guild) ?: return
+        val user = Bot.shardManager.getUserById(infraction.userId) ?: return
         when (infraction.type) {
             InfractionType.TEMPMUTE -> {
                 if (guild.getMember(user) == null) {
@@ -432,7 +432,7 @@ object Infractions {
         if (id == "1") {
             return "Automatic"
         } else {
-            val user = Bot.shardManager.getUser(id)?.nameAndDiscrim
+            val user = Bot.shardManager.getUserById(id)?.nameAndDiscrim
             val model = Model.where(DiscordUser::class.java, "id", id).first()
 
             if (user != null) {
@@ -459,7 +459,7 @@ object Infractions {
     }
 
     fun dmUser(user: String, guild: Guild, infraction: Infraction): DmResult {
-        val u = Bot.shardManager.getUser(user)
+        val u = Bot.shardManager.getUserById(user)
         if (u != null)
             return dmUser(u, guild, infraction)
         val reason = infraction.reason ?: return DmResult.NOT_SENT

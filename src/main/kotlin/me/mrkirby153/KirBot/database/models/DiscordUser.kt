@@ -17,7 +17,7 @@ class DiscordUser(user: User? = null) : Model() {
     var bot: Boolean = false
 
     var user: User?
-        get() = Bot.shardManager.getUser(this.id)
+        get() = Bot.shardManager.getUserById(this.id)
         set(user) {
             this.id = user?.id ?: ""
         }
@@ -37,7 +37,7 @@ class DiscordUser(user: User? = null) : Model() {
     }
 
     fun updateUser(){
-        val u = Bot.shardManager.getUser(this.id) ?: return
+        val u = Bot.shardManager.getUserById(this.id) ?: return
         this.username = u.name
         this.discriminator = u.discriminator.toInt()
         this.bot = u.isBot

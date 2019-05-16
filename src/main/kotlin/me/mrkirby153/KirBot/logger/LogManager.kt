@@ -84,7 +84,7 @@ class LogManager(private val guild: KirBotGuild) {
             return
         val msg = Model.where(GuildMessage::class.java, "id", id).first() ?: return
 
-        val author = Bot.shardManager.getUser(msg.author) ?: return
+        val author = Bot.shardManager.getUserById(msg.author) ?: return
         val chan = guild.getTextChannelById(msg.channel) ?: return
 
         val ignored = guild.extraData.optJSONArray("log-ignored")?.map { it.toString() }

@@ -36,7 +36,7 @@ class Channel(channel: Channel? = null) : Model() {
         }
 
     var guild: Guild?
-        get() = Bot.shardManager.getGuild(this.guildId)
+        get() = Bot.shardManager.getGuildById(this.guildId)
         set(guild) {
             this.guildId = guild!!.id
         }

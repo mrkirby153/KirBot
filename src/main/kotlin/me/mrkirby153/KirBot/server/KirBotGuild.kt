@@ -162,7 +162,6 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
 
         runAsyncTask {
             this.ready = true
-            Bot.shardManager.getEventManager(this).onGuildReady(this)
         }
     }
 

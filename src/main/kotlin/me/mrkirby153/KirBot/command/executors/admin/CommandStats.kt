@@ -33,12 +33,10 @@ class CommandStats {
                     inline = true
                     description = guilds.toString()
                 }
-                if (Bot.numShards > 1) {
-                    field {
-                        title = "Shard"
-                        inline = true
-                        description = "${context.shard.id} / ${Bot.numShards}"
-                    }
+                field {
+                    title = "Shard"
+                    inline = true
+                    description = context.jda.shardInfo.shardId.toString()
                 }
                 field {
                     title = "Users"

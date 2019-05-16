@@ -28,7 +28,7 @@ abstract class Module(val name: String) {
         onLoad()
         debug("Registering listener")
         if (registerListeners)
-            Bot.shardManager.addListener(this)
+            Bot.shardManager.addEventListener(this)
         debug("Registering periodic tasks")
         this.javaClass.declaredMethods.filter {
             it.getAnnotation(Periodic::class.java) != null
@@ -56,7 +56,7 @@ abstract class Module(val name: String) {
         onUnload()
         debug("Removing listener")
         if (unregisterListener)
-            Bot.shardManager.removeListener(this)
+            Bot.shardManager.removeEventListener(this)
         periodicTasks.clear()
         log("Unloading complete")
         loaded = false

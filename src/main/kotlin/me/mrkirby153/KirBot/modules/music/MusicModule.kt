@@ -27,7 +27,7 @@ class MusicModule : Module("music") {
 
     @Periodic(5)
     fun updateQueue() {
-        playingGuilds.mapNotNull { Bot.shardManager.getGuild(it) }.map {
+        playingGuilds.mapNotNull { Bot.shardManager.getGuildById(it) }.map {
             getManager(it)
         }.forEach {
             it.updateQueue()

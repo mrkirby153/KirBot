@@ -111,7 +111,7 @@ class StarboardModule : Module("starboard") {
     fun updateStarboardMessage(guild: Guild, mid: String) {
         var entry = getStarboardEntry(mid)
         val message = Model.where(GuildMessage::class.java, "id", mid).first() ?: return
-        val apiMsg = Bot.shardManager.getGuild(message.serverId)?.getTextChannelById(
+        val apiMsg = Bot.shardManager.getGuildById(message.serverId)?.getTextChannelById(
                 message.channel)?.getMessageById(mid)?.complete()
         if (apiMsg != null) {
             // Update the star count

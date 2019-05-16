@@ -24,7 +24,7 @@ class Role(role: Role? = null) : Model() {
     var order = 0
 
     var guild: Guild?
-        get() = Bot.shardManager.getGuild(serverId)
+        get() = Bot.shardManager.getGuildById(serverId)
         set(guild) {
             if (guild == null) {
                 return

@@ -32,5 +32,5 @@ class RssFeed : Model() {
     var lastCheck : Timestamp? = null
 
     val channel: TextChannel?
-        get() = Bot.shardManager.getGuild(serverId)?.getTextChannelById(this.channelId)
+        get() = Bot.shardManager.getGuildById(serverId)?.getTextChannelById(this.channelId)
 }

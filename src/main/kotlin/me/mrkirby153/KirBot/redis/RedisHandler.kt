@@ -22,8 +22,8 @@ class RedisHandler : JedisPubSub() {
             }
             val serverId = payload.optString("guild", null)
             val userId = payload.optString("user", null)
-            val server = if (serverId != null) Bot.shardManager.getGuild(serverId) else null
-            val user = if (userId != null) Bot.shardManager.getUser(userId) else null
+            val server = if (serverId != null) Bot.shardManager.getGuildById(serverId) else null
+            val user = if (userId != null) Bot.shardManager.getUserById(userId) else null
             val body = payload.optJSONObject("data") ?: JSONObject()
 
             Bot.LOG.debug(

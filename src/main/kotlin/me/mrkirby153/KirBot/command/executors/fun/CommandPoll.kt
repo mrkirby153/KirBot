@@ -147,7 +147,7 @@ class CommandPoll {
                    var avatarUrl: String, var nameAndDiscrim: String, var endsAt: Long,
                    var options: Array<String>, var question: String?) : Schedulable {
         override fun run() {
-            val guild = Bot.shardManager.getGuild(this.guildId) ?: return
+            val guild = Bot.shardManager.getGuildById(this.guildId) ?: return
             val channel = guild.getTextChannelById(channelId) ?: return
             val message = channel.getMessageById(messageId).complete() ?: return
             message.editMessage(embed("Poll") {

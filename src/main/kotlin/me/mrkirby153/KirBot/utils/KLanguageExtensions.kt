@@ -6,7 +6,6 @@ import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.Redis
 import me.mrkirby153.KirBot.server.KirBotGuild
-import me.mrkirby153.KirBot.sharding.Shard
 import net.dv8tion.jda.core.OnlineStatus
 import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.entities.Channel
@@ -68,14 +67,6 @@ fun User.getMember(guild: Guild): Member? = guild.getMember(this)
 fun User.canInteractWith(guild: Guild, user: User): Boolean = this.getClearance(
         guild) > user.getClearance(guild)
 
-/**
- * Gets the [Shard] that represents the guild
- *
- * @return The [Shard] or null if the shard wasn't found
- */
-fun Guild.shard(): Shard? {
-    return Bot.shardManager.getShard(this)
-}
 
 /**
  * Gets a permission override for a [Member] or creates it if it doesn't exist

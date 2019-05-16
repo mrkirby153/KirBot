@@ -12,7 +12,6 @@ import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.AdminControl
 import me.mrkirby153.KirBot.modules.Redis
 import me.mrkirby153.KirBot.server.UserPersistenceHandler
-import me.mrkirby153.KirBot.sharding.Shard
 import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.kcutils.utils.IdGenerator
@@ -39,7 +38,7 @@ import net.dv8tion.jda.core.events.role.update.GenericRoleUpdateEvent
 import net.dv8tion.jda.core.events.user.update.UserUpdateNameEvent
 import java.util.concurrent.TimeUnit
 
-class ShardListener(val shard: Shard, val bot: Bot) {
+class ShardListener {
 
     private val idGenerator = IdGenerator(IdGenerator.ALPHA + IdGenerator.NUMBERS)
 

@@ -59,7 +59,7 @@ class CommandStarboard {
     @LogInModlogs
     @CommandDescription("Blocks a user from the starboard. They cannot star messages and their messages cannot be starred")
     fun blockUser(context: Context, cmdContext: CommandContext) {
-        val user = Bot.shardManager.getUser(cmdContext.getNotNull("user")) ?: throw CommandException("User not found")
+        val user = Bot.shardManager.getUserById(cmdContext.getNotNull<String>("user")) ?: throw CommandException("User not found")
         ModuleManager[StarboardModule::class.java].block(context.guild, user)
         context.send().success("Blocked ${user.nameAndDiscrim} from the starboard", true).queue()
     }
@@ -68,7 +68,7 @@ class CommandStarboard {
     @LogInModlogs
     @CommandDescription("Unblocks a user from the starboard")
     fun unblockUser(context: Context, cmdContext: CommandContext) {
-        val user = Bot.shardManager.getUser(cmdContext.getNotNull("user")) ?: throw CommandException("User not found")
+        val user = Bot.shardManager.getUserById(cmdContext.getNotNull<String>("user")) ?: throw CommandException("User not found")
         ModuleManager[StarboardModule::class.java].unblock(context.guild, user)
         context.send().success("Unblocked ${user.nameAndDiscrim} from the starboard", true).queue()
     }

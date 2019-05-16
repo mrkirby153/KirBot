@@ -26,7 +26,7 @@ class AntiRaid : Module("AntiRaid") {
     private val guildBucketCache = CacheBuilder.newBuilder().maximumSize(100).build(
             object : CacheLoader<String, LeakyBucket>() {
                 override fun load(key: String): LeakyBucket {
-                    val g = Bot.shardManager.getGuild(key)!!
+                    val g = Bot.shardManager.getGuildById(key)!!
                     return LeakyBucket("antiraid:join:$key",
                             SettingsRepository.get(g, "anti_raid_count", "0")!!.toInt(),
                             SettingsRepository.get(g, "anti_raid_period", "0")!!.toInt() * 1000)
@@ -152,7 +152,7 @@ class AntiRaid : Module("AntiRaid") {
 
     private fun alert(raid: Raid, amount: Int, time: Double) {
         Bot.LOG.debug("RAID DETECTED: $raid")
-        val guild = Bot.shardManager.getGuild(raid.guild) ?: return
+        val guild = Bot.shardManager.getGuildById(raid.guild) ?: return
         val alertRole = SettingsRepository.get(guild, "anti_raid_alert_role", "0")
         val toPing: Role? = if (alertRole != null && (alertRole == "@everyone" || alertRole == "@here")) null else guild.getRoleById(
                 alertRole)
@@ -182,7 +182,7 @@ class AntiRaid : Module("AntiRaid") {
     }
 
     private fun updateStatusMessage(raid: Raid) {
-        val guild = Bot.shardManager.getGuild(raid.guild) ?: return
+        val guild = Bot.shardManager.getGuildById(raid.guild) ?: return
         fun buildStatusMessage(): String {
             return "Total Raiders: ${raid.members.size}\nTime until reset: ${Time.format(1,
                     this.getResetTime(
@@ -212,7 +212,7 @@ class AntiRaid : Module("AntiRaid") {
             json.put("timestamp", Time.now())
             json.put("member_count", raid.members.size)
             val memberArray = JSONArray()
-            val guild = Bot.shardManager.getGuild(raid.guild)
+            val guild = Bot.shardManager.getGuildById(raid.guild)
             raid.members.forEach { m ->
                 val memberJson = JSONObject()
                 memberJson.put("id", m)
@@ -237,7 +237,7 @@ class AntiRaid : Module("AntiRaid") {
     @Periodic(1)
     private fun dismissExpiredRaids() {
         val toRemove = mutableListOf<String>()
-        this.activeRaids.keys.mapNotNull { Bot.shardManager.getGuild(it) }.forEach { guild ->
+        this.activeRaids.keys.mapNotNull { Bot.shardManager.getGuildById(it) }.forEach { guild ->
             if (getResetTime(guild) <= 0) {
                 // Dismiss the raid
                 val raid = activeRaids[guild.id]!!

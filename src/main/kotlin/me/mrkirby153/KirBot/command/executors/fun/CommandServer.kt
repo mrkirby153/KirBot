@@ -25,7 +25,7 @@ class CommandServer {
     @IgnoreWhitelist
     fun execute(context: Context, cmdContext: CommandContext) {
         val serverId = cmdContext.get<String>("server") ?: context.guild.id
-        val server = Bot.shardManager.getGuild(serverId) ?: throw CommandException(
+        val server = Bot.shardManager.getGuildById(serverId) ?: throw CommandException(
                 "Server not found")
 
         context.channel.sendMessage(embed {

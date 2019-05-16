@@ -15,11 +15,11 @@ class CommandLeaveGuild {
     fun execute(context: Context, cmdContext: CommandContext) {
         val id = cmdContext.get<String>("guild")!!
 
-        if (Bot.shardManager.getGuild(id) == null) {
+        if (Bot.shardManager.getGuildById(id) == null) {
             throw CommandException("I am not a member of this guild")
         }
 
-        Bot.shardManager.getGuild(id)?.leave()?.queue {
+        Bot.shardManager.getGuildById(id)?.leave()?.queue {
             context.success()
         }
     }

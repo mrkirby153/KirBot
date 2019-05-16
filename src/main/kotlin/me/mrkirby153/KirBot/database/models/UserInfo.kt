@@ -18,5 +18,5 @@ class UserInfo : Model() {
     var lastName = ""
 
     val user: User?
-        get() = Bot.shardManager.getUser(this.id)
+        get() = Bot.shardManager.getUserById(this.id)
 }

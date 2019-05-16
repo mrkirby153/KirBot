@@ -1,13 +1,9 @@
 package me.mrkirby153.KirBot.event
 
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.BotState
 import me.mrkirby153.KirBot.stats.Statistics
-import me.mrkirby153.KirBot.utils.kirbotGuild
 import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.events.Event
-import net.dv8tion.jda.core.events.guild.GenericGuildEvent
-import net.dv8tion.jda.core.events.guild.GuildJoinEvent
 import net.dv8tion.jda.core.events.http.HttpRequestEvent
 import net.dv8tion.jda.core.hooks.IEventManager
 import java.lang.reflect.InvocationTargetException
@@ -32,19 +28,19 @@ class PriorityEventManager : IEventManager {
         if(event !is HttpRequestEvent) {
             Statistics.eventType.labels(event.javaClass.name).inc()
         }
-        if (event is GenericGuildEvent && Bot.state == BotState.RUNNING) {
-            if(event !is GuildJoinEvent) { // Ensure the guild join event is passed through
-                // If the event is a guild event, check if the guild is ready
-                if (!event.guild.kirbotGuild.ready) {
-                    val arrayList = queuedEvents.computeIfAbsent(
-                            event.guild.id) { CopyOnWriteArrayList() }
-                    arrayList.add(event)
-                    Bot.LOG.debug(
-                            "Queueing ${event.javaClass} for guild ${event.guild}. Reason: Guild not ready")
-                    return
-                }
-            }
-        }
+//        if (event is GenericGuildEvent && Bot.state == BotState.RUNNING) {
+//            if(event !is GuildJoinEvent) { // Ensure the guild join event is passed through
+//                // If the event is a guild event, check if the guild is ready
+//                if (!event.guild.kirbotGuild.ready) {
+//                    val arrayList = queuedEvents.computeIfAbsent(
+//                            event.guild.id) { CopyOnWriteArrayList() }
+//                    arrayList.add(event)
+//                    Bot.LOG.debug(
+//                            "Queueing ${event.javaClass} for guild ${event.guild}. Reason: Guild not ready")
+//                    return
+//                }
+//            }
+//        }
 
         // Walk up the hierarchy
         var current: Class<Event>? = event.javaClass

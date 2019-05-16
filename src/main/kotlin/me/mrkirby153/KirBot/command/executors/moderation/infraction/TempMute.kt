@@ -85,8 +85,8 @@ class TempMute {
             val infraction = Model.where(Infraction::class.java, "id", infId).first()
             infraction?.revoke()
 
-            val user = Bot.shardManager.getUser(userId) ?: return
-            val guild = Bot.shardManager.getGuild(guild) ?: return
+            val user = Bot.shardManager.getUserById(userId) ?: return
+            val guild = Bot.shardManager.getGuildById(guild) ?: return
             val member = guild.getMember(user) ?: return
 
             Infractions.removeMutedRole(user, guild)

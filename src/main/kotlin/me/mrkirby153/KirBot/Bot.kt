@@ -6,6 +6,7 @@ import com.mrkirby153.bfs.model.Model
 import com.mrkirby153.bfs.model.SoftDeletingModel
 import com.mrkirby153.bfs.sql.QueryBuilder
 import com.mrkirby153.bfs.sql.elements.Pair
+import com.sedmelluq.discord.lavaplayer.jdaudp.NativeAudioSendFactory
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers
@@ -13,12 +14,14 @@ import me.mrkirby153.KirBot.command.CommandDocumentationGenerator
 import me.mrkirby153.KirBot.database.DatabaseConnection
 import me.mrkirby153.KirBot.database.models.guild.DiscordGuild
 import me.mrkirby153.KirBot.error.UncaughtErrorReporter
+import me.mrkirby153.KirBot.event.PriorityEventManager
+import me.mrkirby153.KirBot.event.Subscribe
 import me.mrkirby153.KirBot.infraction.Infractions
+import me.mrkirby153.KirBot.listener.ShardListener
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.AdminControl
 import me.mrkirby153.KirBot.rss.FeedTask
 import me.mrkirby153.KirBot.server.KirBotGuild
-import me.mrkirby153.KirBot.sharding.ShardManager
 import me.mrkirby153.KirBot.stats.Statistics
 import me.mrkirby153.KirBot.utils.HttpUtils
 import me.mrkirby153.KirBot.utils.SettingsRepository
@@ -27,7 +30,11 @@ import me.mrkirby153.kcutils.Time
 import me.mrkirby153.kcutils.child
 import me.mrkirby153.kcutils.readProperties
 import me.mrkirby153.kcutils.utils.SnowflakeWorker
+import net.dv8tion.jda.bot.sharding.DefaultShardManagerBuilder
+import net.dv8tion.jda.bot.sharding.ShardManager
 import net.dv8tion.jda.core.OnlineStatus
+import net.dv8tion.jda.core.entities.Game
+import net.dv8tion.jda.core.events.ReadyEvent
 import okhttp3.Request
 import org.json.JSONObject
 import org.json.JSONTokener
@@ -95,8 +102,7 @@ object Bot {
         // Get the number of shards to start with
         numShards = if (properties.getProperty("shards") == null || properties.getProperty(
                         "shards") == "auto") {
-            LOG.info("Automatically determining the number of shards to use")
-            getNumShards(token)
+            -1
         } else {
             properties.getProperty("shards").toInt()
         }
@@ -104,14 +110,25 @@ object Bot {
         LOG.info("Initializing Bot ($numShards shards)")
         val startTime = System.currentTimeMillis()
 
-        shardManager = ShardManager(token, numShards)
-        shardManager.playing = "Starting up..."
-        shardManager.onlineStatus = OnlineStatus.IDLE
-        shardManager.addListener(AdminControl)
         state = BotState.CONNECTING
-        for (i in 0 until numShards) {
-            shardManager.addShard(i)
-        }
+
+        shardManager = DefaultShardManagerBuilder(token).apply {
+            addEventListeners(AdminControl, ShardListener())
+            setEventManagerProvider { PriorityEventManager() }
+            setStatus(OnlineStatus.IDLE)
+            setShardsTotal(numShards)
+            setAutoReconnect(true)
+            setBulkDeleteSplittingEnabled(false)
+            setGame(Game.playing("Starting up..."))
+            if (!System.getProperty("os.name").contains("Mac"))
+                setAudioSendFactory(NativeAudioSendFactory())
+            addEventListeners(object {
+                @Subscribe
+                fun onReady(event: ReadyEvent) {
+                    Bot.LOG.info("Shard ${event.jda.shardInfo.shardId} is ready!")
+                }
+            })
+        }.build()
 
         val endTime = System.currentTimeMillis()
         LOG.info("\n\n\nSHARDS INITIALIZED! (${Time.format(1, endTime - startTime)})")
@@ -150,8 +167,8 @@ object Bot {
             guild.controller.setNickname(guild.selfMember, value).queue()
         }
 
-        shardManager.onlineStatus = OnlineStatus.ONLINE
-        shardManager.playing = properties.getOrDefault("playing-message", "!help").toString()
+        shardManager.setStatus(OnlineStatus.ONLINE)
+        shardManager.setGame(null)
         LOG.info("Startup completed in ${Time.format(0, System.currentTimeMillis() - startupTime)}")
         val memberSet = mutableSetOf<String>()
         Bot.shardManager.shards.flatMap { it.guilds }.flatMap { it.members }.forEach {

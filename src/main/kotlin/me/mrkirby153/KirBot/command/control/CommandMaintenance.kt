@@ -67,12 +67,8 @@ class CommandSetStatus {
                     "type")}` was not found. Valid values are `${Game.GameType.values().joinToString(
                     ", ")}`")
         }
-        Bot.shardManager.autoUpdatePresence = false
-        Bot.shardManager.onlineStatus = onlineStatus
-        Bot.shardManager.playing = cmdContext.get<String>("game")!!
-        Bot.shardManager.gameType = gameType
-        Bot.shardManager.autoUpdatePresence = true
-        Bot.shardManager.updatePresence()
+        Bot.shardManager.setStatus(onlineStatus)
+        Bot.shardManager.setGame(Game.of(gameType, cmdContext.getNotNull("game")))
         context.send().success("Presence has been updated!").queue()
     }
 

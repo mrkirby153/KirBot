@@ -236,7 +236,7 @@ class Spam : Module("spam") {
     }
 
     private fun getSettings(guild: String): JSONObject {
-        return SettingsRepository.getAsJsonObject(Bot.shardManager.getGuild(guild)!!,
+        return SettingsRepository.getAsJsonObject(Bot.shardManager.getGuildById(guild)!!,
                 "spam_settings", JSONObject(), true)!!
     }
 

@@ -56,8 +56,8 @@ class CommandRemindMe {
                        val query: String) : Schedulable {
 
         override fun run() {
-            Bot.shardManager.getUser(user)?.let { user ->
-                Bot.shardManager.getGuild(guild)?.let {
+            Bot.shardManager.getUserById(user)?.let { user ->
+                Bot.shardManager.getGuildById(guild)?.let {
                     it.getTextChannelById(channel)?.sendMessage(
                             "<@${this.user}> ${Time.formatLong(
                                     System.currentTimeMillis() - startTime).toLowerCase()} ago, you asked me to remind you about `$query`. React with $RED_TICK to delete this message")?.queue {

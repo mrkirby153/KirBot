@@ -28,13 +28,13 @@ class GuildMemberRole(member: Member? = null, role: Role? = null) : Model() {
 
 
     var server: Guild?
-        get() = Bot.shardManager.getGuild(this.serverId)
+        get() = Bot.shardManager.getGuildById(this.serverId)
         set(guild) {
             this.serverId = guild!!.id
         }
 
     var user: User?
-        get() = Bot.shardManager.getUser(this.userId)
+        get() = Bot.shardManager.getUserById(this.userId)
         set(user) {
             this.userId = user!!.id
         }

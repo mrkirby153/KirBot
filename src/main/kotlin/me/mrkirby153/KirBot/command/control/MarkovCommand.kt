@@ -26,7 +26,7 @@ class MarkovCommand {
     fun execute(context: Context, cmdContext: CommandContext) {
         val userChain = chains[cmdContext.get<String>("user")!!] ?: throw CommandException(
                 "No chain found. Did you generate one?")
-        val user = Bot.shardManager.getUser(cmdContext.get<String>("user")!!)?.nameAndDiscrim
+        val user = Bot.shardManager.getUserById(cmdContext.get<String>("user")!!)?.nameAndDiscrim
                 ?: cmdContext.get<String>("user")!!
         val chain = StringBuilder()
         for (i in 0..(cmdContext.get<Int>("amount") ?: 1)) {

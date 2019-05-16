@@ -17,7 +17,7 @@ class CommandInvite {
     @Command(name = "guild-invite", arguments = ["<id:snowflake>"])
     @AdminCommand
     fun execute(context: Context, cmdContext: CommandContext) {
-        val guild = Bot.shardManager.getGuild(cmdContext.getNotNull("id"))
+        val guild = Bot.shardManager.getGuildById(cmdContext.getNotNull<String>("id"))
                 ?: throw CommandException("Guild not found")
         if (!guild.selfMember.hasPermission(Permission.CREATE_INSTANT_INVITE)) {
             throw CommandException("No permission to create invites")

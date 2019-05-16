@@ -66,7 +66,7 @@ class CommandQuotes {
     fun block(context: Context, cmdContext: CommandContext) {
         ModuleManager[Quotes::class.java].blockUser(context.kirbotGuild,
                 cmdContext.get<String>("user")!!)
-        context.send().success("Blocked ${Bot.shardManager.getUser(
+        context.send().success("Blocked ${Bot.shardManager.getUserById(
                 cmdContext.get<String>("user")!!)?.nameAndDiscrim ?: cmdContext.get(
                 "user")!!} from quoting").queue()
     }
@@ -78,7 +78,7 @@ class CommandQuotes {
     fun unblock(context: Context, cmdContext: CommandContext) {
         ModuleManager[Quotes::class.java].unblockUser(context.kirbotGuild,
                 cmdContext.get<String>("user")!!)
-        context.send().success("Unblocked ${Bot.shardManager.getUser(
+        context.send().success("Unblocked ${Bot.shardManager.getUserById(
                 cmdContext.get<String>("user")!!)?.nameAndDiscrim ?: cmdContext.get(
                 "user")!!} from quoting").queue()
     }

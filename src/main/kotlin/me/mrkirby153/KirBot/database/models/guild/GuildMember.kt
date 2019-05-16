@@ -34,7 +34,7 @@ class GuildMember(member: Member? = null) : Model() {
     var muted = false
 
     var user: User?
-        get() = Bot.shardManager.getUser(this.userId)
+        get() = Bot.shardManager.getUserById(this.userId)
         set(user) {
             if (user != null) {
                 this.userId = user.id
@@ -62,7 +62,7 @@ class GuildMember(member: Member? = null) : Model() {
                 userId).get()
 
     fun updateMember() {
-        val guild = Bot.shardManager.getGuild(this.serverId) ?: return
+        val guild = Bot.shardManager.getGuildById(this.serverId) ?: return
         val member = guild.getMemberById(this.userId)
         if (member == null) {
             Bot.LOG.debug("Guild member $this was not found (left the guild?) deleting")

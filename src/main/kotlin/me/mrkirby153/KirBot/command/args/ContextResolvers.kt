@@ -81,7 +81,7 @@ object ContextResolvers {
             if (id.toLongOrNull() == null)
                 throw ArgumentParseException("Cannot convert `$id` to user")
 
-            return@registerResolver Bot.shardManager.getUser(id)
+            return@registerResolver Bot.shardManager.getUserById(id)
                     ?: throw ArgumentParseException(
                             "The user `$id` was not found")
         }

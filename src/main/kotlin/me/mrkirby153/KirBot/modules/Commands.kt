@@ -1,6 +1,5 @@
 package me.mrkirby153.KirBot.modules
 
-import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.CommandExecutor
 import me.mrkirby153.KirBot.event.Subscribe
 import me.mrkirby153.KirBot.module.Module
@@ -30,10 +29,10 @@ class Commands : Module("commands") {
         if (event.channel.hasLatestMessage())
             if (event.channel.latestMessageId == event.messageId) {
                 // Only process if it's the last message
-                if (event.author == Bot.shardManager.getShard(event.guild)!!.selfUser)
+                if (event.author == event.jda.selfUser)
                     return
 
-                val context = Context(Bot.shardManager.getShard(event.guild)!!, event.message)
+                val context = Context(event.message)
                 CommandExecutor.executeAsync(context)
             }
     }

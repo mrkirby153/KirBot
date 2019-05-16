@@ -14,7 +14,7 @@ import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.embed.b
 import me.mrkirby153.KirBot.utils.embed.embed
 import me.mrkirby153.KirBot.utils.embed.link
-import me.mrkirby153.KirBot.utils.mdEscape
+import me.mrkirby153.KirBot.utils.escapeMarkdown
 import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.core.Permission
 import java.awt.Color
@@ -59,7 +59,7 @@ class CommandSkip {
             description {
                 +b(context.author.name)
                 +" has voted to skip the current track: \n"
-                +currentlyPlaying.info.title.mdEscape() link currentlyPlaying.info.uri
+                +currentlyPlaying.info.title.escapeMarkdown() link currentlyPlaying.info.uri
                 +"\nReact with :thumbsup: or :thumbsdown: to vote"
                 +"\nWhichever has the most votes in ${Time.format(1, skipTimer * 1000L)} wins!"
             }

@@ -23,7 +23,6 @@ import java.io.InputStream
 import java.util.Properties
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
-import java.util.regex.Pattern
 
 // ----- Method Extensions -----
 /**
@@ -142,24 +141,21 @@ fun TextChannel.unhide() {
 }
 
 /**
+ * Sanitizes (escapes markdown and mentions) a string
+ *
+ * @return A copy of the string with markdown escaped and mentions sanitized
+ */
+fun String.sanitize(): String {
+    return this.escapeMarkdown().escapeMentions()
+}
+
+/**
  * Escapes markdown in a string
  *
  * @return A copy of the string with all the markdown escaped
  */
-fun String.mdEscape(): String {
-    val pattern = Pattern.compile("\\*|\\[|]|_|~|\\(|\\)")
-
-    val matcher = pattern.matcher(this)
-
-    return buildString {
-        var start = 0
-        while (matcher.find()) {
-            append(this@mdEscape.substring(start until matcher.start()))
-            append("\\${this@mdEscape.substring(matcher.start() until matcher.end())}")
-            start = matcher.end()
-        }
-        append(this@mdEscape.substring(start until this@mdEscape.length))
-    }
+fun String.escapeMarkdown(): String {
+    return this.replace(Regex("([*\\[\\]_()~])"), "\\\\$1").replace("`", "ˋ")
 }
 
 /**

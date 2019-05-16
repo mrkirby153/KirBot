@@ -10,7 +10,7 @@ import me.mrkirby153.KirBot.modules.music.MusicModule
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.embed.link
-import me.mrkirby153.KirBot.utils.mdEscape
+import me.mrkirby153.KirBot.utils.escapeMarkdown
 import net.dv8tion.jda.core.Permission
 import java.util.Random
 import kotlin.math.roundToInt
@@ -69,7 +69,7 @@ class CommandQueue {
                     +":speaker: "
                 val position = "${MusicManager.parseMS(nowPlaying.position)}/${MusicManager.parseMS(
                         nowPlaying.info.length)}"
-                +nowPlaying.info.title.mdEscape() link nowPlaying.info.uri
+                +nowPlaying.info.title.escapeMarkdown() link nowPlaying.info.uri
                 +"\n\n :rewind: ${buildProgressBar(12, nowPlaying.position, nowPlaying.duration)} :fast_forward: ($position)"
                 +"\n\n:arrow_down_small: __Up Next__ :arrow_down_small:"
                 +"\n\n"

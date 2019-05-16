@@ -13,7 +13,7 @@ import me.mrkirby153.KirBot.scheduler.Schedulable
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.embed.b
 import me.mrkirby153.KirBot.utils.embed.embed
-import me.mrkirby153.KirBot.utils.mdEscape
+import me.mrkirby153.KirBot.utils.escapeMarkdown
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import me.mrkirby153.kcutils.Time
 import java.awt.Color
@@ -80,7 +80,7 @@ class CommandPoll {
                     title = "Options"
                     description {
                         filteredOptions.forEachIndexed { index, option ->
-                            appendln("${'\u0030' + (index)}\u20E3 **${option.mdEscape()}**")
+                            appendln("${'\u0030' + (index)}\u20E3 **${option.escapeMarkdown()}**")
                         }
                     }
                 }
@@ -163,7 +163,7 @@ class CommandPoll {
                         title = "Options"
                         description {
                             options.forEachIndexed { index, option ->
-                                appendln("${'\u0030' + index}\u20E3 **${option.mdEscape()}**")
+                                appendln("${'\u0030' + index}\u20E3 **${option.escapeMarkdown()}**")
                             }
                         }
                     }
@@ -210,7 +210,7 @@ class CommandPoll {
                     field {
                         title = "Winner"
                         description = winners.joinToString(prefix = "**",
-                                postfix = "**") { options[it].mdEscape() }
+                                postfix = "**") { options[it].escapeMarkdown() }
                     }
                 }
 

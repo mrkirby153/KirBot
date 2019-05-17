@@ -32,6 +32,7 @@ import me.mrkirby153.kcutils.readProperties
 import me.mrkirby153.kcutils.utils.SnowflakeWorker
 import net.dv8tion.jda.bot.sharding.DefaultShardManagerBuilder
 import net.dv8tion.jda.bot.sharding.ShardManager
+import net.dv8tion.jda.core.JDA
 import net.dv8tion.jda.core.OnlineStatus
 import net.dv8tion.jda.core.entities.Game
 import net.dv8tion.jda.core.events.ReadyEvent
@@ -122,13 +123,13 @@ object Bot {
             setGame(Game.playing("Starting up..."))
             if (!System.getProperty("os.name").contains("Mac"))
                 setAudioSendFactory(NativeAudioSendFactory())
-            addEventListeners(object {
-                @Subscribe
-                fun onReady(event: ReadyEvent) {
-                    Bot.LOG.info("Shard ${event.jda.shardInfo.shardId} is ready!")
-                }
-            })
         }.build()
+
+        Bot.LOG.info("Waiting for shards to start..")
+
+        while (shardManager.shards.firstOrNull { it.status != JDA.Status.CONNECTED } != null) {
+            shardManager.shards.first { it.status != JDA.Status.CONNECTED }.awaitReady()
+        }
 
         val endTime = System.currentTimeMillis()
         LOG.info("\n\n\nSHARDS INITIALIZED! (${Time.format(1, endTime - startTime)})")
@@ -182,6 +183,18 @@ object Bot {
 
         CommandDocumentationGenerator.generate(files.data.child("commands.md"))
         state = BotState.RUNNING
+        shardManager.addEventListener(object {
+            @Subscribe
+            fun onReady(event: ReadyEvent) {
+                Bot.LOG.info(
+                        "Shard ${event.jda.shardInfo.shardId} is ready, syncing all guilds (${event.jda.guilds.size})")
+                event.jda.guilds.forEach {
+                    KirBotGuild[it].syncSeenUsers()
+                    KirBotGuild[it].sync()
+                    KirBotGuild[it].dispatchBackfill()
+                }
+            }
+        })
     }
 
     private fun purgeSoftDeletedGuilds() {
@@ -189,7 +202,7 @@ object Bot {
         // Remove guilds whose time has passed
         val threshold = Instant.now().minus(Duration.ofDays(30))
         LOG.info("Removing guilds that we left before ${SimpleDateFormat(
-                Time.DATE_FORMAT_NOW).format(threshold.toEpochMilli())}")
+                "MM-dd-yy HH:mm:ss").format(threshold.toEpochMilli())}")
         val guilds = SoftDeletingModel.trashed(DiscordGuild::class.java).where("deleted_at", "<",
                 Timestamp.from(threshold)).get()
         LOG.info("${guilds.size} guilds being purged")

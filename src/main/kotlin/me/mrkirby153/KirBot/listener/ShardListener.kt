@@ -11,10 +11,12 @@ import me.mrkirby153.KirBot.event.Subscribe
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.AdminControl
 import me.mrkirby153.KirBot.modules.Redis
+import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.server.UserPersistenceHandler
 import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.kcutils.utils.IdGenerator
+import net.dv8tion.jda.core.events.ShutdownEvent
 import net.dv8tion.jda.core.events.channel.text.TextChannelCreateEvent
 import net.dv8tion.jda.core.events.channel.text.TextChannelDeleteEvent
 import net.dv8tion.jda.core.events.channel.text.update.GenericTextChannelUpdateEvent
@@ -82,7 +84,7 @@ class ShardListener {
         user.discriminator = event.user.discriminator.toInt()
         user.save()
     }
-    
+
     @Subscribe
     fun onGuildVoiceJoin(event: GuildVoiceJoinEvent) {
         UserPersistenceHandler.restoreVoiceState(event.member.user, event.guild)
@@ -224,8 +226,16 @@ class ShardListener {
         Model.where(Role::class.java, "id", event.role.id).delete()
         // If the role is the muted role, delete it
         val mutedRole = SettingsRepository.get(event.guild, "muted_role")
-        if(mutedRole != null && event.role.id == mutedRole) {
+        if (mutedRole != null && event.role.id == mutedRole) {
             SettingsRepository.set(event.guild, "muted_role", null)
+        }
+    }
+
+    @Subscribe
+    fun shutdownEvent(event: ShutdownEvent) {
+        Bot.LOG.debug("Shard ${event.jda.shardInfo.shardId} is closing, purging guilds from memory")
+        event.jda.guilds.forEach { guild ->
+            KirBotGuild.remove(guild)
         }
     }
 }

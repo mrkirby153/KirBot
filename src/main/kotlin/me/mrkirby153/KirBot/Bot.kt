@@ -11,7 +11,6 @@ import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers
 import me.mrkirby153.KirBot.command.CommandDocumentationGenerator
-import me.mrkirby153.KirBot.database.DatabaseConnection
 import me.mrkirby153.KirBot.database.models.guild.DiscordGuild
 import me.mrkirby153.KirBot.error.UncaughtErrorReporter
 import me.mrkirby153.KirBot.event.PriorityEventManager
@@ -81,9 +80,6 @@ object Bot {
     val idGenerator = SnowflakeWorker(1, 1)
 
     lateinit var shardManager: ShardManager
-
-    @Deprecated("Deprecated")
-    lateinit var database: DatabaseConnection
 
 
     fun start(token: String) {

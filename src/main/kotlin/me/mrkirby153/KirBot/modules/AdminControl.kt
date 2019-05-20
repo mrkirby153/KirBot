@@ -7,6 +7,8 @@ import net.dv8tion.jda.core.JDA
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.events.DisconnectEvent
 import net.dv8tion.jda.core.events.ResumedEvent
+import net.dv8tion.jda.webhook.WebhookClient
+import net.dv8tion.jda.webhook.WebhookClientBuilder
 import java.text.SimpleDateFormat
 import java.util.LinkedList
 
@@ -22,6 +24,11 @@ object AdminControl {
             }
             return null
         }
+    private val webhookUrl = Bot.properties.getProperty("webhook-url")
+
+    private val webhookClient: WebhookClient by lazy {
+        WebhookClientBuilder(webhookUrl).build()
+    }
 
     private val shardId: Int by lazy {
         logChannel?.jda?.shardInfo?.shardId ?: 0
@@ -30,6 +37,11 @@ object AdminControl {
     private val pendingMessages = LinkedList<String>()
     private var connected = false
     private var disconnectedAt = mutableMapOf<JDA, Long>()
+
+
+    fun sendWebhookMessage(message: String) {
+        this.webhookClient.send(message)
+    }
 
     fun log(message: String, jda: JDA? = null) {
         val msg = buildString {
@@ -41,11 +53,16 @@ object AdminControl {
             }
             append(" $message")
         }
-        if (logChannel?.jda?.status == JDA.Status.CONNECTED) {
-            logChannel?.sendMessage(msg)?.queue()
+
+        if(this.webhookUrl != null) {
+            sendWebhookMessage(msg)
         } else {
-            Bot.LOG.debug("Logging \"$msg\" while disconnected. Queueing for reconnect")
-            pendingMessages.add(msg)
+            if (logChannel?.jda?.status == JDA.Status.CONNECTED) {
+                logChannel?.sendMessage(msg)?.queue()
+            } else {
+                Bot.LOG.debug("Logging \"$msg\" while disconnected. Queueing for reconnect")
+                pendingMessages.add(msg)
+            }
         }
     }
 

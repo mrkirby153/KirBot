@@ -142,7 +142,7 @@ object CommandExecutor {
         Bot.LOG.debug("Processing command \"$message\"")
 
         // Strip the command prefix from the message
-        val strippedMessage = if (mention) message.replace(Regex("^<#!?\\d{17,18}>\\s?"),
+        val strippedMessage = if (mention) message.replace(Regex("^<@!?\\d{17,18}>\\s?"),
                 "") else message.substring(prefix.length)
 
 

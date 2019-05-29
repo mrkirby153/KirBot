@@ -25,6 +25,11 @@ import net.dv8tion.jda.core.MessageBuilder
 
 class CommandInfractions {
 
+    @Command(name = "infraction", aliases=["inf"])
+    fun inf() {
+        // Dummy command to support aliases
+    }
+
     @Command(name = "search", clearance = CLEARANCE_MOD, arguments = ["[query:string...]"], parent="infraction", category = CommandCategory.MODERATION)
     @LogInModlogs
     @CommandDescription("Search for an infraction with the given query")

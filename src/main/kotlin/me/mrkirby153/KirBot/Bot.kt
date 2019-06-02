@@ -146,7 +146,7 @@ object Bot {
                 LOG.info("Syncing guild ${it.id} (${it.name})")
                 KirBotGuild[it].syncSeenUsers()
                 KirBotGuild[it].sync()
-                KirBotGuild[it].dispatchBackfill()
+//                KirBotGuild[it].dispatchBackfill()
             }
         }
 

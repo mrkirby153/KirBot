@@ -85,6 +85,10 @@ fun convertSnowflake(snowflake: String): Date {
     return calendar.time
 }
 
+fun toSnowflake(date: Date): String {
+    return (date.toInstant().toEpochMilli() - 1420070400000).shl(22).toString()
+}
+
 infix fun Any.botUrl(url: String): String {
     return Bot.constants.getProperty("bot-base-url") + "/" + url
 }

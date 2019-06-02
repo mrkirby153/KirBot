@@ -42,7 +42,7 @@ class CommandHelp {
     }
 
     private fun displayAllCommands(context: Context) {
-        val cmdPrefix = SettingsRepository.get(context.guild, "cmd_prefix", "!")!!
+        val cmdPrefix = SettingsRepository.get(context.guild, "command_prefix", "!")!!
         val root = CommandExecutor.getRoot()
         val categorized = root.getChildren().filter { it.metadata != null && it.metadata?.admin == false }.groupBy { it.metadata!!.category }
         var msg = ""

@@ -2,130 +2,104 @@ package me.mrkirby153.KirBot.command.executors.admin
 
 import com.mrkirby153.bfs.sql.QueryBuilder
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.command.annotations.CommandDescription
-import me.mrkirby153.KirBot.command.CommandCategory
-import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.annotations.Command
+import me.mrkirby153.KirBot.command.annotations.CommandDescription
 import me.mrkirby153.KirBot.command.annotations.IgnoreWhitelist
 import me.mrkirby153.KirBot.command.annotations.LogInModlogs
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.listener.WaitUtils
-import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
-import me.mrkirby153.KirBot.utils.GREEN_TICK
-import me.mrkirby153.KirBot.utils.RED_TICK
-import me.mrkirby153.KirBot.utils.deleteAfter
-import net.dv8tion.jda.core.entities.TextChannel
-import net.dv8tion.jda.core.events.message.guild.react.GuildMessageReactionAddEvent
-import java.time.Duration
-import java.time.Instant
-import java.util.concurrent.TimeUnit
+import me.mrkirby153.kcutils.Time
+import net.dv8tion.jda.core.requests.RequestFuture
+import java.util.concurrent.CompletableFuture
 
 class CommandClean {
 
     private val confirmAmount = 100
 
-    @Command(name = "all", arguments = ["[amount:int]"], clearance = CLEARANCE_MOD, category = CommandCategory.ADMIN, parent = "clean")
+    @Command(name = "all", arguments = ["[amount:int]"], parent = "clean")
     @CommandDescription("Cleans messages from everyone in the current channel")
     @LogInModlogs
     @IgnoreWhitelist
     fun allClean(context: Context, cmdContext: CommandContext) {
-        val amount = cmdContext.get<Int>("amount") ?: 50
-        if (amount > confirmAmount) {
-            confirmClean(context, context.channel as TextChannel, amount)
-        } else {
-            doClean(context.channel as TextChannel, amount)
-        }
+        val builder = cmdContext.getBuilder()
+        builder.where("channel", context.channel.id)
+        purgeMessages(context, builder.queryIds())
     }
 
-    @Command(name = "bots", arguments = ["[amount:int]"], clearance = CLEARANCE_MOD, category = CommandCategory.ADMIN, parent = "clean")
-    @CommandDescription("Clean messages sent by bots in the current channel")
-    @LogInModlogs
-    @IgnoreWhitelist
-    fun botClean(context: Context, cmdContext: CommandContext) {
-        val amount = cmdContext.get<Int>("amount") ?: 50
-        if (amount > confirmAmount) {
-            confirmClean(context, context.channel as TextChannel, amount, bots = true)
-            return
-        }
-        doClean(context.channel as TextChannel, amount, bots = true)
-    }
-
-    @Command(name = "user", arguments = ["<user:snowflake>", "[amount:int]"],
-            clearance = CLEARANCE_MOD, category = CommandCategory.ADMIN, parent = "clean")
-    @CommandDescription("Clean messages sent by a specific user in the current channel")
+    @Command(name = "user", arguments = ["<user:snowflake>", "[amount:int]"], parent = "clean")
+    @CommandDescription("Cleans messages from a specific user in the current channel")
     @LogInModlogs
     @IgnoreWhitelist
     fun userClean(context: Context, cmdContext: CommandContext) {
-        val user = cmdContext.get<String>("user")!!
-        val amount = cmdContext.get<Int>("amount") ?: 50
-        if (amount > confirmAmount) {
-            confirmClean(context, context.channel as TextChannel, amount, user, false)
-            return
-        }
-        doClean(context.channel as TextChannel, amount, user, false)
+        val builder = cmdContext.getBuilder()
+        builder.where("channel", context.channel.id)
+        builder.where("author", cmdContext.get<String>("user"))
+        purgeMessages(context, builder.queryIds())
     }
 
-    private fun confirmClean(context: Context, channel: TextChannel, amount: Int,
-                             user: String? = null,
-                             bots: Boolean = false) {
-        context.send().info(
-                ":warning: Whoa, you're about to delete $amount messages. Are you sure you want to do this?").queue { msg ->
-            msg.addReaction(GREEN_TICK.emote).queue()
-            msg.addReaction(RED_TICK.emote).queue()
-            WaitUtils.waitFor(GuildMessageReactionAddEvent::class.java) {
-                if (it.user.id != context.author.id)
-                    return@waitFor
-                if (it.messageId != msg.id)
-                    return@waitFor
-                if (it.reactionEmote.isEmote) {
-                    when (it.reactionEmote.id) {
-                        GREEN_TICK.id -> {
-                            doClean(channel, amount, user, bots)
-                            msg.delete().queue()
-                        }
-                        RED_TICK.id -> {
-                            msg.editMessage("Canceled!").queue {
-                                it.deleteAfter(10, TimeUnit.SECONDS)
-                            }
-                        }
-                    }
-                }
-                cancel()
+    @Command(name = "bots", arguments = ["[amount:int]"], parent = "clean")
+    @CommandDescription("Cleans messages sent by bots in the current channel")
+    @LogInModlogs
+    @IgnoreWhitelist
+    fun botClean(context: Context, cmdContext: CommandContext) {
+        val builder = cmdContext.getBuilder()
+        builder.where("channel", context.channel.id)
+        builder.leftJoin("seen_users", "server_messages.author", "=", "seen_users.id")
+        builder.where("bot", true)
+        purgeMessages(context, builder.queryIds())
+    }
+
+
+    fun purgeMessages(context: Context, messages: List<String>) {
+        fun doClean() {
+            val m = context.channel.sendMessage(":repeat: Processing...").complete()
+            val start = System.currentTimeMillis()
+            val buckets = mutableMapOf<String, MutableList<String>>()
+            val builder = QueryBuilder()
+            builder.table("server_messages")
+            builder.whereIn("id", messages.toTypedArray())
+            builder.select("id", "channel")
+            builder.query().forEach {
+                buckets.getOrPut(it.getString("channel"), { mutableListOf() }).add(
+                        it.getString("id"))
+            }
+
+            Bot.LOG.debug("Purging ${messages.size} messages across ${buckets.size} channels")
+            val cf = mutableListOf<CompletableFuture<*>>()
+            buckets.forEach { (channelId, messages) ->
+                val channel = Bot.shardManager.getTextChannelById(channelId) ?: return@forEach
+                cf.add(RequestFuture.allOf(channel.purgeMessagesById(messages)))
+            }
+            CompletableFuture.allOf(*cf.toTypedArray()).thenAccept {
+                Bot.LOG.debug("All completable futures have finished")
+                m.editMessage("Finished in `${Time.format(1,
+                        System.currentTimeMillis() - start)}`. Deleted ${messages.size} messages").queue()
             }
         }
+        if (messages.size >= confirmAmount) {
+            val msg = context.channel.sendMessage(
+                    ":warning: You're about to delete ${messages.size} messages. Are you sure you want to do this?").complete()
+            WaitUtils.confirmYesNo(msg, context.author, {
+                msg.delete().queue()
+                doClean()
+            })
+        } else {
+            doClean()
+        }
     }
 
-    fun doClean(channel: TextChannel, amount: Int, user: String? = null,
-                bots: Boolean = false) {
-        if (amount <= 1)
-            throw CommandException("Specify a number greater than 1")
-        if (user != null) {
-            Bot.LOG.debug("Performing user clean $user")
-        } else if (bots) {
-            Bot.LOG.debug("Performing bot clean")
-        } else {
-            Bot.LOG.debug("Performing all clean")
-        }
-        val now = Instant.now().minus(Duration.ofDays(14))
+    private fun getBuilder(amount: Long? = 50): QueryBuilder {
+        return QueryBuilder().table("server_messages").where("deleted", false).select(
+                "server_messages.id")
+                .orderBy("server_messages.id", "DESC")
+    }
 
-        val builder = QueryBuilder()
-        builder.table("server_messages")
-        builder.where("channel", channel.id)
-        builder.where("deleted", false)
-        builder.leftJoin("seen_users", "server_messages.author", "=", "seen_users.id")
-        builder.select("server_messages.id")
-        builder.orderBy("server_messages.id", "DESC")
-        builder.limit(amount.toLong())
+    private fun QueryBuilder.queryIds(): List<String> {
+        return this.query().map { it.getString("id") }
+    }
 
-        if (bots)
-            builder.where("bot", true)
-        if (user != null)
-            builder.where("author", user)
-
-        val rows = builder.query()
-        Bot.LOG.debug("Matched ${rows.size} messages")
-        val ids = rows.mapNotNull { it.getString("id") }
-        channel.purgeMessagesById(ids)
+    private fun CommandContext.getBuilder(): QueryBuilder {
+        return getBuilder(this.get<Int>("amount")?.toLong() ?: 50L)
     }
 }

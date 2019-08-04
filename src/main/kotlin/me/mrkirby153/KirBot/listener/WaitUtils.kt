@@ -1,7 +1,12 @@
 package me.mrkirby153.KirBot.listener
 
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.utils.GREEN_TICK
+import me.mrkirby153.KirBot.utils.RED_TICK
+import net.dv8tion.jda.core.entities.Message
+import net.dv8tion.jda.core.entities.User
 import net.dv8tion.jda.core.events.Event
+import net.dv8tion.jda.core.events.message.react.MessageReactionAddEvent
 
 object WaitUtils {
 
@@ -27,6 +32,27 @@ object WaitUtils {
         toRun.forEach {
             Bot.LOG.debug("Running ${it.id}")
             it.invoke(event)
+        }
+    }
+
+    fun confirmYesNo(message: Message, user: User, ifYes: (() -> Unit)? = null, ifNo: (() -> Unit)? = null) {
+        message.addReaction(GREEN_TICK.emote).queue()
+        message.addReaction(RED_TICK.emote).queue()
+        waitFor(MessageReactionAddEvent::class.java) {
+            if(it.user != user && it.messageId != message.id)
+                return@waitFor
+            if(it.reactionEmote.isEmote) {
+                when(it.reactionEmote.id) {
+                    RED_TICK.id -> {
+                        ifNo?.invoke()
+                        cancel()
+                    }
+                    GREEN_TICK.id -> {
+                        ifYes?.invoke()
+                        cancel()
+                    }
+                }
+            }
         }
     }
 }

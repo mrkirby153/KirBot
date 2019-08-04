@@ -9,7 +9,9 @@ import me.mrkirby153.KirBot.command.annotations.LogInModlogs
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.listener.WaitUtils
 import me.mrkirby153.KirBot.utils.Context
+import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.kcutils.Time
+import net.dv8tion.jda.core.Permission
 import net.dv8tion.jda.core.requests.RequestFuture
 import java.util.concurrent.CompletableFuture
 
@@ -50,8 +52,29 @@ class CommandClean {
         purgeMessages(context, builder.queryIds())
     }
 
+    @Command(name = "everywhere", arguments = ["<user:snowflake>", "[amount:int]"], parent="clean")
+    @LogInModlogs
+    @CommandDescription("Cleans messages sent by the given user across all channels")
+    @IgnoreWhitelist
+    fun cleanEverywhere(context: Context, cmdContext: CommandContext) {
+        val builder = cmdContext.getBuilder()
+        builder.where("server_id", context.guild.id)
+        builder.where("author", cmdContext.getNotNull("user"))
+        purgeMessages(context, builder.queryIds())
+    }
 
-    fun purgeMessages(context: Context, messages: List<String>) {
+    @Command(name = "between", arguments=["<first:snowflake>", "<last:snowflake>"], parent="clean")
+    @LogInModlogs
+    @CommandDescription("Cleans messages sent by all users between the given snowflakes")
+    @IgnoreWhitelist
+    fun cleanBetween(context: Context, cmdContext: CommandContext) {
+        val builder = getBuilder()
+        builder.where("id", ">=", cmdContext.getNotNull("first"))
+        builder.where("id", "<=", cmdContext.getNotNull("last"))
+        builder.where("channel", context.channel.id)
+        purgeMessages(context, builder.queryIds())
+    }
+    private fun purgeMessages(context: Context, messages: List<String>) {
         fun doClean() {
             val m = context.channel.sendMessage(":repeat: Processing...").complete()
             val start = System.currentTimeMillis()
@@ -67,14 +90,29 @@ class CommandClean {
 
             Bot.LOG.debug("Purging ${messages.size} messages across ${buckets.size} channels")
             val cf = mutableListOf<CompletableFuture<*>>()
+            var failedChannels = 0
             buckets.forEach { (channelId, messages) ->
-                val channel = Bot.shardManager.getTextChannelById(channelId) ?: return@forEach
+                val channel = Bot.shardManager.getTextChannelById(channelId)
+                if(channel == null || !channel.checkPermissions(Permission.MESSAGE_MANAGE)) {
+                    failedChannels++
+                    return@forEach
+                }
                 cf.add(RequestFuture.allOf(channel.purgeMessagesById(messages)))
             }
             CompletableFuture.allOf(*cf.toTypedArray()).thenAccept {
-                Bot.LOG.debug("All completable futures have finished")
-                m.editMessage("Finished in `${Time.format(1,
-                        System.currentTimeMillis() - start)}`. Deleted ${messages.size} messages").queue()
+                val msg = buildString {
+                    append("Finished in `")
+                    append(Time.format(1, System.currentTimeMillis()-start))
+                    append("`. Deleted ")
+                    append(messages.size)
+                    append(" messages")
+                    if(failedChannels > 0) {
+                        append(". Could not delete messages in ")
+                        append(failedChannels)
+                        append(" channels")
+                    }
+                }
+                m.editMessage(msg).queue()
             }
         }
         if (messages.size >= confirmAmount) {
@@ -92,7 +130,10 @@ class CommandClean {
     private fun getBuilder(amount: Long? = 50): QueryBuilder {
         return QueryBuilder().table("server_messages").where("deleted", false).select(
                 "server_messages.id")
-                .orderBy("server_messages.id", "DESC")
+                .orderBy("server_messages.id", "DESC").apply {
+                    if(amount != null)
+                        limit(amount)
+                }
     }
 
     private fun QueryBuilder.queryIds(): List<String> {

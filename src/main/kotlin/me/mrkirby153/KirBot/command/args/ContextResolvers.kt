@@ -57,19 +57,17 @@ object ContextResolvers {
         // Snowflake resolver
         registerResolver("snowflake") { args ->
             val first = args.popFirst()
-            if (first.matches(Regex("<@!?\\d+>"))) {
-                Bot.LOG.debug("Matching via mention")
-                val pattern = Pattern.compile("\\d+")
-                val matcher = pattern.matcher(first)
-                if (matcher.find()) {
-                    try {
-                        return@registerResolver matcher.group()
-                    } catch (e: IllegalStateException) {
-                        throw ArgumentParseException("Failed to extract ID from `$first`")
-                    }
+            val pattern = Pattern.compile("\\d{17,18}")
+            val matcher = pattern.matcher(first)
+            if(matcher.find()) {
+                try{
+                    return@registerResolver matcher.group()
+                } catch (e: IllegalStateException) {
+                    throw ArgumentParseException("`$first` is not a valid snowflake")
                 }
+            } else {
+                throw ArgumentParseException("`$first` is not a valid snowflake")
             }
-            return@registerResolver first
         }
 
         // User resolver

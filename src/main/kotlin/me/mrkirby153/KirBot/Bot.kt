@@ -17,6 +17,7 @@ import me.mrkirby153.KirBot.event.PriorityEventManager
 import me.mrkirby153.KirBot.event.Subscribe
 import me.mrkirby153.KirBot.infraction.Infractions
 import me.mrkirby153.KirBot.listener.ShardListener
+import me.mrkirby153.KirBot.listener.WaitUtilsListener
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.AdminControl
 import me.mrkirby153.KirBot.rss.FeedTask
@@ -187,10 +188,10 @@ object Bot {
                 event.jda.guilds.forEach {
                     KirBotGuild[it].syncSeenUsers()
                     KirBotGuild[it].sync()
-                    KirBotGuild[it].dispatchBackfill()
                 }
             }
         })
+        shardManager.addEventListener(WaitUtilsListener())
     }
 
     private fun purgeSoftDeletedGuilds() {

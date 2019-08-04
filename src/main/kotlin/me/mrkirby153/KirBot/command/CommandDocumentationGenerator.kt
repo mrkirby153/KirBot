@@ -1,7 +1,7 @@
 package me.mrkirby153.KirBot.command
 
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.CommandDescription
+import me.mrkirby153.KirBot.command.annotations.CommandDescription
 import me.mrkirby153.KirBot.command.tree.CommandNode
 import java.io.File
 
@@ -25,7 +25,8 @@ object CommandDocumentationGenerator {
             for(c in cmds) {
                 if(c.metadata?.admin == true)
                     continue
-                val h = c.method?.getAnnotation(CommandDescription::class.java)?.value ?: "No description provided"
+                val h = c.method?.getAnnotation(
+                        CommandDescription::class.java)?.value ?: "No description provided"
                 builder.appendln("| `${c.parentString} ${c.name} ${c.metadata!!.arguments.joinToString(" ")}` | ${c.metadata!!.clearance} | $h |")
             }
             builder.appendln()

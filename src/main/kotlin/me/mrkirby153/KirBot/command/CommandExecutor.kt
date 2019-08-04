@@ -2,7 +2,7 @@ package me.mrkirby153.KirBot.command
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.CommandDescription
+import me.mrkirby153.KirBot.command.annotations.CommandDescription
 import me.mrkirby153.KirBot.command.annotations.AdminCommand
 import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.annotations.IgnoreWhitelist
@@ -76,7 +76,8 @@ object CommandExecutor {
             val ignoreWhitelist = method.isAnnotationPresent(IgnoreWhitelist::class.java)
             val admin = method.isAnnotationPresent(AdminCommand::class.java)
 
-            val descriptionAnnotation = method.getAnnotation(CommandDescription::class.java)
+            val descriptionAnnotation = method.getAnnotation(
+                    CommandDescription::class.java)
 
             val metadata = CommandNodeMetadata(commandAnnotation.arguments.toList(),
                     commandAnnotation.clearance, commandAnnotation.permissions, admin,

@@ -1,6 +1,6 @@
 package me.mrkirby153.KirBot.command.executors.admin
 
-import me.mrkirby153.KirBot.CommandDescription
+import me.mrkirby153.KirBot.command.annotations.CommandDescription
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.annotations.IgnoreWhitelist

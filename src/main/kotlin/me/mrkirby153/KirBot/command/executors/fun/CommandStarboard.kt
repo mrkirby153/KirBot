@@ -2,7 +2,7 @@ package me.mrkirby153.KirBot.command.executors.`fun`
 
 import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.CommandDescription
+import me.mrkirby153.KirBot.command.annotations.CommandDescription
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.annotations.Command

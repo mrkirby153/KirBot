@@ -1,7 +1,7 @@
 package me.mrkirby153.KirBot.command.executors.admin
 
 import com.mrkirby153.bfs.sql.DB
-import me.mrkirby153.KirBot.CommandDescription
+import me.mrkirby153.KirBot.command.annotations.CommandDescription
 import me.mrkirby153.KirBot.command.annotations.AdminCommand
 import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.args.CommandContext

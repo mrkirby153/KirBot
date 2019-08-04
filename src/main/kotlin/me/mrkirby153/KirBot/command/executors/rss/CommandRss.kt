@@ -2,7 +2,7 @@ package me.mrkirby153.KirBot.command.executors.rss
 
 import com.mrkirby153.bfs.model.Model
 import com.rometools.rome.io.FeedException
-import me.mrkirby153.KirBot.CommandDescription
+import me.mrkirby153.KirBot.command.annotations.CommandDescription
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.annotations.Command

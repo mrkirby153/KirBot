@@ -2,7 +2,7 @@ package me.mrkirby153.KirBot.command.executors.moderation
 
 import com.mrkirby153.bfs.sql.DB
 import com.mrkirby153.bfs.sql.DbRow
-import me.mrkirby153.KirBot.CommandDescription
+import me.mrkirby153.KirBot.command.annotations.CommandDescription
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.annotations.Command

@@ -1,7 +1,7 @@
 package me.mrkirby153.KirBot.command.executors.admin
 
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.CommandDescription
+import me.mrkirby153.KirBot.command.annotations.CommandDescription
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.annotations.AdminCommand
 import me.mrkirby153.KirBot.command.annotations.Command

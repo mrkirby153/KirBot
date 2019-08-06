@@ -12,6 +12,7 @@ import me.mrkirby153.KirBot.modules.censor.rules.WordRule
 import me.mrkirby153.KirBot.modules.censor.rules.ZalgoRule
 import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.getClearance
+import me.mrkirby153.KirBot.utils.isNumber
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import net.dv8tion.jda.core.entities.Guild
@@ -76,7 +77,7 @@ class Censor : Module("censor") {
 
         val settings = getSettings(guild)
 
-        val effectiveCats = settings.keySet().map { it.toInt() }.filter { it >= clearance }
+        val effectiveCats = settings.keySet().filter{ it.isNumber() }.map { it.toInt() }.filter { it >= clearance }
 
         val rules = mutableListOf<JSONObject>()
 

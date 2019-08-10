@@ -29,6 +29,7 @@ import net.dv8tion.jda.core.exceptions.ErrorResponseException
 import net.dv8tion.jda.core.requests.ErrorResponse
 import java.sql.Timestamp
 import java.time.Instant
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
@@ -133,17 +134,27 @@ object Infractions {
     }
 
     fun kick(user: String, guild: Guild, issuer: String,
-             reason: String? = null): Pair<Boolean, DmResult> {
+             reason: String? = null): CompletableFuture<InfractionResult> {
         if (!guild.selfMember.hasPermission(Permission.KICK_MEMBERS)) {
-            return Pair(false, DmResult.UNKNOWN)
+            return CompletableFuture.completedFuture(
+                    InfractionResult(false, Infractions.DmResult.NOT_SENT,
+                            "Missing `KICK_MEMBERS`"))
         }
+        val future = CompletableFuture<InfractionResult>()
+
         ModuleManager[Logger::class.java].debouncer.create(GuildMemberLeaveEvent::class.java,
                 Pair("user", user))
 
         val inf = createInfraction(user, guild, if (issuer == "1") user else issuer, reason,
                 InfractionType.KICK)
-        val result = dmUser(user, guild, inf)
-        guild.controller.kick(guild.getMemberById(user), reason ?: "").queue()
+        val result = dmUser(user, guild, inf).get()
+        try {
+            guild.controller.kick(guild.getMemberById(user), reason ?: "").queue {
+                future.complete(InfractionResult(true, result))
+            }
+        } catch (e: Exception) {
+            future.completeExceptionally(e)
+        }
 
         guild.kirbotGuild.logManager.genericLog(LogEvent.USER_KICK, ":boot:", buildString {
             append(lookupUser(user, true))
@@ -152,13 +163,13 @@ object Infractions {
                 append(": `$reason`")
             }
         })
-        return Pair(true, result)
+        return future
     }
 
     fun warn(user: String, guild: Guild, issuer: String,
-             reason: String? = null): Pair<Boolean, DmResult> {
+             reason: String? = null): CompletableFuture<InfractionResult> {
         val inf = createInfraction(user, guild, issuer, reason, InfractionType.WARN)
-        val r = dmUser(user, guild, inf)
+        val r = dmUser(user, guild, inf).get()
         guild.kirbotGuild.logManager.genericLog(LogEvent.USER_WARN, ":warning:", buildString {
             append(lookupUser(user, true))
             append(" was warned by **${lookupUser(issuer)}**")
@@ -166,22 +177,32 @@ object Infractions {
                 append(": `$reason`")
             }
         })
-        return Pair(true, r)
+        return CompletableFuture.completedFuture(InfractionResult(true, r))
     }
 
     fun ban(user: String, guild: Guild, issuer: String, reason: String? = null,
-            purgeDays: Int = 0): Pair<Boolean, DmResult> {
+            purgeDays: Int = 0): CompletableFuture<InfractionResult> {
         if (!guild.selfMember.hasPermission(Permission.BAN_MEMBERS))
-            return Pair(false, DmResult.UNKNOWN)
+            return CompletableFuture.completedFuture(
+                    InfractionResult(false, Infractions.DmResult.UNKNOWN,
+                            "Missing `BAN_MEMBEBRS` permission"))
+
         ModuleManager[InfractionModule::class.java].debouncer.create(GuildBanEvent::class.java,
                 Pair("user", user), Pair("guild", guild.id))
         ModuleManager[Logger::class.java].debouncer.create(GuildMemberLeaveEvent::class.java,
                 Pair("user", user))
 
+        val future = CompletableFuture<InfractionResult>()
         val inf = createInfraction(user, guild, if (issuer == "1") user else issuer, reason,
                 InfractionType.BAN)
-        val r = dmUser(user, guild, inf)
-        guild.controller.ban(user, purgeDays, reason).queue()
+        val r = dmUser(user, guild, inf).get()
+        try {
+            guild.controller.ban(user, purgeDays, reason).queue {
+                future.complete(InfractionResult(true, r))
+            }
+        } catch (e: Exception) {
+            future.completeExceptionally(e)
+        }
 
         guild.kirbotGuild.logManager.genericLog(LogEvent.USER_BAN, ":rotating_light:", buildString {
             append(lookupUser(user, true))
@@ -189,13 +210,15 @@ object Infractions {
             if (reason != null)
                 append(": `$reason`")
         })
-        return Pair(true, r)
+        return future
     }
 
     fun softban(user: String, guild: Guild, issuer: String,
-                reason: String? = null): Pair<Boolean, DmResult> {
+                reason: String? = null): CompletableFuture<InfractionResult> {
         if (!guild.selfMember.hasPermission(Permission.BAN_MEMBERS))
-            return Pair(false, DmResult.UNKNOWN)
+            return CompletableFuture.completedFuture(
+                    InfractionResult(false, Infractions.DmResult.UNKNOWN, "Missing BAN_MEMBERS"))
+
         ModuleManager[InfractionModule::class.java].debouncer.create(GuildBanEvent::class.java,
                 Pair("user", user), Pair("guild", guild.id))
         ModuleManager[InfractionModule::class.java].debouncer.create(GuildUnbanEvent::class.java,
@@ -203,12 +226,19 @@ object Infractions {
         ModuleManager[Logger::class.java].debouncer.create(GuildMemberLeaveEvent::class.java,
                 Pair("user", user))
 
+        val future = CompletableFuture<InfractionResult>()
         val inf = createInfraction(user, guild, if (issuer == "1") user else issuer, reason,
                 InfractionType.KICK)
-        val r = dmUser(user, guild, inf)
+        val r = dmUser(user, guild, inf).get()
 
-        guild.controller.ban(user, 7, reason).queue {
-            guild.controller.unban(user).queue()
+        try {
+            guild.controller.ban(user, 7, reason).queue {
+                guild.controller.unban(user).queue {
+                    future.complete(InfractionResult(true, r))
+                }
+            }
+        } catch (e: Exception) {
+            future.completeExceptionally(e)
         }
         guild.kirbotGuild.logManager.genericLog(LogEvent.USER_KICK, ":boot:", buildString {
             append(lookupUser(user, true))
@@ -216,19 +246,28 @@ object Infractions {
             if (reason != null)
                 append(": `$reason`")
         })
-        return Pair(true, r)
+        return future
     }
 
-    fun unban(user: String, guild: Guild, issuer: String, reason: String = ""): Boolean {
+    fun unban(user: String, guild: Guild, issuer: String,
+              reason: String = ""): CompletableFuture<InfractionResult> {
         if (!guild.selfMember.hasPermission(Permission.BAN_MEMBERS))
-            return false
+            return CompletableFuture.completedFuture(
+                    InfractionResult(false, Infractions.DmResult.UNKNOWN, "Missing BAN_MEMBERS"))
         ModuleManager[InfractionModule::class.java].debouncer.create(GuildUnbanEvent::class.java,
                 Pair("user", user), Pair("guild", guild.id))
-        guild.banList.queue { banList ->
-            if (user in banList.map { it.user.id })
-                guild.controller.unban(user).queue()
-            else
-                Bot.LOG.debug("$user is not banned so not unbanning")
+        val future = CompletableFuture<InfractionResult>()
+        try {
+            guild.banList.queue { banList ->
+                if (user in banList.map { it.user.id })
+                    guild.controller.unban(user).queue {
+                        future.complete(InfractionResult(true, Infractions.DmResult.NOT_SENT))
+                    }
+                else
+                    Bot.LOG.debug("$user is not banned so not unbanning")
+            }
+        } catch (e: Exception) {
+            future.completeExceptionally(e)
         }
 
         // Deactivate all the users active bans (should only be one)
@@ -245,90 +284,136 @@ object Infractions {
                     if (reason.isNotBlank())
                         append("(`$reason`)")
                 })
-        return true
+        return future
     }
 
     fun mute(user: String, guild: Guild, issuer: String, reason: String? = null,
-             createInfraction: Boolean = true): Pair<Boolean, DmResult> {
+             createInfraction: Boolean = true): CompletableFuture<InfractionResult> {
         if (!guild.selfMember.hasPermission(Permission.MANAGE_ROLES))
-            return Pair(false, DmResult.UNKNOWN)
-        val member = guild.getMemberById(user) ?: return Pair(false, DmResult.UNKNOWN)
-        addMutedRole(member.user, guild, "Mute by ${lookupUser(issuer)}: ${reason ?: ""}")
-
-        var dmResult = DmResult.NOT_SENT
-        if (createInfraction) {
-            val inf = createInfraction(user, guild, if (issuer == "1") user else issuer, reason,
-                    InfractionType.MUTE)
-            dmResult = dmUser(user, guild, inf)
-        }
-
-        guild.kirbotGuild.logManager.genericLog(LogEvent.USER_MUTE, ":zipper_mouth:", buildString {
-            append(lookupUser(user, true))
-            append(" muted by **${lookupUser(issuer)}**")
-            if (reason != null) {
-                append(": `$reason`")
+            return CompletableFuture.completedFuture(
+                    InfractionResult(false, DmResult.UNKNOWN, "Missing MANAGE_ROLES"))
+        val member = guild.getMemberById(user) ?: return CompletableFuture.completedFuture(
+                InfractionResult(false, DmResult.UNKNOWN, "User not found"))
+        val future = CompletableFuture<InfractionResult>()
+        addMutedRole(member.user, guild,
+                "Mute by ${lookupUser(issuer)}: ${reason ?: ""}").thenAccept {
+            if (!it) {
+                future.complete(InfractionResult(false, Infractions.DmResult.NOT_SENT,
+                        "Could not add muted role"))
+                return@thenAccept
             }
-        })
-        return Pair(true, dmResult)
+            var dmResult = DmResult.NOT_SENT
+            if (createInfraction) {
+                val inf = createInfraction(user, guild, if (issuer == "1") user else issuer, reason,
+                        InfractionType.MUTE)
+                dmResult = dmUser(user, guild, inf).get()
+            }
+
+            future.complete(InfractionResult(true, dmResult))
+
+            guild.kirbotGuild.logManager.genericLog(LogEvent.USER_MUTE, ":zipper_mouth:",
+                    buildString {
+                        append(lookupUser(user, true))
+                        append(" muted by **${lookupUser(issuer)}**")
+                        if (reason != null) {
+                            append(": `$reason`")
+                        }
+                    })
+        }
+        return future
     }
 
-    fun unmute(user: String, guild: Guild, issuer: String, reason: String? = null): Boolean {
+    fun unmute(user: String, guild: Guild, issuer: String,
+               reason: String? = null): CompletableFuture<InfractionResult> {
         if (!guild.selfMember.hasPermission(Permission.MANAGE_ROLES))
-            return false
+            return CompletableFuture.completedFuture(
+                    InfractionResult(false, Infractions.DmResult.UNKNOWN, "Missing MANAGE_ROLES"))
+
+        val future = CompletableFuture<InfractionResult>()
         removeMutedRole(guild.getMemberById(user).user, guild,
-                "Unmute by ${lookupUser(issuer)}: ${reason ?: ""}")
-
-        getActiveInfractions(user,
-                guild).filter { it.type == InfractionType.MUTE || it.type == InfractionType.TEMPMUTE }.forEach { ban ->
-            ban.revoke()
-        }
-
-        guild.kirbotGuild.logManager.genericLog(LogEvent.USER_UNMUTE, ":open_mouth:", buildString {
-            append(lookupUser(user, true))
-            append(" unmuted by **${lookupUser(issuer)}**")
-            if (reason != null) {
-                append(": `$reason`")
+                "Unmute by ${lookupUser(issuer)}: ${reason ?: ""}").thenAccept { result ->
+            if (!result) {
+                future.complete(InfractionResult(false, Infractions.DmResult.NOT_SENT,
+                        "Could not remove muted role"))
+                return@thenAccept
             }
-        })
-        return true
+            getActiveInfractions(user,
+                    guild).filter { it.type == InfractionType.MUTE || it.type == InfractionType.TEMPMUTE }.forEach { mute ->
+                mute.revoke()
+            }
+
+            future.complete(InfractionResult(true, Infractions.DmResult.NOT_SENT))
+
+            guild.kirbotGuild.logManager.genericLog(LogEvent.USER_UNMUTE, ":open_mouth:",
+                    buildString {
+                        append(lookupUser(user, true))
+                        append(" unmuted by **${lookupUser(issuer)}**")
+                        if (reason != null) {
+                            append(": `$reason`")
+                        }
+                    })
+        }
+        return future
     }
 
     fun tempMute(user: String, guild: Guild, issuer: String, duration: Long, units: TimeUnit,
-                 reason: String? = null): Pair<Boolean, DmResult> {
+                 reason: String? = null): CompletableFuture<InfractionResult> {
         if (!guild.selfMember.hasPermission(Permission.MANAGE_ROLES))
-            return Pair(false, DmResult.UNKNOWN)
-        addMutedRole(guild.getMemberById(user).user, guild,
-                "Temp mute by ${lookupUser(issuer)}: ${reason ?: ""}")
-        val inf = createInfraction(user, guild, if (issuer == "1") user else issuer, reason,
-                InfractionType.TEMPMUTE, Timestamp.from(
-                Instant.now().plusMillis(TimeUnit.MILLISECONDS.convert(duration, units))))
-        val r = dmUser(user, guild, inf)
-        waitForInfraction()
+            return CompletableFuture.completedFuture(
+                    InfractionResult(false, Infractions.DmResult.UNKNOWN, "Missing MANAGE_ROLES"))
 
-        guild.kirbotGuild.logManager.genericLog(LogEvent.USER_MUTE, ":zipper_mouth:", buildString {
-            append(lookupUser(user, true))
-            append(" temp muted by **${lookupUser(issuer)}** for ${Time.formatLong(
-                    TimeUnit.MILLISECONDS.convert(duration, units), Time.TimeUnit.SECONDS)}")
-            if (reason != null) {
-                append(": `$reason`")
+        val future = CompletableFuture<InfractionResult>()
+        addMutedRole(guild.getMemberById(user).user, guild,
+                "Temp mute by ${lookupUser(issuer)}: ${reason ?: ""}").thenAccept { success ->
+            if (!success) {
+                future.complete(InfractionResult(false, Infractions.DmResult.NOT_SENT,
+                        "Could not add muted role"))
+                return@thenAccept
             }
-        })
-        return Pair(true, r)
+            val inf = createInfraction(user, guild, if (issuer == "1") user else issuer, reason,
+                    InfractionType.TEMPMUTE, Timestamp.from(
+                    Instant.now().plusMillis(TimeUnit.MILLISECONDS.convert(duration, units))))
+            val r = dmUser(user, guild, inf).get()
+            future.complete(InfractionResult(true, r))
+            waitForInfraction()
+
+            guild.kirbotGuild.logManager.genericLog(LogEvent.USER_MUTE, ":zipper_mouth:",
+                    buildString {
+                        append(lookupUser(user, true))
+                        append(" temp muted by **${lookupUser(issuer)}** for ${Time.formatLong(
+                                TimeUnit.MILLISECONDS.convert(duration, units),
+                                Time.TimeUnit.SECONDS)}")
+                        if (reason != null) {
+                            append(": `$reason`")
+                        }
+                    })
+        }
+
+        return future
     }
 
     fun tempban(user: String, guild: Guild, issuer: String, duration: Long, units: TimeUnit,
-                reason: String? = null, purgeDays: Int = 0): Pair<Boolean, DmResult> {
+                reason: String? = null, purgeDays: Int = 0): CompletableFuture<InfractionResult> {
         if (!guild.selfMember.hasPermission(Permission.BAN_MEMBERS))
-            return Pair(false, DmResult.UNKNOWN)
+            return CompletableFuture.completedFuture(
+                    InfractionResult(false, Infractions.DmResult.UNKNOWN, "Missing BAN_MEMBERS"))
+
         ModuleManager[InfractionModule::class.java].ignoreBans.add(user)
         val inf = createInfraction(user, guild, issuer, reason, InfractionType.TEMPBAN,
                 Timestamp.from(
                         Instant.now().plusMillis(TimeUnit.MILLISECONDS.convert(duration, units))))
-        val r = dmUser(user, guild, inf)
 
+        val r = dmUser(user, guild, inf).get()
+        val future = CompletableFuture<InfractionResult>()
         guild.banList.queue { banList ->
             if (user !in banList.map { it.user.id })
-                guild.controller.ban(user, purgeDays, reason).queue()
+                try {
+                    guild.controller.ban(user, purgeDays, reason).queue {
+                        future.complete(InfractionResult(true, r))
+                    }
+                } catch (e: Exception) {
+                    future.completeExceptionally(e)
+                }
         }
         waitForInfraction()
         guild.kirbotGuild.logManager.genericLog(LogEvent.USER_BAN, ":rotating_light:", buildString {
@@ -338,7 +423,7 @@ object Infractions {
             if (reason != null)
                 append(": `$reason`")
         })
-        return Pair(true, r)
+        return future
     }
 
     fun createInfraction(user: String, guild: Guild, issuer: String, reason: String?,
@@ -402,30 +487,43 @@ object Infractions {
         }
     }
 
-    fun addMutedRole(user: User, guild: Guild, reason: String = "") {
+    fun addMutedRole(user: User, guild: Guild, reason: String = ""): CompletableFuture<Boolean> {
         Bot.LOG.debug("Adding muted role to $user in $guild")
         val role = getMutedRole(guild)
+        val future = CompletableFuture<Boolean>()
         if (role == null) {
             guild.kirbotGuild.logManager.genericLog(LogEvent.USER_MUTE, ":warning:",
                     "Cannot assign the muted role to ${user.logName} because the muted role is not configured")
-            return
+            return CompletableFuture.completedFuture(false)
         }
         val ra = guild.controller.addSingleRoleToMember(user.getMember(guild),
                 role)
         if (reason.isNotBlank())
             ra.reason(reason)
-        ra.queue()
+        try {
+            ra.queue {
+                future.complete(true)
+            }
+        } catch (e: Exception) {
+            future.completeExceptionally(e)
+        }
+        return future
     }
 
-    fun removeMutedRole(user: User, guild: Guild, reason: String = "") {
-        val r = user.getMember(guild)?.roles?.map { it.id } ?: return
-        val mutedRole = getMutedRole(guild) ?: return
+    fun removeMutedRole(user: User, guild: Guild, reason: String = ""): CompletableFuture<Boolean> {
+        val r = user.getMember(guild)?.roles?.map { it.id }
+                ?: return CompletableFuture.completedFuture(false)
+        val mutedRole = getMutedRole(guild) ?: return CompletableFuture.completedFuture(false)
+        val future = CompletableFuture<Boolean>()
         if (mutedRole.id in r) {
             guild.controller.removeSingleRoleFromMember(user.getMember(guild), mutedRole).apply {
                 if (reason.isNotBlank())
                     reason(reason)
-            }.queue()
+            }.queue {
+                future.complete(true)
+            }
         }
+        return future
     }
 
     fun lookupUser(id: String, withId: Boolean = false): String {
@@ -458,56 +556,62 @@ object Infractions {
         return guild.getRoleById(roleId)
     }
 
-    fun dmUser(user: String, guild: Guild, infraction: Infraction): DmResult {
+    fun dmUser(user: String, guild: Guild, infraction: Infraction): CompletableFuture<DmResult> {
         val u = Bot.shardManager.getUserById(user)
         if (u != null)
             return dmUser(u, guild, infraction)
-        val reason = infraction.reason ?: return DmResult.NOT_SENT
+        val reason = infraction.reason ?: return CompletableFuture.completedFuture(
+                DmResult.NOT_SENT)
         if (!reason.startsWith("[DM]") && !reason.startsWith("[ADM]"))
-            return DmResult.NOT_SENT
+            return CompletableFuture.completedFuture(DmResult.NOT_SENT)
         else
-            return DmResult.SEND_ERROR
+            return CompletableFuture.completedFuture(DmResult.SEND_ERROR)
     }
 
-    fun dmUser(user: User, guild: Guild, infraction: Infraction): DmResult {
-        var reason = infraction.reason ?: return DmResult.NOT_SENT
+    fun dmUser(user: User, guild: Guild, infraction: Infraction): CompletableFuture<DmResult> {
+        var reason = infraction.reason ?: return CompletableFuture.completedFuture(
+                DmResult.NOT_SENT)
         if (!reason.startsWith("[DM]") && !reason.startsWith("[ADM]"))
-            return DmResult.NOT_SENT
+            return CompletableFuture.completedFuture(DmResult.NOT_SENT)
+
+        val future = CompletableFuture<DmResult>()
         val anonymous = reason.startsWith("[ADM]")
         reason = reason.replace(Regex("\\[A?DM]"), "")
         try {
-            val channel = user.openPrivateChannel().complete()
-            val action = when (infraction.type) {
-                InfractionType.WARNING -> "warned"
-                InfractionType.KICK -> "kicked"
-                InfractionType.BAN -> "banned"
-                InfractionType.UNBAN -> "unbanned"
-                InfractionType.MUTE -> "muted"
-                InfractionType.TEMPMUTE -> "temporarily muted"
-                InfractionType.UNKNOWN -> ""
-                InfractionType.WARN -> "warned"
-                InfractionType.TEMPBAN -> "temporarily banned"
-                InfractionType.TEMPROLE -> ""
-            }
-            channel.sendMessage(buildString {
-                append("You have been ")
-                append(action)
-                append(" in **")
-                append(guild.name)
-                append("**")
-                if (!anonymous) {
-                    append(" by ${lookupUser(infraction.issuerId!!, true)}")
+            val channel = user.openPrivateChannel().queue { channel ->
+                val action = when (infraction.type) {
+                    InfractionType.WARNING -> "warned"
+                    InfractionType.KICK -> "kicked"
+                    InfractionType.BAN -> "banned"
+                    InfractionType.UNBAN -> "unbanned"
+                    InfractionType.MUTE -> "muted"
+                    InfractionType.TEMPMUTE -> "temporarily muted"
+                    InfractionType.UNKNOWN -> ""
+                    InfractionType.WARN -> "warned"
+                    InfractionType.TEMPBAN -> "temporarily banned"
+                    InfractionType.TEMPROLE -> ""
                 }
-                if (reason.isNotBlank())
-                    append(": `$reason`")
-            }).complete()
-            return DmResult.SENT
+                channel.sendMessage(buildString {
+                    append("You have been ")
+                    append(action)
+                    append(" in **")
+                    append(guild.name)
+                    append("**")
+                    if (!anonymous) {
+                        append(" by ${lookupUser(infraction.issuerId!!, true)}")
+                    }
+                    if (reason.isNotBlank())
+                        append(": `$reason`")
+                }).queue {
+                    future.complete(DmResult.SENT)
+                }
+            }
         } catch (e: ErrorResponseException) {
             if (e.errorResponse == ErrorResponse.CANNOT_SEND_TO_USER) {
-                return DmResult.NOT_SENT
+                return CompletableFuture.completedFuture(DmResult.NOT_SENT)
             }
         }
-        return DmResult.UNKNOWN
+        return CompletableFuture.completedFuture(DmResult.UNKNOWN)
     }
 
     enum class DmResult {
@@ -517,3 +621,6 @@ object Infractions {
         UNKNOWN
     }
 }
+
+data class InfractionResult(val successful: Boolean, val dmResult: Infractions.DmResult,
+                            val errorMessage: String? = null)

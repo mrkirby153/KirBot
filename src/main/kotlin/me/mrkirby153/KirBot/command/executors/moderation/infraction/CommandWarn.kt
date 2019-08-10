@@ -1,15 +1,16 @@
 package me.mrkirby153.KirBot.command.executors.moderation.infraction
 
-import me.mrkirby153.KirBot.command.annotations.CommandDescription
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.annotations.Command
+import me.mrkirby153.KirBot.command.annotations.CommandDescription
 import me.mrkirby153.KirBot.command.annotations.IgnoreWhitelist
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.infraction.Infractions
 import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.canInteractWith
+import me.mrkirby153.KirBot.utils.nameAndDiscrim
 
 
 class CommandWarn {
@@ -29,19 +30,26 @@ class CommandWarn {
             if (!context.author.canInteractWith(context.guild, member.user))
                 throw CommandException("Missing permissions")
         }
-        val r = Infractions.warn(userId, context.guild, context.author.id, reason)
-        context.send().success(buildString {
-            append("Warned user ")
-            append(Infractions.lookupUser(userId, true))
-            append(" (`$reason`)")
-            when (r.second) {
-                Infractions.DmResult.SENT ->
-                    append(" _Successfully messaged the user_")
-                Infractions.DmResult.SEND_ERROR ->
-                    append(" _Could not send DM to user._")
-                else -> {
-                }
+        Infractions.warn(userId, context.guild, context.author.id, reason).handle { result, t ->
+            if (t != null || !result.successful) {
+                context.send().error("An error occurred when warning ${member?.user?.nameAndDiscrim
+                        ?: userId}: ${t ?: result.errorMessage}").queue()
+                return@handle
             }
-        }, true).queue()
+            context.send().success(buildString {
+                append("Warned user ")
+                append(Infractions.lookupUser(userId, true))
+                append(" (`$reason`)")
+                when (result.dmResult) {
+                    Infractions.DmResult.SENT ->
+                        append(" _Successfully messaged the user_")
+                    Infractions.DmResult.SEND_ERROR ->
+                        append(" _Could not send DM to user._")
+                    else -> {
+                    }
+                }
+            }, true).queue()
+        }
+
     }
 }

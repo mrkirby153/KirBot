@@ -2,12 +2,14 @@ package me.mrkirby153.KirBot.command.executors.admin
 
 import com.mrkirby153.bfs.sql.QueryBuilder
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.annotations.CommandDescription
 import me.mrkirby153.KirBot.command.annotations.IgnoreWhitelist
 import me.mrkirby153.KirBot.command.annotations.LogInModlogs
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.listener.WaitUtils
+import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.kcutils.Time
@@ -19,7 +21,7 @@ class CommandClean {
 
     private val confirmAmount = 100
 
-    @Command(name = "all", arguments = ["[amount:int]"], parent = "clean")
+    @Command(name = "all", arguments = ["[amount:int]"], parent = "clean", clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION)
     @CommandDescription("Cleans messages from everyone in the current channel")
     @LogInModlogs
     @IgnoreWhitelist
@@ -29,7 +31,7 @@ class CommandClean {
         purgeMessages(context, builder.queryIds())
     }
 
-    @Command(name = "user", arguments = ["<user:snowflake>", "[amount:int]"], parent = "clean")
+    @Command(name = "user", arguments = ["<user:snowflake>", "[amount:int]"], parent = "clean", clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION)
     @CommandDescription("Cleans messages from a specific user in the current channel")
     @LogInModlogs
     @IgnoreWhitelist
@@ -40,7 +42,7 @@ class CommandClean {
         purgeMessages(context, builder.queryIds())
     }
 
-    @Command(name = "bots", arguments = ["[amount:int]"], parent = "clean")
+    @Command(name = "bots", arguments = ["[amount:int]"], parent = "clean", clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION)
     @CommandDescription("Cleans messages sent by bots in the current channel")
     @LogInModlogs
     @IgnoreWhitelist
@@ -52,7 +54,7 @@ class CommandClean {
         purgeMessages(context, builder.queryIds())
     }
 
-    @Command(name = "everywhere", arguments = ["<user:snowflake>", "[amount:int]"], parent="clean")
+    @Command(name = "everywhere", arguments = ["<user:snowflake>", "[amount:int]"], parent="clean", clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION)
     @LogInModlogs
     @CommandDescription("Cleans messages sent by the given user across all channels")
     @IgnoreWhitelist
@@ -63,7 +65,7 @@ class CommandClean {
         purgeMessages(context, builder.queryIds())
     }
 
-    @Command(name = "between", arguments=["<first:snowflake>", "<last:snowflake>"], parent="clean")
+    @Command(name = "between", arguments=["<first:snowflake>", "<last:snowflake>"], parent="clean", clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION)
     @LogInModlogs
     @CommandDescription("Cleans messages sent by all users between the given snowflakes")
     @IgnoreWhitelist

@@ -10,6 +10,7 @@ import me.mrkirby153.KirBot.command.annotations.LogInModlogs
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.infraction.Infractions
 import me.mrkirby153.KirBot.listener.WaitUtils
+import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.canInteractWith
 import me.mrkirby153.kcutils.utils.argparser.ArgumentParser
@@ -32,7 +33,7 @@ class MassActionCommands {
 
     @Command(name = "mban", arguments = ["<options:string...>"],
             category = CommandCategory.MODERATION,
-            permissions = [Permission.BAN_MEMBERS])
+            permissions = [Permission.BAN_MEMBERS], clearance = CLEARANCE_MOD)
     @LogInModlogs
     @IgnoreWhitelist
     @CommandDescription("Mass bans users")
@@ -43,7 +44,7 @@ class MassActionCommands {
     }
 
     @Command(name = "munban", arguments = ["<options:string...>"],
-            category = CommandCategory.MODERATION, permissions = [Permission.BAN_MEMBERS])
+            category = CommandCategory.MODERATION, permissions = [Permission.BAN_MEMBERS], clearance = CLEARANCE_MOD)
     @LogInModlogs
     @IgnoreWhitelist
     @CommandDescription("Mass unban users")
@@ -54,7 +55,7 @@ class MassActionCommands {
     }
 
     @Command(name = "mkick", arguments = ["<options:string...>"],
-            category = CommandCategory.MODERATION, permissions = [Permission.BAN_MEMBERS])
+            category = CommandCategory.MODERATION, permissions = [Permission.BAN_MEMBERS], clearance = CLEARANCE_MOD)
     @LogInModlogs
     @IgnoreWhitelist
     @CommandDescription("Mass kick")

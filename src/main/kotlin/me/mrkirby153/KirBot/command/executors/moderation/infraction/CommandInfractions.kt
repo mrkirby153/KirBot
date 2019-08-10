@@ -2,10 +2,10 @@ package me.mrkirby153.KirBot.command.executors.moderation.infraction
 
 import com.mrkirby153.bfs.model.Model
 import com.mrkirby153.bfs.sql.DB
-import me.mrkirby153.KirBot.command.annotations.CommandDescription
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.annotations.Command
+import me.mrkirby153.KirBot.command.annotations.CommandDescription
 import me.mrkirby153.KirBot.command.annotations.IgnoreWhitelist
 import me.mrkirby153.KirBot.command.annotations.LogInModlogs
 import me.mrkirby153.KirBot.command.args.CommandContext
@@ -25,7 +25,8 @@ import net.dv8tion.jda.core.MessageBuilder
 
 class CommandInfractions {
 
-    @Command(name = "infraction", aliases=["inf"])
+    @Command(name = "infraction", aliases=["inf"], clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION)
+    @CommandDescription("Infraction related commands")
     fun inf() {
         // Dummy command to support aliases
     }

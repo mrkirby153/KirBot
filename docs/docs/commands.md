@@ -4,8 +4,8 @@
 |---------|-----------------|-------------|
 | ` rss ` | 50 | Shows a list of RSS feeds currently being monitored |
 | ` rss refresh [id:string]` | 50 | Refresh a feed |
-| ` rss add <url:string>` | 50 | Adds a feed to be watched |
 | ` rss remove <id:string>` | 50 | Removes a feed from the watch list |
+| ` rss add <url:string>` | 50 | Adds a feed to be watched |
 | ` rss list ` | 50 | Show a list of RSS feeds being monitored |
 | ` selfrole ` | 0 | Displays a list of self-assignable roles |
 | ` selfrole add <role:string...>` | 100 | Add a role to the list of self-assignable roles |
@@ -18,10 +18,10 @@
 | Command | Clearance Level | Description |
 |---------|-----------------|-------------|
 | ` starboard update <mid:snowflake>` | 50 | Forces an update of the starboard message |
-| ` starboard hide <mid:snowflake>` | 50 | Hides an entry from the starboard |
-| ` starboard unhide <mid:snowflake>` | 50 | Unhides an entry from the starboard |
 | ` starboard block <user:snowflake>` | 50 | Blocks a user from the starboard. They cannot star messages and their messages cannot be starred |
 | ` starboard unblock <user:snowflake>` | 50 | Unblocks a user from the starboard |
+| ` starboard hide <mid:snowflake>` | 50 | Hides an entry from the starboard |
+| ` starboard unhide <mid:snowflake>` | 50 | Unhides an entry from the starboard |
 | ` jumbo <emojis:string...>` | 0 | Sends a bigger version of the given emojis |
 | ` remind <time:string> <query:string...>` | 0 | Set reminders |
 | ` server [server:snowflake]` | 50 | No description provided |
@@ -37,27 +37,36 @@
 | Command | Clearance Level | Description |
 |---------|-----------------|-------------|
 | ` modlog hide <user:user>` | 100 | Hides a user from the modlogs |
-| ` modlog hidden ` | 100 | List all the hidden users |
 | ` modlog unhide <user:user>` | 100 | Unhides a user from the modlogs |
-| ` modlog hush ` | 100 | Hush the modlogs (Message deletes won't be logged) |
+| ` modlog hidden ` | 100 | List all the hidden users |
 | ` modlog unhush ` | 100 | Unhush the modlogs |
+| ` modlog hush ` | 100 | Hush the modlogs (Message deletes won't be logged) |
 | ` unmute <user:user> [reason:string...]` | 50 | Unmute a user (Remove the configured muted role) |
 | ` hide ` | 100 | No description provided |
-| ` raid dismiss ` | 50 | No description provided |
 | ` raid info <id:string>` | 50 | No description provided |
 | ` raid kick <id:string>` | 50 | No description provided |
-| ` raid ban <id:string>` | 50 | No description provided |
 | ` raid unmute <id:string>` | 50 | No description provided |
+| ` raid ban <id:string>` | 50 | No description provided |
+| ` raid dismiss ` | 50 | No description provided |
 | ` temprole <user:snowflake> <role:string> <duration:string> [reason:string...]` | 100 | No description provided |
 | ` lock [msg:string...]` | 50 | No description provided |
+| ` infraction ` | 50 | Infraction related commands |
 | ` infraction search [query:string...]` | 50 | Search for an infraction with the given query |
+| ` infraction import-banlist ` | 100 | Imports the banlist as infractions |
 | ` infraction info <id:int>` | 50 | Gets detailed information about an infraction |
 | ` infraction export ` | 50 | Exports a CSV of infractions |
 | ` infraction reason <id:number> <reason:string...>` | 50 | Sets the reason of an infraction |
-| ` infraction import-banlist ` | 100 | Imports the banlist as infractions |
 | ` infraction clear <id:int> [reason:string...]` | 50 | Clears an infraction (Deletes it from the database) |
-| ` ban <user:user> [reason:string...]` | 50 | Bans a user |
+| ` ban <user:snowflake> [reason:string...]` | 50 | Bans a user |
 | ` unban <user:snowflake> [reason:string...]` | 50 | Unbans a user |
+| ` munban <options:string...>` | 50 | Mass unban users |
+| ` mkick <options:string...>` | 50 | Mass kick |
+| ` mban <options:string...>` | 50 | Mass bans users |
+| ` clean bots [amount:int]` | 50 | Cleans messages sent by bots in the current channel |
+| ` clean between <first:snowflake> <last:snowflake>` | 50 | Cleans messages sent by all users between the given snowflakes |
+| ` clean everywhere <user:snowflake> [amount:int]` | 50 | Cleans messages sent by the given user across all channels |
+| ` clean user <user:snowflake> [amount:int]` | 50 | Cleans messages from a specific user in the current channel |
+| ` clean all [amount:int]` | 50 | Cleans messages from everyone in the current channel |
 | ` unhide ` | 100 | No description provided |
 | ` mute <user:user> [reason:string...]` | 50 | Mute a user (Assign the set muted role) |
 | ` info [user:user]` | 50 | Retrieves information about a user |
@@ -65,7 +74,6 @@
 | ` archive user <user:snowflake> [amount:int]` | 50 | Create an archive of messages that a user has sent |
 | ` archive channel <channel:snowflake> [amount:int]` | 50 | Creates an archive of messages sent in a channel |
 | ` kick <user:user> [reason:string...]` | 50 | Kick a user |
-| ` forceban <user:snowflake> [reason:string...]` | 50 | Force bans a user |
 | ` role ` | 50 | List all the roles and their IDs |
 | ` role add <user:snowflake> <role:string> [reason:string...]` | 50 | Add a role to the given user |
 | ` role remove <user:snowflake> <role:string> [reason:string...]` | 50 | Remove a role from the given user |
@@ -92,9 +100,6 @@
 | Command | Clearance Level | Description |
 |---------|-----------------|-------------|
 | ` refresh ` | 100 | Updates the currently running configuration with the database |
-| ` clean all [amount:int]` | 50 | Cleans messages from everyone in the current channel |
-| ` clean bots [amount:int]` | 50 | Clean messages sent by bots in the current channel |
-| ` clean user <user:snowflake> [amount:int]` | 50 | Clean messages sent by a specific user in the current channel |
 
 ## Miscellaneous
 | Command | Clearance Level | Description |
@@ -103,5 +108,5 @@
 | ` clearance [user:user]` | 0 | Displays the user's clearance |
 | ` help [command:string...]` | 0 | Display help for a command |
 | ` ping ` | 0 | Check the bot's ping |
-| ` charinfo ` | 0 | Get information about a string of characters |
+| ` charinfo <text:string...>` | 0 | Get information about a string of characters |
 

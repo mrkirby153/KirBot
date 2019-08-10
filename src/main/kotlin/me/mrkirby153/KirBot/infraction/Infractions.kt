@@ -263,8 +263,10 @@ object Infractions {
                     guild.controller.unban(user).queue {
                         future.complete(InfractionResult(true, Infractions.DmResult.NOT_SENT))
                     }
-                else
+                else {
                     Bot.LOG.debug("$user is not banned so not unbanning")
+                    future.complete(InfractionResult(true, Infractions.DmResult.NOT_SENT))
+                }
             }
         } catch (e: Exception) {
             future.completeExceptionally(e)

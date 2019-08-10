@@ -35,21 +35,24 @@ object WaitUtils {
         }
     }
 
-    fun confirmYesNo(message: Message, user: User, ifYes: (() -> Unit)? = null, ifNo: (() -> Unit)? = null) {
-        message.addReaction(GREEN_TICK.emote).queue()
-        message.addReaction(RED_TICK.emote).queue()
-        waitFor(MessageReactionAddEvent::class.java) {
-            if(it.user != user && it.messageId != message.id)
-                return@waitFor
-            if(it.reactionEmote.isEmote) {
-                when(it.reactionEmote.id) {
-                    RED_TICK.id -> {
-                        ifNo?.invoke()
-                        cancel()
-                    }
-                    GREEN_TICK.id -> {
-                        ifYes?.invoke()
-                        cancel()
+    fun confirmYesNo(message: Message, user: User, ifYes: (() -> Unit)? = null,
+                     ifNo: (() -> Unit)? = null) {
+        message.addReaction(GREEN_TICK.emote).queue {
+            message.addReaction(RED_TICK.emote).queue {
+                waitFor(MessageReactionAddEvent::class.java) {
+                    if (it.user != user || it.messageId != message.id)
+                        return@waitFor
+                    if (it.reactionEmote.isEmote) {
+                        when (it.reactionEmote.id) {
+                            RED_TICK.id -> {
+                                ifNo?.invoke()
+                                cancel()
+                            }
+                            GREEN_TICK.id -> {
+                                ifYes?.invoke()
+                                cancel()
+                            }
+                        }
                     }
                 }
             }

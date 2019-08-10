@@ -11,7 +11,7 @@ import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.deleteAfter
 import me.mrkirby153.KirBot.utils.promptForConfirmation
 import me.mrkirby153.kcutils.utils.argparser.ArgumentParser
-import me.mrkirby153.kcutils.utils.argparser.MissingFlagException
+import me.mrkirby153.kcutils.utils.argparser.MissingArgumentException
 import me.mrkirby153.kcutils.utils.argparser.Option
 import net.dv8tion.jda.core.OnlineStatus
 import net.dv8tion.jda.core.entities.Game
@@ -99,7 +99,7 @@ class CommandRestart {
             parser.parse(cmdContext.get<String>("query") ?: "")
         } catch (e: java.lang.IllegalArgumentException) {
             throw CommandException(e.message)
-        } catch (e: MissingFlagException) {
+        } catch (e: MissingArgumentException) {
             throw CommandException(e.message)
         }
         val guild = parsed["guild"]

@@ -5,7 +5,7 @@ import com.mrkirby153.bfs.annotations.PrimaryKey
 import com.mrkirby153.bfs.annotations.Table
 import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.Bot
-import net.dv8tion.jda.core.entities.TextChannel
+import net.dv8tion.jda.api.entities.TextChannel
 import java.sql.Timestamp
 
 @Table("rss_feeds")

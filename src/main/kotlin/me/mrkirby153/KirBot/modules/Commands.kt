@@ -4,8 +4,9 @@ import me.mrkirby153.KirBot.command.CommandExecutor
 import me.mrkirby153.KirBot.event.Subscribe
 import me.mrkirby153.KirBot.module.Module
 import me.mrkirby153.KirBot.utils.Context
-import net.dv8tion.jda.core.events.message.MessageReceivedEvent
-import net.dv8tion.jda.core.events.message.MessageUpdateEvent
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent
+import net.dv8tion.jda.api.events.message.MessageUpdateEvent
+
 
 class Commands : Module("commands") {
 

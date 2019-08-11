@@ -4,7 +4,7 @@ import com.mrkirby153.bfs.annotations.Column
 import com.mrkirby153.bfs.annotations.Table
 import com.mrkirby153.bfs.model.SoftDeletingModel
 import me.mrkirby153.KirBot.Bot
-import net.dv8tion.jda.core.entities.Guild
+import net.dv8tion.jda.api.entities.Guild
 
 @Table("guild")
 class DiscordGuild(guild: Guild? = null) : SoftDeletingModel() {

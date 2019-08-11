@@ -1,6 +1,7 @@
 package me.mrkirby153.KirBot.utils
 
-import net.dv8tion.jda.core.events.Event
+import net.dv8tion.jda.api.events.GenericEvent
+
 
 class Debouncer(val timeout: Long = 120 * 1000) {
 
@@ -23,7 +24,7 @@ class Debouncer(val timeout: Long = 120 * 1000) {
      *
      * @return True if the event was debounced, false if it wasn't
      */
-    fun find(type: Class<out Event>, vararg params: Pair<String, String?>): Boolean {
+    fun find(type: Class<out GenericEvent>, vararg params: Pair<String, String?>): Boolean {
         val potentialEvents = this.debounces.filter { it.type == type }
         var found: DebouncedEvent? = null
 
@@ -44,7 +45,7 @@ class Debouncer(val timeout: Long = 120 * 1000) {
         return found != null
     }
 
-    fun create(type: Class<out Event>, vararg params: Pair<String, String?>) {
+    fun create(type: Class<out GenericEvent>, vararg params: Pair<String, String?>) {
         val paramMap = mutableMapOf<String, String?>()
         params.forEach {
             paramMap[it.first] = it.second
@@ -52,7 +53,7 @@ class Debouncer(val timeout: Long = 120 * 1000) {
         this.debounces.add(DebouncedEvent(type, paramMap, System.currentTimeMillis() + timeout))
     }
 
-    data class DebouncedEvent(val type: Class<out Event>,
+    data class DebouncedEvent(val type: Class<out GenericEvent>,
                                       val parameters: Map<String, String?>,
                                       val expires: Long)
 }

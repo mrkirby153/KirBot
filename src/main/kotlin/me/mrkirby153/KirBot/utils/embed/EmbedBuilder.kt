@@ -1,7 +1,7 @@
 package me.mrkirby153.KirBot.utils.embed
 
-import net.dv8tion.jda.core.entities.MessageEmbed
-import net.dv8tion.jda.core.entities.User
+import net.dv8tion.jda.api.entities.MessageEmbed
+import net.dv8tion.jda.api.entities.User
 import java.awt.Color
 import java.time.Instant
 import java.util.Calendar
@@ -167,7 +167,7 @@ open class EmbedBuilder {
     }
 
     fun build(): MessageEmbed {
-        val embed = net.dv8tion.jda.core.EmbedBuilder()
+        val embed = net.dv8tion.jda.api.EmbedBuilder()
         if (title.toString().isNotEmpty())
             embed.setTitle(title.toString())
         embed.setDescription(description.toString())

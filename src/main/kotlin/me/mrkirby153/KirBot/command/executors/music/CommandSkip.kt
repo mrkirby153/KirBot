@@ -16,7 +16,7 @@ import me.mrkirby153.KirBot.utils.embed.embed
 import me.mrkirby153.KirBot.utils.embed.link
 import me.mrkirby153.KirBot.utils.escapeMarkdown
 import me.mrkirby153.kcutils.Time
-import net.dv8tion.jda.core.Permission
+import net.dv8tion.jda.api.Permission
 import java.awt.Color
 import java.util.concurrent.TimeUnit
 

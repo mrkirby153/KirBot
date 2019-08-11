@@ -15,33 +15,33 @@ import me.mrkirby153.KirBot.utils.logName
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import me.mrkirby153.KirBot.utils.sanitize
 import me.mrkirby153.kcutils.Time
-import net.dv8tion.jda.core.events.ShutdownEvent
-import net.dv8tion.jda.core.events.channel.text.TextChannelCreateEvent
-import net.dv8tion.jda.core.events.channel.text.TextChannelDeleteEvent
-import net.dv8tion.jda.core.events.channel.text.update.TextChannelUpdateNameEvent
-import net.dv8tion.jda.core.events.channel.voice.VoiceChannelCreateEvent
-import net.dv8tion.jda.core.events.channel.voice.VoiceChannelDeleteEvent
-import net.dv8tion.jda.core.events.channel.voice.update.VoiceChannelUpdateNameEvent
-import net.dv8tion.jda.core.events.guild.member.GuildMemberJoinEvent
-import net.dv8tion.jda.core.events.guild.member.GuildMemberLeaveEvent
-import net.dv8tion.jda.core.events.guild.member.GuildMemberNickChangeEvent
-import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleAddEvent
-import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleRemoveEvent
-import net.dv8tion.jda.core.events.guild.voice.GuildVoiceJoinEvent
-import net.dv8tion.jda.core.events.guild.voice.GuildVoiceLeaveEvent
-import net.dv8tion.jda.core.events.guild.voice.GuildVoiceMoveEvent
-import net.dv8tion.jda.core.events.message.MessageBulkDeleteEvent
-import net.dv8tion.jda.core.events.message.guild.GuildMessageDeleteEvent
-import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent
-import net.dv8tion.jda.core.events.message.guild.GuildMessageUpdateEvent
-import net.dv8tion.jda.core.events.role.RoleCreateEvent
-import net.dv8tion.jda.core.events.role.RoleDeleteEvent
-import net.dv8tion.jda.core.events.role.update.RoleUpdateColorEvent
-import net.dv8tion.jda.core.events.role.update.RoleUpdateHoistedEvent
-import net.dv8tion.jda.core.events.role.update.RoleUpdateMentionableEvent
-import net.dv8tion.jda.core.events.role.update.RoleUpdateNameEvent
-import net.dv8tion.jda.core.events.role.update.RoleUpdatePermissionsEvent
-import net.dv8tion.jda.core.events.user.update.UserUpdateNameEvent
+import net.dv8tion.jda.api.events.ShutdownEvent
+import net.dv8tion.jda.api.events.channel.text.TextChannelCreateEvent
+import net.dv8tion.jda.api.events.channel.text.TextChannelDeleteEvent
+import net.dv8tion.jda.api.events.channel.text.update.TextChannelUpdateNameEvent
+import net.dv8tion.jda.api.events.channel.voice.VoiceChannelCreateEvent
+import net.dv8tion.jda.api.events.channel.voice.VoiceChannelDeleteEvent
+import net.dv8tion.jda.api.events.channel.voice.update.VoiceChannelUpdateNameEvent
+import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent
+import net.dv8tion.jda.api.events.guild.member.GuildMemberLeaveEvent
+import net.dv8tion.jda.api.events.guild.member.GuildMemberRoleAddEvent
+import net.dv8tion.jda.api.events.guild.member.GuildMemberRoleRemoveEvent
+import net.dv8tion.jda.api.events.guild.member.update.GuildMemberUpdateNicknameEvent
+import net.dv8tion.jda.api.events.guild.voice.GuildVoiceJoinEvent
+import net.dv8tion.jda.api.events.guild.voice.GuildVoiceLeaveEvent
+import net.dv8tion.jda.api.events.guild.voice.GuildVoiceMoveEvent
+import net.dv8tion.jda.api.events.message.MessageBulkDeleteEvent
+import net.dv8tion.jda.api.events.message.guild.GuildMessageDeleteEvent
+import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent
+import net.dv8tion.jda.api.events.message.guild.GuildMessageUpdateEvent
+import net.dv8tion.jda.api.events.role.RoleCreateEvent
+import net.dv8tion.jda.api.events.role.RoleDeleteEvent
+import net.dv8tion.jda.api.events.role.update.RoleUpdateColorEvent
+import net.dv8tion.jda.api.events.role.update.RoleUpdateHoistedEvent
+import net.dv8tion.jda.api.events.role.update.RoleUpdateMentionableEvent
+import net.dv8tion.jda.api.events.role.update.RoleUpdateNameEvent
+import net.dv8tion.jda.api.events.role.update.RoleUpdatePermissionsEvent
+import net.dv8tion.jda.api.events.user.update.UserUpdateNameEvent
 import org.json.JSONObject
 
 class Logger : Module("logging") {
@@ -117,14 +117,14 @@ class Logger : Module("logging") {
     fun onGuildMemberJoin(event: GuildMemberJoinEvent) {
         event.guild.kirbotGuild.logManager.genericLog(LogEvent.USER_JOIN, ":inbox_tray:",
                 "${event.user.logName} joined (Created ${Time.formatLong(
-                        System.currentTimeMillis() - (event.user.creationTime.toEpochSecond() * 1000))} ago)")
+                        System.currentTimeMillis() - (event.user.timeCreated.toEpochSecond() * 1000))} ago)")
     }
 
     @Subscribe
     fun onGuildMemberLeave(event: GuildMemberLeaveEvent) {
         if (debouncer.find(GuildMemberLeaveEvent::class.java, Pair("user", event.user.id)))
             return
-        val t = System.currentTimeMillis() - (event.member.joinDate.toEpochSecond() * 1000)
+        val t = System.currentTimeMillis() - (event.member.timeJoined.toEpochSecond() * 1000)
         val joinString = if (t < 1000) {
             "a moment ago"
         } else "${Time.formatLong(t)} ago"
@@ -240,22 +240,22 @@ class Logger : Module("logging") {
     }
 
     @Subscribe
-    fun onGuildMemberNickChange(event: GuildMemberNickChangeEvent) {
-        if (debouncer.find(GuildMemberNickChangeEvent::class.java, Pair("id", event.user.id)))
+    fun onGuildMemberNickChange(event: GuildMemberUpdateNicknameEvent) {
+        if (debouncer.find(GuildMemberUpdateNicknameEvent::class.java, Pair("id", event.user.id)))
             return
         when {
-            event.prevNick == null -> {
+            event.oldNickname == null -> {
                 event.guild.kirbotGuild.logManager.genericLog(LogEvent.USER_NICKNAME_CHANGE,
                         ":name_badge:",
-                        "${event.user.logName} set nickname `${event.newNick}`")
+                        "${event.user.logName} set nickname `${event.newNickname}`")
                 return
             }
-            event.newNick == null -> event.guild.kirbotGuild.logManager.genericLog(
+            event.oldNickname == null -> event.guild.kirbotGuild.logManager.genericLog(
                     LogEvent.USER_NICKNAME_CHANGE, ":name_badge:",
-                    "${event.user.logName} removed nickname `${event.prevNick}`")
+                    "${event.user.logName} removed nickname `${event.newNickname}`")
             else -> event.guild.kirbotGuild.logManager.genericLog(LogEvent.USER_NICKNAME_CHANGE,
                     ":name_badge:",
-                    "${event.user.logName} changed nick from `${event.prevNick}` to `${event.newNick}`")
+                    "${event.user.logName} changed nick from `${event.oldNickname}` to `${event.newNickname}`")
         }
     }
 

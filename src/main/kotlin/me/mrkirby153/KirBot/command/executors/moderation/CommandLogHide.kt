@@ -10,7 +10,7 @@ import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.user.CLEARANCE_ADMIN
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
-import net.dv8tion.jda.core.entities.User
+import net.dv8tion.jda.api.entities.User
 
 
 class CommandModlogs {
@@ -24,7 +24,7 @@ class CommandModlogs {
         val userId = cmdContext.get<User>("user")?.id ?: return
 
         val currentlyHidden = context.kirbotGuild.extraData.optJSONArray(
-                "log-ignored")?.map { it.toString() }?.toMutableSet() ?: mutableSetOf()
+                "log-ignored").map { it.toString() }?.toMutableSet() ?: mutableSetOf()
 
         currentlyHidden.add(userId)
 

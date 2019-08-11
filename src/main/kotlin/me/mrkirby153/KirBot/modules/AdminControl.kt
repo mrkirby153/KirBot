@@ -1,14 +1,14 @@
 package me.mrkirby153.KirBot.modules
 
+import club.minnced.discord.webhook.WebhookClient
+import club.minnced.discord.webhook.WebhookClientBuilder
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.event.Subscribe
 import me.mrkirby153.kcutils.Time
-import net.dv8tion.jda.core.JDA
-import net.dv8tion.jda.core.entities.TextChannel
-import net.dv8tion.jda.core.events.DisconnectEvent
-import net.dv8tion.jda.core.events.ResumedEvent
-import net.dv8tion.jda.webhook.WebhookClient
-import net.dv8tion.jda.webhook.WebhookClientBuilder
+import net.dv8tion.jda.api.JDA
+import net.dv8tion.jda.api.entities.TextChannel
+import net.dv8tion.jda.api.events.DisconnectEvent
+import net.dv8tion.jda.api.events.ResumedEvent
 import java.text.SimpleDateFormat
 import java.util.LinkedList
 
@@ -87,19 +87,19 @@ object AdminControl {
         val dcTime = System.currentTimeMillis() - (this.disconnectedAt.remove(event.jda)
                 ?: System.currentTimeMillis())
         log(":e_mail: Received RESUME. Was disconnected for ${Time.format(1, dcTime)}", event.jda)
-        if (event.jda.shardInfo?.shardId ?: shardId == shardId) {
+        if (event.jda.shardInfo.shardId == shardId) {
             sendQueuedMessages()
         }
     }
 
     @Subscribe
     fun onDisconnect(event: DisconnectEvent) {
-        if (event.jda.shardInfo?.shardId ?: shardId == shardId) {
+        if (event.jda.shardInfo.shardId == shardId) {
             this.connected = false
         }
-        this.disconnectedAt[event.jda] = event.disconnectTime.toEpochSecond() * 1000
+        this.disconnectedAt[event.jda] = event.timeDisconnected.toEpochSecond() * 1000
         log(":e_mail: :warning: Disconnected from the websocket at ${SimpleDateFormat(
                 "MM-dd-yy HH:mm:ss").format(
-                event.disconnectTime.toEpochSecond())} (${event.closeCode})", event.jda)
+                event.timeDisconnected.toEpochSecond())} (${event.closeCode})", event.jda)
     }
 }

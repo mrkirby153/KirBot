@@ -5,7 +5,7 @@ import com.mrkirby153.bfs.annotations.PrimaryKey
 import com.mrkirby153.bfs.annotations.Table
 import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.logger.LogManager
-import net.dv8tion.jda.core.entities.Message
+import net.dv8tion.jda.api.entities.Message
 import java.sql.Timestamp
 
 @Table("server_messages")
@@ -75,8 +75,8 @@ class GuildMessage(message: Message? = null) : Model() {
             this.message = message.contentRaw
             this.attachments = if (message.attachments.size > 0) message.attachments.joinToString(
                     ",") { it.url } else null
-            this.createdAt = Timestamp.from(message.creationTime.toInstant())
-            this.updatedAt = this.createdAt
+            this.createdAt = Timestamp.from(message.timeCreated.toInstant())
+            this.updatedAt = Timestamp.from(message.timeEdited?.toInstant() ?: message.timeCreated.toInstant())
         }
     }
 

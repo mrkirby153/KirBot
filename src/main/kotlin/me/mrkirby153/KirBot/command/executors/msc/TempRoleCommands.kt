@@ -16,7 +16,7 @@ import me.mrkirby153.KirBot.utils.canAssign
 import me.mrkirby153.KirBot.utils.logName
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import me.mrkirby153.kcutils.Time
-import net.dv8tion.jda.core.Permission
+import net.dv8tion.jda.api.Permission
 import java.sql.Timestamp
 import java.time.Instant
 
@@ -54,8 +54,8 @@ class TempRoleCommands {
         } catch (e: FuzzyMatchException.NoMatchesException) {
             throw CommandException("No roles found for that query")
         }
-        RoleCommands.checkManipulate(context.member, target)
-        RoleCommands.checkAssignment(context.member, role)
+        RoleCommands.checkManipulate(context.member!!, target)
+        RoleCommands.checkAssignment(context.member!!, role)
 
         if (!context.guild.selfMember.canAssign(role))
             throw CommandException("I cannot assign that role")
@@ -63,7 +63,7 @@ class TempRoleCommands {
         if (role in target.roles)
             throw CommandException("${target.user.nameAndDiscrim} is already in that role")
 
-        context.guild.controller.addSingleRoleToMember(target, role).queue {
+        context.guild.addRoleToMember(target, role).queue {
             Infractions.createInfraction(userId, context.guild, context.author.id,
                     "${role.name} - $reason",
                     InfractionType.TEMPROLE, Timestamp.from(timestamp), role.id)

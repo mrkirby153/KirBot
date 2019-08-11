@@ -2,9 +2,9 @@ package me.mrkirby153.KirBot.command.executors.`fun`
 
 import com.mrkirby153.bfs.model.Model
 import com.mrkirby153.bfs.sql.DB
-import me.mrkirby153.KirBot.command.annotations.CommandDescription
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.annotations.Command
+import me.mrkirby153.KirBot.command.annotations.CommandDescription
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.models.guild.GuildMember
 import me.mrkirby153.KirBot.user.CLEARANCE_MOD
@@ -19,10 +19,10 @@ import me.mrkirby153.KirBot.utils.convertSnowflake
 import me.mrkirby153.KirBot.utils.getMember
 import me.mrkirby153.KirBot.utils.getOnlineStats
 import me.mrkirby153.kcutils.Time
-import net.dv8tion.jda.core.OnlineStatus
-import net.dv8tion.jda.core.entities.Game
-import net.dv8tion.jda.core.entities.Member
-import net.dv8tion.jda.core.entities.User
+import net.dv8tion.jda.api.OnlineStatus
+import net.dv8tion.jda.api.entities.Activity
+import net.dv8tion.jda.api.entities.Member
+import net.dv8tion.jda.api.entities.User
 import okhttp3.Request
 import java.awt.Color
 import java.awt.image.BufferedImage
@@ -35,7 +35,8 @@ class CommandInfo {
 
     private val sdf = SimpleDateFormat("YYYY-MM-dd HH:mm:ss")
 
-    @Command(name = "info", arguments = ["[user:user]"], category = CommandCategory.MODERATION, clearance = CLEARANCE_MOD)
+    @Command(name = "info", arguments = ["[user:user]"], category = CommandCategory.MODERATION,
+            clearance = CLEARANCE_MOD)
     @CommandDescription("Retrieves information about a user")
     fun execute(context: Context, cmdContext: CommandContext) {
         val user = cmdContext.get<User>("user") ?: context.author
@@ -81,12 +82,12 @@ class CommandInfo {
                 appendln("ID: ${user.id}")
                 appendln("Status: $onlineStatus ${getOnlineEmoji(onlineStatus)}")
                 appendln("Profile: ${user.asMention}")
-                if (jdaMember?.game != null)
+                if (jdaMember?.activities?.isNotEmpty() == true)
                     appendln(getPlayingStatus(jdaMember))
                 appendln("")
                 appendln("**> Member Information**")
                 if (jdaMember != null) {
-                    val joinTime = jdaMember.joinDate.toEpochSecond() * 1000
+                    val joinTime = jdaMember.timeJoined.toEpochSecond() * 1000
                     appendln("Joined: ${Time.formatLong(
                             System.currentTimeMillis() - joinTime,
                             Time.TimeUnit.MINUTES).toLowerCase()} ago (${SimpleDateFormat(
@@ -113,7 +114,7 @@ class CommandInfo {
                     if (lastMsg != null || firstMsg != null)
                         appendln("")
                 }
-                if(infractions > 0) {
+                if (infractions > 0) {
                     appendln("")
                     appendln("**> Infractions**")
                     appendln("Total Infractions: $infractions")
@@ -139,16 +140,19 @@ class CommandInfo {
     }
 
     private fun getPlayingStatus(member: Member): String {
-        val game = member.game
+        val activities = member.activities
         return buildString {
-            when (game.type) {
-                Game.GameType.DEFAULT -> append("Playing ")
-                Game.GameType.LISTENING -> append("Listening to ")
-                Game.GameType.STREAMING -> append("Streaming ")
-                Game.GameType.WATCHING -> append("Watching ")
-                null -> append("Playing ")
+            activities.forEach { activity ->
+                when (activity.type) {
+                    Activity.ActivityType.DEFAULT -> append("Playing ")
+                    Activity.ActivityType.LISTENING -> append("Listening to ")
+                    Activity.ActivityType.STREAMING -> append("Streaming ")
+                    Activity.ActivityType.WATCHING -> append("Watching ")
+                    null -> append("Playing ")
+                }
+                append(activity.name)
             }
-            append(game.name)
+
         }
     }
 

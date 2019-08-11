@@ -11,7 +11,7 @@ import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.embed.link
 import me.mrkirby153.KirBot.utils.escapeMarkdown
-import net.dv8tion.jda.core.Permission
+import net.dv8tion.jda.api.Permission
 import java.util.Random
 import kotlin.math.roundToInt
 

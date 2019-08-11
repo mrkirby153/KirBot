@@ -8,7 +8,7 @@ import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.GREEN_TICK
 import me.mrkirby153.KirBot.utils.RED_TICK
-import net.dv8tion.jda.core.Permission
+import net.dv8tion.jda.api.Permission
 import java.util.concurrent.TimeUnit
 
 

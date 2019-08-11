@@ -7,8 +7,8 @@ import com.rometools.rome.io.XmlReader
 import me.mrkirby153.KirBot.database.models.rss.FeedItem
 import me.mrkirby153.KirBot.database.models.rss.RssFeed
 import me.mrkirby153.kcutils.utils.IdGenerator
-import net.dv8tion.jda.core.entities.Guild
-import net.dv8tion.jda.core.entities.TextChannel
+import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.TextChannel
 import java.net.URL
 
 object FeedManager {

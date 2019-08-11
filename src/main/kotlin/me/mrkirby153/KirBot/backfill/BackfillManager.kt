@@ -1,7 +1,7 @@
 package me.mrkirby153.KirBot.backfill
 
 import me.mrkirby153.KirBot.Bot
-import net.dv8tion.jda.core.entities.Guild
+import net.dv8tion.jda.api.entities.Guild
 import java.util.concurrent.ConcurrentHashMap
 
 object BackfillManager {

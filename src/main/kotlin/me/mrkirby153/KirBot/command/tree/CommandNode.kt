@@ -1,7 +1,7 @@
 package me.mrkirby153.KirBot.command.tree
 
 import me.mrkirby153.KirBot.command.CommandCategory
-import net.dv8tion.jda.core.Permission
+import net.dv8tion.jda.api.Permission
 import java.lang.reflect.Method
 
 class CommandNode(val name: String, var method: Method? = null,

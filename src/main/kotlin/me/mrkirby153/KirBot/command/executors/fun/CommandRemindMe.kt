@@ -1,10 +1,10 @@
 package me.mrkirby153.KirBot.command.executors.`fun`
 
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.command.annotations.CommandDescription
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.annotations.Command
+import me.mrkirby153.KirBot.command.annotations.CommandDescription
 import me.mrkirby153.KirBot.command.annotations.IgnoreWhitelist
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.listener.WaitUtils
@@ -13,11 +13,10 @@ import me.mrkirby153.KirBot.modules.Scheduler
 import me.mrkirby153.KirBot.scheduler.Schedulable
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.RED_TICK
-import me.mrkirby153.KirBot.utils.deleteAfter
 import me.mrkirby153.kcutils.Time
-import net.dv8tion.jda.core.entities.Message
-import net.dv8tion.jda.core.entities.User
-import net.dv8tion.jda.core.events.message.guild.react.GuildMessageReactionAddEvent
+import net.dv8tion.jda.api.entities.Message
+import net.dv8tion.jda.api.entities.User
+import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent
 import java.text.SimpleDateFormat
 import java.util.concurrent.TimeUnit
 
@@ -46,8 +45,6 @@ class CommandRemindMe {
                         newTime)} (${Time.format(0, time,
                         smallest = Time.TimeUnit.SECONDS).toLowerCase()} from now) about `$query`",
                 true).queue {
-            it.deleteAfter(10, TimeUnit.SECONDS)
-            context.deleteAfter(10, TimeUnit.SECONDS)
         }
     }
 
@@ -61,17 +58,16 @@ class CommandRemindMe {
                     it.getTextChannelById(channel)?.sendMessage(
                             "<@${this.user}> ${Time.formatLong(
                                     System.currentTimeMillis() - startTime).toLowerCase()} ago, you asked me to remind you about `$query`. React with $RED_TICK to delete this message")?.queue {
-                        it.addReaction(RED_TICK.emote).queue()
+                        it.addReaction(RED_TICK.emote!!).queue()
                         queueDelete(it, user)
                     }
                 }
             }
         }
 
-        private fun queueDelete(it: Message,
-                                user: User) {
+        private fun queueDelete(it: Message, user: User) {
             WaitUtils.waitFor(GuildMessageReactionAddEvent::class.java) { event ->
-                it.channel.getMessageById(event.messageId).queue { msg ->
+                it.channel.retrieveMessageById(event.messageId).queue { msg ->
                     if (msg.id == it.id && event.reactionEmote.id == RED_TICK.id && event.user == user) {
                         Bot.LOG.debug("Reaction request delete")
                         msg.delete().queue()

@@ -19,7 +19,7 @@ class YoutubeSearch(val query: String) {
         Bot.properties.getProperty("google-api-key")
     }
 
-    fun execute(): String {
+    fun execute(): String? {
         val request = Request.Builder().url(getQueryString()).build()
 
         val response = HttpUtils.CLIENT.newCall(request).execute()
@@ -37,7 +37,10 @@ class YoutubeSearch(val query: String) {
         val jsonArray = jsonObject.optJSONArray("items")
         if(jsonArray == null || jsonArray.count() == 0)
             throw CommandException("No items returned!")
-        return jsonArray.getJSONObject(0).getJSONObject("id").getString("videoId")
+        val obj = jsonArray.optJSONObject(0)?.optJSONObject("id")
+        if(obj != null && obj.has("videoId"))
+            return obj.getString("videoId")
+        return null
     }
 
     private fun getQueryString(): String {

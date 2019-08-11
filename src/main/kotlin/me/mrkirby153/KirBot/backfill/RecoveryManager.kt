@@ -6,9 +6,9 @@ import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.Database
 import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.KirBot.utils.toSnowflake
-import net.dv8tion.jda.core.Permission
-import net.dv8tion.jda.core.entities.Guild
-import net.dv8tion.jda.core.entities.TextChannel
+import net.dv8tion.jda.api.Permission
+import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.TextChannel
 import java.time.Instant
 import java.util.Date
 import java.util.concurrent.CopyOnWriteArrayList
@@ -82,7 +82,7 @@ class RecoveryTask(private val recovery: ActiveRecovery, val channel: TextChanne
                 ps.use {
                     action.retrievedHistory.forEach { msg ->
                         Bot.LOG.debug("Queueing $msg")
-                        if (msg.creationTime.toInstant().isAfter(end))
+                        if (msg.timeCreated.toInstant().isAfter(end))
                             return@forEach
                         ps.setString(1, msg.id)
                         ps.setString(2, msg.guild.id)

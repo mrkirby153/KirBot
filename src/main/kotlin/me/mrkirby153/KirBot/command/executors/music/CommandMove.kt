@@ -9,7 +9,7 @@ import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.music.MusicModule
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.SettingsRepository
-import net.dv8tion.jda.core.Permission
+import net.dv8tion.jda.api.Permission
 
 
 class CommandMove {

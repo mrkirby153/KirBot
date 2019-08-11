@@ -14,8 +14,9 @@ import me.mrkirby153.KirBot.utils.STATUS_ONLINE
 import me.mrkirby153.KirBot.utils.embed.embed
 import me.mrkirby153.KirBot.utils.getPrimaryColor
 import me.mrkirby153.kcutils.Time
-import net.dv8tion.jda.core.OnlineStatus
-import net.dv8tion.jda.core.entities.Member
+import net.dv8tion.jda.api.OnlineStatus
+import net.dv8tion.jda.api.entities.Member
+import java.awt.Color
 import java.text.SimpleDateFormat
 
 
@@ -29,15 +30,15 @@ class CommandServer {
                 "Server not found")
 
         context.channel.sendMessage(embed {
-            color = getPrimaryColor(server.iconUrl)
+            color = if(server.iconUrl != null) getPrimaryColor(server.iconUrl!!) else Color(114, 137, 218)
             thumbnail = server.iconUrl
             title {
                 append(server.name)
             }
             description {
                 appendln("Created: ${Time.format(1,
-                        System.currentTimeMillis() - (server.creationTime.toEpochSecond() * 1000))} ago (${SimpleDateFormat(
-                        "MM-dd-yy HH:mm:ss").format(server.creationTime.toEpochSecond() * 1000)})")
+                        System.currentTimeMillis() - (server.timeCreated.toEpochSecond() * 1000))} ago (${SimpleDateFormat(
+                        "MM-dd-yy HH:mm:ss").format(server.timeCreated.toEpochSecond() * 1000)})")
                 appendln("Members: ${server.members.size}")
                 if (server.features.isNotEmpty())
                     appendln("Features: ${server.features.joinToString(", ")}")
@@ -54,6 +55,7 @@ class CommandServer {
                     memberFilter.getOrPut(member.onlineStatus) { mutableListOf() }.add(member)
                 }
                 appendln()
+                appendln("\\> Members")
                 appendln("$STATUS_ONLINE ${memberFilter[OnlineStatus.ONLINE]?.size ?: "0"}")
                 appendln("$STATUS_AWAY ${memberFilter[OnlineStatus.IDLE]?.size ?: "0"}")
                 appendln("$STATUS_DND ${memberFilter[OnlineStatus.DO_NOT_DISTURB]?.size ?: "0"}")

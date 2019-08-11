@@ -17,12 +17,11 @@ import me.mrkirby153.KirBot.utils.getMember
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.logName
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
-import net.dv8tion.jda.core.Permission
-import net.dv8tion.jda.core.entities.Member
-import net.dv8tion.jda.core.entities.Role
-import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleAddEvent
-import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleRemoveEvent
-
+import net.dv8tion.jda.api.Permission
+import net.dv8tion.jda.api.entities.Member
+import net.dv8tion.jda.api.entities.Role
+import net.dv8tion.jda.api.events.guild.member.GuildMemberRoleAddEvent
+import net.dv8tion.jda.api.events.guild.member.GuildMemberRoleRemoveEvent
 
 class RoleCommands {
 
@@ -62,7 +61,7 @@ class RoleCommands {
         }
 
 
-        val member = context.guild.getMemberById(cmdContext.get<String>("user"))
+        val member = context.guild.getMemberById(cmdContext.getNotNull<String>("user"))
                 ?: throw CommandException("That user is not in the guild")
 
         val m = context.author.getMember(context.guild) ?: return
@@ -74,7 +73,7 @@ class RoleCommands {
 
         ModuleManager[Logger::class.java].debouncer.create(GuildMemberRoleAddEvent::class.java,
                 Pair("user", member.user.id), Pair("role", role.id))
-        context.guild.controller.addSingleRoleToMember(member, role).queue()
+        context.guild.addRoleToMember(member, role).queue()
         context.kirbotGuild.logManager.genericLog(LogEvent.ROLE_ADD, ":key:",
                 "Assigned **${role.name}** to ${member.user.logName}: `$reason`")
         context.send().success("Added role **${role.name}** to ${member.user.nameAndDiscrim}",
@@ -101,7 +100,7 @@ class RoleCommands {
             throw CommandException("No roles found for that query")
         }
 
-        val member = context.guild.getMemberById(cmdContext.get<String>("user"))
+        val member = context.guild.getMemberById(cmdContext.getNotNull<String>("user"))
                 ?: throw CommandException(
                         "that user is not in the guild")
 
@@ -113,7 +112,7 @@ class RoleCommands {
                 Pair("user", member.user.id), Pair("role", role.id))
         context.kirbotGuild.logManager.genericLog(LogEvent.ROLE_ADD, ":key:",
                 "Removed **${role.name}** from ${member.user.logName}: `$reason`")
-        context.guild.controller.removeSingleRoleFromMember(member, role).queue()
+        context.guild.removeRoleFromMember(member, role).queue()
         context.send().success("Removed role **${role.name}** from ${member.user.nameAndDiscrim}",
                 true).queue()
     }

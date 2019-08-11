@@ -9,9 +9,8 @@ import me.mrkirby153.KirBot.user.CLEARANCE_ADMIN
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.hide
 import me.mrkirby153.KirBot.utils.unhide
-import net.dv8tion.jda.core.Permission
-import net.dv8tion.jda.core.entities.TextChannel
-
+import net.dv8tion.jda.api.Permission
+import net.dv8tion.jda.api.entities.TextChannel
 
 class CommandHideChannel {
     @Command(name = "hide", clearance = CLEARANCE_ADMIN, permissions = [Permission.MANAGE_CHANNEL],

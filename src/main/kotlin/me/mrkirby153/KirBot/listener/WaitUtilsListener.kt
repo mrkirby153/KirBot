@@ -1,7 +1,7 @@
 package me.mrkirby153.KirBot.listener
 
 import me.mrkirby153.KirBot.event.Subscribe
-import net.dv8tion.jda.core.events.Event
+import net.dv8tion.jda.api.events.Event
 
 class WaitUtilsListener {
 

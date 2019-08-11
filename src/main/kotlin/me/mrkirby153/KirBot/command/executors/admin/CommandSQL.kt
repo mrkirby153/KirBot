@@ -1,10 +1,10 @@
 package me.mrkirby153.KirBot.command.executors.admin
 
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.command.annotations.CommandDescription
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.annotations.AdminCommand
 import me.mrkirby153.KirBot.command.annotations.Command
+import me.mrkirby153.KirBot.command.annotations.CommandDescription
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.Database
@@ -12,9 +12,8 @@ import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.kcutils.Time
 import me.mrkirby153.kcutils.use
 import me.mrkirby153.kcutils.utils.TableBuilder
-import net.dv8tion.jda.core.MessageBuilder
+import net.dv8tion.jda.api.MessageBuilder
 import java.sql.SQLException
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
 
@@ -51,9 +50,9 @@ class CommandSQL {
 
                             val table = builder.buildTable()
                             if (table.length > 1900) {
-                                context.channel.sendFile(table.toByteArray(),
-                                        "query.txt", MessageBuilder("_Took ${Time.format(1,
-                                        end_time - start_time)}_").build()).queue()
+                                context.channel.sendMessage(MessageBuilder("_Took ${Time.format(1,
+                                        end_time - start_time)}_").build()).addFile(
+                                        table.toByteArray(), "query.txt").queue()
                             } else {
                                 context.channel.sendMessage("```$table```_Took ${Time.format(1,
                                         end_time - start_time)}_").queue()
@@ -68,8 +67,9 @@ class CommandSQL {
                 }
             }
         }
+        // TODO 8/11/2019 Use completable future
         try {
-            future.get(5, TimeUnit.SECONDS)
+            future.get()
         } catch (e: TimeoutException) {
             throw CommandException("Query took too long!")
         }

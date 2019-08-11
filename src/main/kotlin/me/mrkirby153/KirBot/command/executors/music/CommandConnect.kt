@@ -1,9 +1,9 @@
 package me.mrkirby153.KirBot.command.executors.music
 
-import me.mrkirby153.KirBot.command.annotations.CommandDescription
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.annotations.Command
+import me.mrkirby153.KirBot.command.annotations.CommandDescription
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.music.MusicModule
@@ -12,9 +12,9 @@ import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.checkPermissions
 import me.xdrop.fuzzywuzzy.FuzzySearch
-import net.dv8tion.jda.core.Permission
-import net.dv8tion.jda.core.entities.Channel
-import net.dv8tion.jda.core.entities.VoiceChannel
+import net.dv8tion.jda.api.Permission
+import net.dv8tion.jda.api.entities.GuildChannel
+import net.dv8tion.jda.api.entities.VoiceChannel
 
 
 class CommandConnect{
@@ -27,13 +27,13 @@ class CommandConnect{
             return
         val chanName = cmdContext.get<String>("channel")
         val channel = if (chanName != null) fuzzyMatchChannel(chanName,
-                context.guild.voiceChannels) as VoiceChannel else context.member.voiceState.channel
+                context.guild.voiceChannels) as VoiceChannel else context.member!!.voiceState!!.channel
                 ?: throw CommandException("Please join a voice channel first!")
         if (!channel.checkPermissions(Permission.VOICE_CONNECT))
             throw CommandException("I cannot join this voice channel")
 
-        if(context.guild.selfMember.voiceState.inVoiceChannel()){
-            if(context.guild.selfMember.voiceState.channel.members.any { it != context.guild.selfMember }){
+        if(context.guild.selfMember.voiceState!!.inVoiceChannel()){
+            if(context.guild.selfMember.voiceState!!.channel!!.members.any { it != context.guild.selfMember }){
                 if(!isDJ(context.member))
                     throw CommandException("Only DJs can switch channels while the bot is playing")
             }
@@ -44,7 +44,7 @@ class CommandConnect{
                 "Joining **${channel.name}** and binding to <#${context.channel.id}>").queue()
     }
 
-    private fun fuzzyMatchChannel(query: String, channels: List<Channel>): Channel? {
+    private fun fuzzyMatchChannel(query: String, channels: List<GuildChannel>): GuildChannel? {
         if (query.matches(Regex("\\d{17,18}"))) {
             return channels.first { it.id == query }
         }
@@ -56,7 +56,7 @@ class CommandConnect{
                 throw CommandException("Too many matches for the query `$query`")
             return exactMatches.first()
         } else {
-            val fuzzyRated = mutableMapOf<Channel, Int>()
+            val fuzzyRated = mutableMapOf<GuildChannel, Int>()
             channels.forEach { chan ->
                 fuzzyRated[chan] = FuzzySearch.partialRatio(query.toLowerCase().replace(" ", ""),
                         chan.name.toLowerCase().replace(" ", ""))

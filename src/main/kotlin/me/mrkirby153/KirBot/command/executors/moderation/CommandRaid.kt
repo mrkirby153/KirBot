@@ -11,11 +11,11 @@ import me.mrkirby153.KirBot.modules.AntiRaid
 import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.embed.b
-import net.dv8tion.jda.core.MessageBuilder
 
 class CommandRaid {
 
-    @Command(name = "info", arguments = ["<id:string>"], clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION, parent = "raid")
+    @Command(name = "info", arguments = ["<id:string>"], clearance = CLEARANCE_MOD,
+            category = CommandCategory.MODERATION, parent = "raid")
     @IgnoreWhitelist
     fun raidInfo(context: Context, cmdContext: CommandContext) {
         val raid = ModuleManager[AntiRaid::class.java].getRaid(context.guild,
@@ -35,12 +35,12 @@ class CommandRaid {
             appendln("Only IDs:")
             appendln(raid.members.joinToString("\n") { it.id })
         }
-        context.channel.sendFile(users.toByteArray(),
-                "raid_members_${cmdContext.getNotNull<String>("id")}.txt",
-                MessageBuilder(msg).build()).queue()
+        context.channel.sendMessage(msg).addFile(users.toByteArray(),
+                "raid_members_${cmdContext.getNotNull<String>("id")}.txt").queue()
     }
 
-    @Command(name = "ban", arguments = ["<id:string>"], parent = "raid", clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION)
+    @Command(name = "ban", arguments = ["<id:string>"], parent = "raid", clearance = CLEARANCE_MOD,
+            category = CommandCategory.MODERATION)
     @LogInModlogs
     @IgnoreWhitelist
     fun raidBan(context: Context, cmdContext: CommandContext) {
@@ -51,7 +51,8 @@ class CommandRaid {
         context.send().success("Banning ${raid.members.size} raiders").queue()
     }
 
-    @Command(name = "kick", arguments = ["<id:string>"], parent = "raid", clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION)
+    @Command(name = "kick", arguments = ["<id:string>"], parent = "raid", clearance = CLEARANCE_MOD,
+            category = CommandCategory.MODERATION)
     @LogInModlogs
     @IgnoreWhitelist
     fun raidKick(context: Context, cmdContext: CommandContext) {
@@ -62,7 +63,8 @@ class CommandRaid {
         context.send().success("Kicking ${raid.members.size} raiders").queue()
     }
 
-    @Command(name = "unmute", arguments = ["<id:string>"], parent = "raid", clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION)
+    @Command(name = "unmute", arguments = ["<id:string>"], parent = "raid",
+            clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION)
     @LogInModlogs
     @IgnoreWhitelist
     fun raidUnmute(context: Context, cmdContext: CommandContext) {
@@ -72,7 +74,8 @@ class CommandRaid {
         context.send().success("Unmuting ${raid.members.size} raiders").queue()
     }
 
-    @Command(name = "dismiss", parent = "raid", clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION)
+    @Command(name = "dismiss", parent = "raid", clearance = CLEARANCE_MOD,
+            category = CommandCategory.MODERATION)
     @LogInModlogs
     @IgnoreWhitelist
     fun dismiss(context: Context, cmdContext: CommandContext) {

@@ -5,14 +5,14 @@ import com.mrkirby153.bfs.annotations.PrimaryKey
 import com.mrkirby153.bfs.annotations.Table
 import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.Bot
-import net.dv8tion.jda.core.Permission
-import net.dv8tion.jda.core.entities.Channel
-import net.dv8tion.jda.core.entities.Guild
-import net.dv8tion.jda.core.entities.TextChannel
-import net.dv8tion.jda.core.entities.VoiceChannel
+import net.dv8tion.jda.api.Permission
+import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.GuildChannel
+import net.dv8tion.jda.api.entities.TextChannel
+import net.dv8tion.jda.api.entities.VoiceChannel
 
 @Table("channels")
-class Channel(channel: Channel? = null) : Model() {
+class Channel(channel: GuildChannel? = null) : Model() {
 
     @PrimaryKey
     var id = ""
@@ -41,7 +41,7 @@ class Channel(channel: Channel? = null) : Model() {
             this.guildId = guild!!.id
         }
 
-    var channel: Channel?
+    var channel: GuildChannel?
         get() {
             val guild = guild ?: return null
             return when (type) {
@@ -62,7 +62,11 @@ class Channel(channel: Channel? = null) : Model() {
             this.guildId = channel.guild.id
             this.name = channel.name
             this.type = getType(channel)
-            this.hidden = channel.getPermissionOverride(guild?.publicRole)?.denied?.contains(Permission.MESSAGE_READ) ?: false
+            if(guild != null) {
+                this.hidden = channel.getPermissionOverride(guild!!.publicRole)?.denied?.contains(Permission.MESSAGE_WRITE) ?: false
+            } else {
+                this.hidden = false
+            }
         }
     }
 
@@ -81,12 +85,16 @@ class Channel(channel: Channel? = null) : Model() {
         val channel = this.channel ?: return
         this.name = channel.name
         this.type = getType(channel)
-        this.hidden = channel.getPermissionOverride(guild?.publicRole)?.denied?.contains(
-                Permission.MESSAGE_READ) ?: false
+        if(guild != null) {
+            this.hidden = channel.getPermissionOverride(guild!!.publicRole)?.denied?.contains(
+                    Permission.MESSAGE_READ) ?: false
+        } else {
+            this.hidden = false
+        }
         save()
     }
 
-    fun getType(channel: Channel?): Type {
+    fun getType(channel: GuildChannel?): Type {
         if (channel == null)
             return Type.UNKNOWN
         if (channel is TextChannel)

@@ -7,7 +7,7 @@ import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.deleteAfter
-import net.dv8tion.jda.core.MessageBuilder
+import net.dv8tion.jda.api.MessageBuilder
 import java.util.concurrent.TimeUnit
 
 
@@ -33,12 +33,19 @@ class CommandGuildChat {
             val attachment = context.attachments.first()
             val m = if (msg != null) MessageBuilder().append(msg).build() else null
             Bot.LOG.debug("File size is ${attachment.size}")
-            val fileMsg = if (attachment.size > 102400) context.send().info(
-                    "Sending a file, this may take some time...").complete() else null
-            resolvedChannel.sendFile(attachment.inputStream, attachment.fileName, m).queue {
-                context.success()
-                context.deleteAfter(60, TimeUnit.SECONDS)
-                fileMsg?.delete()?.queue()
+            val fileMsg = context.send().info("Sending a file, this may take some time...").complete()
+            attachment.retrieveInputStream().thenApply { inputStream ->
+                if(m != null) {
+                    resolvedChannel.sendMessage(m).addFile(inputStream, attachment.fileName).queue {
+                        context.success()
+                        fileMsg.delete().queue()
+                    }
+                } else {
+                    resolvedChannel.sendFile(inputStream, attachment.fileName).queue {
+                        context.success()
+                        fileMsg.delete().queue()
+                    }
+                }
             }
         } else {
             if (msg == null)

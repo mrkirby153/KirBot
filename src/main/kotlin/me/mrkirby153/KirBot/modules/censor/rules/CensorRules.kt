@@ -1,9 +1,9 @@
 package me.mrkirby153.KirBot.modules.censor.rules
 
 import me.mrkirby153.KirBot.utils.toTypedArray
-import net.dv8tion.jda.core.JDA
-import net.dv8tion.jda.core.entities.Invite
-import net.dv8tion.jda.core.entities.Message
+import net.dv8tion.jda.api.JDA
+import net.dv8tion.jda.api.entities.Invite
+import net.dv8tion.jda.api.entities.Message
 import org.json.JSONObject
 import java.net.MalformedURLException
 import java.net.URL

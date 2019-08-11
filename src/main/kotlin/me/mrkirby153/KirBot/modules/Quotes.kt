@@ -12,7 +12,7 @@ import me.mrkirby153.KirBot.utils.embed.embed
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import me.mrkirby153.KirBot.utils.removeReaction
-import net.dv8tion.jda.core.events.message.react.MessageReactionAddEvent
+import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
 import java.awt.Color
 import java.util.concurrent.TimeUnit
 
@@ -55,7 +55,7 @@ class Quotes : Module("quote") {
         if (event.reactionEmote.name != quoteReaction || SettingsRepository.get(event.guild,"starboard_enabled", "0") == "1")
             return
         debug("Beginning quote sequence")
-        event.channel.getMessageById(event.messageId).queue { msg ->
+        event.channel.retrieveMessageById(event.messageId).queue { msg ->
             if (msg == null)
                 return@queue
             if (msg.author == event.user) {
@@ -97,7 +97,7 @@ class Quotes : Module("quote") {
             quote.content = msg.contentDisplay
             quote.save()
 
-            msg.addReaction(GREEN_TICK.emote).queue()
+            msg.addReaction(GREEN_TICK.emote!!).queue()
 
             event.channel.sendMessage(embed("Quote") {
                 color = Color.BLUE
@@ -121,7 +121,7 @@ class Quotes : Module("quote") {
                     }
                 }
                 timestamp {
-                    timestamp = msg.creationTime.toInstant()
+                    timestamp = msg.timeCreated.toInstant()
                 }
             }.build()).queue()
         }

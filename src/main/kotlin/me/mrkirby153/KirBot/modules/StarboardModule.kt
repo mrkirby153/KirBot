@@ -11,13 +11,13 @@ import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.embed.embed
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.toTypedArray
-import net.dv8tion.jda.core.MessageBuilder
-import net.dv8tion.jda.core.entities.Guild
-import net.dv8tion.jda.core.entities.TextChannel
-import net.dv8tion.jda.core.entities.User
-import net.dv8tion.jda.core.events.message.MessageDeleteEvent
-import net.dv8tion.jda.core.events.message.react.MessageReactionAddEvent
-import net.dv8tion.jda.core.events.message.react.MessageReactionRemoveEvent
+import net.dv8tion.jda.api.MessageBuilder
+import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.TextChannel
+import net.dv8tion.jda.api.entities.User
+import net.dv8tion.jda.api.events.message.MessageDeleteEvent
+import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
+import net.dv8tion.jda.api.events.message.react.MessageReactionRemoveEvent
 import org.json.JSONArray
 import java.sql.Timestamp
 import java.time.Instant
@@ -34,7 +34,10 @@ class StarboardModule : Module("starboard") {
     }
 
     private fun getStarboardChannel(guild: Guild): TextChannel? {
-        return guild.getTextChannelById(SettingsRepository.get(guild, "starboard_channel_id", "0"))
+        val get = SettingsRepository.get(guild, "starboard_channel_id", "0")
+        if(get == null || get == "0")
+            return null
+        return guild.getTextChannelById(get)
     }
 
     private fun incrementStar(mid: String) {
@@ -60,7 +63,7 @@ class StarboardModule : Module("starboard") {
             if (SettingsRepository.get(event.guild, "starboard_enabled", "0") == "0")
                 return
             debug("Incrementing star on ${event.messageId}")
-            val msg = event.textChannel.getMessageById(event.messageId).complete()
+            val msg = event.textChannel.retrieveMessageById(event.messageId).complete()
             if (event.channel.id == getStarboardChannel(event.guild)?.id)
                 return
             if (msg.author.id in blocked(event.guild)) {
@@ -104,7 +107,7 @@ class StarboardModule : Module("starboard") {
             return
         val entry = getStarboardEntry(event.messageId) ?: return
         if (entry.starboardMid != null)
-            getStarboardChannel(event.guild)?.deleteMessageById(entry.starboardMid)?.queue()
+            getStarboardChannel(event.guild)?.deleteMessageById(entry.starboardMid!!)?.queue()
         entry.delete()
     }
 
@@ -112,7 +115,7 @@ class StarboardModule : Module("starboard") {
         var entry = getStarboardEntry(mid)
         val message = Model.where(GuildMessage::class.java, "id", mid).first() ?: return
         val apiMsg = Bot.shardManager.getGuildById(message.serverId)?.getTextChannelById(
-                message.channel)?.getMessageById(mid)?.complete()
+                message.channel)?.retrieveMessageById(mid)?.complete()
         if (apiMsg != null) {
             // Update the star count
             val starCount = apiMsg.reactions.firstOrNull { it.reactionEmote.name == STAR }?.count?.toLong()
@@ -137,7 +140,7 @@ class StarboardModule : Module("starboard") {
             // Delete the star from the board if it's hidden or the original message was deleted or it's fallen below the star count
             // TODO 12/19/2018 Make the latter configurable
             if (entry.starboardMid != null) {
-                getStarboardChannel(guild)?.deleteMessageById(entry.starboardMid)?.queue()
+                getStarboardChannel(guild)?.deleteMessageById(entry.starboardMid!!)?.queue()
                 entry.starboardMid = null
                 if (entry.count == 0L)
                     entry.delete()
@@ -162,11 +165,11 @@ class StarboardModule : Module("starboard") {
                 image = att.split(",").first().trim()
             }
             timestamp {
-                timestamp = apiMsg.creationTime.toInstant()
+                timestamp = apiMsg.timeCreated.toInstant()
             }
         }.build())
-        val sbMessage = if (entry.starboardMid != null) getStarboardChannel(guild)?.getMessageById(
-                entry.starboardMid)?.complete() else null
+        val sbMessage = if (entry.starboardMid != null) getStarboardChannel(guild)?.retrieveMessageById(
+                entry.starboardMid!!)?.complete() else null
         if (sbMessage != null) {
             sbMessage.editMessage(msg.build()).queue()
         } else {

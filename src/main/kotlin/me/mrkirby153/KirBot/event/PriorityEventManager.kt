@@ -2,10 +2,10 @@ package me.mrkirby153.KirBot.event
 
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.stats.Statistics
-import net.dv8tion.jda.core.entities.Guild
-import net.dv8tion.jda.core.events.Event
-import net.dv8tion.jda.core.events.http.HttpRequestEvent
-import net.dv8tion.jda.core.hooks.IEventManager
+import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.events.GenericEvent
+import net.dv8tion.jda.api.events.http.HttpRequestEvent
+import net.dv8tion.jda.api.hooks.IEventManager
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
@@ -20,36 +20,23 @@ class PriorityEventManager : IEventManager {
     private val listeners: CopyOnWriteArrayList<Any> = CopyOnWriteArrayList()
 
     private val classMethods: ConcurrentHashMap<Any, CopyOnWriteArrayList<Method>> = ConcurrentHashMap()
-    private val eventMethods: ConcurrentHashMap<Class<Event>, CopyOnWriteArrayList<EventListenerMethod>> = ConcurrentHashMap()
+    private val eventMethods: ConcurrentHashMap<Class<GenericEvent>, CopyOnWriteArrayList<EventListenerMethod>> = ConcurrentHashMap()
 
-    private val queuedEvents: ConcurrentHashMap<String, CopyOnWriteArrayList<Event>> = ConcurrentHashMap()
+    private val queuedEvents: ConcurrentHashMap<String, CopyOnWriteArrayList<GenericEvent>> = ConcurrentHashMap()
 
-    override fun handle(event: Event) {
+    override fun handle(event: GenericEvent) {
         if(event !is HttpRequestEvent) {
             Statistics.eventType.labels(event.javaClass.name).inc()
         }
-//        if (event is GenericGuildEvent && Bot.state == BotState.RUNNING) {
-//            if(event !is GuildJoinEvent) { // Ensure the guild join event is passed through
-//                // If the event is a guild event, check if the guild is ready
-//                if (!event.guild.kirbotGuild.ready) {
-//                    val arrayList = queuedEvents.computeIfAbsent(
-//                            event.guild.id) { CopyOnWriteArrayList() }
-//                    arrayList.add(event)
-//                    Bot.LOG.debug(
-//                            "Queueing ${event.javaClass} for guild ${event.guild}. Reason: Guild not ready")
-//                    return
-//                }
-//            }
-//        }
 
         // Walk up the hierarchy
-        var current: Class<Event>? = event.javaClass
+        var current: Class<GenericEvent>? = event.javaClass
         while (current != null && current != Object::class.java) {
             val start = System.currentTimeMillis()
             dispatch(event, current)
             val end = System.currentTimeMillis()
             Statistics.eventDuration.labels(current.name).observe((end - start).toDouble())
-            current = current.superclass as Class<Event>?
+            current = current.superclass as Class<GenericEvent>?
         }
     }
 
@@ -78,7 +65,7 @@ class PriorityEventManager : IEventManager {
         }
     }
 
-    private fun dispatch(event: Event, evtType: Class<Event>) {
+    private fun dispatch(event: GenericEvent, evtType: Class<GenericEvent>) {
         val registeredEvents = this.eventMethods[evtType] ?: return
         registeredEvents.forEach { evt ->
             try {
@@ -101,7 +88,7 @@ class PriorityEventManager : IEventManager {
         listener.javaClass.declaredMethods.forEach {
             it.isAccessible = true
             if (it.parameterCount == 1) {
-                if (Event::class.java.isAssignableFrom(it.parameterTypes.first())) {
+                if (GenericEvent::class.java.isAssignableFrom(it.parameterTypes.first())) {
                     if (!it.isAnnotationPresent(Subscribe::class.java)) {
                         Bot.LOG.warn(
                                 "The method ${it.declaringClass.canonicalName}.${it.name} is missing the @Subscribe annotation")
@@ -110,7 +97,7 @@ class PriorityEventManager : IEventManager {
                         val priority = it.getAnnotation(Subscribe::class.java).priority
                         Bot.LOG.debug(
                                 "Registering ${it.declaringClass.canonicalName}.${it.name} to event ${it.parameterTypes.first()} with priority $priority")
-                        val m = EventListenerMethod(it.parameterTypes.first() as Class<Event>,
+                        val m = EventListenerMethod(it.parameterTypes.first() as Class<GenericEvent>,
                                 priority, it, listener)
                         this.classMethods.getOrPut(listener) { CopyOnWriteArrayList() }.add(it)
                         this.eventMethods.getOrPut(m.event) { CopyOnWriteArrayList() }.add(m)
@@ -126,6 +113,6 @@ class PriorityEventManager : IEventManager {
             Bot.LOG.warn("${listener.javaClass.canonicalName} didn't contain any valid listeners!")
     }
 
-    private data class EventListenerMethod(val event: Class<Event>, val priority: EventPriority,
+    private data class EventListenerMethod(val event: Class<GenericEvent>, val priority: EventPriority,
                                            val method: Method, val obj: Any)
 }

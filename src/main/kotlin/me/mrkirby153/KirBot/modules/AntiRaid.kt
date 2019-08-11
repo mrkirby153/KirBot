@@ -11,12 +11,12 @@ import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import me.mrkirby153.KirBot.utils.toTypedArray
 import me.mrkirby153.kcutils.Time
-import net.dv8tion.jda.core.entities.Guild
-import net.dv8tion.jda.core.entities.Member
-import net.dv8tion.jda.core.entities.Message
-import net.dv8tion.jda.core.entities.Role
-import net.dv8tion.jda.core.entities.TextChannel
-import net.dv8tion.jda.core.events.guild.member.GuildMemberJoinEvent
+import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.Member
+import net.dv8tion.jda.api.entities.Message
+import net.dv8tion.jda.api.entities.Role
+import net.dv8tion.jda.api.entities.TextChannel
+import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent
 import org.json.JSONArray
 import org.json.JSONObject
 import org.json.JSONTokener
@@ -155,7 +155,7 @@ class AntiRaid : Module("AntiRaid") {
         val guild = Bot.shardManager.getGuildById(raid.guild) ?: return
         val alertRole = SettingsRepository.get(guild, "anti_raid_alert_role", "0")
         val toPing: Role? = if (alertRole != null && (alertRole == "@everyone" || alertRole == "@here")) null else guild.getRoleById(
-                alertRole)
+                alertRole!!)
 
         val prefix = SettingsRepository.get(guild, "command_prefix", "!")
         val msg = buildString {
@@ -201,6 +201,8 @@ class AntiRaid : Module("AntiRaid") {
 
     private fun getAlertChannel(guild: Guild): TextChannel? {
         val get = SettingsRepository.get(guild, "anti_raid_alert_channel", "0")
+        if(get == null || get == "0")
+            return null;
         return guild.getTextChannelById(get)
     }
 

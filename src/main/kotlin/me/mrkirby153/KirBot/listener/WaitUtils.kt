@@ -3,10 +3,11 @@ package me.mrkirby153.KirBot.listener
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.utils.GREEN_TICK
 import me.mrkirby153.KirBot.utils.RED_TICK
-import net.dv8tion.jda.core.entities.Message
-import net.dv8tion.jda.core.entities.User
-import net.dv8tion.jda.core.events.Event
-import net.dv8tion.jda.core.events.message.react.MessageReactionAddEvent
+import net.dv8tion.jda.api.entities.Message
+import net.dv8tion.jda.api.entities.User
+import net.dv8tion.jda.api.events.Event
+import net.dv8tion.jda.api.events.GenericEvent
+import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
 
 object WaitUtils {
 
@@ -27,7 +28,7 @@ object WaitUtils {
         }
     }
 
-    fun process(event: Event) {
+    fun process(event: GenericEvent) {
         val toRun = waitingEvents.filter { (_, evt) -> evt.eventClass == event.javaClass }.map { it.value }
         toRun.forEach {
             Bot.LOG.debug("Running ${it.id}")
@@ -37,8 +38,8 @@ object WaitUtils {
 
     fun confirmYesNo(message: Message, user: User, ifYes: (() -> Unit)? = null,
                      ifNo: (() -> Unit)? = null) {
-        message.addReaction(GREEN_TICK.emote).queue {
-            message.addReaction(RED_TICK.emote).queue {
+        message.addReaction(GREEN_TICK.emote!!).queue {
+            message.addReaction(RED_TICK.emote!!).queue {
                 waitFor(MessageReactionAddEvent::class.java) {
                     if (it.user != user || it.messageId != message.id)
                         return@waitFor
@@ -60,12 +61,12 @@ object WaitUtils {
     }
 }
 
-class WaitingEvent<T : Event>(val id: Int, val eventClass: Class<T>,
+class WaitingEvent<T : GenericEvent>(val id: Int, val eventClass: Class<T>,
                               private val callback: WaitingEvent<T>.(T) -> Unit) {
 
     var canceled = false
 
-    fun invoke(event: Event) {
+    fun invoke(event: GenericEvent) {
         if (canceled)
             return
         try {

@@ -13,7 +13,7 @@ import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.embed.embed
 import me.mrkirby153.kcutils.child
-import net.dv8tion.jda.core.Permission
+import net.dv8tion.jda.api.Permission
 import java.awt.Color
 import java.util.LinkedList
 

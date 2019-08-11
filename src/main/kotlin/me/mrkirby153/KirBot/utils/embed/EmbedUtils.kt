@@ -1,6 +1,5 @@
 package me.mrkirby153.KirBot.utils.embed
 
-import net.dv8tion.jda.core.EmbedBuilder
 
 /** Bold strings.*/
 inline fun b(string: String) = "**$string**"

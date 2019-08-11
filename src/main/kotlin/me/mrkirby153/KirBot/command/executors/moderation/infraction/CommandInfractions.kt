@@ -21,17 +21,18 @@ import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import me.mrkirby153.KirBot.utils.promptForConfirmation
 import me.mrkirby153.kcutils.utils.TableBuilder
-import net.dv8tion.jda.core.MessageBuilder
 
 class CommandInfractions {
 
-    @Command(name = "infraction", aliases=["inf"], clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION)
+    @Command(name = "infraction", aliases = ["inf"], clearance = CLEARANCE_MOD,
+            category = CommandCategory.MODERATION)
     @CommandDescription("Infraction related commands")
     fun inf() {
         // Dummy command to support aliases
     }
 
-    @Command(name = "search", clearance = CLEARANCE_MOD, arguments = ["[query:string...]"], parent="infraction", category = CommandCategory.MODERATION)
+    @Command(name = "search", clearance = CLEARANCE_MOD, arguments = ["[query:string...]"],
+            parent = "infraction", category = CommandCategory.MODERATION)
     @LogInModlogs
     @CommandDescription("Search for an infraction with the given query")
     @IgnoreWhitelist
@@ -77,7 +78,8 @@ class CommandInfractions {
         }
     }
 
-    @Command(name = "info", clearance = CLEARANCE_MOD, arguments = ["<id:int>"], parent = "infraction", category = CommandCategory.MODERATION)
+    @Command(name = "info", clearance = CLEARANCE_MOD, arguments = ["<id:int>"],
+            parent = "infraction", category = CommandCategory.MODERATION)
     @LogInModlogs
     @CommandDescription("Gets detailed information about an infraction")
     @IgnoreWhitelist
@@ -120,7 +122,8 @@ class CommandInfractions {
     }
 
     @Command(name = "clear", clearance = CLEARANCE_MOD,
-            arguments = ["<id:int>", "[reason:string...]"], category = CommandCategory.MODERATION, parent = "infraction")
+            arguments = ["<id:int>", "[reason:string...]"], category = CommandCategory.MODERATION,
+            parent = "infraction")
     @LogInModlogs
     @CommandDescription("Clears an infraction (Deletes it from the database)")
     @IgnoreWhitelist
@@ -147,7 +150,8 @@ class CommandInfractions {
     }
 
     @Command(name = "reason", clearance = CLEARANCE_MOD,
-            arguments = ["<id:number>", "<reason:string...>"], category = CommandCategory.MODERATION, parent = "infraction")
+            arguments = ["<id:number>", "<reason:string...>"],
+            category = CommandCategory.MODERATION, parent = "infraction")
     @LogInModlogs
     @CommandDescription("Sets the reason of an infraction")
     @IgnoreWhitelist
@@ -164,7 +168,8 @@ class CommandInfractions {
         context.send().success("Updated reason of `$id`").queue()
     }
 
-    @Command(name = "import-banlist", clearance = CLEARANCE_ADMIN, category = CommandCategory.MODERATION, parent = "infraction")
+    @Command(name = "import-banlist", clearance = CLEARANCE_ADMIN,
+            category = CommandCategory.MODERATION, parent = "infraction")
     @LogInModlogs
     @CommandDescription("Imports the banlist as infractions")
     @IgnoreWhitelist
@@ -178,7 +183,8 @@ class CommandInfractions {
         })
     }
 
-    @Command(name = "export", clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION, parent = "infraction")
+    @Command(name = "export", clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION,
+            parent = "infraction")
     @LogInModlogs
     @IgnoreWhitelist
     @CommandDescription("Exports a CSV of infractions")
@@ -204,8 +210,7 @@ class CommandInfractions {
                 appendln(it.createdAt.toString())
             }
         }
-        context.channel.sendFile(infString.toByteArray(), "infractions.csv", MessageBuilder().apply {
-            setContent("Exported ${infractions.size} infractions")
-        }.build()).queue()
+        context.channel.sendMessage("Exported ${infractions.size} infractions").addFile(
+                infString.toByteArray(), "infractions.csv").queue()
     }
 }

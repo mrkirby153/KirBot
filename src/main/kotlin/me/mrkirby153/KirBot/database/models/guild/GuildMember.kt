@@ -6,8 +6,8 @@ import com.mrkirby153.bfs.annotations.Table
 import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.kcutils.utils.IdGenerator
-import net.dv8tion.jda.core.entities.Member
-import net.dv8tion.jda.core.entities.User
+import net.dv8tion.jda.api.entities.Member
+import net.dv8tion.jda.api.entities.User
 
 @Table("guild_members")
 class GuildMember(member: Member? = null) : Model() {
@@ -52,8 +52,8 @@ class GuildMember(member: Member? = null) : Model() {
             nick = member.nickname
             name = member.user.name
             discrim = member.user.discriminator
-            muted = member.voiceState.isGuildMuted
-            deafened = member.voiceState.isDeafened
+            muted = member.voiceState?.isGuildMuted ?: false
+            deafened = member.voiceState?.isDeafened ?: false
         }
     }
 

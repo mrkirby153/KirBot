@@ -17,16 +17,16 @@ import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.logName
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import me.mrkirby153.kcutils.Time
-import net.dv8tion.jda.core.Permission
-import net.dv8tion.jda.core.entities.Guild
-import net.dv8tion.jda.core.entities.Role
-import net.dv8tion.jda.core.entities.User
-import net.dv8tion.jda.core.events.guild.GuildBanEvent
-import net.dv8tion.jda.core.events.guild.GuildUnbanEvent
-import net.dv8tion.jda.core.events.guild.member.GuildMemberLeaveEvent
-import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleRemoveEvent
-import net.dv8tion.jda.core.exceptions.ErrorResponseException
-import net.dv8tion.jda.core.requests.ErrorResponse
+import net.dv8tion.jda.api.Permission
+import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.Role
+import net.dv8tion.jda.api.entities.User
+import net.dv8tion.jda.api.events.guild.GuildBanEvent
+import net.dv8tion.jda.api.events.guild.GuildUnbanEvent
+import net.dv8tion.jda.api.events.guild.member.GuildMemberLeaveEvent
+import net.dv8tion.jda.api.events.guild.member.GuildMemberRoleRemoveEvent
+import net.dv8tion.jda.api.exceptions.ErrorResponseException
+import net.dv8tion.jda.api.requests.ErrorResponse
 import java.sql.Timestamp
 import java.time.Instant
 import java.util.concurrent.CompletableFuture
@@ -47,7 +47,7 @@ object Infractions {
         val nextInfraction = Model.query(Infraction::class.java).whereNotNull("expires_at").where(
                 "active", true).orderBy("expires_at", "ASC").limit(1).first()
         if (nextInfraction == null) {
-            Bot.LOG.info("No infractions left to wait for")
+            Bot.LOG.debug("No infractions left to wait for")
             return
         }
         if (nextInfraction.id == nextInfractionId) {
@@ -97,7 +97,7 @@ object Infractions {
             }
             InfractionType.TEMPBAN -> {
                 ModuleManager[InfractionModule::class.java].ignoreUnbans.add(infraction.userId)
-                guild.controller.unban(infraction.userId).queue()
+                guild.unban(infraction.userId).queue()
                 guild.kirbotGuild.logManager.genericLog(LogEvent.USER_UNBAN, ":rotating_light:",
                         buildString {
                             append(lookupUser(infraction.userId, true))
@@ -120,7 +120,7 @@ object Infractions {
                                     Pair("user", infraction.userId), Pair("role", role.id))
                             guild.kirbotGuild.logManager.genericLog(LogEvent.ROLE_REMOVE, ":key:",
                                     "Removed **${role.name}** from ${user.logName}: `Temprole expired`")
-                            guild.controller.removeSingleRoleFromMember(member, role).reason(
+                            guild.removeRoleFromMember(member, role).reason(
                                     "#${infraction.id} - Temprole expired").queue()
                         }
                     }
@@ -149,7 +149,8 @@ object Infractions {
                 InfractionType.KICK)
         val result = dmUser(user, guild, inf).get()
         try {
-            guild.controller.kick(guild.getMemberById(user), reason ?: "").queue {
+            guild.kick(guild.getMemberById(user) ?: return CompletableFuture.completedFuture(
+                    InfractionResult(false, result, "Member not found")), reason ?: "").queue {
                 future.complete(InfractionResult(true, result))
             }
         } catch (e: Exception) {
@@ -197,7 +198,7 @@ object Infractions {
                 InfractionType.BAN)
         val r = dmUser(user, guild, inf).get()
         try {
-            guild.controller.ban(user, purgeDays, reason).queue {
+            guild.ban(user, purgeDays, reason).queue {
                 future.complete(InfractionResult(true, r))
             }
         } catch (e: Exception) {
@@ -232,8 +233,8 @@ object Infractions {
         val r = dmUser(user, guild, inf).get()
 
         try {
-            guild.controller.ban(user, 7, reason).queue {
-                guild.controller.unban(user).queue {
+            guild.ban(user, 7, reason).queue {
+                guild.unban(user).queue {
                     future.complete(InfractionResult(true, r))
                 }
             }
@@ -258,9 +259,9 @@ object Infractions {
                 Pair("user", user), Pair("guild", guild.id))
         val future = CompletableFuture<InfractionResult>()
         try {
-            guild.banList.queue { banList ->
+            guild.retrieveBanList().queue { banList ->
                 if (user in banList.map { it.user.id })
-                    guild.controller.unban(user).queue {
+                    guild.unban(user).queue {
                         future.complete(InfractionResult(true, Infractions.DmResult.NOT_SENT))
                     }
                 else {
@@ -332,7 +333,7 @@ object Infractions {
                     InfractionResult(false, Infractions.DmResult.UNKNOWN, "Missing MANAGE_ROLES"))
 
         val future = CompletableFuture<InfractionResult>()
-        removeMutedRole(guild.getMemberById(user).user, guild,
+        removeMutedRole(guild.getMemberById(user)!!.user, guild,
                 "Unmute by ${lookupUser(issuer)}: ${reason ?: ""}").thenAccept { result ->
             if (!result) {
                 future.complete(InfractionResult(false, Infractions.DmResult.NOT_SENT,
@@ -365,7 +366,7 @@ object Infractions {
                     InfractionResult(false, Infractions.DmResult.UNKNOWN, "Missing MANAGE_ROLES"))
 
         val future = CompletableFuture<InfractionResult>()
-        addMutedRole(guild.getMemberById(user).user, guild,
+        addMutedRole(guild.getMemberById(user)!!.user, guild,
                 "Temp mute by ${lookupUser(issuer)}: ${reason ?: ""}").thenAccept { success ->
             if (!success) {
                 future.complete(InfractionResult(false, Infractions.DmResult.NOT_SENT,
@@ -407,10 +408,10 @@ object Infractions {
 
         val r = dmUser(user, guild, inf).get()
         val future = CompletableFuture<InfractionResult>()
-        guild.banList.queue { banList ->
+        guild.retrieveBanList().queue { banList ->
             if (user !in banList.map { it.user.id })
                 try {
-                    guild.controller.ban(user, purgeDays, reason).queue {
+                    guild.ban(user, purgeDays, reason).queue {
                         future.complete(InfractionResult(true, r))
                     }
                 } catch (e: Exception) {
@@ -463,7 +464,7 @@ object Infractions {
 
     fun importFromBanlist(guild: KirBotGuild) {
         if (guild.selfMember.hasPermission(Permission.BAN_MEMBERS)) {
-            guild.banList.queue { bans ->
+            guild.retrieveBanList().queue { bans ->
                 val bannedIds = bans.map { it.user.id }
                 if (bannedIds.isEmpty()) {
                     Bot.LOG.debug("banlist is empty")
@@ -498,7 +499,7 @@ object Infractions {
                     "Cannot assign the muted role to ${user.logName} because the muted role is not configured")
             return CompletableFuture.completedFuture(false)
         }
-        val ra = guild.controller.addSingleRoleToMember(user.getMember(guild),
+        val ra = guild.addRoleToMember(user.getMember(guild)!!,
                 role)
         if (reason.isNotBlank())
             ra.reason(reason)
@@ -513,12 +514,13 @@ object Infractions {
     }
 
     fun removeMutedRole(user: User, guild: Guild, reason: String = ""): CompletableFuture<Boolean> {
-        val r = user.getMember(guild)?.roles?.map { it.id }
+        val member = user.getMember(guild) ?: return CompletableFuture.completedFuture(false)
+        val r = member?.roles?.map { it.id }
                 ?: return CompletableFuture.completedFuture(false)
         val mutedRole = getMutedRole(guild) ?: return CompletableFuture.completedFuture(false)
         val future = CompletableFuture<Boolean>()
         if (mutedRole.id in r) {
-            guild.controller.removeSingleRoleFromMember(user.getMember(guild), mutedRole).apply {
+            guild.removeRoleFromMember(member, mutedRole).apply {
                 if (reason.isNotBlank())
                     reason(reason)
             }.queue {

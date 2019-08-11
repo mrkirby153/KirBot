@@ -6,7 +6,7 @@ import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.Redis
 import me.mrkirby153.kcutils.Time
 import me.xdrop.fuzzywuzzy.FuzzySearch
-import net.dv8tion.jda.core.events.message.react.MessageReactionAddEvent
+import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
 import okhttp3.Request
 import java.awt.Color
 import java.awt.image.BufferedImage
@@ -42,11 +42,12 @@ fun uploadToArchive(text: String, ttl: Int = 604800): String {
  * @param onConfirm The action to run when confirmed
  * @param onDeny The action to run when denied
  */
+@Deprecated("Use WaitUtils.confirmYesNo")
 fun promptForConfirmation(context: Context, msg: String, onConfirm: (() -> Boolean)? = null,
                           onDeny: (() -> Boolean)? = null) {
     context.channel.sendMessage(msg).queue { m ->
-        m.addReaction(GREEN_TICK.emote).queue()
-        m.addReaction(RED_TICK.emote).queue()
+        m.addReaction(GREEN_TICK.emote!!).queue()
+        m.addReaction(RED_TICK.emote!!).queue()
         WaitUtils.waitFor(MessageReactionAddEvent::class.java) {
             if (it.user.id != context.author.id)
                 return@waitFor

@@ -13,8 +13,8 @@ import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.canInteractWith
 import me.mrkirby153.KirBot.utils.getMember
 import me.mrkirby153.KirBot.utils.logName
-import net.dv8tion.jda.core.Permission
-import net.dv8tion.jda.core.entities.User
+import net.dv8tion.jda.api.Permission
+import net.dv8tion.jda.api.entities.User
 
 
 class CommandKick {
@@ -29,7 +29,7 @@ class CommandKick {
 
         val reason = cmdContext.get<String>("reason")
 
-        if (!context.guild.selfMember.canInteract(user.getMember(context.guild)))
+        if (!context.guild.selfMember.canInteract(user.getMember(context.guild)!!))
             throw CommandException("I cannot kick this user")
         if (!context.author.canInteractWith(context.guild, user))
             throw CommandException("Missing permissions")

@@ -22,13 +22,14 @@ import me.mrkirby153.KirBot.utils.toTypedArray
 import me.mrkirby153.kcutils.child
 import me.mrkirby153.kcutils.mkdirIfNotExist
 import me.mrkirby153.kcutils.use
-import net.dv8tion.jda.core.Permission
-import net.dv8tion.jda.core.entities.Guild
-import net.dv8tion.jda.core.entities.Member
-import net.dv8tion.jda.core.entities.Message
-import net.dv8tion.jda.core.entities.Role
-import net.dv8tion.jda.core.entities.TextChannel
-import net.dv8tion.jda.core.entities.User
+import net.dv8tion.jda.api.Permission
+import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.GuildChannel
+import net.dv8tion.jda.api.entities.Member
+import net.dv8tion.jda.api.entities.Message
+import net.dv8tion.jda.api.entities.Role
+import net.dv8tion.jda.api.entities.TextChannel
+import net.dv8tion.jda.api.entities.User
 import org.json.JSONObject
 import org.json.JSONTokener
 import java.util.concurrent.Future
@@ -121,14 +122,13 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         runAsyncTask {
             val botNick = SettingsRepository.get(guild, "bot_nick")
             if (this.selfMember.nickname != botNick) {
-                this.controller.setNickname(this.selfMember,
-                        if (botNick?.isEmpty() == true) null else botNick).queue()
+                this.selfMember.modifyNickname(if (botNick?.isEmpty() == true) null else botNick).queue()
             }
         }
 
         runAsyncTask {
             Bot.LOG.debug("Updating channels on $this")
-            val channels = this.textChannels.map { it as net.dv8tion.jda.core.entities.Channel }.union(
+            val channels = this.textChannels.map { it as GuildChannel }.union(
                     this.voiceChannels)
             Model.query(Channel::class.java).whereNotIn("id",
                     channels.map { it.id }.toTypedArray()).where("server", this.id).delete()
@@ -278,7 +278,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
             }
     }
 
-    fun backfillChannels(channel: net.dv8tion.jda.core.entities.TextChannel? = null) {
+    fun backfillChannels(channel: TextChannel? = null) {
         if (channel != null) {
             Bot.LOG.debug("Backfilling ${channel.name}")
             if (!channel.checkPermissions(Permission.MESSAGE_HISTORY)) {

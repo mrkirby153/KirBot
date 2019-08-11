@@ -15,9 +15,8 @@ import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.canInteractWith
 import me.mrkirby153.kcutils.utils.argparser.ArgumentParser
 import me.mrkirby153.kcutils.utils.argparser.Option
-import net.dv8tion.jda.core.Permission
-import net.dv8tion.jda.core.entities.Guild
-import net.dv8tion.jda.core.requests.RequestFuture
+import net.dv8tion.jda.api.Permission
+import net.dv8tion.jda.api.entities.Guild
 import java.util.concurrent.CompletableFuture
 
 class MassActionCommands {
@@ -82,7 +81,7 @@ class MassActionCommands {
                     action.invoke(id, guild, ids.second)
                 }
 
-                RequestFuture.allOf(results.third).thenAccept {
+                CompletableFuture.allOf(*results.third.toTypedArray()).thenAccept {
                     m.clearReactions().queue()
                     m.editMessage(
                             "${actionName.capitalize()}ed ${results.first.size} members. Could not $actionName ${results.second.size}").queue()

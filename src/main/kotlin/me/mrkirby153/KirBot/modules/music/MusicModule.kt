@@ -5,15 +5,16 @@ import me.mrkirby153.KirBot.event.Subscribe
 import me.mrkirby153.KirBot.module.Module
 import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.getClearance
-import net.dv8tion.jda.core.entities.Channel
-import net.dv8tion.jda.core.entities.Guild
-import net.dv8tion.jda.core.entities.Member
-import net.dv8tion.jda.core.entities.VoiceChannel
-import net.dv8tion.jda.core.events.guild.GuildLeaveEvent
-import net.dv8tion.jda.core.events.guild.voice.GuildVoiceJoinEvent
-import net.dv8tion.jda.core.events.guild.voice.GuildVoiceLeaveEvent
-import net.dv8tion.jda.core.events.guild.voice.GuildVoiceMoveEvent
-import net.dv8tion.jda.core.hooks.SubscribeEvent
+import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.GuildChannel
+import net.dv8tion.jda.api.entities.Member
+import net.dv8tion.jda.api.entities.VoiceChannel
+import net.dv8tion.jda.api.events.guild.GuildLeaveEvent
+import net.dv8tion.jda.api.events.guild.voice.GuildVoiceJoinEvent
+import net.dv8tion.jda.api.events.guild.voice.GuildVoiceLeaveEvent
+import net.dv8tion.jda.api.events.guild.voice.GuildVoiceMoveEvent
+import net.dv8tion.jda.api.hooks.SubscribeEvent
+
 
 class MusicModule : Module("music") {
 
@@ -90,23 +91,27 @@ class MusicModule : Module("music") {
     }
 
     private fun isChannelEmpty(
-            channel: Channel) = channel.members.none { m -> m.user.id != channel.guild.selfMember.user.id }
+            channel: GuildChannel) = channel.members.none { m -> m.user.id != channel.guild.selfMember.user.id }
 
     private fun getCurrentChannel(guild: Guild): VoiceChannel? {
-        return guild.selfMember.voiceState.channel
+        return guild.selfMember.voiceState!!.channel
     }
 
     companion object {
-        fun isDJ(member: Member): Boolean {
+        fun isDJ(member: Member?): Boolean {
+            if(member == null)
+                return false
             if (member.user.getClearance(member.guild) > CLEARANCE_MOD)
                 return true
             return member.roles.map { it.name }.firstOrNull { it.equals("DJ", true) } != null
         }
 
-        fun alone(member: Member): Boolean {
-            if (!member.voiceState.inVoiceChannel())
+        fun alone(member: Member?): Boolean {
+            if(member == null)
                 return false
-            return member.voiceState.channel.members.filter { it != member.guild.selfMember }.size == 1
+            if (!member.voiceState!!.inVoiceChannel())
+                return false
+            return member.voiceState!!.channel?.members?.filter { it != member.guild.selfMember }?.size == 1
         }
     }
 }

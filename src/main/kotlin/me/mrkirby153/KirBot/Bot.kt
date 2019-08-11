@@ -30,12 +30,12 @@ import me.mrkirby153.kcutils.Time
 import me.mrkirby153.kcutils.child
 import me.mrkirby153.kcutils.readProperties
 import me.mrkirby153.kcutils.utils.SnowflakeWorker
-import net.dv8tion.jda.bot.sharding.DefaultShardManagerBuilder
-import net.dv8tion.jda.bot.sharding.ShardManager
-import net.dv8tion.jda.core.JDA
-import net.dv8tion.jda.core.OnlineStatus
-import net.dv8tion.jda.core.entities.Game
-import net.dv8tion.jda.core.events.ReadyEvent
+import net.dv8tion.jda.api.JDA
+import net.dv8tion.jda.api.OnlineStatus
+import net.dv8tion.jda.api.entities.Activity
+import net.dv8tion.jda.api.events.ReadyEvent
+import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder
+import net.dv8tion.jda.api.sharding.ShardManager
 import okhttp3.Request
 import org.json.JSONObject
 import org.json.JSONTokener
@@ -117,7 +117,7 @@ object Bot {
             setShardsTotal(numShards)
             setAutoReconnect(true)
             setBulkDeleteSplittingEnabled(false)
-            setGame(Game.playing("Starting up..."))
+            setActivity(Activity.playing("Starting up..."))
             if (!System.getProperty("os.name").contains("Mac"))
                 setAudioSendFactory(NativeAudioSendFactory())
         }.build()
@@ -162,11 +162,11 @@ object Bot {
 
         // Register listener for nick changes
         SettingsRepository.registerSettingListener("bot_nick") { guild, value ->
-            guild.controller.setNickname(guild.selfMember, value).queue()
+            guild.selfMember.modifyNickname(value).queue()
         }
 
         shardManager.setStatus(OnlineStatus.ONLINE)
-        shardManager.setGame(null)
+        shardManager.setActivity(null)
         LOG.info("Startup completed in ${Time.format(0, System.currentTimeMillis() - startupTime)}")
         val memberSet = mutableSetOf<String>()
         Bot.shardManager.shards.flatMap { it.guilds }.flatMap { it.members }.forEach {

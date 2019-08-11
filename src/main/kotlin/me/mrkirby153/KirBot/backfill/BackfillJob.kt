@@ -6,10 +6,10 @@ import me.mrkirby153.KirBot.database.MessageConcurrencyManager
 import me.mrkirby153.KirBot.database.models.guild.GuildMessage
 import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.kcutils.Time
-import net.dv8tion.jda.core.Permission
-import net.dv8tion.jda.core.entities.Guild
-import net.dv8tion.jda.core.entities.Message
-import net.dv8tion.jda.core.entities.TextChannel
+import net.dv8tion.jda.api.Permission
+import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.Message
+import net.dv8tion.jda.api.entities.TextChannel
 import java.util.LinkedList
 import kotlin.system.measureTimeMillis
 
@@ -144,7 +144,7 @@ class BackfillJob(val jobId: String, val guild: Guild, val id: String, val jobTy
         guild.textChannels.forEach { chan ->
             if (chan.checkPermissions(Permission.MESSAGE_HISTORY, Permission.MESSAGE_READ)) {
                 try {
-                    val m = chan.getMessageById(this.id).complete()
+                    val m = chan.retrieveMessageById(this.id).complete()
                     if (m != null) {
                         msg = m
                         return@forEach

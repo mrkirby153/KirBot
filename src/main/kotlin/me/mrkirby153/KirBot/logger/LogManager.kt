@@ -15,8 +15,8 @@ import me.mrkirby153.KirBot.utils.logName
 import me.mrkirby153.KirBot.utils.resolveMentions
 import me.mrkirby153.KirBot.utils.uploadToArchive
 import me.mrkirby153.KirBot.utils.urlEscape
-import net.dv8tion.jda.core.entities.Message
-import net.dv8tion.jda.core.entities.TextChannel
+import net.dv8tion.jda.api.entities.Message
+import net.dv8tion.jda.api.entities.TextChannel
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone

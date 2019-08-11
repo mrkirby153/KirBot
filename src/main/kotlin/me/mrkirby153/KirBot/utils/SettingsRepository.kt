@@ -3,7 +3,7 @@ package me.mrkirby153.KirBot.utils
 import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.models.GuildSetting
-import net.dv8tion.jda.core.entities.Guild
+import net.dv8tion.jda.api.entities.Guild
 import org.json.JSONArray
 import org.json.JSONObject
 import org.json.JSONTokener

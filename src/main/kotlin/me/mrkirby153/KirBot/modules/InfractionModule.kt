@@ -10,12 +10,12 @@ import me.mrkirby153.KirBot.module.Module
 import me.mrkirby153.KirBot.utils.Debouncer
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
-import net.dv8tion.jda.core.Permission
-import net.dv8tion.jda.core.audit.ActionType
-import net.dv8tion.jda.core.entities.Guild
-import net.dv8tion.jda.core.entities.User
-import net.dv8tion.jda.core.events.guild.GuildBanEvent
-import net.dv8tion.jda.core.events.guild.GuildUnbanEvent
+import net.dv8tion.jda.api.Permission
+import net.dv8tion.jda.api.audit.ActionType
+import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.User
+import net.dv8tion.jda.api.events.guild.GuildBanEvent
+import net.dv8tion.jda.api.events.guild.GuildUnbanEvent
 import java.sql.Timestamp
 
 class InfractionModule : Module("infractions") {
@@ -42,7 +42,7 @@ class InfractionModule : Module("infractions") {
         // Create an infraction from the audit logs if we can view the banlist
         if (event.guild.selfMember.hasPermission(Permission.BAN_MEMBERS)) {
             // TODO 1/6/2019 Fix deadlock error where complete() is used
-            val banList = event.guild.banList.complete()
+            val banList = event.guild.retrieveBanList().complete()
             val entry = banList.firstOrNull { it.user.id == event.user.id } ?: return
             val infraction = Infraction()
             val actor = findBannedUser(event.guild, event.user.id)
@@ -84,7 +84,7 @@ class InfractionModule : Module("infractions") {
             return null
         }
         var foundUser: User? = null
-        val entries = guild.auditLogs.type(ActionType.BAN).complete()
+        val entries = guild.retrieveAuditLogs().type(ActionType.BAN).complete()
         entries.forEach { e ->
             Bot.LOG.debug("Found ban for ${e.targetId}")
             if (e.targetId == user && foundUser == null) {
@@ -102,7 +102,7 @@ class InfractionModule : Module("infractions") {
             return null
         }
         var found: User? = null
-        val entries = guild.auditLogs.type(ActionType.UNBAN).complete()
+        val entries = guild.retrieveAuditLogs().type(ActionType.UNBAN).complete()
         entries.forEach {
             if (it.targetId == user && found == null)
                 found = it.user

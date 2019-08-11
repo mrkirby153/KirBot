@@ -16,12 +16,12 @@ import me.mrkirby153.KirBot.utils.getClearance
 import me.mrkirby153.KirBot.utils.isNumber
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.logName
-import net.dv8tion.jda.core.Permission
-import net.dv8tion.jda.core.entities.Guild
-import net.dv8tion.jda.core.entities.Message
-import net.dv8tion.jda.core.entities.MessageChannel
-import net.dv8tion.jda.core.entities.User
-import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent
+import net.dv8tion.jda.api.Permission
+import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.Message
+import net.dv8tion.jda.api.entities.MessageChannel
+import net.dv8tion.jda.api.entities.User
+import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent
 import org.json.JSONObject
 import java.sql.Timestamp
 import java.time.Instant
@@ -201,6 +201,7 @@ class Spam : Module("spam") {
                         val channel = violation.guild.getTextChannelById(chan)
                         if (channel == null) {
                             Bot.LOG.debug("No channel found with $chan")
+                            return@forEach
                         }
                         // Check for delete perms
                         if (!channel.checkPermissions(Permission.MESSAGE_MANAGE)) {

@@ -8,9 +8,9 @@ import me.mrkirby153.KirBot.utils.deleteAfter
 import me.mrkirby153.KirBot.utils.embed.b
 import me.mrkirby153.kcutils.child
 import me.mrkirby153.kcutils.utils.IdGenerator
-import net.dv8tion.jda.core.entities.Guild
-import net.dv8tion.jda.core.entities.TextChannel
-import net.dv8tion.jda.core.entities.User
+import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.TextChannel
+import net.dv8tion.jda.api.entities.User
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 import java.util.concurrent.TimeUnit
@@ -60,7 +60,7 @@ object ErrorLogger {
             errorRepository[dupe.id] = dupe
             save()
             if (shouldEdit)
-                channel?.getMessageById(dupe.messageId)?.queue {
+                channel?.retrieveMessageById(dupe.messageId)?.queue {
                     it.editMessage(buildReport(throwable, occurrences = dupe.occurrences,
                             id = dupe.id)).queue()
                 }
@@ -115,7 +115,7 @@ object ErrorLogger {
 
     fun acknowledge(id: String) {
         val error = errorRepository.remove(id) ?: return
-        channel?.getMessageById(error.messageId)?.queue({
+        channel?.retrieveMessageById(error.messageId)?.queue({
             it.delete().queue()
         }, {
             Bot.LOG.warn("Message $error was already deleted")

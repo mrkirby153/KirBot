@@ -6,13 +6,12 @@ import com.mrkirby153.bfs.annotations.Table
 import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.kcutils.utils.IdGenerator
-import net.dv8tion.jda.core.entities.Guild
-import net.dv8tion.jda.core.entities.Member
-import net.dv8tion.jda.core.entities.Role
-import net.dv8tion.jda.core.entities.User
+import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.Member
+import net.dv8tion.jda.api.entities.User
 
 @Table("guild_member_roles")
-class GuildMemberRole(member: Member? = null, role: Role? = null) : Model() {
+class GuildMemberRole(member: Member? = null, role: net.dv8tion.jda.api.entities.Role? = null) : Model() {
 
     @PrimaryKey
     var id = ""
@@ -39,7 +38,7 @@ class GuildMemberRole(member: Member? = null, role: Role? = null) : Model() {
             this.userId = user!!.id
         }
 
-    var role: Role?
+    var role: net.dv8tion.jda.api.entities.Role?
         get() = server?.getRoleById(this.roleId)
         set(role) {
             this.roleId = role!!.id

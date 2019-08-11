@@ -6,17 +6,17 @@ import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.Redis
 import me.mrkirby153.KirBot.server.KirBotGuild
-import net.dv8tion.jda.core.OnlineStatus
-import net.dv8tion.jda.core.Permission
-import net.dv8tion.jda.core.entities.Channel
-import net.dv8tion.jda.core.entities.Guild
-import net.dv8tion.jda.core.entities.Member
-import net.dv8tion.jda.core.entities.Message
-import net.dv8tion.jda.core.entities.MessageChannel
-import net.dv8tion.jda.core.entities.PermissionOverride
-import net.dv8tion.jda.core.entities.Role
-import net.dv8tion.jda.core.entities.TextChannel
-import net.dv8tion.jda.core.entities.User
+import net.dv8tion.jda.api.OnlineStatus
+import net.dv8tion.jda.api.Permission
+import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.GuildChannel
+import net.dv8tion.jda.api.entities.Member
+import net.dv8tion.jda.api.entities.Message
+import net.dv8tion.jda.api.entities.MessageChannel
+import net.dv8tion.jda.api.entities.Role
+import net.dv8tion.jda.api.entities.TextChannel
+import net.dv8tion.jda.api.entities.User
+import net.dv8tion.jda.api.utils.MarkdownSanitizer
 import org.json.JSONArray
 import java.io.InputStream
 import java.util.Properties
@@ -69,24 +69,6 @@ fun User.canInteractWith(guild: Guild, user: User): Boolean = this.getClearance(
 
 
 /**
- * Gets a permission override for a [Member] or creates it if it doesn't exist
- *
- * @return The permission override
- */
-fun Channel.getOrCreateOverride(member: Member): PermissionOverride {
-    return this.getPermissionOverride(member) ?: this.createPermissionOverride(member).complete()
-}
-
-/**
- * Gets a permission override for a [Role] or creates it if it doesn't exist
- *
- * @return The permission override
- */
-fun Channel.getOrCreateOverride(role: Role): PermissionOverride {
-    return this.getPermissionOverride(role) ?: this.createPermissionOverride(role).complete()
-}
-
-/**
  * Hides a text channel from everyone except the given users and roles
  *
  * @param exceptUsers A list of users that can still view the channel after hiding it
@@ -97,24 +79,24 @@ fun TextChannel.hide(exceptUsers: List<User> = emptyList(), exceptRoles: List<Ro
         it.allowed.contains(Permission.MESSAGE_READ)
     }.forEach { override ->
         if (override.isMemberOverride && override.member == this.guild.selfMember
-                || override.member.user in exceptUsers)
+                || override.member!!.user in exceptUsers)
             return@forEach
         if (override.isRoleOverride && override.role in exceptRoles)
             return@forEach
 
         override.manager.clear(Permission.MESSAGE_READ).queue()
     }
-    val userOverride = this.getOrCreateOverride(this.guild.selfMember)
-    userOverride.manager.grant(Permission.MESSAGE_READ).queue()
-    val public = this.getOrCreateOverride(this.guild.publicRole)
-    public.manager.deny(Permission.MESSAGE_READ).queue()
+    val userOverride = this.upsertPermissionOverride(this.guild.selfMember)
+    userOverride.grant(Permission.MESSAGE_READ).queue()
+    val public = this.upsertPermissionOverride(this.guild.publicRole)
+    public.deny(Permission.MESSAGE_READ).queue()
 
     exceptRoles.forEach {
-        this.getOrCreateOverride(it).manager.grant(Permission.MESSAGE_READ).queue()
+        this.upsertPermissionOverride(it).grant(Permission.MESSAGE_READ).queue()
     }
     exceptUsers.forEach {
         it.getMember(guild)?.run {
-            this@hide.getOrCreateOverride(this).manager.grant(Permission.MESSAGE_READ).queue()
+            this@hide.upsertPermissionOverride(this).grant(Permission.MESSAGE_READ).queue()
         }
     }
     Model.query(me.mrkirby153.KirBot.database.models.Channel::class.java).where("id",
@@ -146,7 +128,7 @@ fun String.sanitize(): String {
  * @return A copy of the string with all the markdown escaped
  */
 fun String.escapeMarkdown(): String {
-    return this.replace(Regex("([*\\[\\]_()~])"), "\\\\$1").replace("`", "ˋ")
+    return MarkdownSanitizer.escape(this)
 }
 
 /**
@@ -180,7 +162,7 @@ fun Message.deleteAfter(time: Long, unit: TimeUnit): ScheduledFuture<*>? {
  *
  * @return True if the bot has all permissions, false if otherwise
  */
-fun <T : Channel> T.checkPermissions(
+fun <T : GuildChannel> T.checkPermissions(
         vararg permission: Permission) = this.guild.selfMember.hasPermission(this, *permission)
 
 /**
@@ -261,7 +243,7 @@ fun String.isNumber(): Boolean {
  * @return True if the user can assign the role, false if they can't
  */
 fun Member.canAssign(role: Role): Boolean {
-    if (!this.hasPermission(net.dv8tion.jda.core.Permission.MANAGE_ROLES))
+    if (!this.hasPermission(Permission.MANAGE_ROLES))
         return false
     val memberHighest = this.roles.map { it.position }.max() ?: 0
     return memberHighest > role.position

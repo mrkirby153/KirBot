@@ -2,7 +2,7 @@ package me.mrkirby153.KirBot.command.annotations
 
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.user.CLEARANCE_DEFAULT
-import net.dv8tion.jda.core.Permission
+import net.dv8tion.jda.api.Permission
 
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.FUNCTION)

@@ -1,10 +1,10 @@
 package me.mrkirby153.KirBot.command.executors.`fun`
 
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.command.annotations.CommandDescription
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.annotations.Command
+import me.mrkirby153.KirBot.command.annotations.CommandDescription
 import me.mrkirby153.KirBot.command.annotations.IgnoreWhitelist
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.module.ModuleManager
@@ -97,9 +97,9 @@ class CommandPoll {
                 it.addReaction("${'\u0030' + i}\u20E3").queue()
             }
             val task = PollTask(context.guild.id, context.channel.id, it.id,
-                    context.author.avatarUrl, context.author.nameAndDiscrim, endsAt,
+                    context.author.effectiveAvatarUrl, context.author.nameAndDiscrim, endsAt,
                     filteredOptions.toTypedArray(), question)
-            ModuleManager[Scheduler::class.java].submit(task, duration.toLong(), TimeUnit.SECONDS)
+            ModuleManager[Scheduler::class.java].submit(task, duration.toLong(), TimeUnit.MILLISECONDS)
         }
     }
 
@@ -149,7 +149,7 @@ class CommandPoll {
         override fun run() {
             val guild = Bot.shardManager.getGuildById(this.guildId) ?: return
             val channel = guild.getTextChannelById(channelId) ?: return
-            val message = channel.getMessageById(messageId).complete() ?: return
+            val message = channel.retrieveMessageById(messageId).complete() ?: return
             message.editMessage(embed("Poll") {
                 description {
                     +"Voting has ended, check newer messages for results"

@@ -2,7 +2,7 @@ package me.mrkirby153.KirBot.logger
 
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.server.KirBotGuild
-import net.dv8tion.jda.core.exceptions.RateLimitedException
+import net.dv8tion.jda.api.exceptions.RateLimitedException
 import java.util.Arrays
 import java.util.LinkedList
 

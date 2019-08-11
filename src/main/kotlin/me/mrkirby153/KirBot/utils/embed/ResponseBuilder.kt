@@ -3,8 +3,8 @@ package me.mrkirby153.KirBot.utils.embed
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.GREEN_TICK
 import me.mrkirby153.KirBot.utils.RED_TICK
-import net.dv8tion.jda.core.entities.Message
-import net.dv8tion.jda.core.requests.RestAction
+import net.dv8tion.jda.api.entities.Message
+import net.dv8tion.jda.api.requests.RestAction
 import java.awt.Color
 
 val info_color = Color(0, 80, 175)

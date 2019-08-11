@@ -1,16 +1,16 @@
 package me.mrkirby153.KirBot.command.executors.`fun`
 
-import me.mrkirby153.KirBot.command.annotations.CommandDescription
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.annotations.Command
+import me.mrkirby153.KirBot.command.annotations.CommandDescription
 import me.mrkirby153.KirBot.command.annotations.IgnoreWhitelist
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.EMOJI_RE
 import me.mrkirby153.KirBot.utils.HttpUtils
 import me.mrkirby153.KirBot.utils.checkPermissions
-import net.dv8tion.jda.core.Permission
+import net.dv8tion.jda.api.Permission
 import okhttp3.Request
 import java.awt.Image
 import java.awt.image.BufferedImage

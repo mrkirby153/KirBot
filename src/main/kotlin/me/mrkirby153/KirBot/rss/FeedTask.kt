@@ -4,7 +4,7 @@ import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.models.rss.RssFeed
 import me.mrkirby153.KirBot.utils.embed.b
-import net.dv8tion.jda.core.entities.Guild
+import net.dv8tion.jda.api.entities.Guild
 import java.sql.Timestamp
 
 class FeedTask : Runnable {

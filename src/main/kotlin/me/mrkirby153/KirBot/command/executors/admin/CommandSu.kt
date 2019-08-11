@@ -1,15 +1,16 @@
 package me.mrkirby153.KirBot.command.executors.admin
 
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.command.annotations.CommandDescription
 import me.mrkirby153.KirBot.command.CommandExecutor
 import me.mrkirby153.KirBot.command.annotations.AdminCommand
 import me.mrkirby153.KirBot.command.annotations.Command
+import me.mrkirby153.KirBot.command.annotations.CommandDescription
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.utils.Context
-import net.dv8tion.jda.core.entities.Message
-import net.dv8tion.jda.core.entities.User
-
+import me.mrkirby153.KirBot.utils.getMember
+import net.dv8tion.jda.api.entities.Member
+import net.dv8tion.jda.api.entities.Message
+import net.dv8tion.jda.api.entities.User
 
 class CommandSu {
 
@@ -35,6 +36,10 @@ class CommandSu {
 
         override fun getContentRaw(): String {
             return customMsg ?: super.getContentRaw()
+        }
+
+        override fun getMember(): Member? {
+            return customAuthor?.getMember(guild) ?: super.getMember()
         }
     }
 }

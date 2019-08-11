@@ -1,15 +1,15 @@
 package me.mrkirby153.KirBot.command.executors.`fun`
 
-import me.mrkirby153.KirBot.command.annotations.CommandDescription
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.annotations.Command
+import me.mrkirby153.KirBot.command.annotations.CommandDescription
 import me.mrkirby153.KirBot.command.annotations.IgnoreWhitelist
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.user.CLEARANCE_ADMIN
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.FuzzyMatchException
-import net.dv8tion.jda.core.entities.Role
+import net.dv8tion.jda.api.entities.Role
 
 
 class CommandSelfroles {
@@ -38,12 +38,12 @@ class CommandSelfroles {
     fun join(context: Context, cmdContext: CommandContext) {
         val role = cmdContext.get<String>("role")!!
         val foundRole = findSelfassignRole(context, role)
-        if (foundRole.id in context.member.roles.map { it.id })
+        if (foundRole.id in context.member!!.roles.map { it.id })
             throw CommandException("You are already in `${foundRole.name}`")
         if (foundRole.position >= context.guild.selfMember.roles.sortedByDescending { it.position }.first().position)
             throw CommandException(
                     "That role is above my highest role. I can't assign that to you!")
-        context.guild.controller.addSingleRoleToMember(context.member, foundRole).queue()
+        context.guild.addRoleToMember(context.member!!, foundRole).queue()
         context.send().success("Joined role `${foundRole.name}`", true).queue()
     }
 
@@ -52,12 +52,12 @@ class CommandSelfroles {
     fun leave(context: Context, cmdContext: CommandContext) {
         val role = cmdContext.get<String>("role")!!
         val foundRole = findSelfassignRole(context, role)
-        if (foundRole.id !in context.member.roles.map { it.id })
+        if (foundRole.id !in context.member!!.roles.map { it.id })
             throw CommandException("You are not in `${foundRole.name}`")
         if (foundRole.position >= context.guild.selfMember.roles.sortedByDescending { it.position }.first().position)
             throw CommandException(
                     "That role is above my highest role. I can't remove that from you!")
-        context.guild.controller.removeSingleRoleFromMember(context.member, foundRole).queue()
+        context.guild.addRoleToMember(context.member!!, foundRole).queue()
         context.send().success("Left role `${foundRole.name}`", true).queue()
     }
 

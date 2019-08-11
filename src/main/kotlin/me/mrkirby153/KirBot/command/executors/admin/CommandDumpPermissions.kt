@@ -1,8 +1,8 @@
 package me.mrkirby153.KirBot.command.executors.admin
 
-import me.mrkirby153.KirBot.command.annotations.CommandDescription
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.annotations.Command
+import me.mrkirby153.KirBot.command.annotations.CommandDescription
 import me.mrkirby153.KirBot.command.annotations.IgnoreWhitelist
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.user.CLEARANCE_ADMIN
@@ -11,7 +11,7 @@ import me.mrkirby153.KirBot.utils.GREEN_CHECK
 import me.mrkirby153.KirBot.utils.RED_CROSS
 import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.KirBot.utils.deleteAfter
-import net.dv8tion.jda.core.Permission
+import net.dv8tion.jda.api.Permission
 import java.util.concurrent.TimeUnit
 
 

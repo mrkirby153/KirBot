@@ -15,7 +15,7 @@ import me.mrkirby153.KirBot.utils.canInteractWith
 import me.mrkirby153.KirBot.utils.deleteAfter
 import me.mrkirby153.KirBot.utils.logName
 import me.mrkirby153.kcutils.Time
-import net.dv8tion.jda.core.Permission
+import net.dv8tion.jda.api.Permission
 import java.util.concurrent.TimeUnit
 
 

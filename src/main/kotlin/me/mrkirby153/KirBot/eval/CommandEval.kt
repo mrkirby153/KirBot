@@ -6,7 +6,7 @@ import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.GREEN_TICK
-import net.dv8tion.jda.core.requests.RestAction
+import net.dv8tion.jda.api.requests.RestAction
 import org.json.JSONObject
 import org.json.JSONTokener
 import java.io.DataOutputStream
@@ -38,7 +38,7 @@ class CommandEval {
         context.message.addReaction(ARROWS).queue()
 
         val result = Engine.eval(shortcuts, Engine.defaultImports, 10, toEval)
-        context.message.addReaction(GREEN_TICK.emote).queue()
+        context.message.addReaction(GREEN_TICK.emote!!).queue()
         if (result.first is RestAction<*>) {
             Bot.LOG.debug("Eval returned rest action, queueing")
             (result.first as RestAction<*>).queue()

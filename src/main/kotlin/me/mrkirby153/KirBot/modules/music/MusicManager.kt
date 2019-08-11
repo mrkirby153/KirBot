@@ -5,10 +5,10 @@ import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.Redis
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
-import net.dv8tion.jda.core.entities.Guild
-import net.dv8tion.jda.core.entities.TextChannel
-import net.dv8tion.jda.core.entities.User
-import net.dv8tion.jda.core.entities.VoiceChannel
+import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.TextChannel
+import net.dv8tion.jda.api.entities.User
+import net.dv8tion.jda.api.entities.VoiceChannel
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.LinkedList
@@ -31,7 +31,7 @@ class MusicManager(val guild: Guild) {
     var boundChannelId: String? = null
 
     val boundChannel: TextChannel?
-        get() = guild.getTextChannelById(boundChannelId)
+        get() = guild.getTextChannelById(boundChannelId ?: "")
 
     var connected = false
 
@@ -81,6 +81,7 @@ class MusicManager(val guild: Guild) {
      * @param channelToBind The channel to bind to
      */
     fun connect(channel: VoiceChannel, channelToBind: TextChannel? = null) {
+        this.boundChannelId = channelToBind?.id
         this.guild.audioManager.openAudioConnection(channel)
         connected = true
         ModuleManager[MusicModule::class.java].startPlaying(this.guild)
@@ -154,7 +155,7 @@ class MusicManager(val guild: Guild) {
     fun updateVoiceState() {
         ModuleManager[Redis::class.java].getConnection().use { redis ->
             val keys = redis.keys("music:${guild.id}:channel:*")
-            this.guild.selfMember.voiceState.channel?.members?.forEach {
+            this.guild.selfMember.voiceState!!.channel?.members?.forEach {
                 redis.set("music:${guild.id}:channel:${it.user.id}", "true")
                 keys.remove("music:${guild.id}:channel:${it.user.id}")
             }

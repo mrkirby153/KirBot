@@ -9,7 +9,7 @@ import me.mrkirby153.KirBot.utils.GREEN_TICK
 import me.mrkirby153.KirBot.utils.RED_TICK
 import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.kcutils.Time
-import net.dv8tion.jda.core.entities.Message
+import net.dv8tion.jda.api.entities.Message
 
 class TrackLoader(val manager: MusicManager, val context: Context, val msg: Message) :
         AudioLoadResultHandler {

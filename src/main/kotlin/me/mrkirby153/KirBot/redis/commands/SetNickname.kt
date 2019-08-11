@@ -1,8 +1,8 @@
 package me.mrkirby153.KirBot.redis.commands
 
 import me.mrkirby153.KirBot.Bot
-import net.dv8tion.jda.core.entities.Guild
-import net.dv8tion.jda.core.entities.User
+import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.User
 import org.json.JSONObject
 
 class SetNickname : RedisCommandHandler {
@@ -13,7 +13,7 @@ class SetNickname : RedisCommandHandler {
 
         if (guild.selfMember.nickname != nick) {
             Bot.LOG.debug("Updating nick to \"$nick\"")
-            guild.controller.setNickname(guild.selfMember, nick).queue()
+            guild.selfMember.modifyNickname(nick).queue()
         }
     }
 }

@@ -2,9 +2,9 @@ package me.mrkirby153.KirBot.command
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.command.annotations.CommandDescription
 import me.mrkirby153.KirBot.command.annotations.AdminCommand
 import me.mrkirby153.KirBot.command.annotations.Command
+import me.mrkirby153.KirBot.command.annotations.CommandDescription
 import me.mrkirby153.KirBot.command.annotations.IgnoreWhitelist
 import me.mrkirby153.KirBot.command.annotations.LogInModlogs
 import me.mrkirby153.KirBot.command.args.ArgumentParseException
@@ -24,8 +24,8 @@ import me.mrkirby153.KirBot.utils.globalAdmin
 import me.mrkirby153.KirBot.utils.logName
 import me.mrkirby153.KirBot.utils.toTypedArray
 import me.mrkirby153.kcutils.Time
-import net.dv8tion.jda.core.entities.Channel
-import net.dv8tion.jda.core.entities.ChannelType
+import net.dv8tion.jda.api.entities.ChannelType
+import net.dv8tion.jda.api.entities.GuildChannel
 import org.json.JSONArray
 import org.reflections.Reflections
 import org.reflections.scanners.MethodAnnotationsScanner
@@ -159,9 +159,9 @@ object CommandExecutor {
         }
         var node = resolve(args)
         val alias = context.kirbotGuild.commandAliases.firstOrNull { it.command == rootCommandName }
-        if(alias != null && alias.alias?.isNotEmpty() == true) {
+        if (alias != null && alias.alias?.isNotEmpty() == true) {
             // An alias exists for this command
-            args[0] = alias.alias
+            args[0] = alias.alias!!
             node = resolve(args)
         }
         if (node == null || node.isSkeleton()) {
@@ -173,7 +173,7 @@ object CommandExecutor {
 
         val defaultAlias = context.kirbotGuild.commandAliases.firstOrNull { it.command == "*" }
 
-        if (!canExecuteInChannel(node, context.channel as Channel)) {
+        if (!canExecuteInChannel(node, context.channel as GuildChannel)) {
             Bot.LOG.debug("Ignoring because whitelist")
             return
         }
@@ -207,7 +207,25 @@ object CommandExecutor {
         val cmdContext = try {
             parser.parse(metadata.arguments.toTypedArray())
         } catch (e: ArgumentParseException) {
-            context.send().error(e.message?.escapeMentions() ?: "An unknown error occurred").queue()
+            val msg = buildString {
+                if (e.message != null) {
+                    appendln(e.message.escapeMentions())
+                } else {
+                    appendln("An unknown error occurred!")
+                }
+                append("Usage: `")
+                append(prefix)
+                if (node.parentString.isNotBlank()) {
+                    append(node.parentString + " ")
+                }
+                append(node.name)
+                if(node.metadata?.arguments != null) {
+                    append(" ")
+                    append(node.metadata?.arguments?.joinToString(" "))
+                }
+                append("`")
+            }
+            context.send().error(msg).queue()
             return
         }
 
@@ -268,7 +286,7 @@ object CommandExecutor {
     }
 
     tailrec fun resolve(arguments: LinkedList<String>,
-                                parent: CommandNode = rootNode): CommandNode? {
+                        parent: CommandNode = rootNode): CommandNode? {
         if (arguments.peek() == null) {
             if (parent == rootNode)
                 return null
@@ -289,7 +307,7 @@ object CommandExecutor {
     }
 
     private fun isMention(message: String): Boolean {
-        return message.matches(Regex("^<@!?${Bot.shardManager.getShardById(0).selfUser.id}>.*"))
+        return message.matches(Regex("^<@!?${Bot.shardManager.getShardById(0)!!.selfUser.id}>.*"))
     }
 
     fun executeCustomCommand(context: Context, command: String, args: Array<String>) {
@@ -303,7 +321,7 @@ object CommandExecutor {
             }
             return
         }
-        if (!canExecuteInChannel(customCommand, context.channel as Channel)) {
+        if (!canExecuteInChannel(customCommand, context.channel as GuildChannel)) {
             return
         }
 
@@ -315,7 +333,7 @@ object CommandExecutor {
         context.channel.sendMessage(response).queue()
     }
 
-    private fun canExecuteInChannel(command: CommandNode, channel: Channel): Boolean {
+    private fun canExecuteInChannel(command: CommandNode, channel: GuildChannel): Boolean {
         val channels = SettingsRepository.getAsJsonArray(channel.guild, "cmd_whitelist",
                 JSONArray())!!.toTypedArray(String::class.java)
         if (command.metadata?.admin == true)
@@ -329,7 +347,7 @@ object CommandExecutor {
         }
     }
 
-    private fun canExecuteInChannel(command: CustomCommand, channel: Channel): Boolean {
+    private fun canExecuteInChannel(command: CustomCommand, channel: GuildChannel): Boolean {
         val channels = SettingsRepository.getAsJsonArray(channel.guild, "cmd_whitelist",
                 JSONArray())!!.toTypedArray(String::class.java)
         return if (command.respectWhitelist) {

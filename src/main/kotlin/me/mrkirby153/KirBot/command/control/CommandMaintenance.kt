@@ -13,8 +13,8 @@ import me.mrkirby153.KirBot.utils.promptForConfirmation
 import me.mrkirby153.kcutils.utils.argparser.ArgumentParser
 import me.mrkirby153.kcutils.utils.argparser.MissingArgumentException
 import me.mrkirby153.kcutils.utils.argparser.Option
-import net.dv8tion.jda.core.OnlineStatus
-import net.dv8tion.jda.core.entities.Game
+import net.dv8tion.jda.api.OnlineStatus
+import net.dv8tion.jda.api.entities.Activity
 import java.util.concurrent.TimeUnit
 
 
@@ -67,13 +67,13 @@ class CommandSetStatus {
         val gameString = cmdContext.get<String>("game")
         if (gameTypeRaw != null) {
             val gameType = try {
-                Game.GameType.valueOf(gameTypeRaw.toUpperCase())
+                Activity.ActivityType.valueOf(gameTypeRaw.toUpperCase())
             } catch (e: IllegalArgumentException) {
                 throw CommandException("The game type `${cmdContext.get<String>(
-                        "type")}` was not found. Valid values are `${Game.GameType.values().joinToString(
+                        "type")}` was not found. Valid values are `${Activity.ActivityType.values().joinToString(
                         ", ")}`")
             }
-            Bot.shardManager.setGame(Game.of(gameType, gameString))
+            Bot.shardManager.setActivity(Activity.of(gameType, gameString?: ""))
         }
         if (gameTypeRaw == null && gameString == null) {
             Bot.shardManager.setGame(null)
@@ -90,9 +90,9 @@ class CommandRestart {
     @AdminCommand
     fun restart(context: Context, cmdContext: CommandContext) {
         val parser = ArgumentParser()
-        parser.addOption(Option("guild", required = false, aliases = arrayOf("g"),
+        parser.addOption(Option("--guild", required = false, aliases = arrayOf("-g"),
                 help = "The guild to restart"))
-        parser.addOption(Option("shard", required = false, aliases = arrayOf("s"),
+        parser.addOption(Option("--shard", required = false, aliases = arrayOf("-s"),
                 help = "The shard to restart"))
 
         val parsed = try {

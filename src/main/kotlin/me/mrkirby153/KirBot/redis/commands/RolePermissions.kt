@@ -1,8 +1,8 @@
 package me.mrkirby153.KirBot.redis.commands
 
 import me.mrkirby153.KirBot.utils.kirbotGuild
-import net.dv8tion.jda.core.entities.Guild
-import net.dv8tion.jda.core.entities.User
+import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.User
 import org.json.JSONObject
 
 class RolePermissions : RedisCommandHandler {

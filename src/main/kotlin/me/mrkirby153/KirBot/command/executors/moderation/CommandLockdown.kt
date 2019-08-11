@@ -8,10 +8,9 @@ import me.mrkirby153.KirBot.command.annotations.LogInModlogs
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
-import me.mrkirby153.KirBot.utils.getOrCreateOverride
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
-import net.dv8tion.jda.core.Permission
-import net.dv8tion.jda.core.entities.TextChannel
+import net.dv8tion.jda.api.Permission
+import net.dv8tion.jda.api.entities.TextChannel
 
 
 private val lockdownMessages = mutableMapOf<String, String>()
@@ -28,16 +27,16 @@ class CommandLockdown {
 
         val chan = context.channel as TextChannel
 
-        val override = chan.getOrCreateOverride(context.guild.publicRole)
+        val override = chan.upsertPermissionOverride(context.guild.publicRole)
 
-        if (Permission.MESSAGE_WRITE in override.denied) {
+        if (Permission.MESSAGE_WRITE in override.deniedPermissions) {
             throw CommandException("Channel is already locked")
         }
 
         chan.sendMessage(
                 "Channel locked by **${context.author.nameAndDiscrim}**: $msg").queue { m ->
             lockdownMessages[chan.id] = m.id
-            override.manager.deny(Permission.MESSAGE_WRITE).queue()
+            override.deny(Permission.MESSAGE_WRITE).queue()
         }
     }
 }

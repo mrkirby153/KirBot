@@ -5,11 +5,10 @@ import com.mrkirby153.bfs.annotations.PrimaryKey
 import com.mrkirby153.bfs.annotations.Table
 import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.Bot
-import net.dv8tion.jda.core.entities.Guild
-import net.dv8tion.jda.core.entities.Role
+import net.dv8tion.jda.api.entities.Guild
 
 @Table("roles")
-class Role(role: Role? = null) : Model() {
+class Role(role: net.dv8tion.jda.api.entities.Role? = null) : Model() {
 
     @PrimaryKey
     var id = ""
@@ -32,7 +31,7 @@ class Role(role: Role? = null) : Model() {
             this.serverId = guild.id
         }
 
-    var role: Role?
+    var role: net.dv8tion.jda.api.entities.Role?
         get() = guild?.getRoleById(this.id)
         set(role) {
             if (role == null) {

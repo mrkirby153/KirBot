@@ -13,12 +13,12 @@ import me.mrkirby153.KirBot.utils.getMember
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.logName
 import me.mrkirby153.KirBot.utils.toTypedArray
-import net.dv8tion.jda.core.Permission
-import net.dv8tion.jda.core.entities.Guild
-import net.dv8tion.jda.core.entities.Member
-import net.dv8tion.jda.core.entities.User
-import net.dv8tion.jda.core.events.guild.member.GuildMemberNickChangeEvent
-import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleAddEvent
+import net.dv8tion.jda.api.Permission
+import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.Member
+import net.dv8tion.jda.api.entities.User
+import net.dv8tion.jda.api.events.guild.member.GuildMemberRoleAddEvent
+import net.dv8tion.jda.api.events.guild.member.update.GuildMemberUpdateNicknameEvent
 
 object UserPersistenceHandler {
 
@@ -36,9 +36,9 @@ object UserPersistenceHandler {
         var changed = false
         if (member.nickname != backup.nick && guild.checkPermission(
                         Permission.NICKNAME_MANAGE) && Mode.NICK in mode) {
-            logger.debouncer.create(GuildMemberNickChangeEvent::class.java,
+            logger.debouncer.create(GuildMemberUpdateNicknameEvent::class.java,
                     Pair("id", member.user.id))
-            guild.controller.setNickname(member, backup.nick).queue()
+            member.modifyNickname(backup.nick).queue()
             Bot.LOG.debug("Nickname restored to ${backup.nick}")
             changed = true
         }
@@ -55,7 +55,7 @@ object UserPersistenceHandler {
                         Pair("role", it.id))
             }
             if (roles.isNotEmpty()) {
-                guild.controller.addRolesToMember(member, roles).queue()
+                guild.modifyMemberRoles(member, roles).queue()
                 changed = true
             }
         }
@@ -76,13 +76,13 @@ object UserPersistenceHandler {
         val member = user.getMember(guild) ?: return
         val backup = getBackup(member) ?: return
 
-        if (member.voiceState.isGuildDeafened != backup.deafened && Mode.DEAFEN in mode) {
+        if (member.voiceState!!.isGuildDeafened != backup.deafened && Mode.DEAFEN in mode) {
             Bot.LOG.debug("Deafened? ${backup.deafened}")
-            guild.controller.setDeafen(member, backup.deafened).queue()
+            guild.deafen(member, backup.deafened).queue()
         }
-        if (member.voiceState.isGuildMuted != backup.muted && Mode.MUTE in mode) {
+        if (member.voiceState!!.isGuildMuted != backup.muted && Mode.MUTE in mode) {
             Bot.LOG.debug("Muted? ${backup.muted}")
-            guild.controller.setMute(member, backup.muted).queue()
+            guild.mute(member, backup.muted).queue()
         }
     }
 
@@ -91,8 +91,8 @@ object UserPersistenceHandler {
                 "user_id", member.user.id).first() ?: GuildMember(member)
         guildMember.user = member.user
         guildMember.nick = member.nickname
-        guildMember.deafened = member.voiceState.isGuildDeafened
-        guildMember.muted = member.voiceState.isGuildMuted
+        guildMember.deafened = member.voiceState?.isGuildDeafened ?: false
+        guildMember.muted = member.voiceState?.isGuildMuted ?: false
         guildMember.save()
 
         val storedRoles = Model.where(GuildMemberRole::class.java, "server_id",

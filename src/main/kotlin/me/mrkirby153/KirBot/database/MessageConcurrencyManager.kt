@@ -4,7 +4,7 @@ import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.logger.LogManager
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.Database
-import net.dv8tion.jda.core.entities.Message
+import net.dv8tion.jda.api.entities.Message
 import java.sql.Timestamp
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executors
@@ -66,18 +66,18 @@ object MessageConcurrencyManager {
                                 messagePs.setString(4, msg.channel.id)
                                 messagePs.setString(5, LogManager.encrypt(msg.contentRaw))
                                 messagePs.setTimestamp(6,
-                                        Timestamp.from(msg.creationTime.toInstant()))
+                                        Timestamp.from(msg.timeCreated.toInstant()))
                                 messagePs.setTimestamp(7,
-                                        Timestamp.from(msg.creationTime.toInstant()))
+                                        Timestamp.from(msg.timeCreated.toInstant()))
                                 messagePs.addBatch()
                                 if (msg.attachments.size > 0) {
                                     attachmentPs.setString(1, msg.id)
                                     attachmentPs.setString(2, LogManager.encrypt(
                                             msg.attachments.joinToString(",") { it.url }))
                                     attachmentPs.setTimestamp(3,
-                                            Timestamp.from(msg.creationTime.toInstant()))
+                                            Timestamp.from(msg.timeCreated.toInstant()))
                                     attachmentPs.setTimestamp(4,
-                                            Timestamp.from(msg.creationTime.toInstant()))
+                                            Timestamp.from(msg.timeCreated.toInstant()))
                                     attachmentPs.addBatch()
                                 }
                             }

@@ -1,11 +1,12 @@
 package me.mrkirby153.KirBot.utils
 
-import net.dv8tion.jda.core.Permission
-import net.dv8tion.jda.core.audit.ActionType
-import net.dv8tion.jda.core.audit.AuditLogEntry
-import net.dv8tion.jda.core.entities.Guild
-import net.dv8tion.jda.core.entities.ISnowflake
-import net.dv8tion.jda.core.entities.User
+import net.dv8tion.jda.api.Permission
+import net.dv8tion.jda.api.audit.ActionType
+import net.dv8tion.jda.api.audit.AuditLogEntry
+import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.ISnowflake
+import net.dv8tion.jda.api.entities.User
+
 
 object AuditLogs {
 
@@ -30,7 +31,7 @@ object AuditLogs {
     }
 
     fun getFirstAction(guild: Guild, type: ActionType, id: ISnowflake): AuditLogEntry? {
-        val e = guild.auditLogs.type(type).stream().filter { it.targetId == id.id }.findFirst()
+        val e = guild.retrieveAuditLogs().type(type).stream().filter { it.targetId == id.id }.findFirst()
         if (e.isPresent)
             return e.get()
         return null

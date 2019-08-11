@@ -4,7 +4,7 @@ import com.google.gson.GsonBuilder
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.kcutils.child
 import me.mrkirby153.kcutils.mkdirIfNotExist
-import net.dv8tion.jda.core.entities.Guild
+import net.dv8tion.jda.api.entities.Guild
 
 private val GSON = GsonBuilder().setPrettyPrinting().create()
 

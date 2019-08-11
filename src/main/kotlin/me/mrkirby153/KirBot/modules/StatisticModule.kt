@@ -6,8 +6,8 @@ import me.mrkirby153.KirBot.event.Subscribe
 import me.mrkirby153.KirBot.module.Module
 import me.mrkirby153.KirBot.stats.Statistics
 import me.mrkirby153.KirBot.utils.getOnlineStats
-import net.dv8tion.jda.core.entities.User
-import net.dv8tion.jda.core.events.message.guild.GuildMessageReceivedEvent
+import net.dv8tion.jda.api.entities.User
+import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent
 import java.util.stream.Collectors
 
 class StatisticModule : Module("stats") {
@@ -28,8 +28,8 @@ class StatisticModule : Module("stats") {
         Statistics.guilds.set(Bot.shardManager.shards.flatMap { it.guilds }.count().toDouble())
 
         Bot.shardManager.shards.forEach { shard ->
-            val shardNumber = shard.shardInfo?.shardId ?: 0
-            Statistics.websocketPing.labels(shardNumber.toString()).set(shard.ping.toDouble())
+            val shardNumber = shard.shardInfo.shardId
+            Statistics.websocketPing.labels(shardNumber.toString()).set(shard.gatewayPing.toDouble())
         }
         Statistics.pendingMessageJobs.set(MessageConcurrencyManager.queueSize().toDouble())
         Statistics.pendingMessages.set(MessageConcurrencyManager.messageCount().toDouble())

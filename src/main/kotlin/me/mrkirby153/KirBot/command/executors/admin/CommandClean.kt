@@ -13,8 +13,7 @@ import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.kcutils.Time
-import net.dv8tion.jda.core.Permission
-import net.dv8tion.jda.core.requests.RequestFuture
+import net.dv8tion.jda.api.Permission
 import java.util.concurrent.CompletableFuture
 
 class CommandClean {
@@ -99,7 +98,7 @@ class CommandClean {
                     failedChannels++
                     return@forEach
                 }
-                cf.add(RequestFuture.allOf(channel.purgeMessagesById(messages)))
+                cf.add(CompletableFuture.allOf(*channel.purgeMessagesById(messages).toTypedArray()))
             }
             CompletableFuture.allOf(*cf.toTypedArray()).thenAccept {
                 val msg = buildString {

@@ -9,6 +9,7 @@ import me.mrkirby153.KirBot.utils.toSnowflake
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.TextChannel
+import java.sql.Timestamp
 import java.time.Instant
 import java.util.Date
 import java.util.concurrent.CopyOnWriteArrayList
@@ -78,34 +79,41 @@ class RecoveryTask(private val recovery: ActiveRecovery, val channel: TextChanne
             val connection = ModuleManager[Database::class.java].database.getConnection()
             connection.use {
                 val ps = connection.prepareStatement(
-                        "INSERT IGNORE INTO `server_messages` (id, server_id, author, channel, message) VALUES (?, ?, ?, ?, ?)")
+                        "INSERT IGNORE INTO `server_messages` (id, server_id, author, channel, message, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)")
                 ps.use {
-                    action.retrievedHistory.forEach { msg ->
-                        Bot.LOG.debug("Queueing $msg")
-                        if (msg.timeCreated.toInstant().isAfter(end))
-                            return@forEach
-                        ps.setString(1, msg.id)
-                        ps.setString(2, msg.guild.id)
-                        ps.setString(3, msg.author.id)
-                        ps.setString(4, msg.channel.id)
-                        ps.setString(5, LogManager.encrypt(msg.contentRaw))
-                        ps.addBatch()
-                        if (msg.attachments.isNotEmpty()) {
-                            val attachmentPs = connection.prepareStatement(
-                                    "INSERT IGNORE INTO attachments (id, attachments) VALUE (?, ?)")
-                            attachmentPs.use {
-                                attachmentPs.setString(1, msg.id)
-                                attachmentPs.setString(2, LogManager.encrypt(
-                                        msg.attachments.joinToString(", ") { it.url }))
-                                attachmentPs.executeUpdate()
+                    try {
+                        action.retrievedHistory.forEach { msg ->
+                            Bot.LOG.debug("Queueing $msg")
+                            if (msg.timeCreated.toInstant().isAfter(end))
+                                return@forEach
+                            ps.setString(1, msg.id)
+                            ps.setString(2, msg.guild.id)
+                            ps.setString(3, msg.author.id)
+                            ps.setString(4, msg.channel.id)
+                            ps.setString(5, LogManager.encrypt(msg.contentRaw))
+                            ps.setTimestamp(6, Timestamp(msg.timeCreated.toEpochSecond() * 1000))
+
+                            val edited = msg.timeEdited ?: msg.timeCreated
+                            ps.setTimestamp(7, Timestamp(edited.toEpochSecond() * 1000))
+                            ps.addBatch()
+                            if (msg.attachments.isNotEmpty()) {
+                                val attachmentPs = connection.prepareStatement(
+                                        "INSERT IGNORE INTO attachments (id, attachments) VALUE (?, ?)")
+                                attachmentPs.use {
+                                    attachmentPs.setString(1, msg.id)
+                                    attachmentPs.setString(2, LogManager.encrypt(
+                                            msg.attachments.joinToString(", ") { it.url }))
+                                    attachmentPs.executeUpdate()
+                                }
                             }
                         }
+                    } finally {
+                        synchronized(recovery) {
+                            recovery.recoveredMessages += ps.executeBatch().sum()
+                        }
+                        Bot.LOG.debug("Recovery completed on $channel")
+                        recovery.completed.add(channel)
                     }
-                    synchronized(recovery) {
-                        recovery.recoveredMessages += ps.executeBatch().sum()
-                    }
-                    Bot.LOG.debug("Recovery completed on $channel")
-                    recovery.completed.add(channel)
                 }
             }
         } catch (e: Exception) {

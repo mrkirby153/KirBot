@@ -26,15 +26,17 @@ class CommandRecovery {
                 "Recovery status: ${ar.completed.size}/${ar.channels.size}").complete()
         val start = System.currentTimeMillis()
         Bot.scheduler.submit {
+            val end: Long
             while (true) {
                 msg.editMessage("Recovery status: ${ar.completed.size}/${ar.channels.size}").queue()
                 if (ar.completed.size == ar.channels.size) {
+                    end = System.currentTimeMillis()
                     break
                 }
                 Thread.sleep(5000)
             }
             context.channel.sendMessage("Recovery completed! (Took ${Time.format(1,
-                    System.currentTimeMillis() - start)} and recovered ${ar.recoveredMessages} messages)").queue()
+                    end - start)} and recovered ${ar.recoveredMessages} messages)").queue()
         }
     }
 }

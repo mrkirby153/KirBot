@@ -84,6 +84,7 @@ class CommandClean {
             builder.table("server_messages")
             builder.whereIn("id", messages.toTypedArray())
             builder.select("id", "channel")
+            builder.where("deleted", false)
             builder.query().forEach {
                 buckets.getOrPut(it.getString("channel"), { mutableListOf() }).add(
                         it.getString("id"))
@@ -98,7 +99,7 @@ class CommandClean {
                     failedChannels++
                     return@forEach
                 }
-                cf.add(CompletableFuture.allOf(*channel.purgeMessagesById(messages).toTypedArray()))
+                cf.addAll(channel.purgeMessagesById(messages).toTypedArray())
             }
             CompletableFuture.allOf(*cf.toTypedArray()).thenAccept {
                 val msg = buildString {

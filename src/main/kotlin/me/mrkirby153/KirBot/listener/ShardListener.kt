@@ -9,12 +9,14 @@ import me.mrkirby153.KirBot.database.models.guild.Role
 import me.mrkirby153.KirBot.event.EventPriority
 import me.mrkirby153.KirBot.event.Subscribe
 import me.mrkirby153.KirBot.module.ModuleManager
+import me.mrkirby153.KirBot.modules.AccessModule
 import me.mrkirby153.KirBot.modules.AdminControl
-import me.mrkirby153.KirBot.modules.Redis
 import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.server.UserPersistenceHandler
 import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.kirbotGuild
+import me.mrkirby153.KirBot.utils.logName
+import me.mrkirby153.KirBot.utils.sanitize
 import me.mrkirby153.kcutils.utils.IdGenerator
 import net.dv8tion.jda.api.events.ShutdownEvent
 import net.dv8tion.jda.api.events.channel.text.TextChannelCreateEvent
@@ -43,6 +45,7 @@ import java.util.concurrent.TimeUnit
 class ShardListener {
 
     private val idGenerator = IdGenerator(IdGenerator.ALPHA + IdGenerator.NUMBERS)
+    private val guildLeavesIgnore = mutableSetOf<String>()
 
     @Subscribe
     fun onGuildMemberJoin(event: GuildMemberJoinEvent) {
@@ -115,30 +118,57 @@ class ShardListener {
     @Subscribe
     fun onGuildLeave(event: GuildLeaveEvent) {
         val guild = event.guild
-        AdminControl.log("Left guild ${guild.name} (`${guild.id}`)")
-        Model.where(DiscordGuild::class.java, "id", event.guild.id).first().delete()
+        if (!guildLeavesIgnore.contains(event.guild.id)) {
+            AdminControl.log("Left guild ${guild.name} (`${guild.id}`)")
+        }
+        guildLeavesIgnore.remove(event.guild.id)
+        Model.where(DiscordGuild::class.java, "id", event.guild.id).first()?.delete()
         event.guild.kirbotGuild.onPart()
     }
 
     @Subscribe(priority = EventPriority.HIGHEST)
     fun onGuildJoin(event: GuildJoinEvent) {
-        // Check the guild whitelist
-        if (Bot.properties.getOrDefault("guild-whitelist", "false").toString().toBoolean()) {
-            ModuleManager[Redis::class.java].getConnection().use { con ->
-                val status = (con.get("whitelist:${event.guild.id}") ?: "false").toBoolean()
-                if (!status) {
-                    Bot.LOG.debug(
-                            "Left guild ${event.guild.id} because it was not on the whitelist!")
-                    event.guild.leave().queue()
-                    return
-                } else {
-                    con.del("whitelist:${event.guild.id}")
-                    Bot.LOG.debug("Joined whitelisted guild ${event.guild.id}")
-                }
+        fun getGuildInfo(): String {
+            val guild = event.guild
+            var userCount = 0
+            var botCount = 0
+            guild.members.forEach {
+                if (it.user.isBot)
+                    botCount++
+                else
+                    userCount++
+            }
+
+            return buildString {
+                appendln("**${guild.name.sanitize()}**")
+                appendln("ID: `${guild.id}`")
+                appendln("Owner: ${guild.owner?.user?.logName ?: "Unknown"}")
+                appendln()
+                appendln("Members: ${guild.members.size}")
+                appendln(":bust_in_silhouette: $userCount")
+                appendln(":robot: $botCount")
             }
         }
-        AdminControl.log(
-                "Joined guild ${event.guild.name} (`${event.guild.id}`) [${event.guild.members.size} members]")
+
+
+        val module = ModuleManager[AccessModule::class.java]
+        if (module.onList(event.guild, AccessModule.WhitelistMode.BLACKLIST)) {
+            Bot.LOG.debug("left guild ${event.guild.id} because it was blacklisted")
+            AdminControl.log("Attempted to join blacklisted guild\n${getGuildInfo()}")
+            guildLeavesIgnore.add(event.guild.id)
+            event.guild.leave().queue()
+            return
+        }
+        if (Bot.properties.getOrDefault("guild-whitelist", "false").toString().toBoolean()) {
+            if (!module.onList(event.guild, AccessModule.WhitelistMode.WHITELIST)) {
+                Bot.LOG.debug("Left guild ${event.guild.id} because it was not whitelisted")
+                AdminControl.log("Attempted to join non-whitelisted guild\n${getGuildInfo()}")
+                guildLeavesIgnore.add(event.guild.id)
+                event.guild.leave().queue()
+                return
+            }
+        }
+        AdminControl.log("Joined guild \n${getGuildInfo()}")
         event.guild.kirbotGuild.loadSettings()
         Bot.scheduler.schedule({
             event.guild.kirbotGuild.sync()

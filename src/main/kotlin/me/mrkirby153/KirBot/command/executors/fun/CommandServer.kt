@@ -30,36 +30,74 @@ class CommandServer {
                 "Server not found")
 
         context.channel.sendMessage(embed {
-            color = if(server.iconUrl != null) getPrimaryColor(server.iconUrl!!) else Color(114, 137, 218)
+            color = if (server.iconUrl != null) getPrimaryColor(server.iconUrl!!) else Color(114,
+                    137, 218)
             thumbnail = server.iconUrl
             title {
                 append(server.name)
             }
-            description {
-                appendln("Created: ${Time.format(1,
-                        System.currentTimeMillis() - (server.timeCreated.toEpochSecond() * 1000))} ago (${SimpleDateFormat(
-                        "MM-dd-yy HH:mm:ss").format(server.timeCreated.toEpochSecond() * 1000)})")
-                appendln("Members: ${server.members.size}")
-                if (server.features.isNotEmpty())
-                    appendln("Features: ${server.features.joinToString(", ")}")
-                else
-                    appendln("Features: none")
-                appendln()
-                appendln("Roles: ${server.roles.size}")
-                appendln("Categories: ${server.categories.size}")
-                appendln("Text Channels: ${server.textChannels.size}")
-                appendln("Voice Channels: ${server.voiceChannels.size}")
-
-                val memberFilter = mutableMapOf<OnlineStatus, MutableList<Member>>()
-                server.members.forEach { member ->
-                    memberFilter.getOrPut(member.onlineStatus) { mutableListOf() }.add(member)
+            fields {
+                field {
+                    title = "ID"
+                    description = context.guild.id
+                    inline = true
                 }
-                appendln()
-                appendln("\\> Members")
-                appendln("$STATUS_ONLINE ${memberFilter[OnlineStatus.ONLINE]?.size ?: "0"}")
-                appendln("$STATUS_AWAY ${memberFilter[OnlineStatus.IDLE]?.size ?: "0"}")
-                appendln("$STATUS_DND ${memberFilter[OnlineStatus.DO_NOT_DISTURB]?.size ?: "0"}")
-                appendln("$STATUS_OFFLINE ${memberFilter[OnlineStatus.OFFLINE]?.size ?: "0"}")
+                field {
+                    title = "Created"
+                    description = " ${Time.format(1,
+                            System.currentTimeMillis() - (server.timeCreated.toEpochSecond() * 1000))} ago (${SimpleDateFormat(
+                            "MM-dd-yy HH:mm:ss").format(
+                            server.timeCreated.toEpochSecond() * 1000)})"
+                    inline = true
+                }
+                field {
+                    title = "Members"
+                    description = server.members.size.toString()
+                    inline = true
+                }
+                field {
+                    title = "Features"
+                    description = if (server.features.isNotEmpty()) {
+                        server.features.joinToString(", ")
+                    } else {
+                        "None"
+                    }
+                    inline = true
+                }
+                if(serverId == context.guild.id)
+                    // Only show the roles on the current server
+                    field {
+                        title = "Roles"
+                        description = server.roles.filter { !it.isPublicRole }.joinToString(" ") { it.asMention }
+                    }
+                field {
+                    title = "Categories"
+                    description = server.categories.size.toString()
+                    inline = true
+                }
+                field {
+                    title = "Text Channels"
+                    description = server.textChannels.size.toString()
+                    inline = true
+                }
+                field {
+                    title = "Voice Channels"
+                    description = server.voiceChannels.size.toString()
+                    inline = true
+                }
+                field {
+                    title = "Members"
+                    val memberFilter = mutableMapOf<OnlineStatus, MutableList<Member>>()
+                    server.members.forEach { member ->
+                        memberFilter.getOrPut(member.onlineStatus) { mutableListOf() }.add(member)
+                    }
+                    description {
+                        appendln("$STATUS_ONLINE Online: ${memberFilter[OnlineStatus.ONLINE]?.size ?: "0"}")
+                        appendln("$STATUS_AWAY Idle: ${memberFilter[OnlineStatus.IDLE]?.size ?: "0"}")
+                        appendln("$STATUS_DND Do not Disturb: ${memberFilter[OnlineStatus.DO_NOT_DISTURB]?.size ?: "0"}")
+                        appendln("$STATUS_OFFLINE Offline: ${memberFilter[OnlineStatus.OFFLINE]?.size ?: "0"}")
+                    }
+                }
             }
         }.build()).queue()
     }

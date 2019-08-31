@@ -23,3 +23,4 @@ src/main/resources/rebel.xml
 /data/*
 sentry\.properties
 .data
+docker-compose.override.yml

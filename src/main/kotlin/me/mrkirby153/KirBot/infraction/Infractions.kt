@@ -582,7 +582,7 @@ object Infractions {
         val anonymous = reason.startsWith("[ADM]")
         reason = reason.replace(Regex("\\[A?DM]"), "")
         try {
-            val channel = user.openPrivateChannel().queue { channel ->
+            user.openPrivateChannel().queue { channel ->
                 val action = when (infraction.type) {
                     InfractionType.WARNING -> "warned"
                     InfractionType.KICK -> "kicked"
@@ -615,7 +615,7 @@ object Infractions {
                 return CompletableFuture.completedFuture(DmResult.NOT_SENT)
             }
         }
-        return CompletableFuture.completedFuture(DmResult.UNKNOWN)
+        return future
     }
 
     enum class DmResult {

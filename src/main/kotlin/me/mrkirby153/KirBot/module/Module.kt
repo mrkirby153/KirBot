@@ -8,7 +8,7 @@ abstract class Module(val name: String) {
 
     var loaded = false
 
-    val dependencies = mutableListOf<Class<*>>()
+    val dependencies = mutableListOf<Class<out Module>>()
 
     private val periodicTasks = mutableMapOf<Method, Int>()
 
@@ -62,7 +62,7 @@ abstract class Module(val name: String) {
         loaded = false
     }
 
-    fun getUnmetDeps(): List<Class<*>> {
+    fun getUnmetDeps(): List<Class<out Module>> {
         return dependencies.filter { it !in ModuleManager.loadedModules.map { it.javaClass } }
     }
 

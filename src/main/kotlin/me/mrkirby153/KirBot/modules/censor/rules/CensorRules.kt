@@ -84,9 +84,9 @@ class InviteRule : CensorRule {
             val guild = resolve(message.jda, invite) ?: throw ViolationException("Invite `$invite`")
             if (guild.id == message.guild.id) // Allow invites to the current server
                 return@forEach
-            if ((blacklistedGuilds != null && guild.id in blacklistedGuilds) || (blacklistedInvites != null && invite in blacklistedInvites))
+            if (((blacklistedGuilds != null && blacklistedGuilds.isNotEmpty()) && guild.id in blacklistedGuilds))
                 throw ViolationException("Invite `$invite` to ${guild.name}")
-            if ((whitelistedGuilds != null && guild.id !in whitelistedGuilds) || (whitelistedInvites != null && invite !in whitelistedInvites))
+            if (((whitelistedGuilds != null && whitelistedGuilds.isNotEmpty()) && guild.id !in whitelistedGuilds))
                 throw ViolationException("Invite `$invite` to ${guild.name}")
         }
     }
@@ -119,9 +119,9 @@ class DomainRule : CensorRule {
             try {
                 val url = URL(it)
                 val domain = url.host
-                if (whitelist != null && domain !in whitelist) {
+                if ((whitelist != null && whitelist.isNotEmpty()) && domain !in whitelist) {
                     throw ViolationException("Not whitelisted domain: `$domain`")
-                } else if (blacklist != null && domain in blacklist) {
+                } else if ((blacklist != null && blacklist.isNotEmpty()) && domain in blacklist) {
                     throw ViolationException("Blacklisted domain: `$domain`")
                 }
             } catch (ignored: MalformedURLException) {

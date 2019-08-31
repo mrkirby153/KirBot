@@ -26,7 +26,7 @@ class PriorityEventManager : IEventManager {
 
     override fun handle(event: GenericEvent) {
         if(event !is HttpRequestEvent) {
-            Statistics.eventType.labels(event.javaClass.name).inc()
+            Statistics.eventType.labels(event.javaClass.simpleName).inc()
         }
 
         // Walk up the hierarchy

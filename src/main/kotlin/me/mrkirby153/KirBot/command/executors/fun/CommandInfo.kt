@@ -80,6 +80,9 @@ class CommandInfo {
             description {
                 appendln("**> User Information**")
                 appendln("ID: ${user.id}")
+                appendln("Created: ${Time.formatLong(
+                        System.currentTimeMillis() - (user.timeCreated.toEpochSecond() * 1000),
+                        Time.TimeUnit.MINUTES)}")
                 appendln("Status: $onlineStatus ${getOnlineEmoji(onlineStatus)}")
                 appendln("Profile: ${user.asMention}")
                 if (jdaMember?.activities?.isNotEmpty() == true)

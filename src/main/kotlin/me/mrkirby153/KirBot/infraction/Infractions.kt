@@ -598,7 +598,10 @@ object Infractions {
                 channel.sendMessage(buildString {
                     append("You have been ")
                     append(action)
-                    append(" in **")
+                    when(infraction.type) {
+                        InfractionType.WARNING, InfractionType.MUTE, InfractionType.TEMPMUTE -> append(" in **")
+                        else -> append(" from **")
+                    }
                     append(guild.name)
                     append("**")
                     if (!anonymous) {

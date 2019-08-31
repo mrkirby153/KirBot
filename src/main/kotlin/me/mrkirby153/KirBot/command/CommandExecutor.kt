@@ -214,11 +214,11 @@ object CommandExecutor {
                     appendln("An unknown error occurred!")
                 }
                 append("Usage: `")
-                append(prefix)
+                append(prefix.trim())
                 if (node.parentString.isNotBlank()) {
-                    append(node.parentString + " ")
+                    append(node.parentString.trim() + " ")
                 }
-                append(node.name)
+                append(node.name.trim())
                 if(node.metadata?.arguments != null) {
                     append(" ")
                     append(node.metadata?.arguments?.joinToString(" "))

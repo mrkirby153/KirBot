@@ -1,0 +1,75 @@
+plugins {
+    id 'java'
+    id 'maven-publish'
+    id 'org.jetbrains.kotlin.jvm' version '1.3.50'
+    id 'application'
+    id 'com.gorylenko.gradle-git-properties' version '2.1.0'
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven {
+        url = 'http://jcenter.bintray.com'
+    }
+
+    maven {
+        url = 'https://jitpack.io'
+    }
+
+    maven {
+        url = 'https://repo.mrkirby153.com/repository/maven-public/'
+    }
+}
+
+dependencies {
+    compile 'com.google.code.gson:gson:2.8.2'
+    compile 'net.dv8tion:JDA:4.0.0_44'
+    compile 'com.sedmelluq:jda-nas:1.1.0'
+    compile 'com.sedmelluq:lavaplayer:1.3.20'
+    compile 'club.minnced:discord-webhooks:0.1.7'
+    compile 'org.json:json:20170516'
+    compile 'com.squareup.okhttp3:okhttp:3.8.1'
+    compile 'com.google.guava:guava:23.0-rc1'
+    compile 'redis.clients:jedis:2.9.0'
+    compile 'ch.qos.logback:logback-classic:1.2.3'
+    compile 'com.rometools:rome:1.9.0'
+    compile 'org.reflections:reflections:0.9.11'
+    compile 'me.mrkirby153:KirbyUtils-Common:3.1-SNAPSHOT'
+    compile 'com.zaxxer:HikariCP:2.4.1'
+    compile 'mysql:mysql-connector-java:5.1.33'
+    compile 'commons-codec:commons-codec:1.11'
+    compile 'me.xdrop:fuzzywuzzy:1.1.10'
+    compile 'com.mrkirby153:bug-free-spork:1.2-SNAPSHOT'
+    compile 'io.prometheus:simpleclient:0.6.0'
+    compile 'io.prometheus:simpleclient_hotspot:0.6.0'
+    compile 'io.prometheus:simpleclient_httpserver:0.6.0'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+}
+
+group = 'me.mrkirby153'
+version = '1.3-SNAPSHOT'
+sourceCompatibility = '1.8'
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from(components.java)
+        }
+    }
+}
+
+compileKotlin {
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+}
+compileTestKotlin {
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+}
+
+application {
+    mainClassName = 'me.mrkirby153.KirBot.Main'
+}

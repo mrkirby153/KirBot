@@ -57,19 +57,23 @@ class CommandStats {
                     title = "Version"
                     inline = !context.author.globalAdmin
                     description = buildString {
-                        if (!context.author.globalAdmin) {
-                            append(Bot.gitProperties.getProperty("git.build.version", "Unknown"))
+                        val gitProperties = Bot.gitProperties
+                        if (gitProperties == null) {
+                            append("_Build information currently unavailable_")
                         } else {
-                            appendln("__Branch__: ${Bot.gitProperties["git.branch"]}")
-                            appendln("__Built At__: ${Bot.gitProperties["git.build.time"]}")
-                            append("__Commit__: ${Bot.gitProperties["git.commit.id"]}")
-                            if (Bot.gitProperties.getProperty("git.dirty", "false")!!.toBoolean()) {
-                                append("*\n")
+                            if (!context.author.globalAdmin) {
+                                append(gitProperties.getProperty("git.build.version", "Unknown"))
                             } else {
-                                append("\n")
+                                appendln("__Branch__: ${gitProperties["git.branch"]}")
+                                append("__Commit__: ${gitProperties["git.commit.id"]}")
+                                if (gitProperties.getProperty("git.dirty", "false")!!.toBoolean()) {
+                                    append("*\n")
+                                } else {
+                                    append("\n")
+                                }
+                                appendln(
+                                        "__Message__: `${gitProperties["git.commit.message.short"]}`")
                             }
-                            appendln(
-                                    "__Message__: `${Bot.gitProperties["git.commit.message.short"]}`")
                         }
                     }
                 }

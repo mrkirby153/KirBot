@@ -3,3 +3,7 @@
 
 # Ignore panel
 KirBotPanel/
+
+# Ignore prebuilt stuff
+build/
+.gradle/

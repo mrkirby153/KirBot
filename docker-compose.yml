@@ -1,7 +1,7 @@
 version: "3"
 services:
     db:
-        image: mariadb:10.3.2
+        image: mariadb:10.3.12
         restart: always
         environment:
             MYSQL_USER: kirbot
@@ -30,7 +30,7 @@ services:
         build: .
         restart: unless-stopped
         volumes:
-            - ./.data/kirbot:/kirbot/data
+            - ./.data/kirbot:/kirbot/bin/data
         depends_on:
             - redis
             - web

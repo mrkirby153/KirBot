@@ -1,19 +1,16 @@
-# Import the base maven image
-FROM maven:3.5-jdk-8-alpine
+# Import the base gradle image
+FROM gradle:5.6.1-jdk8
 MAINTAINER mrkirby153 <mrkirby153@mrkirby153.com>
 
 # Add the files to the container
 ADD . /build
-# Add MySQL Client for DB backups
-RUN apk update && apk add --no-cache mysql-client
 # Perform the build
-RUN cd /build && \
-    mvn clean install && \
-    mkdir /kirbot && \
-    find /build/target -type f -name 'KirBot-?.*\.jar' -exec cp '{}' /kirbot/KirBot.jar ';' && \
-    rm -rf /build && \
-    rm -rf ~/.m2
+WORKDIR /build
 
-WORKDIR /kirbot
+RUN gradle build --no-daemon
+RUN mkdir /kirbot
+RUN find /build/build/distributions -type f -name 'KirBot-?.*\.tar' -exec tar --strip-components 1 -C /kirbot -xvf  '{}' ';'
 
-CMD ["java", "-jar", "KirBot.jar"]
+WORKDIR /kirbot/bin
+
+CMD ["./KirBot"]

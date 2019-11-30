@@ -60,13 +60,6 @@ class CommandInfo {
                 "SELECT id from server_messages WHERE author = ? AND server_id = ? ORDER BY id ASC LIMIT 1",
                 user.id, context.guild.id)
 
-        val infractions = DB.getFirstColumn<Long>(
-                "SELECT COUNT(*) FROM `infractions` WHERE `user_id` = ? AND `reason` NOT LIKE '[NOTE]%' AND `type` != 'unban'",
-                user.id)
-        val servers = DB.getFirstColumn<Long>(
-                "SELECT COUNT(DISTINCT `guild`) FROM `infractions` WHERE `user_id` = ? AND `reason` NOT LIKE '[NOTE]%'  AND `type` != 'unban'",
-                user.id)
-
         val jdaMember = user.getMember(context.guild)
         context.send().embed {
             thumbnail = user.effectiveAvatarUrl
@@ -116,13 +109,6 @@ class CommandInfo {
                     }
                     if (lastMsg != null || firstMsg != null)
                         appendln("")
-                }
-                if (infractions > 0) {
-                    appendln("")
-                    appendln("**> Infractions**")
-                    appendln("Total Infractions: $infractions")
-                    appendln("Servers: $servers")
-                    appendln("")
                 }
                 appendln("Sent Messages: $sentMessages")
                 appendln("Edited Messages: $editedMessages")

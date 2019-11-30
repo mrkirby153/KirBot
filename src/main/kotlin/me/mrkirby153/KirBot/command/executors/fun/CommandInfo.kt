@@ -71,27 +71,28 @@ class CommandInfo {
                 iconUrl = user.effectiveAvatarUrl
             }
             description {
-                appendln("**> User Information**")
-                appendln("ID: ${user.id}")
+                appendln("**\\> User Information**")
+                appendln("ID: `${user.id}`")
                 appendln("Created: ${Time.formatLong(
                         System.currentTimeMillis() - (user.timeCreated.toEpochSecond() * 1000),
-                        Time.TimeUnit.MINUTES)}")
+                        Time.TimeUnit.MINUTES)} ago (`${SimpleDateFormat(
+                        "MM-dd-yy HH:mm:ss").format(user.timeCreated.toEpochSecond() * 1000)}`)")
                 appendln("Status: $onlineStatus ${getOnlineEmoji(onlineStatus)}")
                 appendln("Profile: ${user.asMention}")
                 if (jdaMember?.activities?.isNotEmpty() == true)
                     appendln(getPlayingStatus(jdaMember))
                 appendln("")
-                appendln("**> Member Information**")
+                appendln("**\\> Member Information**")
                 if (jdaMember != null) {
                     val joinTime = jdaMember.timeJoined.toEpochSecond() * 1000
                     appendln("Joined: ${Time.formatLong(
                             System.currentTimeMillis() - joinTime,
-                            Time.TimeUnit.MINUTES).toLowerCase()} ago (${SimpleDateFormat(
-                            "MM-dd-yy HH:mm:ss").format(joinTime)})")
+                            Time.TimeUnit.MINUTES).toLowerCase()} ago (`${SimpleDateFormat(
+                            "MM-dd-yy HH:mm:ss").format(joinTime)}`)")
                 }
                 if (member != null) {
                     appendln("")
-                    appendln("**> Activity**")
+                    appendln("**\\> Activity**")
                     val firstMsg = if (firstMessageId != null) convertSnowflake(
                             firstMessageId) else null
                     val lastMsg = if (lastMessageId != null) convertSnowflake(

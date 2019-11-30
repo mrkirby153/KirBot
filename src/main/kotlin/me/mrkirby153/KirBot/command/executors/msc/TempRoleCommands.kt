@@ -1,9 +1,9 @@
 package me.mrkirby153.KirBot.command.executors.msc
 
-import com.sun.org.glassfish.gmbal.Description
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.annotations.Command
+import me.mrkirby153.KirBot.command.annotations.CommandDescription
 import me.mrkirby153.KirBot.command.annotations.IgnoreWhitelist
 import me.mrkirby153.KirBot.command.annotations.LogInModlogs
 import me.mrkirby153.KirBot.command.args.CommandContext
@@ -27,7 +27,7 @@ class TempRoleCommands {
             arguments = ["<user:snowflake>", "<role:string>", "<duration:string>", "[reason:string...]"],
             clearance = CLEARANCE_ADMIN, permissions = [Permission.MANAGE_ROLES], category = CommandCategory.MODERATION)
     @LogInModlogs
-    @Description("Temporarily assign a role to a user")
+    @CommandDescription("Temporarily assign a role to a user")
     @IgnoreWhitelist
     fun execute(context: Context, cmdContext: CommandContext) {
         val userId = cmdContext.get<String>("user")!!

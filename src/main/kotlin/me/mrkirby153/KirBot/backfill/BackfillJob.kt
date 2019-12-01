@@ -103,7 +103,7 @@ class BackfillJob(val jobId: String, val guild: Guild, val id: String, val jobTy
         val chanMessages = mutableListOf<String>()
         var scanned = 0
 
-        log("Scanning messages in <#${channel.id}> (`${channel.id}`)")
+        log("Scanning messages in #${channel.name} (`${channel.id}`)")
         val time = measureTimeMillis {
             channel.iterableHistory.forEach { message ->
                 scanned++
@@ -117,7 +117,7 @@ class BackfillJob(val jobId: String, val guild: Guild, val id: String, val jobTy
                     created.add(message)
                 }
                 if (this.maxMessages != -1L && scanned >= maxMessages) {
-                    log("Reached message cap for <#${channel.id}> (`${channel.id}`)!")
+                    log("Reached message cap for #${channel.name} (`${channel.id}`)!")
                     return@forEach
                 }
                 if (Thread.interrupted()) {
@@ -126,17 +126,17 @@ class BackfillJob(val jobId: String, val guild: Guild, val id: String, val jobTy
                 }
             }
         }
-        log("Scanned $scanned messages from <#${channel.id}> (`${channel.id}`) in ${Time.format(1,
+        log("Scanned $scanned messages from #${channel.name} (`${channel.id}`) in ${Time.format(1,
                 time)}")
         val deleted = loggedMsgMap.keys.filter { it !in chanMessages }
-        log("Inserting ${created.size}, Deleting ${deleted.size} and updating ${modified.size} messages in <#${channel.id}> (`${channel.id}`)")
+        log("Inserting ${created.size}, Deleting ${deleted.size} and updating ${modified.size} messages in #${channel.name} (`${channel.id}`)")
         if (created.isNotEmpty())
             MessageConcurrencyManager.insert(*created.toTypedArray())
         if (modified.isNotEmpty())
             MessageConcurrencyManager.update(*modified.toTypedArray())
         if (deleted.isNotEmpty())
             MessageConcurrencyManager.delete(*deleted.toTypedArray())
-        log("Backfill of <#${channel.id}> (`${channel.id}`) completed")
+        log("Backfill of #${channel.name} (`${channel.id}`) completed")
     }
 
     fun backfillMessage() {
@@ -179,6 +179,7 @@ class BackfillJob(val jobId: String, val guild: Guild, val id: String, val jobTy
 
     fun log(message: String) {
         val msg = "[`${this.jobId}`] $message"
+        Bot.LOG.debug(msg)
         this.logMessages.add(msg)
         this.messageSubscribers.forEach { it.invoke(msg) }
     }

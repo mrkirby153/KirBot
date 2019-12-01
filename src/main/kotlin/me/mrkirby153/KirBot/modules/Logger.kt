@@ -1,6 +1,5 @@
 package me.mrkirby153.KirBot.modules
 
-import com.mrkirby153.bfs.sql.DB
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.MessageConcurrencyManager
 import me.mrkirby153.KirBot.event.EventPriority
@@ -83,10 +82,7 @@ class Logger : Module("logging") {
     @Subscribe(priority = EventPriority.HIGHEST)
     fun onMessageBulkDelete(event: MessageBulkDeleteEvent) {
         event.guild.kirbotGuild.logManager.logBulkDelete(event.channel, event.messageIds)
-        val selector = "?, ".repeat(event.messageIds.size)
-        DB.executeUpdate(
-                "UPDATE `server_messages` SET `deleted` = TRUE WHERE `id` IN (${selector.substring(
-                        0, selector.lastIndexOf(","))})", *(event.messageIds.toTypedArray()))
+        MessageConcurrencyManager.delete(*event.messageIds.toTypedArray())
     }
 
     @Subscribe

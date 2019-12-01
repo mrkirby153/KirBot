@@ -118,17 +118,21 @@ object MessageConcurrencyManager {
         override fun run() {
             val connection = ModuleManager[Database::class].database.getConnection()
             connection.use {
-                var placeholders = "?, ".repeat(ids.size)
-                placeholders = placeholders.substring(0..(placeholders.length - 2))
-                val updatePs = connection.prepareStatement(
-                        "UPDATE server_messages SET deleted = 1 WHERE id IN ($placeholders)")
+                val placeholders = ids.joinToString(",") { "?" }
+                // If the message already is deleted, don't delete it
+                val sql = "UPDATE server_messages SET deleted = 1, updated_at = CURRENT_TIMESTAMP WHERE id IN ($placeholders) AND deleted = 0"
+                val updatePs = connection.prepareStatement(sql)
                 var i = 1
                 ids.forEach { msg ->
                     updatePs.setString(i++, msg)
                 }
-                updatePs.executeUpdate()
-                updatePs.close()
-                Bot.LOG.debug("Deleting ${ids.size} messages: ($ids)")
+                try {
+                    updatePs.executeUpdate()
+                    updatePs.close()
+                    Bot.LOG.debug("Deleting ${ids.size} messages: (${ids.contentToString()})")
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             }
         }
 

@@ -20,7 +20,8 @@ class CommandClean {
 
     private val confirmAmount = 100
 
-    @Command(name = "all", arguments = ["[amount:int]"], parent = "clean", clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION)
+    @Command(name = "all", arguments = ["[amount:int]"], parent = "clean",
+            clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION)
     @CommandDescription("Cleans messages from everyone in the current channel")
     @LogInModlogs
     @IgnoreWhitelist
@@ -30,7 +31,8 @@ class CommandClean {
         purgeMessages(context, builder.queryIds())
     }
 
-    @Command(name = "user", arguments = ["<user:snowflake>", "[amount:int]"], parent = "clean", clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION)
+    @Command(name = "user", arguments = ["<user:snowflake>", "[amount:int]"], parent = "clean",
+            clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION)
     @CommandDescription("Cleans messages from a specific user in the current channel")
     @LogInModlogs
     @IgnoreWhitelist
@@ -41,7 +43,8 @@ class CommandClean {
         purgeMessages(context, builder.queryIds())
     }
 
-    @Command(name = "bots", arguments = ["[amount:int]"], parent = "clean", clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION)
+    @Command(name = "bots", arguments = ["[amount:int]"], parent = "clean",
+            clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION)
     @CommandDescription("Cleans messages sent by bots in the current channel")
     @LogInModlogs
     @IgnoreWhitelist
@@ -53,7 +56,8 @@ class CommandClean {
         purgeMessages(context, builder.queryIds())
     }
 
-    @Command(name = "everywhere", arguments = ["<user:snowflake>", "[amount:int]"], parent="clean", clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION)
+    @Command(name = "everywhere", arguments = ["<user:snowflake>", "[amount:int]"],
+            parent = "clean", clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION)
     @LogInModlogs
     @CommandDescription("Cleans messages sent by the given user across all channels")
     @IgnoreWhitelist
@@ -64,7 +68,8 @@ class CommandClean {
         purgeMessages(context, builder.queryIds())
     }
 
-    @Command(name = "between", arguments=["<first:snowflake>", "<last:snowflake>"], parent="clean", clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION)
+    @Command(name = "between", arguments = ["<first:snowflake>", "<last:snowflake>"],
+            parent = "clean", clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION)
     @LogInModlogs
     @CommandDescription("Cleans messages sent by all users between the given snowflakes")
     @IgnoreWhitelist
@@ -75,6 +80,7 @@ class CommandClean {
         builder.where("channel", context.channel.id)
         purgeMessages(context, builder.queryIds())
     }
+
     private fun purgeMessages(context: Context, messages: List<String>) {
         fun doClean() {
             val m = context.channel.sendMessage(":repeat: Processing...").complete()
@@ -95,20 +101,20 @@ class CommandClean {
             var failedChannels = 0
             buckets.forEach { (channelId, messages) ->
                 val channel = Bot.shardManager.getTextChannelById(channelId)
-                if(channel == null || !channel.checkPermissions(Permission.MESSAGE_MANAGE)) {
+                if (channel == null || !channel.checkPermissions(Permission.MESSAGE_MANAGE)) {
                     failedChannels++
                     return@forEach
                 }
                 cf.addAll(channel.purgeMessagesById(messages).toTypedArray())
             }
-            CompletableFuture.allOf(*cf.toTypedArray()).thenAccept {
+            CompletableFuture.allOf(*cf.toTypedArray()).handle { _, _ ->
                 val msg = buildString {
                     append("Finished in `")
-                    append(Time.format(1, System.currentTimeMillis()-start))
+                    append(Time.format(1, System.currentTimeMillis() - start))
                     append("`. Deleted ")
                     append(messages.size)
                     append(" messages")
-                    if(failedChannels > 0) {
+                    if (failedChannels > 0) {
                         append(". Could not delete messages in ")
                         append(failedChannels)
                         append(" channels")
@@ -133,7 +139,7 @@ class CommandClean {
         return QueryBuilder().table("server_messages").where("deleted", false).select(
                 "server_messages.id")
                 .orderBy("server_messages.id", "DESC").apply {
-                    if(amount != null)
+                    if (amount != null)
                         limit(amount)
                 }
     }

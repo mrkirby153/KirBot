@@ -84,53 +84,66 @@ object Infractions {
 
 
     private fun onInfractionExpire(infraction: Infraction) {
-        val guild = Bot.shardManager.getGuildById(infraction.guild) ?: return
-        val user = Bot.shardManager.getUserById(infraction.userId) ?: return
-        when (infraction.type) {
-            InfractionType.TEMPMUTE -> {
-                if (guild.getMember(user) == null) {
-                    infraction.revoke()
-                    Bot.LOG.debug("User $user is no longer a member of $guild. Skipping infraction")
-                    return
+        val guild = Bot.shardManager.getGuildById(infraction.guild)
+        val user = Bot.shardManager.getUserById(infraction.userId)
+        if(guild == null || user == null) {
+            // User or guild was not found. Revoke and do nothing
+            infraction.revoke()
+            return
+        }
+        try {
+            when (infraction.type) {
+                InfractionType.TEMPMUTE -> {
+                    if (guild.getMember(user) == null) {
+                        infraction.revoke()
+                        Bot.LOG.debug(
+                                "User $user is no longer a member of $guild. Skipping infraction")
+                        return
+                    }
+                    unmute(user.id, guild, guild.jda.selfUser.id, "Timed mute expired")
                 }
-                unmute(user.id, guild, guild.jda.selfUser.id, "Timed mute expired")
-            }
-            InfractionType.TEMPBAN -> {
-                ModuleManager[InfractionModule::class.java].ignoreUnbans.add(infraction.userId)
-                guild.unban(infraction.userId).queue()
-                guild.kirbotGuild.logManager.genericLog(LogEvent.USER_UNBAN, ":rotating_light:",
-                        buildString {
-                            append(lookupUser(infraction.userId, true))
-                            append(" unbanned by **${lookupUser(guild.selfMember.user.id)}**")
-                            append(" (`Timed ban expired`)")
-                        })
-            }
-            InfractionType.TEMPROLE -> {
-                // Remove the role from the user
-                val roleId = infraction.metadata
-                if (roleId != null) {
-                    val role = guild.getRoleById(roleId)
-                    val member = guild.getMember(user)
-                    if (role != null && member != null && role in member.roles) {
-                        if (guild.checkPermission(
-                                        Permission.MANAGE_ROLES) && guild.selfMember.canAssign(
-                                        role)) {
-                            ModuleManager[Logger::class.java].debouncer.create(
-                                    GuildMemberRoleRemoveEvent::class.java,
-                                    Pair("user", infraction.userId), Pair("role", role.id))
-                            guild.kirbotGuild.logManager.genericLog(LogEvent.ROLE_REMOVE, ":key:",
-                                    "Removed **${role.name}** from ${user.logName}: `Temprole expired`")
-                            guild.removeRoleFromMember(member, role).reason(
-                                    "#${infraction.id} - Temprole expired").queue()
+                InfractionType.TEMPBAN -> {
+                    ModuleManager[InfractionModule::class.java].ignoreUnbans.add(infraction.userId)
+                    guild.unban(infraction.userId).queue()
+                    guild.kirbotGuild.logManager.genericLog(LogEvent.USER_UNBAN, ":rotating_light:",
+                            buildString {
+                                append(lookupUser(infraction.userId, true))
+                                append(" unbanned by **${lookupUser(guild.selfMember.user.id)}**")
+                                append(" (`Timed ban expired`)")
+                            })
+                }
+                InfractionType.TEMPROLE -> {
+                    // Remove the role from the user
+                    val roleId = infraction.metadata
+                    if (roleId != null) {
+                        val role = guild.getRoleById(roleId)
+                        val member = guild.getMember(user)
+                        if (role != null && member != null && role in member.roles) {
+                            if (guild.checkPermission(
+                                            Permission.MANAGE_ROLES) && guild.selfMember.canAssign(
+                                            role)) {
+                                ModuleManager[Logger::class.java].debouncer.create(
+                                        GuildMemberRoleRemoveEvent::class.java,
+                                        Pair("user", infraction.userId), Pair("role", role.id))
+                                guild.kirbotGuild.logManager.genericLog(LogEvent.ROLE_REMOVE,
+                                        ":key:",
+                                        "Removed **${role.name}** from ${user.logName}: `Temprole expired`")
+                                guild.removeRoleFromMember(member, role).reason(
+                                        "#${infraction.id} - Temprole expired").queue()
+                            }
                         }
                     }
                 }
+                else -> {
+                    // Not a temporary infraction, don't do anything
+                }
             }
-            else -> {
-                // Not a temporary infraction, don't do anything
-            }
+        } catch (e: java.lang.Exception) {
+            Bot.LOG.warn("An exception occurred when expiring infraction {}", infraction.id, e)
+        } finally {
+            // Revoke the infraction
+            infraction.revoke()
         }
-        infraction.revoke()
     }
 
     fun kick(user: String, guild: Guild, issuer: String,

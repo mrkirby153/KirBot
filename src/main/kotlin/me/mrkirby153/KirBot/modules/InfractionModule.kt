@@ -7,8 +7,10 @@ import me.mrkirby153.KirBot.infraction.InfractionType
 import me.mrkirby153.KirBot.infraction.Infractions
 import me.mrkirby153.KirBot.logger.LogEvent
 import me.mrkirby153.KirBot.module.Module
+import me.mrkirby153.KirBot.utils.AuditLogs
 import me.mrkirby153.KirBot.utils.Debouncer
 import me.mrkirby153.KirBot.utils.kirbotGuild
+import me.mrkirby153.KirBot.utils.logName
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.audit.ActionType
@@ -41,22 +43,21 @@ class InfractionModule : Module("infractions") {
             return
         // Create an infraction from the audit logs if we can view the banlist
         if (event.guild.selfMember.hasPermission(Permission.BAN_MEMBERS)) {
-            // TODO 1/6/2019 Fix deadlock error where complete() is used
-            val banList = event.guild.retrieveBanList().complete()
-            val entry = banList.firstOrNull { it.user.id == event.user.id } ?: return
-            val infraction = Infraction()
-            val actor = findBannedUser(event.guild, event.user.id)
-            infraction.issuerId = actor?.id
-            infraction.userId = event.user.id
-            infraction.guild = event.guild.id
-            infraction.createdAt = Timestamp(System.currentTimeMillis())
-            infraction.type = InfractionType.BAN
-            infraction.reason = entry.reason ?: "No reason specified"
-            infraction.create()
-            Bot.LOG.debug("Created infraction ${infraction.id}")
-            event.guild.kirbotGuild.logManager.genericLog(LogEvent.USER_BAN, ":rotating_light:",
-                    "${event.user.nameAndDiscrim} (`${event.user.id}`) was banned by **${actor?.nameAndDiscrim
-                            ?: "Unknown"}** (`${entry.reason}`)")
+            event.guild.retrieveBanList().queue { banList ->
+                val entry = banList.firstOrNull { it.user.id == event.user.id } ?: return@queue
+                val actor = findBannedUser(event.guild, event.user)
+                val inf = Infraction()
+                inf.issuerId = actor?.id
+                inf.userId = event.user.id
+                inf.guild = event.guild.id
+                inf.createdAt = Timestamp(System.currentTimeMillis())
+                inf.type = InfractionType.BAN
+                inf.reason = entry.reason ?: "No reason specified"
+                inf.create()
+                event.guild.kirbotGuild.logManager.genericLog(LogEvent.USER_BAN, ":rotating_light:",
+                        "${event.user.logName} was banned by **${actor?.nameAndDiscrim
+                                ?: "Unknown"}** (`${entry.reason}`)")
+            }
         }
     }
 
@@ -69,7 +70,7 @@ class InfractionModule : Module("infractions") {
                 event.guild).filter { it.type == InfractionType.BAN }.forEach { ban ->
             ban.revoke()
         }
-        val responsibleMember = findUnbannedUser(event.guild, event.user.id)
+        val responsibleMember = findUnbannedUser(event.guild, event.user)
         Infractions.createInfraction(event.user.id, event.guild, responsibleMember?.id ?: "1",
                 "Manually Revoked", InfractionType.UNBAN)
         event.guild.kirbotGuild.logManager.genericLog(LogEvent.USER_UNBAN, ":hammer:",
@@ -77,36 +78,15 @@ class InfractionModule : Module("infractions") {
                         ?: "Unknown"}**")
     }
 
-    private fun findBannedUser(guild: Guild, user: String): User? {
+    private fun findBannedUser(guild: Guild, user: User): User? {
         Bot.LOG.debug("Looking up ban for $user in $guild audit logs")
-        if (!guild.selfMember.hasPermission(Permission.VIEW_AUDIT_LOGS)) {
-            Bot.LOG.debug("Cannot view audit logs, not looking up user")
-            return null
-        }
-        var foundUser: User? = null
-        val entries = guild.retrieveAuditLogs().type(ActionType.BAN).complete()
-        entries.forEach { e ->
-            Bot.LOG.debug("Found ban for ${e.targetId}")
-            if (e.targetId == user && foundUser == null) {
-                foundUser = e.user
-            }
-        }
+        val foundUser: User? = AuditLogs.getActor(guild, ActionType.BAN, user)
         Bot.LOG.debug("Found responsible person: $foundUser")
         return foundUser
     }
 
-    private fun findUnbannedUser(guild: Guild, user: String): User? {
+    private fun findUnbannedUser(guild: Guild, user: User): User? {
         Bot.LOG.debug("Looking up unban for $user in $guild audit logs")
-        if (!guild.selfMember.hasPermission(Permission.VIEW_AUDIT_LOGS)) {
-            Bot.LOG.debug("Cannot view audit logs, not looking up user")
-            return null
-        }
-        var found: User? = null
-        val entries = guild.retrieveAuditLogs().type(ActionType.UNBAN).complete()
-        entries.forEach {
-            if (it.targetId == user && found == null)
-                found = it.user
-        }
-        return found
+        return AuditLogs.getActor(guild, ActionType.UNBAN, user)
     }
 }

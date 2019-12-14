@@ -1,9 +1,9 @@
 package me.mrkirby153.KirBot.command.executors.moderation
 
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.command.annotations.CommandDescription
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.annotations.Command
+import me.mrkirby153.KirBot.command.annotations.CommandDescription
 import me.mrkirby153.KirBot.command.annotations.IgnoreWhitelist
 import me.mrkirby153.KirBot.command.annotations.LogInModlogs
 import me.mrkirby153.KirBot.command.args.CommandContext
@@ -24,7 +24,7 @@ class CommandModlogs {
         val userId = cmdContext.get<User>("user")?.id ?: return
 
         val currentlyHidden = context.kirbotGuild.extraData.optJSONArray(
-                "log-ignored").map { it.toString() }?.toMutableSet() ?: mutableSetOf()
+                "log-ignored")?.map { it.toString() }?.toMutableSet() ?: mutableSetOf()
 
         currentlyHidden.add(userId)
 

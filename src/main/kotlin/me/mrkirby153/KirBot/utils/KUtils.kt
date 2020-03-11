@@ -6,6 +6,7 @@ import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.Redis
 import me.mrkirby153.kcutils.Time
 import me.xdrop.fuzzywuzzy.FuzzySearch
+import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
 import okhttp3.Request
 import java.awt.Color
@@ -13,6 +14,7 @@ import java.awt.image.BufferedImage
 import java.util.Calendar
 import java.util.Date
 import java.util.UUID
+import java.util.concurrent.CompletableFuture
 import javax.imageio.ImageIO
 
 /**
@@ -176,6 +178,52 @@ fun getPrimaryColor(image: BufferedImage): Color {
         }
     }
     return Color(max)
+}
+
+/**
+ * Finds a message from the given search string
+ */
+fun findMessage(string: String): CompletableFuture<Message> {
+    val cf = CompletableFuture<Message>()
+    val jumpRegex = Regex(
+            "https://(?>(?>canary|ptb)\\.)?discordapp\\.com/channels/(\\d+)/(\\d+)/(\\d+)")
+    if (string.matches(jumpRegex)) {
+        val match = jumpRegex.find(string)?.groups ?: return CompletableFuture.failedFuture(
+                NoSuchElementException("Message not found"))
+        val guildId = match[1]!!
+        val channelId = match[2]!!
+        val messageId = match[3]!!
+
+        val guild = Bot.shardManager.getGuildById(guildId.value)
+        val channel = guild?.getTextChannelById(channelId.value)
+        if (guild == null || channel == null) {
+            return CompletableFuture.failedFuture(NoSuchElementException("Message not found"))
+        }
+        channel.retrieveMessageById(messageId.value).queue({
+            cf.complete(it)
+        }, {
+            cf.completeExceptionally(it)
+        })
+    } else {
+        Bot.scheduler.submit {
+            Bot.shardManager.guilds.forEach guilds@{ guild ->
+                guild.textChannels.forEach channels@{ chan ->
+                    try {
+                        val msg = chan.retrieveMessageById(string).complete()
+                        if (msg != null) {
+                            cf.complete(msg)
+                            return@guilds
+                        }
+                    } catch (e: Exception) {
+                        // Ignore
+                    }
+                }
+            }
+            cf.completeExceptionally(NoSuchElementException("Message not found"))
+        }
+    }
+
+    return cf
 }
 
 /**

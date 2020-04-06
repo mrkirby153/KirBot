@@ -6,6 +6,7 @@ import net.dv8tion.jda.api.audit.AuditLogEntry
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.ISnowflake
 import net.dv8tion.jda.api.entities.User
+import java.time.Instant
 
 
 object AuditLogs {
@@ -30,8 +31,12 @@ object AuditLogs {
         return getFirstAction(guild, actionType, target)?.reason
     }
 
-    fun getFirstAction(guild: Guild, type: ActionType, id: ISnowflake): AuditLogEntry? {
-        val e = guild.retrieveAuditLogs().type(type).stream().filter { it.targetId == id.id }.findFirst()
+    fun getFirstAction(guild: Guild, type: ActionType, id: ISnowflake,
+                       period: Long = 30): AuditLogEntry? {
+        val e = guild.retrieveAuditLogs().type(type).stream().filter {
+            it.targetId == id.id && it.timeCreated.toInstant().isAfter(
+                    Instant.now().minusSeconds(period))
+        }.findFirst()
         if (e.isPresent)
             return e.get()
         return null

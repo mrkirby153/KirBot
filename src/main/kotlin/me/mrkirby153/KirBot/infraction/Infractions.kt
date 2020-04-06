@@ -86,7 +86,7 @@ object Infractions {
     private fun onInfractionExpire(infraction: Infraction) {
         val guild = Bot.shardManager.getGuildById(infraction.guild)
         val user = Bot.shardManager.getUserById(infraction.userId)
-        if(guild == null || user == null) {
+        if (guild == null || user == null) {
             // User or guild was not found. Revoke and do nothing
             infraction.revoke()
             return
@@ -162,6 +162,8 @@ object Infractions {
                 InfractionType.KICK)
         val result = dmUser(user, guild, inf).get()
         try {
+            ModuleManager[InfractionModule::class.java].debouncer.create(
+                    GuildMemberLeaveEvent::class.java, Pair("user", user), Pair("guild", guild.id));
             guild.kick(guild.getMemberById(user) ?: return CompletableFuture.completedFuture(
                     InfractionResult(false, result, "Member not found")), reason ?: "").queue {
                 future.complete(InfractionResult(true, result))
@@ -611,8 +613,9 @@ object Infractions {
                 channel.sendMessage(buildString {
                     append("You have been ")
                     append(action)
-                    when(infraction.type) {
-                        InfractionType.WARNING, InfractionType.MUTE, InfractionType.TEMPMUTE -> append(" in **")
+                    when (infraction.type) {
+                        InfractionType.WARNING, InfractionType.MUTE, InfractionType.TEMPMUTE -> append(
+                                " in **")
                         else -> append(" from **")
                     }
                     append(guild.name)

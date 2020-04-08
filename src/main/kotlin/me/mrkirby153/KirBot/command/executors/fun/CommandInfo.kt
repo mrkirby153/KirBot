@@ -24,6 +24,8 @@ import net.dv8tion.jda.api.entities.Activity
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.User
 import okhttp3.Request
+import org.json.JSONObject
+import org.json.JSONTokener
 import java.awt.Color
 import java.awt.image.BufferedImage
 import java.text.SimpleDateFormat
@@ -46,7 +48,7 @@ class CommandInfo {
                 context.guild.id).first()
 
         val sentMessages = DB.getFirstColumn<Long>(
-                "SELECT COUNT(*) FROM server_messages WHERE `author` = ?", user.id)
+                "SELECT COUNT(*) FROM `server_messages` WHERE `author` = ?", user.id)
         val editedMessages = DB.getFirstColumn<Long>(
                 "SELECT COUNT(*) FROM server_messages WHERE `author` = ? AND edit_count > 0",
                 user.id)
@@ -90,6 +92,9 @@ class CommandInfo {
                             Time.TimeUnit.MINUTES).toLowerCase()} ago (`${SimpleDateFormat(
                             "MM-dd-yy HH:mm:ss").format(joinTime)}`)")
                 }
+                val flags = getUserFlags(user)
+                if (flags.isNotEmpty())
+                    appendln("Flags: ${flags.joinToString(", ") { it.displayName }}")
                 if (member != null) {
                     appendln("")
                     appendln("**\\> Activity**")
@@ -179,5 +184,37 @@ class CommandInfo {
             }
         }
         return Color(max)
+    }
+
+    // TODO 4/8/20 Temporary hack while JDA doesn't support getting flags
+    fun getUserFlags(user: User): List<Flag> {
+        val request = Request.Builder().url(
+                "https://discordapp.com/api/v6/users/${user.id}").header("Authorization",
+                user.jda.token).build()
+        val resp = HttpUtils.CLIENT.newCall(request).execute()
+
+        val jsonObj = JSONObject(JSONTokener(resp.body()?.byteStream()))
+
+        val rawFlags = jsonObj.optInt("public_flags", 0)
+
+        val flags = mutableListOf<Flag>()
+        Flag.values().forEach { flag ->
+            if (rawFlags.and(flag.bitmask) > 0) {
+                flags.add(flag)
+            }
+        }
+        return flags
+    }
+
+    enum class Flag(val bitmask: Int, val displayName: String) {
+        STAFF(1, "Discord Staff"),
+        PARTNER(2, "Discord Partner"),
+        HS_EVENTS(4, "Hypesquad Events"),
+        BUG_HUNTER_TIER_1(8, "Bug Hunter"),
+        HS_BRAVE(64, "Hypesquad Bravery"),
+        HS_BRILL(128, "Hypesquad Brilliance"),
+        HS_BAL(256, "Hypesquad Balance"),
+        EARLY_SUPPORTER(512, "Early Supporter"),
+        BUG_HUNTER_TIER_2(16384, "Bug Hunter Tier 2")
     }
 }

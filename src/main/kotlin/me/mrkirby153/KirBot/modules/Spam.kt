@@ -13,15 +13,16 @@ import me.mrkirby153.KirBot.utils.EMOJI_RE
 import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.KirBot.utils.getClearance
-import me.mrkirby153.KirBot.utils.isNumber
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.logName
+import me.mrkirby153.KirBot.utils.toTypedArray
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.MessageChannel
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent
+import org.json.JSONArray
 import org.json.JSONObject
 import java.sql.Timestamp
 import java.time.Instant
@@ -242,14 +243,20 @@ class Spam : Module("spam") {
     }
 
     private fun getRule(guild: String, level: Int): JSONObject? {
-        return getSettings(guild).optJSONObject(level.toString())
+        val rawRules = getSettings(guild).optJSONArray("rules") ?: JSONArray()
+        return rawRules.toTypedArray(JSONObject::class.java).firstOrNull {
+            it.optInt("_level", -1) == level
+        }
     }
 
     private fun getEffectiveRules(guild: Guild, user: User): List<Int> {
         val clearance = user.getClearance(guild)
         val settings = getSettings(guild.id)
 
-        return settings.keySet().filter { it.isNumber() }.map { it.toInt() }.filter { it >= clearance }
+        val rawRules = settings.optJSONArray("rules") ?: JSONArray()
+        return rawRules.toTypedArray(JSONObject::class.java).map {
+            it.optInt("_level", -1)
+        }.filter { it >= clearance }
     }
 
     private class ViolationException(val type: String, val msg: String, val user: User,

@@ -55,7 +55,9 @@ enum class LogEvent {
 
     CHANNEL_CREATE,
     CHANNEL_MODIFY,
-    CHANNEL_DELETE;
+    CHANNEL_DELETE,
+
+    NAME_CENSOR;
 
     val permission = 1L.shl(this.ordinal)
 

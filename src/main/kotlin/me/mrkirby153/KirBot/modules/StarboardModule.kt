@@ -68,19 +68,16 @@ class StarboardModule : Module("starboard") {
                 return
             if (msg.author.id in blocked(event.guild)) {
                 debug("Author is blocked. Their messages can't be starred")
-                event.reaction.removeReaction(event.user).queueAfter(100, TimeUnit.MILLISECONDS)
                 return
             }
-            if (event.user.id in blocked(event.guild)) {
+            if (event.user?.id in blocked(event.guild)) {
                 debug("User is blocked. Their star has no effect")
-                event.reaction.removeReaction(event.user).queueAfter(100, TimeUnit.MILLISECONDS)
                 return
             }
             if (msg.author == event.user)
                 if (SettingsRepository.get(event.guild, "starboard_self_star", "0") == "1")
                     incrementStar(event.messageId)
                 else {
-                    event.reaction.removeReaction(event.user).queueAfter(100, TimeUnit.MILLISECONDS)
                     return
                 }
             else

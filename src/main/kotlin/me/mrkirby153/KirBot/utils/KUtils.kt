@@ -51,7 +51,7 @@ fun promptForConfirmation(context: Context, msg: String, onConfirm: (() -> Boole
         m.addReaction(GREEN_TICK.emote!!).queue()
         m.addReaction(RED_TICK.emote!!).queue()
         WaitUtils.waitFor(MessageReactionAddEvent::class.java) {
-            if (it.user.id != context.author.id)
+            if (it.user?.id != context.author.id)
                 return@waitFor
             if (it.messageId != m.id)
                 return@waitFor

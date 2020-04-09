@@ -54,13 +54,15 @@ class CommandDecryptMessage{
     @Command(name = "decrypt-message", arguments = ["[message:string]"])
     fun execute(context: Context, cmdContext: CommandContext) {
         if (!cmdContext.has("message")) {
-            val count = DB.getFirstColumn<Long>("SELECT COUNT(*) FROM server_messages")
+            val count = DB.getFirstColumn<Long>("SELECT COUNT(*) FROM server_messages WHERE message LIKE 'e:%'")
+            val attachCount = DB.getFirstColumn<Long>("SELECT COUNT(*) FROM attachments WHERE attachments LIKE 'e:%'")
             promptForConfirmation(context, "Are you sure you want to decrypt `$count` messages?", {
                 Bot.scheduler.submit {
                     context.channel.sendMessage(
                             "Decrypting messages, this may take some time").queue()
                     var m = 0
-                    val results = DB.getResults("SELECT * FROM server_messages")
+                    var a = 0
+                    val results = DB.getResults("SELECT * FROM server_messages WHERE message LIKE 'e:%'")
                     results.forEach { result ->
                         val msg = LogManager.decrypt(result.getString("message"))
                         if (msg != result.getString("message")) {
@@ -74,6 +76,17 @@ class CommandDecryptMessage{
                         }
                     }
                     context.channel.sendMessage("Decrypted `$m` messages").queue()
+                    val attachments = DB.getResults("SELECT * FROM attachments WHERE attachments LIKE 'e:%'")
+                    attachments.forEach { attachment ->
+                        val attach = LogManager.decrypt(attachment.getString("attachments"))
+                        DB.executeUpdate("UPDATE attachments SET attachments = ? WHERE id = ?", attach, attachment.getString("id"))
+                        a++
+                        if(a > 1 && (a % 100) == 0) {
+                            Bot.LOG.info("Decrypted $a/$attachCount attachments")
+                        }
+                    }
+                    context.channel.sendMessage("Decrypted `$a` attachments").queue()
+
                 }
                 true
             })

@@ -64,7 +64,7 @@ object MessageConcurrencyManager {
                                 messagePs.setString(2, msg.guild.id)
                                 messagePs.setString(3, msg.author.id)
                                 messagePs.setString(4, msg.channel.id)
-                                messagePs.setString(5, LogManager.encrypt(msg.contentRaw))
+                                messagePs.setString(5, msg.contentRaw)
                                 messagePs.setTimestamp(6,
                                         Timestamp.from(msg.timeCreated.toInstant()))
                                 messagePs.setTimestamp(7,
@@ -72,8 +72,7 @@ object MessageConcurrencyManager {
                                 messagePs.addBatch()
                                 if (msg.attachments.size > 0) {
                                     attachmentPs.setString(1, msg.id)
-                                    attachmentPs.setString(2, LogManager.encrypt(
-                                            msg.attachments.joinToString(",") { it.url }))
+                                    attachmentPs.setString(2, msg.attachments.joinToString(",") { it.url })
                                     attachmentPs.setTimestamp(3,
                                             Timestamp.from(msg.timeCreated.toInstant()))
                                     attachmentPs.setTimestamp(4,

@@ -11,7 +11,4 @@ class MessageAttachments : Model() {
 
     var attachments: String = ""
         get() = LogManager.decrypt(field)
-        set(value) {
-            field = LogManager.encrypt(value)
-        }
 }

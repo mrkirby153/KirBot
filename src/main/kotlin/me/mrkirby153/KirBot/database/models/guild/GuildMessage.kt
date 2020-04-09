@@ -23,9 +23,6 @@ class GuildMessage(message: Message? = null) : Model() {
 
     var message = ""
         get() = LogManager.decrypt(field)
-        set(value) {
-            field = LogManager.encrypt(value)
-        }
 
     var deleted: Boolean = false
 

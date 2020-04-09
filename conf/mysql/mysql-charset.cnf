@@ -1,2 +1,13 @@
 [mysqld]
 character-set-server=utf8mb4
+
+plugin_load_add=file_key_management
+file_key_management=ON
+file_key_management_encryption_algorithm=aes_cbc
+file_key_management_filename=/etc/mysql/keyfile.enc
+file_key_management_filekey=FILE:/etc/mysql/keyfile.key
+innodb_encrypt_tables=ON
+innodb_encrypt_log=ON
+aria_encrypt_tables=ON
+encrypt_tmp_disk_tables=ON
+innodb_encryption_threads=8

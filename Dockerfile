@@ -1,5 +1,5 @@
 # Import the base gradle image
-FROM gradle:5.6.1-jdk8
+FROM gradle:6.3.0-jdk11
 MAINTAINER mrkirby153 <mrkirby153@mrkirby153.com>
 
 # Add the files to the container

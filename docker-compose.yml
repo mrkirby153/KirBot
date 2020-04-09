@@ -11,6 +11,8 @@ services:
         volumes:
             - ./.data/db:/var/lib/mysql
             - ./conf/mysql:/etc/mysql/conf.d
+            - ./.data/keyfile.enc:/etc/mysql/keyfile.enc
+            - ./.data/keyfile.key:/etc/mysql/keyfile.key
     redis:
         image: redis:3.2
         restart: always

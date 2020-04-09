@@ -38,14 +38,15 @@ class ReactionRoles : Module("reaction-roles") {
 
         val rolesToGive = getRoles(event, member, false)
 
-        if (event.guild.selfMember.canInteract(member)) {
-            debug("Giving ${member.user.nameAndDiscrim} ${rolesToGive.size} roles")
-            rolesToGive.forEach {
-                event.guild.addRoleToMember(member, it).queue()
+        if (rolesToGive.isNotEmpty())
+            if (event.guild.selfMember.canInteract(member)) {
+                debug("Giving ${member.user.nameAndDiscrim} ${rolesToGive.size} roles")
+                rolesToGive.forEach {
+                    event.guild.addRoleToMember(member, it).queue()
+                }
+            } else {
+                debug("Can't give ${member.user.nameAndDiscrim} roles")
             }
-        } else {
-            debug("Can't give ${member.user.nameAndDiscrim} roles")
-        }
     }
 
 
@@ -55,14 +56,15 @@ class ReactionRoles : Module("reaction-roles") {
 
         val rolesToTake = getRoles(event, member, true)
 
-        if (event.guild.selfMember.canInteract(member)) {
-            debug("Taking ${member.user.nameAndDiscrim} ${rolesToTake.size} roles")
-            rolesToTake.forEach {
-                event.guild.removeRoleFromMember(member, it).queue()
+        if (rolesToTake.isNotEmpty())
+            if (event.guild.selfMember.canInteract(member)) {
+                debug("Taking ${member.user.nameAndDiscrim} ${rolesToTake.size} roles")
+                rolesToTake.forEach {
+                    event.guild.removeRoleFromMember(member, it).queue()
+                }
+            } else {
+                debug("Can't take ${member.user.nameAndDiscrim} roles")
             }
-        } else {
-            debug("Can't take ${member.user.nameAndDiscrim} roles")
-        }
     }
 
     @Subscribe

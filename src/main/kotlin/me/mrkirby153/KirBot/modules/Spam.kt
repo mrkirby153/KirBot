@@ -10,11 +10,12 @@ import me.mrkirby153.KirBot.module.Module
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.utils.Bucket
 import me.mrkirby153.KirBot.utils.EMOJI_RE
-import me.mrkirby153.KirBot.utils.SettingsRepository
+import me.mrkirby153.KirBot.utils.settings.SettingsRepository
 import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.KirBot.utils.getClearance
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.logName
+import me.mrkirby153.KirBot.utils.settings.GuildSettings
 import me.mrkirby153.KirBot.utils.toTypedArray
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Guild
@@ -238,8 +239,7 @@ class Spam : Module("spam") {
     }
 
     private fun getSettings(guild: String): JSONObject {
-        return SettingsRepository.getAsJsonObject(Bot.shardManager.getGuildById(guild)!!,
-                "spam_settings", JSONObject(), true)!!
+        return GuildSettings.spamSettings.get(guild)
     }
 
     private fun getRule(guild: String, level: Int): JSONObject? {

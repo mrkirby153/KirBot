@@ -1,7 +1,7 @@
 package me.mrkirby153.KirBot.redis.commands
 
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.utils.SettingsRepository
+import me.mrkirby153.KirBot.utils.settings.SettingsRepository
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.User
 import org.json.JSONObject
@@ -18,7 +18,7 @@ class SettingChange : RedisCommandHandler {
         if (newval == "true" || newval == "false") {
             newval = if (newval == "true") "1" else "0"
         }
-        SettingsRepository.broadcastSettingChange(guild, json.getString("key"),
+        SettingsRepository.onSettingsChange(guild.id, json.getString("key"),
                 newval)
     }
 
@@ -30,7 +30,7 @@ class SettingDelete : RedisCommandHandler {
             Bot.LOG.warn("Deleting settings for a guild that doesn't exist")
             return
         }
-        SettingsRepository.broadcastSettingChange(guild, json.getString("key"), null)
+        SettingsRepository.onSettingsChange(guild.id, json.getString("key"), null)
     }
 
 }

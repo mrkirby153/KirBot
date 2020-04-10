@@ -10,8 +10,8 @@ import me.mrkirby153.KirBot.modules.music.MusicModule
 import me.mrkirby153.KirBot.user.CLEARANCE_DEFAULT
 import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
-import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.getClearance
+import me.mrkirby153.KirBot.utils.settings.GuildSettings
 import net.dv8tion.jda.api.Permission
 
 
@@ -21,9 +21,9 @@ class CommandDeQueue  {
             permissions = [Permission.MESSAGE_EMBED_LINKS], category = CommandCategory.MUSIC)
     @CommandDescription("Removes a previously queued song from the queue")
      fun execute(context: Context, cmdContext: CommandContext) {
-        val manager = ModuleManager[MusicModule::class.java].getManager(context.guild)
-        if (SettingsRepository.get(context.guild, "music_enabled", "0") == "0")
+        if (!GuildSettings.musicEnabled.get(context.guild))
             return
+        val manager = ModuleManager[MusicModule::class.java].getManager(context.guild)
         val index = (cmdContext.get<Int>("position")?.toInt() ?: 1) - 1
         try {
             val song = manager.queue[index]

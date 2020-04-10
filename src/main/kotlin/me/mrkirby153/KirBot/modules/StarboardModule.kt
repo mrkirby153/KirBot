@@ -7,9 +7,10 @@ import me.mrkirby153.KirBot.database.models.guild.GuildMessage
 import me.mrkirby153.KirBot.database.models.guild.starboard.StarboardEntry
 import me.mrkirby153.KirBot.event.Subscribe
 import me.mrkirby153.KirBot.module.Module
-import me.mrkirby153.KirBot.utils.SettingsRepository
+import me.mrkirby153.KirBot.utils.settings.SettingsRepository
 import me.mrkirby153.KirBot.utils.embed.embed
 import me.mrkirby153.KirBot.utils.kirbotGuild
+import me.mrkirby153.KirBot.utils.settings.GuildSettings
 import me.mrkirby153.KirBot.utils.toTypedArray
 import net.dv8tion.jda.api.MessageBuilder
 import net.dv8tion.jda.api.entities.Guild
@@ -21,7 +22,6 @@ import net.dv8tion.jda.api.events.message.react.MessageReactionRemoveEvent
 import org.json.JSONArray
 import java.sql.Timestamp
 import java.time.Instant
-import java.util.concurrent.TimeUnit
 
 
 class StarboardModule : Module("starboard") {
@@ -34,9 +34,7 @@ class StarboardModule : Module("starboard") {
     }
 
     private fun getStarboardChannel(guild: Guild): TextChannel? {
-        val get = SettingsRepository.get(guild, "starboard_channel_id", "0")
-        if(get == null || get == "0")
-            return null
+        val get = GuildSettings.starboardChannel.nullableGet(guild) ?: return null
         return guild.getTextChannelById(get)
     }
 
@@ -60,7 +58,7 @@ class StarboardModule : Module("starboard") {
     @Subscribe
     fun onReactionAdd(event: MessageReactionAddEvent) {
         if (event.reactionEmote.name == STAR) {
-            if (SettingsRepository.get(event.guild, "starboard_enabled", "0") == "0")
+            if (!GuildSettings.starboardEnabled.get(event.guild))
                 return
             debug("Incrementing star on ${event.messageId}")
             val msg = event.textChannel.retrieveMessageById(event.messageId).complete()
@@ -75,7 +73,7 @@ class StarboardModule : Module("starboard") {
                 return
             }
             if (msg.author == event.user)
-                if (SettingsRepository.get(event.guild, "starboard_self_star", "0") == "1")
+                if (GuildSettings.starboardSelfStar.get(event.guild))
                     incrementStar(event.messageId)
                 else {
                     return
@@ -89,7 +87,7 @@ class StarboardModule : Module("starboard") {
     @Subscribe
     fun onReactionRemove(event: MessageReactionRemoveEvent) {
         if (event.reactionEmote.name == STAR) {
-            if (SettingsRepository.get(event.guild, "starboard_enabled", "0") == "0")
+            if (!GuildSettings.starboardEnabled.get(event.guild))
                 return
             debug("Decrementing star on ${event.messageId}")
             decrementStar(event.messageId)
@@ -100,7 +98,7 @@ class StarboardModule : Module("starboard") {
 
     @Subscribe
     fun onMessageDelete(event: MessageDeleteEvent) {
-        if (SettingsRepository.get(event.guild, "starboard_enabled", "0") == "0")
+        if (!GuildSettings.starboardEnabled.get(event.guild))
             return
         val entry = getStarboardEntry(event.messageId) ?: return
         if (entry.starboardMid != null)
@@ -132,8 +130,7 @@ class StarboardModule : Module("starboard") {
                 entry?.delete()
             }
         }
-        if (entry.hidden || apiMsg == null || entry.count < SettingsRepository.get(guild,
-                        "starboard_star_count", "0")!!.toInt()) {
+        if (entry.hidden || apiMsg == null || entry.count < GuildSettings.starboardStarCount.get(guild)) {
             // Delete the star from the board if it's hidden or the original message was deleted or it's fallen below the star count
             // TODO 12/19/2018 Make the latter configurable
             if (entry.starboardMid != null) {
@@ -151,8 +148,7 @@ class StarboardModule : Module("starboard") {
         // Construct the star message
         val msg = MessageBuilder()
         msg.setContent(
-                "${if (entry.count < SettingsRepository.get(guild, "starboard_gild_count",
-                                "0")!!.toInt()) STAR else GILD_STAR} ${entry.count} <#${apiMsg.channel.id}> $mid")
+                "${if (entry.count < GuildSettings.starboardGildCount.get(guild)) STAR else GILD_STAR} ${entry.count} <#${apiMsg.channel.id}> $mid")
         msg.setEmbed(embed {
             description {
                 +message.message

@@ -10,8 +10,8 @@ import me.mrkirby153.KirBot.command.annotations.AdminCommand
 import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.utils.Context
-import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.embed.embed
+import me.mrkirby153.KirBot.utils.settings.GuildSettings
 import me.mrkirby153.kcutils.child
 import net.dv8tion.jda.api.Permission
 import java.awt.Color
@@ -42,7 +42,7 @@ class CommandHelp {
     }
 
     private fun displayAllCommands(context: Context) {
-        val cmdPrefix = SettingsRepository.get(context.guild, "command_prefix", "!")!!
+        val cmdPrefix = GuildSettings.commandPrefix.get(context.guild)
         val root = CommandExecutor.getRoot()
         val categorized = root.getChildren().filter { it.metadata != null && it.metadata?.admin == false }.groupBy { it.metadata!!.category }
         var msg = ""
@@ -87,7 +87,7 @@ class CommandHelp {
     }
 
     private fun displayHelpForCommand(context: Context, args: Array<String>) {
-        val cmdPrefix = SettingsRepository.get(context.guild, "cmd_prefix", "!")!!
+        val cmdPrefix = GuildSettings.commandPrefix.get(context.guild)
         val node = CommandExecutor.resolve(LinkedList(args.toList())) ?: throw CommandException(
                 "No command was found")
         val cmdString = "$cmdPrefix${node.parentString.trim()} ${node.name}"

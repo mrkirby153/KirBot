@@ -9,10 +9,10 @@ import me.mrkirby153.KirBot.logger.LogEvent
 import me.mrkirby153.KirBot.module.Module
 import me.mrkirby153.KirBot.utils.AuditLogs
 import me.mrkirby153.KirBot.utils.Debouncer
-import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.logName
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
+import me.mrkirby153.KirBot.utils.settings.GuildSettings
 import net.dv8tion.jda.api.audit.ActionType
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.User
@@ -38,7 +38,7 @@ class InfractionModule : Module("infractions") {
     }
 
     private fun manualActionsEnabled(guild: Guild): Boolean {
-        return SettingsRepository.get(guild, "log_manual_inf", "0") == "1"
+        return GuildSettings.logManualInfractions.get(guild)
     }
 
     @Subscribe

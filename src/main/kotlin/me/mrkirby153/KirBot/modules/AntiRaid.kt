@@ -7,8 +7,9 @@ import me.mrkirby153.KirBot.event.Subscribe
 import me.mrkirby153.KirBot.infraction.Infractions
 import me.mrkirby153.KirBot.module.Module
 import me.mrkirby153.KirBot.module.ModuleManager
-import me.mrkirby153.KirBot.utils.SettingsRepository
+import me.mrkirby153.KirBot.utils.settings.SettingsRepository
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
+import me.mrkirby153.KirBot.utils.settings.GuildSettings
 import me.mrkirby153.KirBot.utils.toTypedArray
 import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.api.entities.Guild
@@ -28,8 +29,8 @@ class AntiRaid : Module("AntiRaid") {
                 override fun load(key: String): LeakyBucket {
                     val g = Bot.shardManager.getGuildById(key)!!
                     return LeakyBucket("antiraid:join:$key",
-                            SettingsRepository.get(g, "anti_raid_count", "0")!!.toInt(),
-                            SettingsRepository.get(g, "anti_raid_period", "0")!!.toInt() * 1000)
+                            GuildSettings.antiRaidCount.get(g).toInt(),
+                            GuildSettings.antiRaidPeriod.get(g).toInt() * 1000)
                 }
             }
     )
@@ -42,13 +43,13 @@ class AntiRaid : Module("AntiRaid") {
             Bot.LOG.debug("Raid settings changed on $guild. Clearing cached bucket data")
             guildBucketCache.invalidate(guild.id)
         }
-        SettingsRepository.registerSettingListener("anti_raid_count", listener)
-        SettingsRepository.registerSettingListener("anti_raid_period", listener)
+        SettingsRepository.registerSettingsListener("anti_raid_count", listener)
+        SettingsRepository.registerSettingsListener("anti_raid_period", listener)
     }
 
     @Subscribe
     fun onJoin(event: GuildMemberJoinEvent) {
-        if (SettingsRepository.get(event.guild, "anti_raid_enabled", "0") == "1")
+        if (GuildSettings.antiRaidEnabled.get(event.guild))
             handleJoin(event.member)
     }
 
@@ -88,7 +89,7 @@ class AntiRaid : Module("AntiRaid") {
     private fun handleJoin(member: Member) {
         debug("Processing join for $member")
         val joinBucket = this.guildBucketCache[member.guild.id]
-        val action = SettingsRepository.get(member.guild, "anti_raid_action", "NONE")!!
+        val action = GuildSettings.antiRaidAction.get(member.guild)
         if (raidActive(member.guild)) {
             // Record the join
             val raid = this.activeRaids[member.guild.id] ?: return
@@ -146,18 +147,17 @@ class AntiRaid : Module("AntiRaid") {
     private fun getResetTime(guild: Guild): Long {
         val raid = this.activeRaids[guild.id] ?: return 0
         val lastJoin = raid.lastJoin
-        return (lastJoin + SettingsRepository.get(guild, "anti_raid_quiet_period",
-                "0")!!.toInt() * 1000) - System.currentTimeMillis()
+        return (lastJoin + GuildSettings.antiRaidQuietPeriod.get(guild) * 1000) - System.currentTimeMillis()
     }
 
     private fun alert(raid: Raid, amount: Int, time: Double) {
         Bot.LOG.debug("RAID DETECTED: $raid")
         val guild = Bot.shardManager.getGuildById(raid.guild) ?: return
-        val alertRole = SettingsRepository.get(guild, "anti_raid_alert_role", "0")
+        val alertRole = GuildSettings.antiRaidAlertRole.nullableGet(guild)
         val toPing: Role? = if (alertRole != null && (alertRole == "@everyone" || alertRole == "@here")) null else guild.getRoleById(
                 alertRole!!)
 
-        val prefix = SettingsRepository.get(guild, "command_prefix", "!")
+        val prefix = GuildSettings.commandPrefix.get(guild)
         val msg = buildString {
             if (toPing != null) {
                 append(toPing.asMention)
@@ -200,9 +200,7 @@ class AntiRaid : Module("AntiRaid") {
     }
 
     private fun getAlertChannel(guild: Guild): TextChannel? {
-        val get = SettingsRepository.get(guild, "anti_raid_alert_channel", "0")
-        if(get == null || get == "0")
-            return null;
+        val get = GuildSettings.antiRaidAlertChannel.nullableGet(guild) ?: return null
         return guild.getTextChannelById(get)
     }
 
@@ -246,11 +244,11 @@ class AntiRaid : Module("AntiRaid") {
                 if (raid.active) {
                     val remainingMembers = raid.members.mapNotNull { guild.getMemberById(it) }.size
                     recordRaidMembers(raid)
-                    val punishment = SettingsRepository.get(guild, "anti_raid_action", "NONE")
+                    val punishment = GuildSettings.antiRaidAction.get(guild)
                     val msg = buildString {
                         appendln("Raid `${raid.id}` has concluded")
                         appendln("Total members: ${raid.members.size}")
-                        val prefix = SettingsRepository.get(guild, "command_prefix", "!")
+                        val prefix = GuildSettings.commandPrefix.get(guild)
                         if (punishment == "MUTE") {
                             appendln(
                                     "$remainingMembers members have been locked in for further moderation action.")

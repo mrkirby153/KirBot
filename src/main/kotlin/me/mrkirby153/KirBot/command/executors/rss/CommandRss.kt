@@ -16,7 +16,7 @@ import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.GREEN_TICK
 import me.mrkirby153.KirBot.utils.HttpUtils
 import me.mrkirby153.KirBot.utils.RED_TICK
-import me.mrkirby153.KirBot.utils.SettingsRepository
+import me.mrkirby153.KirBot.utils.settings.GuildSettings
 import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.TextChannel
@@ -37,7 +37,7 @@ class CommandRss {
     @CommandDescription("Show a list of RSS feeds being monitored")
     @IgnoreWhitelist
     fun listFeeds(context: Context, cmdContext: CommandContext) {
-        val cmdPrefix = SettingsRepository.get(context.guild, "cmd_prefix", "!")
+        val cmdPrefix = GuildSettings.commandPrefix.get(context.guild)
         val feeds = Model.where(RssFeed::class.java, "server_id", context.guild.id).get()
 
         context.channel.sendMessage(buildString {

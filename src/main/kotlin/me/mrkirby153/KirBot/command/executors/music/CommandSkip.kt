@@ -10,11 +10,11 @@ import me.mrkirby153.KirBot.modules.music.MusicModule
 import me.mrkirby153.KirBot.modules.music.MusicModule.Companion.alone
 import me.mrkirby153.KirBot.modules.music.MusicModule.Companion.isDJ
 import me.mrkirby153.KirBot.utils.Context
-import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.embed.b
 import me.mrkirby153.KirBot.utils.embed.embed
 import me.mrkirby153.KirBot.utils.embed.link
 import me.mrkirby153.KirBot.utils.escapeMarkdown
+import me.mrkirby153.KirBot.utils.settings.GuildSettings
 import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.api.Permission
 import java.awt.Color
@@ -29,9 +29,9 @@ class CommandSkip {
             category = CommandCategory.MUSIC)
     @CommandDescription("Skips the currently playing song")
     fun execute(context: Context, cmdContext: CommandContext) {
-        val manager = ModuleManager[MusicModule::class.java].getManager(context.guild)
-        if (SettingsRepository.get(context.guild, "music_enabled", "0") == "0")
+        if (!GuildSettings.musicEnabled.get(context.guild))
             return
+        val manager = ModuleManager[MusicModule::class.java].getManager(context.guild)
         if (!manager.playing) {
             throw CommandException("I am not playing anything right now")
         }
@@ -48,7 +48,7 @@ class CommandSkip {
         }
 
         val currentlyPlaying = manager.nowPlaying ?: throw CommandException("Nothing playing!")
-        val skipTimer = SettingsRepository.get(context.guild, "music_skip_timer", "30")!!.toInt()
+        val skipTimer = GuildSettings.musicSkipTimer.get(context.guild)
         if (alone(context.member)) {
             context.send().success("Playing next song").queue()
             manager.playNextTrack()
@@ -68,7 +68,7 @@ class CommandSkip {
             }
         }.rest().queue { m ->
             skipCooldown[context.author.id] = System.currentTimeMillis() + (skipTimer * 1000) + 1500
-            val cd = SettingsRepository.get(context.guild, "music_skip_cooldown", "0")!!.toInt()
+            val cd = GuildSettings.musicSkipCooldown.get(context.guild)
             if (cd > 0)
                 skipCooldown[context.author.id] = (skipCooldown[context.author.id]
                         ?: 0) + (cd * 1000).toLong()

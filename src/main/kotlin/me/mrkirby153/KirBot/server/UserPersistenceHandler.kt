@@ -7,11 +7,12 @@ import me.mrkirby153.KirBot.database.models.guild.GuildMemberRole
 import me.mrkirby153.KirBot.logger.LogEvent
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.Logger
-import me.mrkirby153.KirBot.utils.SettingsRepository
+import me.mrkirby153.KirBot.utils.settings.SettingsRepository
 import me.mrkirby153.KirBot.utils.checkPermission
 import me.mrkirby153.KirBot.utils.getMember
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.logName
+import me.mrkirby153.KirBot.utils.settings.GuildSettings
 import me.mrkirby153.KirBot.utils.toTypedArray
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Guild
@@ -24,7 +25,7 @@ object UserPersistenceHandler {
 
     fun restore(user: User, guild: Guild) {
         Bot.LOG.debug("Restoring user $user on $guild")
-        val persistenceMode = SettingsRepository.get(guild, "user_persistence", "0")!!.toInt()
+        val persistenceMode = GuildSettings.userPersistence.get(guild).toInt()
         val mode = Mode.decode(persistenceMode)
         if (Mode.ENABLED !in mode) {
             Bot.LOG.debug("Persistence is disabled.")
@@ -44,8 +45,7 @@ object UserPersistenceHandler {
         }
         if (Mode.ROLES in mode) {
             val roles = backup.roles.mapNotNull { guild.getRoleById(it) }.filter { role ->
-                val persistRoles = SettingsRepository.getAsJsonArray(guild,
-                        "persist_roles")?.toTypedArray(String::class.java) ?: emptyList()
+                val persistRoles = GuildSettings.persistRoles.get(guild).toTypedArray(String::class.java)
                 if (persistRoles.isEmpty())
                     return@filter true
                 role.id in persistRoles
@@ -67,7 +67,7 @@ object UserPersistenceHandler {
 
     fun restoreVoiceState(user: User, guild: Guild) {
         Bot.LOG.debug("Restoring voice state for $user on $guild")
-        val persistenceMoede = SettingsRepository.get(guild, "user_persistence", "0")!!.toInt()
+        val persistenceMoede = GuildSettings.userPersistence.get(guild).toInt()
         val mode = Mode.decode(persistenceMoede)
         if (Mode.ENABLED !in mode) {
             Bot.LOG.debug("Persistence is disabled.")

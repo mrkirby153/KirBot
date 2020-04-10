@@ -11,12 +11,11 @@ import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.music.MusicModule
 import me.mrkirby153.KirBot.modules.music.TrackLoader
 import me.mrkirby153.KirBot.utils.Context
-import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.checkPermissions
+import me.mrkirby153.KirBot.utils.settings.GuildSettings
 import me.mrkirby153.KirBot.utils.toTypedArray
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.TextChannel
-import org.json.JSONArray
 
 
 class PlayCommand {
@@ -24,10 +23,10 @@ class PlayCommand {
             permissions = [Permission.MESSAGE_EMBED_LINKS], category = CommandCategory.MUSIC)
     @CommandDescription("Play music")
     fun execute(context: Context, cmdContext: CommandContext) {
-        val manager = ModuleManager[MusicModule::class.java].getManager(context.guild)
-        if (SettingsRepository.get(context.guild, "music_enabled", "0") == "0")
+        if (!GuildSettings.musicEnabled.get(context.guild))
             return
-        val cmdPrefix = SettingsRepository.get(context.guild, "cmd_prefix", "!")
+        val manager = ModuleManager[MusicModule::class.java].getManager(context.guild)
+        val cmdPrefix = GuildSettings.commandPrefix.get(context.guild)
         val data = cmdContext.get<String>("query/url")
 
         if (data == null) {
@@ -47,9 +46,8 @@ class PlayCommand {
                 throw CommandException(
                         "I am already playing music in **${context.guild.selfMember.voiceState!!.channel!!.name}**. Join me there or use `${cmdPrefix}summon` to summon me to your current channel")
         }
-        val whitelistChannels = SettingsRepository.getAsJsonArray(context.guild, "music_channels",
-                JSONArray())!!.toTypedArray(String::class.java)
-        when (SettingsRepository.get(context.guild, "music_mode", "OFF")) {
+        val whitelistChannels = GuildSettings.musicChannels.get(context.guild).toTypedArray(String::class.java)
+        when (GuildSettings.musicWhitelistMode.get(context.guild)) {
             "WHITELIST" -> {
                 if (voiceState.channel!!.id !in whitelistChannels)
                     throw CommandException("I cannot play music in your channel")
@@ -85,9 +83,8 @@ class PlayCommand {
             }
             url = searchResult
         }
-        val maxQueueLength = SettingsRepository.get(context.guild, "music_max_queue_length",
-                "-1")!!.toInt()
-        if (maxQueueLength != -1 && manager.queueLength() / (60 * 1000) >= maxQueueLength) {
+        val maxQueueLength = GuildSettings.musicMaxQueueLength.get(context.guild)
+        if (maxQueueLength != -1L && manager.queueLength() / (60 * 1000) >= maxQueueLength) {
             throw CommandException(
                     "The queue is too long right now, please try again when it is shorter")
         }

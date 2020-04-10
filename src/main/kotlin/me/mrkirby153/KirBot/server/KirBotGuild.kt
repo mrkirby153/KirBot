@@ -15,9 +15,10 @@ import me.mrkirby153.KirBot.logger.LogManager
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.Redis
 import me.mrkirby153.KirBot.user.CLEARANCE_ADMIN
-import me.mrkirby153.KirBot.utils.SettingsRepository
+import me.mrkirby153.KirBot.utils.settings.SettingsRepository
 import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.KirBot.utils.fuzzyMatch
+import me.mrkirby153.KirBot.utils.settings.GuildSettings
 import me.mrkirby153.KirBot.utils.toTypedArray
 import me.mrkirby153.kcutils.child
 import me.mrkirby153.kcutils.mkdirIfNotExist
@@ -120,7 +121,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         loadSettings()
 
         runAsyncTask {
-            val botNick = SettingsRepository.get(guild, "bot_nick")
+            val botNick = GuildSettings.botNick.nullableGet(this)
             if (this.selfMember.nickname != botNick) {
                 this.selfMember.modifyNickname(if (botNick?.isEmpty() == true) null else botNick).queue()
             }

@@ -10,7 +10,7 @@ import me.mrkirby153.KirBot.modules.music.MusicModule
 import me.mrkirby153.KirBot.modules.music.MusicModule.Companion.alone
 import me.mrkirby153.KirBot.modules.music.MusicModule.Companion.isDJ
 import me.mrkirby153.KirBot.utils.Context
-import me.mrkirby153.KirBot.utils.SettingsRepository
+import me.mrkirby153.KirBot.utils.settings.GuildSettings
 
 
 class CommandDisconnect{
@@ -18,9 +18,9 @@ class CommandDisconnect{
     @Command(name = "disconnect", category = CommandCategory.MUSIC)
     @CommandDescription("Disconnects the bot from the current voice channel")
     fun execute(context: Context, cmdContext: CommandContext) {
-        val manager = ModuleManager[MusicModule::class.java].getManager(context.guild)
-        if (SettingsRepository.get(context.guild, "music_enabled", "0") == "0")
+        if (!GuildSettings.musicEnabled.get(context.guild))
             return
+        val manager = ModuleManager[MusicModule::class.java].getManager(context.guild)
         if(!isDJ(context.member)){
             if(!alone(context.member)){
                 throw CommandException("You must be alone to use this command!")

@@ -9,7 +9,7 @@ import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.music.MusicModule
 import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
-import me.mrkirby153.KirBot.utils.SettingsRepository
+import me.mrkirby153.KirBot.utils.settings.GuildSettings
 
 
 class PauseCommand {
@@ -17,9 +17,9 @@ class PauseCommand {
     @Command(name = "pause", clearance = CLEARANCE_MOD, category = CommandCategory.MUSIC)
     @CommandDescription("Pause the music that is currently playing")
     fun execute(context: Context, cmdContext: CommandContext) {
-        val manager = ModuleManager[MusicModule::class.java].getManager(context.guild)
-        if (SettingsRepository.get(context.guild, "music_enabled", "0") == "0")
+        if (!GuildSettings.musicEnabled.get(context.guild))
             return
+        val manager = ModuleManager[MusicModule::class.java].getManager(context.guild)
         if (!manager.playing)
             throw CommandException("Music is already paused")
         manager.pause()

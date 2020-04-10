@@ -9,8 +9,8 @@ import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.music.MusicModule
 import me.mrkirby153.KirBot.modules.music.MusicModule.Companion.isDJ
 import me.mrkirby153.KirBot.utils.Context
-import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.checkPermissions
+import me.mrkirby153.KirBot.utils.settings.GuildSettings
 import me.xdrop.fuzzywuzzy.FuzzySearch
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.GuildChannel
@@ -22,9 +22,9 @@ class CommandConnect{
     @Command(name = "connect", arguments = ["[channel:string...]"], category = CommandCategory.MUSIC, aliases = ["summon"])
     @CommandDescription("Connects the bot to the voice channel")
     fun execute(context: Context, cmdContext: CommandContext) {
-        val manager = ModuleManager[MusicModule::class.java].getManager(context.guild)
-        if (SettingsRepository.get(context.guild, "music_enabled", "0") == "0")
+        if (!GuildSettings.musicEnabled.get(context.guild))
             return
+        val manager = ModuleManager[MusicModule::class.java].getManager(context.guild)
         val chanName = cmdContext.get<String>("channel")
         val channel = if (chanName != null) fuzzyMatchChannel(chanName,
                 context.guild.voiceChannels) as VoiceChannel else context.member!!.voiceState!!.channel

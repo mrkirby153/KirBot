@@ -9,13 +9,13 @@ import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.InfractionModule
 import me.mrkirby153.KirBot.modules.Logger
 import me.mrkirby153.KirBot.server.KirBotGuild
-import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.canAssign
 import me.mrkirby153.KirBot.utils.checkPermission
 import me.mrkirby153.KirBot.utils.getMember
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.logName
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
+import me.mrkirby153.KirBot.utils.settings.GuildSettings
 import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Guild
@@ -571,7 +571,7 @@ object Infractions {
     }
 
     fun getMutedRole(guild: Guild): Role? {
-        val roleId = SettingsRepository.get(guild, "muted_role") ?: return null
+        val roleId = GuildSettings.mutedRole.nullableGet(guild) ?: return null
         return guild.getRoleById(roleId)
     }
 

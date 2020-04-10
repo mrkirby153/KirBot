@@ -13,10 +13,10 @@ import me.mrkirby153.KirBot.modules.AccessModule
 import me.mrkirby153.KirBot.modules.AdminControl
 import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.server.UserPersistenceHandler
-import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.logName
 import me.mrkirby153.KirBot.utils.sanitize
+import me.mrkirby153.KirBot.utils.settings.GuildSettings
 import me.mrkirby153.kcutils.utils.IdGenerator
 import net.dv8tion.jda.api.events.ShutdownEvent
 import net.dv8tion.jda.api.events.channel.text.TextChannelCreateEvent
@@ -255,9 +255,9 @@ class ShardListener {
             event.guild.kirbotGuild.removeSelfrole(event.role.id)
         Model.where(Role::class.java, "id", event.role.id).delete()
         // If the role is the muted role, delete it
-        val mutedRole = SettingsRepository.get(event.guild, "muted_role")
+        val mutedRole = GuildSettings.mutedRole.nullableGet(event.guild)
         if (mutedRole != null && event.role.id == mutedRole) {
-            SettingsRepository.set(event.guild, "muted_role", null)
+            GuildSettings.mutedRole.set(event.guild, null)
         }
     }
 

@@ -24,14 +24,15 @@ import me.mrkirby153.KirBot.rss.FeedTask
 import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.stats.Statistics
 import me.mrkirby153.KirBot.utils.HttpUtils
-import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.readProperties
+import me.mrkirby153.KirBot.utils.settings.SettingsRepository
 import me.mrkirby153.kcutils.Time
 import me.mrkirby153.kcutils.child
 import me.mrkirby153.kcutils.readProperties
 import me.mrkirby153.kcutils.utils.SnowflakeWorker
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.OnlineStatus
+import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Activity
 import net.dv8tion.jda.api.events.ReadyEvent
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder
@@ -161,8 +162,9 @@ object Bot {
         Infractions.waitForInfraction()
 
         // Register listener for nick changes
-        SettingsRepository.registerSettingListener("bot_nick") { guild, value ->
-            guild.selfMember.modifyNickname(value).queue()
+        SettingsRepository.registerSettingsListener("bot_nick") { guild, value ->
+            if (guild.selfMember.hasPermission(Permission.NICKNAME_CHANGE))
+                guild.selfMember.modifyNickname(value).queue()
         }
 
         shardManager.setStatus(OnlineStatus.ONLINE)

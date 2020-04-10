@@ -7,12 +7,12 @@ import me.mrkirby153.KirBot.database.models.guild.GuildMessage
 import me.mrkirby153.KirBot.database.models.guild.LogSettings
 import me.mrkirby153.KirBot.server.KirBotGuild
 import me.mrkirby153.KirBot.utils.CustomEmoji
-import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.convertSnowflake
 import me.mrkirby153.KirBot.utils.crypto.AesCrypto
 import me.mrkirby153.KirBot.utils.escapeMentions
 import me.mrkirby153.KirBot.utils.logName
 import me.mrkirby153.KirBot.utils.resolveMentions
+import me.mrkirby153.KirBot.utils.settings.GuildSettings
 import me.mrkirby153.KirBot.utils.uploadToArchive
 import me.mrkirby153.KirBot.utils.urlEscape
 import net.dv8tion.jda.api.entities.Message
@@ -165,7 +165,7 @@ class LogManager(private val guild: KirBotGuild) {
         if (!guild.ready)
             return
         val sdf = SimpleDateFormat("HH:mm:ss", Locale.ENGLISH)
-        sdf.timeZone = TimeZone.getTimeZone(SettingsRepository.get(guild, "log_timezone", "UTC"))
+        sdf.timeZone = TimeZone.getTimeZone(GuildSettings.logTimezone.nullableGet(guild))
         val m = buildString {
             append("`[")
             append(sdf.format(System.currentTimeMillis()))

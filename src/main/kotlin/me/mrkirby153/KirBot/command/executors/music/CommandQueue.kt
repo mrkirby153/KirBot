@@ -8,9 +8,9 @@ import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.music.MusicManager
 import me.mrkirby153.KirBot.modules.music.MusicModule
 import me.mrkirby153.KirBot.utils.Context
-import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.embed.link
 import me.mrkirby153.KirBot.utils.escapeMarkdown
+import me.mrkirby153.KirBot.utils.settings.GuildSettings
 import net.dv8tion.jda.api.Permission
 import java.util.Random
 import kotlin.math.roundToInt
@@ -22,9 +22,9 @@ class CommandQueue {
             permissions = [Permission.MESSAGE_EMBED_LINKS], category = CommandCategory.MUSIC)
     @CommandDescription("Shows the current queue")
     fun execute(context: Context, cmdContext: CommandContext) {
-        val manager = ModuleManager[MusicModule::class.java].getManager(context.guild)
-        if (SettingsRepository.get(context.guild, "music_enabled", "0") == "0")
+        if (!GuildSettings.musicEnabled.get(context.guild))
             return
+        val manager = ModuleManager[MusicModule::class.java].getManager(context.guild)
         if (cmdContext.has("option")) {
             when (cmdContext.get<String>("option")!!.toLowerCase()) {
                 "clear" -> {

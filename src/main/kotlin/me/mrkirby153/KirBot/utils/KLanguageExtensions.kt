@@ -218,7 +218,13 @@ fun Message.removeReaction(user: User, reaction: String) {
  * @param clazz The class to cast elements in the array to
  */
 fun <T> JSONArray.toTypedArray(clazz: Class<T>): List<T> {
-    return this.map { it as T }
+    return this.map {
+        if (!it.javaClass.isAssignableFrom(clazz)) {
+            throw ClassCastException("Found element of wrong type ${it.javaClass}")
+        }
+        @Suppress("UNCHECKED_CAST")
+        it as T
+    }
 }
 
 /**

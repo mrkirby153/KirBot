@@ -16,17 +16,16 @@ import me.mrkirby153.KirBot.logger.ErrorLogger
 import me.mrkirby153.KirBot.logger.LogEvent
 import me.mrkirby153.KirBot.stats.Statistics
 import me.mrkirby153.KirBot.utils.Context
-import me.mrkirby153.KirBot.utils.SettingsRepository
 import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.KirBot.utils.escapeMentions
 import me.mrkirby153.KirBot.utils.getClearance
 import me.mrkirby153.KirBot.utils.globalAdmin
 import me.mrkirby153.KirBot.utils.logName
+import me.mrkirby153.KirBot.utils.settings.GuildSettings
 import me.mrkirby153.KirBot.utils.toTypedArray
 import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.api.entities.ChannelType
 import net.dv8tion.jda.api.entities.GuildChannel
-import org.json.JSONArray
 import org.reflections.Reflections
 import org.reflections.scanners.MethodAnnotationsScanner
 import java.lang.reflect.InvocationTargetException
@@ -136,7 +135,7 @@ object CommandExecutor {
             return // Ignore DMs
         val message = context.contentRaw
 
-        val prefix = SettingsRepository.get(context.guild, "command_prefix", "!", true)!!
+        val prefix = GuildSettings.commandPrefix.get(context.guild)
         val mention = isMention(message)
         if (!message.startsWith(prefix) && !mention)
             return
@@ -195,7 +194,7 @@ object CommandExecutor {
             Bot.LOG.debug(
                     "${context.author} was denied access due to lack of clearance. Required $clearance -- Found ${context.author.getClearance(
                             context.guild)}")
-            if (SettingsRepository.get(context.guild, "command_silent_fail", "0") == "0") {
+            if (GuildSettings.commandSilentFail.get(context.guild)) {
                 context.channel.sendMessage(
                         ":lock: You do not have permission to perform this command").queue()
             }
@@ -315,7 +314,7 @@ object CommandExecutor {
             it.name.equals(command, true)
         } ?: return
         if (customCommand.clearance > context.author.getClearance(context.guild)) {
-            if (SettingsRepository.get(context.guild, "command_silent_fail", "0") == "0") {
+            if (GuildSettings.commandSilentFail.get(context.guild)) {
                 context.channel.sendMessage(
                         ":lock: You do not have permission to perform this command").queue()
             }
@@ -334,22 +333,26 @@ object CommandExecutor {
     }
 
     private fun canExecuteInChannel(command: CommandNode, channel: GuildChannel): Boolean {
-        val channels = SettingsRepository.getAsJsonArray(channel.guild, "cmd_whitelist",
-                JSONArray())!!.toTypedArray(String::class.java)
-        if (command.metadata?.admin == true)
-            return true
-        return if (command.metadata?.ignoreWhitelist == false) {
-            if (channels.isEmpty())
+        try {
+            val channels = GuildSettings.commandWhitelistChannels.get(channel.guild).toTypedArray(
+                    String::class.java)
+            if (command.metadata?.admin == true)
                 return true
-            channels.any { it == channel.id }
-        } else {
-            true
+            return if (command.metadata?.ignoreWhitelist == false) {
+                if (channels.isEmpty())
+                    return true
+                channels.any { it == channel.id }
+            } else {
+                true
+            }
+        } catch (e: Throwable) {
+            e.printStackTrace()
         }
+        return false
     }
 
     private fun canExecuteInChannel(command: CustomCommand, channel: GuildChannel): Boolean {
-        val channels = SettingsRepository.getAsJsonArray(channel.guild, "cmd_whitelist",
-                JSONArray())!!.toTypedArray(String::class.java)
+        val channels = GuildSettings.commandWhitelistChannels.get(channel.guild).toTypedArray(String::class.java)
         return if (command.respectWhitelist) {
             if (channels.isEmpty())
                 return true

@@ -19,7 +19,7 @@ services:
         volumes:
             - ./.data/redis:/data
     web:
-        image: mrkirby153/laravel:7.3.9
+        image: mrkirby153/laravel:7.3.11
         restart: always
         ports:
             - "8580:80"

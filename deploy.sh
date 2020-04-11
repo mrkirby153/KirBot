@@ -70,7 +70,7 @@ cd ..
 
 echo "Updating documentation"
 cd docs
-mkdocs build
+LC_ALL=C.UTF-8 mkdocs build
 cd ..
 
 echo "SUCCESS! Panel has been deployed. $branch ($commit_hash)"

@@ -9,6 +9,7 @@ import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.events.DisconnectEvent
 import net.dv8tion.jda.api.events.ResumedEvent
+import net.dv8tion.jda.api.requests.CloseCode
 import java.text.SimpleDateFormat
 import java.util.LinkedList
 
@@ -37,6 +38,8 @@ object AdminControl {
     private val pendingMessages = LinkedList<String>()
     private var connected = false
     private var disconnectedAt = mutableMapOf<JDA, Long>()
+
+    private var disconnectCode = mutableMapOf<JDA, CloseCode?>()
 
 
     fun sendWebhookMessage(message: String) {
@@ -86,21 +89,28 @@ object AdminControl {
      fun onResume(event: ResumedEvent) {
         val dcTime = System.currentTimeMillis() - (this.disconnectedAt.remove(event.jda)
                 ?: System.currentTimeMillis())
-        log(":e_mail: Received RESUME. Was disconnected for ${Time.format(1, dcTime)}", event.jda)
-        if (event.jda.shardInfo.shardId == shardId) {
-            sendQueuedMessages()
+        val closeCode = this.disconnectCode.remove(event.jda)
+        if(closeCode != CloseCode.RECONNECT || dcTime > 5000) {
+            log(":e_mail: Received RESUME. Was disconnected for ${Time.format(1, dcTime)}",
+                    event.jda)
+            if (event.jda.shardInfo.shardId == shardId) {
+                sendQueuedMessages()
+            }
         }
     }
 
     @Subscribe
     fun onDisconnect(event: DisconnectEvent) {
-        // TODO 4/10/20 Filter out 49000 events as these are normal reconnects
         if (event.jda.shardInfo.shardId == shardId) {
             this.connected = false
         }
         this.disconnectedAt[event.jda] = event.timeDisconnected.toEpochSecond() * 1000
-        log(":e_mail: :warning: Disconnected from the websocket at ${SimpleDateFormat(
-                "MM-dd-yy HH:mm:ss").format(
-                event.timeDisconnected.toEpochSecond() * 1000)} (${event.closeCode})", event.jda)
+        this.disconnectCode[event.jda] = event.closeCode
+        if(event.closeCode != CloseCode.RECONNECT) {
+            log(":e_mail: :warning: Disconnected from the websocket at ${SimpleDateFormat(
+                    "MM-dd-yy HH:mm:ss").format(
+                    event.timeDisconnected.toEpochSecond() * 1000)} (${event.closeCode})",
+                    event.jda)
+        }
     }
 }

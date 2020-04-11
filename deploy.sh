@@ -30,7 +30,7 @@ sleep 5
 echo "Deploying..."
 
 echo "Backing up database..."
-docker-compose exec mysqldump kirbot --user=kirbot --password=kirbot > .data/last_backup.sql
+docker-compose exec db mysqldump kirbot --user=kirbot --password=kirbot > .data/last_backup.sql
 
 git reset --hard "$commit_hash"
 

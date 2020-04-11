@@ -54,6 +54,9 @@ class CommandHelp {
             msg = ""
         }
         categorized.forEach { category, commands ->
+            if(category == CommandCategory.MUSIC && !GuildSettings.musicEnabled.get(context.guild)) {
+                return@forEach
+            }
             if (checkAppend(msg, "\n__${category.friendlyName}__\n")) {
                 msg += "\n__${category.friendlyName}__\n"
             } else {

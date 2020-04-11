@@ -94,6 +94,7 @@ object AdminControl {
 
     @Subscribe
     fun onDisconnect(event: DisconnectEvent) {
+        // TODO 4/10/20 Filter out 49000 events as these are normal reconnects
         if (event.jda.shardInfo.shardId == shardId) {
             this.connected = false
         }

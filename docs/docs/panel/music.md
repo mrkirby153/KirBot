@@ -1,9 +1,12 @@
 # Music
 KirBot supports playing music in voice channels. If you do not wish to use this feature, turn the `Master Switch` off.
 
+For more information regarding music, see [Music](../modules/music.md).
+
 ## Master Switch
 
-Globally controls if music is enabled or disabled. If the switch is off, the bot will not respond to any music commands and music commands will be removed from the help box.
+Globally controls if music is enabled or disabled. If the switch is off, the bot will not respond to
+any music commands and music commands will be removed from the help command's output.
 
 ## Channel Whitelist/Blacklist
 Control which channels the bot can play music in.
@@ -18,7 +21,8 @@ There are three modes:
 Configure various queue-related settings
 
 ### Queue Length
-The maximum length of the queue in minutes. Any song that is added to the queue that would put the queue over the max length will be rejected.
+The maximum length of the queue in minutes. Any song that is added to the queue that would put the 
+queue over the max length will be rejected.
 
 Set to `-1` to disable and allow the queue to grow to an unlimited length.
 
@@ -28,7 +32,8 @@ The maximum length of a song that can be queued in minutes.
 Set to `-1` to disable and allow any song to be added to the queue regardless of length.
 
 ### Allow Playlists
-If playlists can be queued. Playlists will be queued as individual songs subject to the **Queue Length** and **Max Song Length** settings.
+If playlists can be queued. Playlists will be queued as individual songs subject to the 
+**Queue Length** and **Max Song Length** settings.
 
 ## Skip Settings
 KirBot supports vote skipping when there is more than one person in the channel.

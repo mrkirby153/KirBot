@@ -1,16 +1,34 @@
 site_name: KirBot
+repo_url: https://github.com/mrkirby153/KirBot
+edit_uri: 'edit/master/docs/docs'
+use_directory_urls: false
 theme:
-  name: 'material'
+  name: 'readthedocs'
 nav:
-  - Home: 'index.md'
-  - Adding: 'adding.md'
-  - "Command List": 'commands.md'
-  - Clearance: 'clearance.md'
-  - Admin Panel:
+  - The Basics:
+    - About: 'index.md'
+    - Technical & Security Information: 'technical.md'
+    - "Quick Start": 'quickstart.md'
+    - "Invite KirBot": 'adding.md'
+    - "Command List": 'commands.md'
+    - Clearance: 'clearance.md'
+  - Modules:
+      - Anti-Raid: 'modules/antiraid.md'
+      - Anti-Spam: 'modules/spam.md'
+      - Censor: 'modules/censor.md'
+      - Infractions: 'modules/infractions.md'
+      - Modlogs: 'modules/logging.md'
+      - Music: 'modules/music.md'
+      - Persistence: 'modules/persistence.md'
+      - "Reaction Roles": 'modules/reactionroles.md'
+      - RSS: 'modules/rss.md'
+      - Starboard: 'modules/starboard.md'
+  - Web Admin Panel:
     - General: 'panel/general.md'
     - Permissions: 'panel/permissions.md'
     - Commands: 'panel/commands.md'
     - Music: 'panel/music.md'
+    - Infractions: 'panel/infractions.md'
     - Spam: 'panel/spam.md'
     - Censor: 'panel/censor.md'
     - Anti-Raid: 'panel/antiraid.md'

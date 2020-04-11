@@ -162,6 +162,10 @@ class CommandInfractions {
         val infraction = Model.where(Infraction::class.java, "id", id).first()
                 ?: throw CommandException("That infraction doesn't exist")
 
+        // Prevent modifying infractions from different guilds
+        if(infraction.guild != context.guild.id)
+            throw CommandException("That infraction doesn't exist")
+
         infraction.reason = reason
         infraction.save()
 

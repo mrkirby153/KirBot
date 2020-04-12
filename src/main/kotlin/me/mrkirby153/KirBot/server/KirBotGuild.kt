@@ -3,38 +3,35 @@ package me.mrkirby153.KirBot.server
 import com.mrkirby153.bfs.model.Model
 import com.mrkirby153.bfs.model.SoftDeletingModel
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.database.MessageConcurrencyManager
 import me.mrkirby153.KirBot.database.models.Channel
 import me.mrkirby153.KirBot.database.models.CustomCommand
 import me.mrkirby153.KirBot.database.models.DiscordUser
 import me.mrkirby153.KirBot.database.models.RoleClearance
 import me.mrkirby153.KirBot.database.models.guild.CommandAlias
 import me.mrkirby153.KirBot.database.models.guild.DiscordGuild
-import me.mrkirby153.KirBot.database.models.guild.GuildMessage
 import me.mrkirby153.KirBot.logger.LogManager
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.Redis
 import me.mrkirby153.KirBot.user.CLEARANCE_ADMIN
-import me.mrkirby153.KirBot.utils.settings.SettingsRepository
-import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.KirBot.utils.fuzzyMatch
 import me.mrkirby153.KirBot.utils.settings.GuildSettings
 import me.mrkirby153.KirBot.utils.toTypedArray
 import me.mrkirby153.kcutils.child
 import me.mrkirby153.kcutils.mkdirIfNotExist
 import me.mrkirby153.kcutils.use
-import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.GuildChannel
 import net.dv8tion.jda.api.entities.Member
-import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.Role
-import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.entities.User
 import org.json.JSONObject
 import org.json.JSONTokener
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Future
-import java.util.stream.Collectors
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import java.util.function.Supplier
 
 class KirBotGuild(val guild: Guild) : Guild by guild {
 
@@ -53,15 +50,18 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         Model.where(DiscordGuild::class.java, "id", this.id).first()
     }
 
-    var extraData = JSONObject()
+    private var extraData = JSONObject()
+    private var extraDataLock = ReentrantReadWriteLock()
+
     private val dataFile = Bot.files.data.child("servers").mkdirIfNotExist().child(
             "${this.id}.json")
 
-    private val visibleChannelCache = mutableMapOf<String, Boolean>()
+    val ready
+        get() = readyFuture.isDone
 
-    var ready = false
+    private val runningTasks: CopyOnWriteArrayList<Future<*>> = CopyOnWriteArrayList()
 
-    private val runningTasks = mutableListOf<Future<*>>()
+    private lateinit var readyFuture: CompletableFuture<Void>
 
     /**
      * Load guild-specific settings
@@ -117,17 +117,18 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
 
     fun sync() {
         Bot.LOG.debug("STARTING SYNC FOR $this")
-        cacheVisibilities(false)
         loadSettings()
 
-        runAsyncTask {
+        // Load the rest asynchronously
+        val nickFuture = runAsyncTask {
             val botNick = GuildSettings.botNick.nullableGet(this)
             if (this.selfMember.nickname != botNick) {
-                this.selfMember.modifyNickname(if (botNick?.isEmpty() == true) null else botNick).queue()
+                this.selfMember.modifyNickname(
+                        if (botNick?.isEmpty() == true) null else botNick).queue()
             }
         }
 
-        runAsyncTask {
+        val channelFuture = runAsyncTask {
             Bot.LOG.debug("Updating channels on $this")
             val channels = this.textChannels.map { it as GuildChannel }.union(
                     this.voiceChannels)
@@ -141,7 +142,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
             }
         }
 
-        runAsyncTask {
+        val roleFuture = runAsyncTask {
             Model.query(me.mrkirby153.KirBot.database.models.guild.Role::class.java).whereNotIn(
                     "id",
                     this.roles.map { it.id }.toTypedArray()
@@ -155,18 +156,49 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
             }
         }
 
-        // TODO 5/15/2019 Sync guild members & roles??
+        val seenUsersFuture = syncSeenUsers()
 
-        runAsyncTask {
-            syncSeenUsers()
-        }
+        readyFuture = CompletableFuture.allOf(nickFuture, channelFuture, roleFuture,
+                seenUsersFuture)
 
-        runAsyncTask {
-            this.ready = true
+        readyFuture.thenRun {
+            Bot.LOG.info("Guild ${guild.id} is ready")
+            removeCompletedTasks()
+        }.exceptionally { ex ->
+            Bot.LOG.error("Guild ${guild.id} did not initialize correctly", ex)
+            removeCompletedTasks()
+            return@exceptionally null
         }
     }
 
-    fun saveData() {
+    fun runWithExtraData(writable: Boolean = false, runnable: (JSONObject) -> Unit) {
+        if (writable) {
+            extraDataLock.writeLock().lock()
+        } else {
+            extraDataLock.readLock().lock()
+        }
+        try {
+            val existing = extraData.toString()
+            runnable.invoke(extraData)
+            if (extraData.toString() != existing) {
+                if (!writable) {
+                    Bot.LOG.warn(
+                            "Extra data on $this has changed while not open for writing. This will be ignored")
+                } else {
+                    Bot.LOG.debug("Extra data on $this has been modified. Saving")
+                    saveData()
+                }
+            }
+        } finally {
+            if (writable) {
+                extraDataLock.writeLock().unlock()
+            } else {
+                extraDataLock.readLock().unlock()
+            }
+        }
+    }
+
+    private fun saveData() {
         Bot.LOG.debug("Saving data for $guild")
         val json = this.extraData.toString()
         ModuleManager[Redis::class.java].getConnection().use {
@@ -174,7 +206,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         }
     }
 
-    fun loadData() {
+    private fun loadData() {
         Bot.LOG.debug("Loading data for $guild")
         if (dataFile.exists()) {
             Bot.LOG.debug("Data file exists, migrating to redis")
@@ -215,12 +247,13 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         return clearance
     }
 
-    fun syncSeenUsers() {
-        Bot.LOG.debug("Syncing users")
-        runAsyncTask {
-            val users = Model.query(DiscordUser::class.java).get()
-            users.forEach(DiscordUser::updateUser)
-            val newMembers = this.members.filter { it.user.id !in users.map { it.id } }
+    fun syncSeenUsers(): CompletableFuture<Unit> {
+        return runAsyncTask {
+            Bot.LOG.debug("Syncing seen users on $this")
+            val guildUsers = Model.query(DiscordUser::class.java).whereIn("id",
+                    members.map { it.id }.toTypedArray()).get()
+            guildUsers.forEach(DiscordUser::updateUser)
+            val newMembers = members.filter { it.id !in guildUsers.map { it.id } }
             Bot.LOG.debug("Found ${newMembers.size} new members")
             newMembers.map { it.user }.forEach { user ->
                 DiscordUser(user).save()
@@ -254,79 +287,13 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
                 { it.name.replace(" ", "").toLowerCase() })
     }
 
-    fun dispatchBackfill() {
-        Bot.scheduler.submit {
-            backfillChannels()
-        }
-    }
-
-    fun cacheVisibilities(backfill: Boolean = true) {
-        // TODO 4/11/20 Remove this as this isn't terribly useful
-        val newChannels = mutableListOf<TextChannel>()
-        this.textChannels.forEach { c ->
-            val canView = c.checkPermissions(Permission.VIEW_CHANNEL)
-            if (visibleChannelCache[c.id] != canView && canView)
-                newChannels.add(c)
-            visibleChannelCache[c.id] = canView
-        }
-        if (backfill)
-            if (newChannels.isNotEmpty()) {
-                Bot.LOG.debug("Found ${newChannels.size} new channels, backfilling")
-                Bot.scheduler.submit {
-                    newChannels.forEach {
-                        backfillChannels(it)
-                    }
-                }
-            }
-    }
-
-    fun backfillChannels(channel: TextChannel? = null) {
-        if (channel != null) {
-            Bot.LOG.debug("Backfilling ${channel.name}")
-            if (!channel.checkPermissions(Permission.MESSAGE_HISTORY)) {
-                Bot.LOG.debug(
-                        "Skipping backfill on ${channel.name} - No permission to read history")
-                return
-            }
-            val history = channel.iterableHistory.stream().limit(500).collect(Collectors.toList())
-            val storedMessages = if (history.isNotEmpty()) Model.query(
-                    GuildMessage::class.java).whereIn("id",
-                    history.map { it.id }.toTypedArray()).get() else listOf()
-            var new = 0
-            var updated = 0
-            val toInsert = mutableListOf<Message>()
-            val toUpdate = mutableListOf<Message>()
-            history.forEach { message ->
-                val stored = storedMessages.firstOrNull { it.id == message.id }
-                if (stored == null) {
-                    toInsert.add(message)
-                    new++
-                } else {
-                    if (stored.message != message.contentRaw) {
-                        toUpdate.add(message)
-                    }
-                }
-            }
-            if (toInsert.isNotEmpty())
-                MessageConcurrencyManager.insert(*toInsert.toTypedArray())
-            if (toUpdate.isNotEmpty())
-                MessageConcurrencyManager.update(*toUpdate.toTypedArray())
-            Bot.LOG.debug(
-                    "Backfilled ${channel.name}: $new new, $updated updated out of ${history.size} total")
-        } else {
-            this.guild.textChannels.forEach { backfillChannels(it) }
-        }
-    }
-
-    fun runAsyncTask(task: () -> Unit) {
+    fun <T> runAsyncTask(task: () -> T): CompletableFuture<T> {
         removeCompletedTasks()
-        val future = Bot.scheduler.submit(task)
-        this.runningTasks.add(future)
-    }
-
-    fun hasAsyncTasksPending(): Boolean {
-        removeCompletedTasks()
-        return this.runningTasks.isNotEmpty()
+        val future = CompletableFuture.supplyAsync(Supplier {
+            task.invoke()
+        }, Bot.scheduler)
+        runningTasks.add(future)
+        return future
     }
 
     fun cancelAllTasks(interrupt: Boolean = true) {
@@ -336,17 +303,10 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
     }
 
     private fun removeCompletedTasks() {
-        val it = this.runningTasks.iterator()
-        var count = 0
-        while (it.hasNext()) {
-            val f = it.next()
-            if (f.isDone) {
-                it.remove()
-                count++
-            }
-        }
+        val finishedTasks = runningTasks.filter { it.isDone }
+        runningTasks.removeAll(finishedTasks)
         Bot.LOG.debug(
-                "Removed $count completed tasks on $this. (${this.runningTasks.size} still pending)")
+                "[$this] Removed ${finishedTasks.size} completed tasks on $this. (${this.runningTasks.size} still pending)")
     }
 
     override fun toString(): String {
@@ -354,29 +314,20 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
     }
 
     companion object {
-        private val guilds = mutableMapOf<String, KirBotGuild>()
-        private lateinit var leakDetectorThread: Thread
+        private val guilds: ConcurrentHashMap<String, KirBotGuild> = ConcurrentHashMap()
 
         private val overriddenUsers = mutableSetOf<String>()
 
-        var leakThreshold = 1000
-
         operator fun get(guild: Guild): KirBotGuild {
-            synchronized(guilds) {
-                return guilds.computeIfAbsent(guild.id) { KirBotGuild(guild) }
-            }
+            return guilds.computeIfAbsent(guild.id) { KirBotGuild(guild) }
         }
 
         fun remove(guild: Guild) {
-            synchronized(guilds) {
-                remove(guild.id)
-            }
+            remove(guild.id)
         }
 
         fun remove(id: String) {
-            synchronized(guilds) {
-                guilds.remove(id)
-            }
+            guilds.remove(id)
         }
 
         fun setOverride(user: User, value: Boolean) {

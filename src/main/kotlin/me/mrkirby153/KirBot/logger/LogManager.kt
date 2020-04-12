@@ -10,9 +10,11 @@ import me.mrkirby153.KirBot.utils.CustomEmoji
 import me.mrkirby153.KirBot.utils.convertSnowflake
 import me.mrkirby153.KirBot.utils.crypto.AesCrypto
 import me.mrkirby153.KirBot.utils.escapeMentions
+import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.logName
 import me.mrkirby153.KirBot.utils.resolveMentions
 import me.mrkirby153.KirBot.utils.settings.GuildSettings
+import me.mrkirby153.KirBot.utils.toTypedArray
 import me.mrkirby153.KirBot.utils.uploadToArchive
 import me.mrkirby153.KirBot.utils.urlEscape
 import net.dv8tion.jda.api.entities.Message
@@ -87,8 +89,11 @@ class LogManager(private val guild: KirBotGuild) {
         val author = Bot.shardManager.getUserById(msg.author) ?: return
         val chan = guild.getTextChannelById(msg.channel) ?: return
 
-        val ignored = guild.extraData.optJSONArray("log-ignored")?.map { it.toString() }
-        if (ignored != null && author.id in ignored)
+        var ignored = emptyList<String>()
+        guild.kirbotGuild.runWithExtraData {
+            ignored = it.optJSONArray("log-ignored")?.toTypedArray(String::class.java) ?: emptyList()
+        }
+        if (author.id in ignored)
             return // The user is in the ignored log array
 
         this.genericLog(LogEvent.MESSAGE_DELETE, ":wastebasket:",
@@ -144,8 +149,11 @@ class LogManager(private val guild: KirBotGuild) {
     fun logEdit(message: Message) {
         val old = Model.where(GuildMessage::class.java, "id", message.id).first() ?: return
         val user = message.author
-        val ignored = guild.extraData.optJSONArray("log-ignored")?.map { it.toString() }
-        if (ignored != null && user.id in ignored)
+        var ignored = emptyList<String>()
+        guild.kirbotGuild.runWithExtraData {
+            ignored = it.optJSONArray("log-ignored")?.toTypedArray(String::class.java) ?: emptyList()
+        }
+        if (user.id in ignored)
             return // The user is in the ignored log array
         val oldMessage = old.message
         if (oldMessage.equals(message.contentRaw, true)) {

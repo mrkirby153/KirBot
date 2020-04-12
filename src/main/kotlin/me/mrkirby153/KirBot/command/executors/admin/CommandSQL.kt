@@ -16,7 +16,8 @@ import me.mrkirby153.kcutils.utils.TableBuilder
 import net.dv8tion.jda.api.MessageBuilder
 import net.dv8tion.jda.api.Permission
 import java.sql.SQLException
-import java.util.concurrent.TimeoutException
+import java.util.concurrent.CompletableFuture
+import java.util.function.Supplier
 
 
 class CommandSQL {
@@ -27,8 +28,9 @@ class CommandSQL {
     fun execute(context: Context, cmdContext: CommandContext) {
         val query = cmdContext.get<String>("query") ?: throw CommandException(
                 "Please specify a query")
+        context.addReaction("\uD83D\uDD04").queue()
 
-        val future = Bot.scheduler.submit {
+        val future = CompletableFuture.supplyAsync(Supplier {
             ModuleManager[Database::class].database.getConnection().use { con ->
                 con.createStatement().use { statement ->
                     try {
@@ -52,13 +54,15 @@ class CommandSQL {
 
                             val table = builder.buildTable()
                             if (table.length > 1900) {
-                                if(context.channel.checkPermissions(Permission.MESSAGE_ATTACH_FILES)) {
+                                if (context.channel.checkPermissions(
+                                                Permission.MESSAGE_ATTACH_FILES)) {
                                     context.channel.sendMessage(
                                             MessageBuilder("_Took ${Time.format(1,
                                                     end_time - start_time)}_").build()).addFile(
                                             table.toByteArray(), "query.txt").queue()
                                 } else {
-                                    context.send().error("Query is too long and files cannot be uploaded!").queue()
+                                    context.send().error(
+                                            "Query is too long and files cannot be uploaded!").queue()
                                 }
                             } else {
                                 context.channel.sendMessage("```$table```_Took ${Time.format(1,
@@ -73,12 +77,11 @@ class CommandSQL {
                     }
                 }
             }
-        }
-        // TODO 8/11/2019 Use completable future
-        try {
-            future.get()
-        } catch (e: TimeoutException) {
-            throw CommandException("Query took too long!")
+        }, Bot.scheduler)
+        future.whenComplete { _, throwable ->
+            if (throwable != null) {
+                context.send().error("An error occurred: ${throwable.localizedMessage}")
+            }
         }
     }
 

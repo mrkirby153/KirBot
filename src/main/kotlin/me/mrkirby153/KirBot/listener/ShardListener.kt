@@ -106,22 +106,6 @@ class ShardListener {
     }
 
     @Subscribe
-    fun onGuildMemberRoleAdd(event: GuildMemberRoleAddEvent) {
-        if (event.member == event.guild.selfMember) {
-            Bot.LOG.debug("We had a role added, re-caching visibilities")
-            event.guild.kirbotGuild.cacheVisibilities()
-        }
-    }
-
-    @Subscribe
-    fun onGuildMemberRoleRemove(event: GuildMemberRoleRemoveEvent) {
-        if (event.member == event.guild.selfMember) {
-            Bot.LOG.debug("We had a role removed, re-caching visibilities")
-            event.guild.kirbotGuild.cacheVisibilities()
-        }
-    }
-
-    @Subscribe
     fun onGuildLeave(event: GuildLeaveEvent) {
         val guild = event.guild
         if (!guildLeavesIgnore.contains(event.guild.id)) {
@@ -178,7 +162,6 @@ class ShardListener {
         event.guild.kirbotGuild.loadSettings()
         Bot.scheduler.schedule({
             event.guild.kirbotGuild.sync()
-            event.guild.kirbotGuild.dispatchBackfill()
         }, 0, TimeUnit.MILLISECONDS)
     }
 
@@ -203,17 +186,6 @@ class ShardListener {
         channel.type = me.mrkirby153.KirBot.database.models.Channel.Type.TEXT
         channel.hidden = false
         channel.create()
-    }
-
-    @Subscribe
-    fun onTextChannelUpdatePermissions(event: TextChannelUpdatePermissionsEvent) {
-        val selfRoles = event.guild.selfMember.roles
-        val matchedRoles = event.changedRoles.filter { it in selfRoles }
-        if (matchedRoles.isNotEmpty() || event.guild.selfMember in event.changedMembers) {
-            Bot.LOG.debug(
-                    "Our channel override was updated on ${event.channel.name} re-caching visibilities")
-            event.guild.kirbotGuild.cacheVisibilities()
-        }
     }
 
     @Subscribe

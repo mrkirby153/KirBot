@@ -2,6 +2,7 @@ package me.mrkirby153.KirBot.command.executors.moderation
 
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.CommandCategory
+import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.annotations.CommandDescription
 import me.mrkirby153.KirBot.command.annotations.IgnoreWhitelist
@@ -10,7 +11,9 @@ import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.user.CLEARANCE_ADMIN
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
+import me.mrkirby153.KirBot.utils.toTypedArray
 import net.dv8tion.jda.api.entities.User
+import org.json.JSONArray
 
 
 class CommandModlogs {
@@ -23,13 +26,16 @@ class CommandModlogs {
     fun hide(context: Context, cmdContext: CommandContext) {
         val userId = cmdContext.get<User>("user")?.id ?: return
 
-        val currentlyHidden = context.kirbotGuild.extraData.optJSONArray(
-                "log-ignored")?.map { it.toString() }?.toMutableSet() ?: mutableSetOf()
-
-        currentlyHidden.add(userId)
-
-        context.kirbotGuild.extraData.put("log-ignored", currentlyHidden)
-        context.kirbotGuild.saveData()
+        context.kirbotGuild.runWithExtraData(true) {
+            val currentlyHidden = it.optJSONArray("log-ignored")
+            if (currentlyHidden == null) {
+                it.put("log-ignored", JSONArray(arrayOf(userId)))
+            } else {
+                if(currentlyHidden.contains(userId))
+                    throw CommandException("That user is already hidden from the logs")
+                currentlyHidden.put(userId)
+            }
+        }
 
         context.send().info(":ok_hand: Hidden `$userId` from the logs").queue()
     }
@@ -42,13 +48,19 @@ class CommandModlogs {
     fun unhide(context: Context, cmdContext: CommandContext) {
         val userId = cmdContext.get<User>("user")?.id ?: return
 
-        val currentlyHidden = context.kirbotGuild.extraData.optJSONArray(
-                "log-ignored")?.map { it.toString() }?.toMutableSet() ?: mutableSetOf()
-
-        currentlyHidden.remove(userId)
-
-        context.kirbotGuild.extraData.put("log-ignored", currentlyHidden)
-        context.kirbotGuild.saveData()
+        context.kirbotGuild.runWithExtraData(true) {
+            val currentlyHidden = it.optJSONArray("log-ignored") ?: return@runWithExtraData
+            val iter = currentlyHidden.iterator()
+            var removed = false
+            while(iter.hasNext()) {
+                if(iter.next() == userId) {
+                    removed = true
+                    iter.remove()
+                }
+            }
+            if(!removed)
+                throw CommandException("That user was not hidden from the logs")
+        }
 
         context.send().info(":ok_hand: Unhidden `$userId` from the logs").queue()
     }
@@ -59,8 +71,14 @@ class CommandModlogs {
     @CommandDescription("List all the hidden users")
     @IgnoreWhitelist
     fun hidden(context: Context, cmdContext: CommandContext) {
-        val currentlyHidden = context.kirbotGuild.extraData.optJSONArray(
-                "log-ignored")?.map { it.toString() }?.toMutableSet() ?: mutableSetOf()
+        var currentlyHidden: List<String> = emptyList()
+        context.kirbotGuild.runWithExtraData {
+            currentlyHidden = it.optJSONArray("log-ignored")?.toTypedArray(String::class.java) ?: emptyList()
+        }
+        if(currentlyHidden.isEmpty()) {
+            context.channel.sendMessage("No users are hidden from the logs").queue()
+            return
+        }
         context.send().text(buildString {
             appendln("The following users are hidden from the logs: ```")
             currentlyHidden.forEach {

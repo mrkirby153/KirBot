@@ -7,7 +7,6 @@ import me.mrkirby153.KirBot.database.models.guild.GuildMessage
 import me.mrkirby153.KirBot.database.models.guild.starboard.StarboardEntry
 import me.mrkirby153.KirBot.event.Subscribe
 import me.mrkirby153.KirBot.module.Module
-import me.mrkirby153.KirBot.utils.settings.SettingsRepository
 import me.mrkirby153.KirBot.utils.embed.embed
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.settings.GuildSettings
@@ -130,7 +129,8 @@ class StarboardModule : Module("starboard") {
                 entry?.delete()
             }
         }
-        if (entry.hidden || apiMsg == null || entry.count < GuildSettings.starboardStarCount.get(guild)) {
+        if (entry.hidden || apiMsg == null || entry.count < GuildSettings.starboardStarCount.get(
+                        guild)) {
             // Delete the star from the board if it's hidden or the original message was deleted or it's fallen below the star count
             // TODO 12/19/2018 Make the latter configurable
             if (entry.starboardMid != null) {
@@ -148,7 +148,8 @@ class StarboardModule : Module("starboard") {
         // Construct the star message
         val msg = MessageBuilder()
         msg.setContent(
-                "${if (entry.count < GuildSettings.starboardGildCount.get(guild)) STAR else GILD_STAR} ${entry.count} <#${apiMsg.channel.id}> $mid")
+                "${if (entry.count < GuildSettings.starboardGildCount.get(
+                                guild)) STAR else GILD_STAR} ${entry.count} <#${apiMsg.channel.id}> $mid")
         msg.setEmbed(embed {
             description {
                 +message.message
@@ -161,7 +162,8 @@ class StarboardModule : Module("starboard") {
                 timestamp = apiMsg.timeCreated.toInstant()
             }
         }.build())
-        val sbMessage = if (entry.starboardMid != null) getStarboardChannel(guild)?.retrieveMessageById(
+        val sbMessage = if (entry.starboardMid != null) getStarboardChannel(
+                guild)?.retrieveMessageById(
                 entry.starboardMid!!)?.complete() else null
         if (sbMessage != null) {
             sbMessage.editMessage(msg.build()).queue()
@@ -174,21 +176,35 @@ class StarboardModule : Module("starboard") {
     }
 
     fun block(guild: Guild, user: User) {
-        val blocked = guild.kirbotGuild.extraData.optJSONArray("starboard_blocked")
-                ?: JSONArray().apply { guild.kirbotGuild.extraData.put("starboard_blocked", this) }
-        blocked.put(user.id)
-        guild.kirbotGuild.saveData()
+        guild.kirbotGuild.runWithExtraData(true) {
+            val blocked = it.optJSONArray("starboard_blocked")
+            if (blocked == null) {
+                it.put("starboard_blocked", JSONArray(arrayOf(user.id)))
+            } else {
+                if (!blocked.contains(user.id))
+                    blocked.put(user.id)
+            }
+        }
     }
 
     fun unblock(guild: Guild, user: User) {
-        val blocked = guild.kirbotGuild.extraData.optJSONArray("starboard_blocked")
-                ?: return
-        blocked.remove(blocked.indexOfFirst { it as String == user.id })
-        guild.kirbotGuild.saveData()
+        guild.kirbotGuild.runWithExtraData(true) {
+            val blocked = it.optJSONArray("starboard_blocked") ?: return@runWithExtraData
+            val itr = blocked.iterator()
+            while (itr.hasNext()) {
+                if (itr.next() == user.id) {
+                    itr.remove()
+                }
+            }
+        }
     }
 
-    fun blocked(guild: Guild): List<String> {
-        return guild.kirbotGuild.extraData.optJSONArray("starboard_blocked")?.toTypedArray(
-                String::class.java) ?: emptyList<String>()
+    private fun blocked(guild: Guild): List<String> {
+        var blocked = emptyList<String>()
+        guild.kirbotGuild.runWithExtraData {
+            blocked = it.optJSONArray("starboard_blocked")?.toTypedArray(String::class.java)
+                    ?: emptyList()
+        }
+        return blocked
     }
 }

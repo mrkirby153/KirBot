@@ -21,7 +21,7 @@ class CommandClean {
     private val confirmAmount = 100
 
     @Command(name = "all", arguments = ["[amount:int]"], parent = "clean",
-            clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION)
+            clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION, permissions = [Permission.MESSAGE_MANAGE])
     @CommandDescription("Cleans messages from everyone in the current channel")
     @LogInModlogs
     @IgnoreWhitelist
@@ -32,7 +32,7 @@ class CommandClean {
     }
 
     @Command(name = "user", arguments = ["<user:snowflake>", "[amount:int]"], parent = "clean",
-            clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION)
+            clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION, permissions = [Permission.MESSAGE_MANAGE])
     @CommandDescription("Cleans messages from a specific user in the current channel")
     @LogInModlogs
     @IgnoreWhitelist
@@ -44,7 +44,7 @@ class CommandClean {
     }
 
     @Command(name = "bots", arguments = ["[amount:int]"], parent = "clean",
-            clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION)
+            clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION, permissions = [Permission.MESSAGE_MANAGE])
     @CommandDescription("Cleans messages sent by bots in the current channel")
     @LogInModlogs
     @IgnoreWhitelist

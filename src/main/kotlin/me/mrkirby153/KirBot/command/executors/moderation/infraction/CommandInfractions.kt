@@ -2,6 +2,7 @@ package me.mrkirby153.KirBot.command.executors.moderation.infraction
 
 import com.mrkirby153.bfs.model.Model
 import com.mrkirby153.bfs.sql.DB
+import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.annotations.Command
@@ -12,15 +13,19 @@ import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.models.DiscordUser
 import me.mrkirby153.KirBot.infraction.Infraction
 import me.mrkirby153.KirBot.infraction.Infractions
+import me.mrkirby153.KirBot.listener.WaitUtils
 import me.mrkirby153.KirBot.logger.LogEvent
 import me.mrkirby153.KirBot.user.CLEARANCE_ADMIN
 import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
+import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.KirBot.utils.getClearance
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
-import me.mrkirby153.KirBot.utils.promptForConfirmation
+import me.mrkirby153.kcutils.Time
 import me.mrkirby153.kcutils.utils.TableBuilder
+import net.dv8tion.jda.api.Permission
+import kotlin.system.measureTimeMillis
 
 class CommandInfractions {
 
@@ -74,12 +79,15 @@ class CommandInfractions {
         if (builtTable.length < 2000) {
             context.channel.sendMessage("```$builtTable```").queue()
         } else {
+            if(!context.channel.checkPermissions(Permission.MESSAGE_ATTACH_FILES)) {
+                throw CommandException("The output was too long and I do not have permission to attach files")
+            }
             context.channel.sendFile(builtTable.toByteArray(), "infractions.txt").queue()
         }
     }
 
     @Command(name = "info", clearance = CLEARANCE_MOD, arguments = ["<id:int>"],
-            parent = "infraction", category = CommandCategory.MODERATION)
+            parent = "infraction", category = CommandCategory.MODERATION, permissions = [Permission.MESSAGE_EMBED_LINKS])
     @LogInModlogs
     @CommandDescription("Gets detailed information about an infraction")
     @IgnoreWhitelist
@@ -88,10 +96,21 @@ class CommandInfractions {
         val infraction = Model.where(Infraction::class.java, "id", id).first()
         if (infraction == null || infraction.guild != context.guild.id)
             throw CommandException("Infraction not found!")
-        context.send().embed(infraction.type.internalName.capitalize()) {
+        val user = Model.where(DiscordUser::class.java, "id", infraction.userId).first()
+        val moderator = Model.where(DiscordUser::class.java, "id", infraction.issuerId).first()
+        context.send().embed("#${id} - ${infraction.type.internalName.capitalize()}") {
+            timestamp {
+                millis(infraction.createdAt.time)
+            }
+            author {
+                name = user.nameAndDiscrim
+                val jdaUser = Bot.shardManager.getUserById(user.id)
+                if(jdaUser != null) {
+                    iconUrl = jdaUser.effectiveAvatarUrl
+                }
+            }
             fields {
                 field {
-                    val user = Model.where(DiscordUser::class.java, "id", infraction.userId).first()
                     title = "User"
                     description {
                         if (user != null)
@@ -102,12 +121,10 @@ class CommandInfractions {
                     inline = true
                 }
                 field {
-                    val user = Model.where(DiscordUser::class.java, "id",
-                            infraction.issuerId).first()
                     title = "Moderator"
                     description {
-                        if (user != null)
-                            +user.nameAndDiscrim
+                        if (moderator != null)
+                            +moderator.nameAndDiscrim
                         else
                             +infraction.userId
                     }
@@ -123,7 +140,7 @@ class CommandInfractions {
 
     @Command(name = "clear", clearance = CLEARANCE_MOD,
             arguments = ["<id:int>", "[reason:string...]"], category = CommandCategory.MODERATION,
-            parent = "infraction")
+            parent = "infraction", aliases = ["delete"], permissions = [Permission.MESSAGE_ADD_REACTION])
     @LogInModlogs
     @CommandDescription("Clears an infraction (Deletes it from the database)")
     @IgnoreWhitelist
@@ -139,19 +156,23 @@ class CommandInfractions {
             if (context.author.getClearance(context.guild) < CLEARANCE_ADMIN)
                 throw CommandException("You do not have permission to clear this infraction")
         }
-        promptForConfirmation(context,
-                "Are you sure you want to delete this infraction? This cannot be undone", {
-            infraction.delete()
-            context.send().success("Infraction `$id` cleared!", true).queue()
-            context.guild.kirbotGuild.logManager.genericLog(LogEvent.ADMIN_COMMAND, ":warning:",
-                    "Infraction `$id` deleted by ${context.author.nameAndDiscrim} (`${context.author.id}`): `$reason`")
-            true
-        })
+
+        context.channel.sendMessage(
+                "Are you sure you want to delete this infraction? This cannot be undone").queue { msg ->
+            WaitUtils.confirmYesNo(msg, context.author, {
+                infraction.delete()
+                context.channel.sendMessage("Infraction `$id` deleted!").queue()
+                context.guild.kirbotGuild.logManager.genericLog(LogEvent.ADMIN_COMMAND, ":warning:",
+                        "Infraction `$id` deleted by ${context.author.nameAndDiscrim} (`${context.author.id}`): `$reason`")
+            }, {
+                msg.editMessage("Canceled!").queue()
+            })
+        }
     }
 
     @Command(name = "reason", clearance = CLEARANCE_MOD,
             arguments = ["<id:number>", "<reason:string...>"],
-            category = CommandCategory.MODERATION, parent = "infraction")
+            category = CommandCategory.MODERATION, parent = "infraction", aliases = ["update"])
     @LogInModlogs
     @CommandDescription("Sets the reason of an infraction")
     @IgnoreWhitelist
@@ -163,7 +184,7 @@ class CommandInfractions {
                 ?: throw CommandException("That infraction doesn't exist")
 
         // Prevent modifying infractions from different guilds
-        if(infraction.guild != context.guild.id)
+        if (infraction.guild != context.guild.id)
             throw CommandException("That infraction doesn't exist")
 
         infraction.reason = reason
@@ -173,22 +194,27 @@ class CommandInfractions {
     }
 
     @Command(name = "import-banlist", clearance = CLEARANCE_ADMIN,
-            category = CommandCategory.MODERATION, parent = "infraction")
+            category = CommandCategory.MODERATION, parent = "infraction", permissions = [Permission.MESSAGE_ADD_REACTION])
     @LogInModlogs
     @CommandDescription("Imports the banlist as infractions")
     @IgnoreWhitelist
     fun importBanlist(context: Context, cmdContext: CommandContext) {
-        promptForConfirmation(context, "Are you sure you want to import the banlist?", onConfirm = {
-            context.channel.sendMessage(":timer: Importing from the banlist...").queue {
-                Infractions.importFromBanlist(context.guild.kirbotGuild)
-                it.editMessage("Completed!").queue()
-            }
-            return@promptForConfirmation true
-        })
+        context.channel.sendMessage("Are you sure you want to import the banlist?").queue { msg ->
+            WaitUtils.confirmYesNo(msg, context.author, {
+                context.channel.sendMessage(":timer: Importing from the banlist...").queue {
+                    val timeTaken = measureTimeMillis {
+                        Infractions.importFromBanlist(context.guild.kirbotGuild)
+                    }
+                    it.editMessage("Completed in ${Time.format(1, timeTaken)}").queue()
+                }
+            }, {
+                msg.editMessage("Canceled!").queue()
+            })
+        }
     }
 
     @Command(name = "export", clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION,
-            parent = "infraction")
+            parent = "infraction", permissions = [Permission.MESSAGE_ATTACH_FILES])
     @LogInModlogs
     @IgnoreWhitelist
     @CommandDescription("Exports a CSV of infractions")

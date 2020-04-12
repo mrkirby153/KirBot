@@ -5,21 +5,33 @@ import com.mrkirby153.bfs.sql.DB
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.annotations.CommandDescription
+import me.mrkirby153.KirBot.command.annotations.LogInModlogs
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.database.models.guild.GuildMember
 import me.mrkirby153.KirBot.user.CLEARANCE_MOD
+import me.mrkirby153.KirBot.utils.BUG_HUNTER
+import me.mrkirby153.KirBot.utils.BUG_HUNTER_TIER_2
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.CustomEmoji
+import me.mrkirby153.KirBot.utils.EARLY_SUPPORTER
+import me.mrkirby153.KirBot.utils.HS_BALANCE
+import me.mrkirby153.KirBot.utils.HS_BRAVERY
+import me.mrkirby153.KirBot.utils.HS_BRILLIANCE
+import me.mrkirby153.KirBot.utils.HYPESQUAD_EVENTS
 import me.mrkirby153.KirBot.utils.HttpUtils
+import me.mrkirby153.KirBot.utils.PARTNER
+import me.mrkirby153.KirBot.utils.STAFF
 import me.mrkirby153.KirBot.utils.STATUS_AWAY
 import me.mrkirby153.KirBot.utils.STATUS_DND
 import me.mrkirby153.KirBot.utils.STATUS_OFFLINE
 import me.mrkirby153.KirBot.utils.STATUS_ONLINE
+import me.mrkirby153.KirBot.utils.VERIFIED_DEVELOPER
 import me.mrkirby153.KirBot.utils.convertSnowflake
 import me.mrkirby153.KirBot.utils.getMember
 import me.mrkirby153.KirBot.utils.getOnlineStats
 import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.api.OnlineStatus
+import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Activity
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.User
@@ -38,14 +50,12 @@ class CommandInfo {
     private val sdf = SimpleDateFormat("YYYY-MM-dd HH:mm:ss")
 
     @Command(name = "info", arguments = ["[user:user]"], category = CommandCategory.MODERATION,
-            clearance = CLEARANCE_MOD)
+            clearance = CLEARANCE_MOD, permissions = [Permission.MESSAGE_EMBED_LINKS])
     @CommandDescription("Retrieves information about a user")
+    @LogInModlogs
     fun execute(context: Context, cmdContext: CommandContext) {
         val user = cmdContext.get<User>("user") ?: context.author
         val onlineStatus = user.getOnlineStats()
-
-        val member = Model.where(GuildMember::class.java, "user_id", user.id).where("server_id",
-                context.guild.id).first()
 
         val sentMessages = DB.getFirstColumn<Long>(
                 "SELECT COUNT(*) FROM `server_messages` WHERE `author` = ?", user.id)
@@ -93,9 +103,18 @@ class CommandInfo {
                             "MM-dd-yy HH:mm:ss").format(joinTime)}`)")
                 }
                 val flags = getUserFlags(user)
-                if (flags.isNotEmpty())
-                    appendln("Flags: ${flags.joinToString(", ") { it.displayName }}")
-                if (member != null) {
+                if (flags.isNotEmpty()) {
+                    val flagString = flags.joinToString("\n") { flag ->
+                        val emoji = flag.emoji
+                        if(emoji != null) {
+                            "   <:${emoji.name}:${emoji.id}> ${flag.displayName}"
+                        } else {
+                            "   ${flag.displayName}"
+                        }
+                    }
+                    appendln("Badges:\n$flagString\n")
+                }
+                if (jdaMember != null) {
                     appendln("")
                     appendln("**\\> Activity**")
                     val firstMsg = if (firstMessageId != null) convertSnowflake(
@@ -136,18 +155,15 @@ class CommandInfo {
 
     private fun getPlayingStatus(member: Member): String {
         val activities = member.activities
-        return buildString {
-            activities.forEach { activity ->
-                when (activity.type) {
-                    Activity.ActivityType.DEFAULT -> append("Playing ")
-                    Activity.ActivityType.LISTENING -> append("Listening to ")
-                    Activity.ActivityType.STREAMING -> append("Streaming ")
-                    Activity.ActivityType.WATCHING -> append("Watching ")
-                    null -> append("Playing ")
-                }
-                append(activity.name)
+        return activities.joinToString(", ") { activity ->
+            when(activity.type) {
+                Activity.ActivityType.DEFAULT -> "Playing ${activity.name}"
+                Activity.ActivityType.LISTENING -> "Listening to ${activity.name}"
+                Activity.ActivityType.STREAMING -> "Streaming ${activity.name}"
+                Activity.ActivityType.WATCHING -> "Watching ${activity.name}"
+                Activity.ActivityType.CUSTOM_STATUS -> "Custom Status: ${activity.name}"
+                else -> "Playing ${activity.name}"
             }
-
         }
     }
 
@@ -206,15 +222,17 @@ class CommandInfo {
         return flags
     }
 
-    enum class Flag(val bitmask: Int, val displayName: String) {
-        STAFF(1, "Discord Staff"),
-        PARTNER(2, "Discord Partner"),
-        HS_EVENTS(4, "Hypesquad Events"),
-        BUG_HUNTER_TIER_1(8, "Bug Hunter"),
-        HS_BRAVE(64, "Hypesquad Bravery"),
-        HS_BRILL(128, "Hypesquad Brilliance"),
-        HS_BAL(256, "Hypesquad Balance"),
-        EARLY_SUPPORTER(512, "Early Supporter"),
-        BUG_HUNTER_TIER_2(16384, "Bug Hunter Tier 2")
+    enum class Flag(val bitmask: Int, val displayName: String, val emoji: CustomEmoji? = null) {
+        STAFF(1, "Discord Staff", me.mrkirby153.KirBot.utils.STAFF),
+        PARTNER(2, "Discord Partner", me.mrkirby153.KirBot.utils.PARTNER),
+        HS_EVENTS(4, "Hypesquad Events", HYPESQUAD_EVENTS),
+        BUG_HUNTER_TIER_1(8, "Bug Hunter", BUG_HUNTER),
+        HS_BRAVE(64, "Hypesquad Bravery", HS_BRAVERY),
+        HS_BRILL(128, "Hypesquad Brilliance", HS_BRILLIANCE),
+        HS_BAL(256, "Hypesquad Balance", HS_BALANCE),
+        EARLY_SUPPORTER(512, "Early Supporter", me.mrkirby153.KirBot.utils.EARLY_SUPPORTER),
+        BUG_HUNTER_TIER_2(16384, "Bug Hunter Tier 2", me.mrkirby153.KirBot.utils.BUG_HUNTER_TIER_2),
+        VERIFIED_BOT(65536, "Verified Bot"),
+        VERIFIED_DEVELOPER(131072, "Verified Developer", me.mrkirby153.KirBot.utils.VERIFIED_DEVELOPER)
     }
 }

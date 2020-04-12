@@ -25,7 +25,7 @@ import okhttp3.Request
 
 class CommandRss {
 
-    @Command(name = "rss", clearance = CLEARANCE_MOD, category = CommandCategory.UTILITY)
+    @Command(name = "rss", clearance = CLEARANCE_MOD, category = CommandCategory.UTILITY, permissions = [Permission.MESSAGE_EMBED_LINKS])
     @CommandDescription("Shows a list of RSS feeds currently being monitored")
     @IgnoreWhitelist
     fun execute(context: Context, cmdContext: CommandContext) {

@@ -22,7 +22,7 @@ import net.dv8tion.jda.api.events.channel.voice.VoiceChannelCreateEvent
 import net.dv8tion.jda.api.events.channel.voice.VoiceChannelDeleteEvent
 import net.dv8tion.jda.api.events.channel.voice.update.VoiceChannelUpdateNameEvent
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent
-import net.dv8tion.jda.api.events.guild.member.GuildMemberLeaveEvent
+import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRoleAddEvent
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRoleRemoveEvent
 import net.dv8tion.jda.api.events.guild.member.update.GuildMemberUpdateNicknameEvent
@@ -117,15 +117,26 @@ class Logger : Module("logging") {
     }
 
     @Subscribe
-    fun onGuildMemberLeave(event: GuildMemberLeaveEvent) {
-        if (debouncer.find(GuildMemberLeaveEvent::class.java, Pair("user", event.user.id)))
+    fun onGuildMemberLeave(event: GuildMemberRemoveEvent) {
+        if (debouncer.find(GuildMemberRemoveEvent::class.java, Pair("user", event.user.id),
+                        Pair("guild", event.guild.id)))
             return
-        val t = System.currentTimeMillis() - (event.member.timeJoined.toEpochSecond() * 1000)
-        val joinString = if (t < 1000) {
-            "a moment ago"
-        } else "${Time.formatLong(t)} ago"
+        val member = event.member
+        val leaveString = buildString {
+            append("${event.user.logName} left")
+            if (member != null) {
+                append(" (Joined ")
+                val t = System.currentTimeMillis() - (member.timeJoined.toEpochSecond() * 1000)
+                if (t < 1000) {
+                    append("a moment ago")
+                } else {
+                    append("${Time.formatLong(t)} ago")
+                }
+                append(")")
+            }
+        }
         event.guild.kirbotGuild.logManager.genericLog(LogEvent.USER_LEAVE, ":outbox_tray:",
-                "${event.user.logName} left (Joined $joinString)")
+                leaveString)
     }
 
     @Subscribe

@@ -19,6 +19,7 @@ import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.events.guild.GuildBanEvent
 import net.dv8tion.jda.api.events.guild.GuildUnbanEvent
 import net.dv8tion.jda.api.events.guild.member.GuildMemberLeaveEvent
+import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent
 import java.sql.Timestamp
 
 class InfractionModule : Module("infractions") {
@@ -102,8 +103,8 @@ class InfractionModule : Module("infractions") {
     }
 
     @Subscribe
-    fun onKick(event: GuildMemberLeaveEvent) {
-        if (debouncer.find(GuildMemberLeaveEvent::class.java, Pair("user", event.user.id),
+    fun onKick(event: GuildMemberRemoveEvent) {
+        if (debouncer.find(GuildMemberRemoveEvent::class.java, Pair("user", event.user.id),
                         Pair("guild", event.guild.id))) {
             return
         }

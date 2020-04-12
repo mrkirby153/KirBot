@@ -6,8 +6,10 @@ import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.database.models.guild.ReactionRole
 import me.mrkirby153.KirBot.event.Subscribe
 import me.mrkirby153.KirBot.module.Module
+import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import me.mrkirby153.kcutils.utils.IdGenerator
+import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.Message
@@ -87,11 +89,13 @@ class ReactionRoles : Module("reaction-roles") {
         reactionRoleCache.invalidate(message.id)
 
         // Add our reaction to the message
-        if (custom) {
-            val resolvedEmote = message.guild.getEmoteById(emote) ?: return
-            message.addReaction(resolvedEmote).queue()
-        } else {
-            message.addReaction(emote).queue()
+        if(message.channel.checkPermissions(Permission.MESSAGE_ADD_REACTION)) {
+            if (custom) {
+                val resolvedEmote = message.guild.getEmoteById(emote) ?: return
+                message.addReaction(resolvedEmote).queue()
+            } else {
+                message.addReaction(emote).queue()
+            }
         }
     }
 

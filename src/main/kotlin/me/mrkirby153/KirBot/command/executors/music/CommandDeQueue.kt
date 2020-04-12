@@ -17,8 +17,7 @@ import net.dv8tion.jda.api.Permission
 
 class CommandDeQueue  {
 
-    @Command(name = "dequeue", clearance = CLEARANCE_DEFAULT, arguments = ["<position:int>"],
-            permissions = [Permission.MESSAGE_EMBED_LINKS], category = CommandCategory.MUSIC)
+    @Command(name = "dequeue", clearance = CLEARANCE_DEFAULT, arguments = ["<position:int>"], category = CommandCategory.MUSIC)
     @CommandDescription("Removes a previously queued song from the queue")
      fun execute(context: Context, cmdContext: CommandContext) {
         if (!GuildSettings.musicEnabled.get(context.guild))

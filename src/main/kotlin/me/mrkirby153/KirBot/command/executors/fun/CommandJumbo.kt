@@ -1,7 +1,6 @@
 package me.mrkirby153.KirBot.command.executors.`fun`
 
 import me.mrkirby153.KirBot.command.CommandCategory
-import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.annotations.CommandDescription
 import me.mrkirby153.KirBot.command.annotations.IgnoreWhitelist
@@ -9,7 +8,6 @@ import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.EMOJI_RE
 import me.mrkirby153.KirBot.utils.HttpUtils
-import me.mrkirby153.KirBot.utils.checkPermissions
 import net.dv8tion.jda.api.Permission
 import okhttp3.Request
 import java.awt.Image
@@ -21,7 +19,8 @@ import javax.imageio.ImageIO
 
 class CommandJumbo {
 
-    @Command(name = "jumbo", arguments = ["<emojis:string...>"], category = CommandCategory.FUN)
+    @Command(name = "jumbo", arguments = ["<emojis:string...>"], category = CommandCategory.FUN,
+            permissions = [Permission.MESSAGE_ATTACH_FILES])
     @CommandDescription("Sends a bigger version of the given emojis")
     @IgnoreWhitelist
     fun execute(context: Context, cmdContext: CommandContext) {
@@ -55,8 +54,6 @@ class CommandJumbo {
         val os = ByteArrayOutputStream()
         ImageIO.write(finalImg, "png", os)
         val `is` = ByteArrayInputStream(os.toByteArray())
-        if (!context.channel.checkPermissions(Permission.MESSAGE_ATTACH_FILES))
-            throw CommandException("I need `ATTACH_FILES` to execute this command")
         context.channel.sendFile(`is`, "emoji.png").queue {
             os.close()
             `is`.close()

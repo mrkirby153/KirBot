@@ -50,7 +50,7 @@ class StarboardModule : Module("starboard") {
     }
 
     private fun getStarCount(mid: String) = DB.getFirstColumn<Long>(
-            "SELECT `star_count` FROM `starboard` WHERE `id` = ?")
+            "SELECT `star_count` FROM `starboard` WHERE `id` = ?", mid)
 
     private fun getStarboardEntry(mid: String) = Model.query(StarboardEntry::class.java).where("id",
             mid).first()

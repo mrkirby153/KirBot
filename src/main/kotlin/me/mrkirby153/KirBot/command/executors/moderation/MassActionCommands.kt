@@ -54,7 +54,7 @@ class MassActionCommands {
     }
 
     @Command(name = "mkick", arguments = ["<options:string...>"],
-            category = CommandCategory.MODERATION, permissions = [Permission.BAN_MEMBERS], clearance = CLEARANCE_MOD)
+            category = CommandCategory.MODERATION, permissions = [Permission.KICK_MEMBERS], clearance = CLEARANCE_MOD)
     @LogInModlogs
     @IgnoreWhitelist
     @CommandDescription("Mass kick")

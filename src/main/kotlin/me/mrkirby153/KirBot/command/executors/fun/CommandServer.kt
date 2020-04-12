@@ -6,6 +6,7 @@ import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.annotations.IgnoreWhitelist
 import me.mrkirby153.KirBot.command.args.CommandContext
+import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.STATUS_AWAY
 import me.mrkirby153.KirBot.utils.STATUS_DND
@@ -15,14 +16,15 @@ import me.mrkirby153.KirBot.utils.embed.embed
 import me.mrkirby153.KirBot.utils.getPrimaryColor
 import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.api.OnlineStatus
+import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Member
 import java.awt.Color
 import java.text.SimpleDateFormat
 
 
 class CommandServer {
-    @Command(name = "server", arguments = ["[server:snowflake]"], clearance = 50,
-            category = CommandCategory.FUN)
+    @Command(name = "server", arguments = ["[server:snowflake]"], clearance = CLEARANCE_MOD,
+            category = CommandCategory.FUN, permissions = [Permission.MESSAGE_ATTACH_FILES])
     @IgnoreWhitelist
     fun execute(context: Context, cmdContext: CommandContext) {
         val serverId = cmdContext.get<String>("server") ?: context.guild.id

@@ -9,10 +9,12 @@ import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.Database
 import me.mrkirby153.KirBot.utils.Context
+import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.kcutils.Time
 import me.mrkirby153.kcutils.use
 import me.mrkirby153.kcutils.utils.TableBuilder
 import net.dv8tion.jda.api.MessageBuilder
+import net.dv8tion.jda.api.Permission
 import java.sql.SQLException
 import java.util.concurrent.TimeoutException
 
@@ -50,9 +52,14 @@ class CommandSQL {
 
                             val table = builder.buildTable()
                             if (table.length > 1900) {
-                                context.channel.sendMessage(MessageBuilder("_Took ${Time.format(1,
-                                        end_time - start_time)}_").build()).addFile(
-                                        table.toByteArray(), "query.txt").queue()
+                                if(context.channel.checkPermissions(Permission.MESSAGE_ATTACH_FILES)) {
+                                    context.channel.sendMessage(
+                                            MessageBuilder("_Took ${Time.format(1,
+                                                    end_time - start_time)}_").build()).addFile(
+                                            table.toByteArray(), "query.txt").queue()
+                                } else {
+                                    context.send().error("Query is too long and files cannot be uploaded!").queue()
+                                }
                             } else {
                                 context.channel.sendMessage("```$table```_Took ${Time.format(1,
                                         end_time - start_time)}_").queue()

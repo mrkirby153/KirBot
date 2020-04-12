@@ -9,6 +9,7 @@ import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.user.CLEARANCE_ADMIN
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.FuzzyMatchException
+import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Role
 
 
@@ -33,7 +34,7 @@ class CommandSelfroles {
         context.channel.sendMessage(msg).queue()
     }
 
-    @Command(name = "join", arguments = ["<role:string...>"], parent = "selfrole", category = CommandCategory.UTILITY)
+    @Command(name = "join", arguments = ["<role:string...>"], parent = "selfrole", category = CommandCategory.UTILITY, permissions = [Permission.MANAGE_ROLES])
     @CommandDescription("Join a self-assignable role")
     fun join(context: Context, cmdContext: CommandContext) {
         val role = cmdContext.get<String>("role")!!
@@ -47,7 +48,7 @@ class CommandSelfroles {
         context.send().success("Joined role `${foundRole.name}`", true).queue()
     }
 
-    @Command(name = "leave", arguments = ["<role:string...>"], parent = "selfrole", category = CommandCategory.UTILITY)
+    @Command(name = "leave", arguments = ["<role:string...>"], parent = "selfrole", category = CommandCategory.UTILITY, permissions = [Permission.MANAGE_PERMISSIONS])
     @CommandDescription("Leave a self-assignable role")
     fun leave(context: Context, cmdContext: CommandContext) {
         val role = cmdContext.get<String>("role")!!

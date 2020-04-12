@@ -248,7 +248,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
     fun matchRole(query: String): Role? {
         // Check ID
         if (query.matches(Regex("\\d{17,18}"))) {
-            return getRoleById(query) ?: null
+            return getRoleById(query)
         }
         return fuzzyMatch(this.roles, query.replace(" ", "").toLowerCase(),
                 { it.name.replace(" ", "").toLowerCase() })
@@ -261,6 +261,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
     }
 
     fun cacheVisibilities(backfill: Boolean = true) {
+        // TODO 4/11/20 Remove this as this isn't terribly useful
         val newChannels = mutableListOf<TextChannel>()
         this.textChannels.forEach { c ->
             val canView = c.checkPermissions(Permission.VIEW_CHANNEL)

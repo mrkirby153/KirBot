@@ -23,7 +23,7 @@ import net.dv8tion.jda.api.entities.Role
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.events.guild.GuildBanEvent
 import net.dv8tion.jda.api.events.guild.GuildUnbanEvent
-import net.dv8tion.jda.api.events.guild.member.GuildMemberLeaveEvent
+import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRoleRemoveEvent
 import net.dv8tion.jda.api.exceptions.ErrorResponseException
 import net.dv8tion.jda.api.requests.ErrorResponse
@@ -155,15 +155,15 @@ object Infractions {
         }
         val future = CompletableFuture<InfractionResult>()
 
-        ModuleManager[Logger::class.java].debouncer.create(GuildMemberLeaveEvent::class.java,
-                Pair("user", user))
+        ModuleManager[Logger::class.java].debouncer.create(GuildMemberRemoveEvent::class.java,
+                Pair("user", user), Pair("guild", guild.id))
 
         val inf = createInfraction(user, guild, if (issuer == "1") user else issuer, reason,
                 InfractionType.KICK)
         val result = dmUser(user, guild, inf).get()
         try {
             ModuleManager[InfractionModule::class.java].debouncer.create(
-                    GuildMemberLeaveEvent::class.java, Pair("user", user), Pair("guild", guild.id));
+                    GuildMemberRemoveEvent::class.java, Pair("user", user), Pair("guild", guild.id));
             guild.kick(guild.getMemberById(user) ?: return CompletableFuture.completedFuture(
                     InfractionResult(false, result, "Member not found")), reason ?: "").queue {
                 future.complete(InfractionResult(true, result))
@@ -205,8 +205,8 @@ object Infractions {
 
         ModuleManager[InfractionModule::class.java].debouncer.create(GuildBanEvent::class.java,
                 Pair("user", user), Pair("guild", guild.id))
-        ModuleManager[Logger::class.java].debouncer.create(GuildMemberLeaveEvent::class.java,
-                Pair("user", user))
+        ModuleManager[Logger::class.java].debouncer.create(GuildMemberRemoveEvent::class.java,
+                Pair("user", user), Pair("guild", guild.id))
 
         val future = CompletableFuture<InfractionResult>()
         val inf = createInfraction(user, guild, if (issuer == "1") user else issuer, reason,
@@ -239,8 +239,8 @@ object Infractions {
                 Pair("user", user), Pair("guild", guild.id))
         ModuleManager[InfractionModule::class.java].debouncer.create(GuildUnbanEvent::class.java,
                 Pair("user", user), Pair("guild", guild.id))
-        ModuleManager[Logger::class.java].debouncer.create(GuildMemberLeaveEvent::class.java,
-                Pair("user", user))
+        ModuleManager[Logger::class.java].debouncer.create(GuildMemberRemoveEvent::class.java,
+                Pair("user", user), Pair("guild", guild.id))
 
         val future = CompletableFuture<InfractionResult>()
         val inf = createInfraction(user, guild, if (issuer == "1") user else issuer, reason,

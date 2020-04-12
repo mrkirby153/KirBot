@@ -8,13 +8,14 @@ import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.globalAdmin
 import me.mrkirby153.kcutils.Time
+import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Guild
 import java.awt.Color
 
 
 class CommandStats {
 
-    @Command(name = "stats", category = CommandCategory.UTILITY)
+    @Command(name = "stats", category = CommandCategory.UTILITY, permissions = [Permission.MESSAGE_EMBED_LINKS])
     @CommandDescription("Displays statistics about the bot")
     fun execute(context: Context, cmdContext: CommandContext) {
         var guilds = 0

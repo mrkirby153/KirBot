@@ -66,13 +66,9 @@ class InviteRule : CensorRule {
 
     override fun check(message: Message, config: JSONObject) {
         val inviteSettings = config.optJSONObject("invites") ?: return
-        val whitelistedInvites = inviteSettings.optJSONArray("whitelist")?.toTypedArray(
-                String::class.java)
         val whitelistedGuilds = inviteSettings.optJSONArray("guild_whitelist")?.toTypedArray(
                 String::class.java)
 
-        val blacklistedInvites = inviteSettings.optJSONArray("blacklist")?.toTypedArray(
-                String::class.java)
         val blacklistedGuilds = inviteSettings.optJSONArray("guild_blacklist")?.toTypedArray(
                 String::class.java)
 

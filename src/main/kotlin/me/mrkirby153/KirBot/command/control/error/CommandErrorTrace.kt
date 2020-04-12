@@ -1,4 +1,4 @@
-package me.mrkirby153.KirBot.command.executors.admin.error
+package me.mrkirby153.KirBot.command.control.error
 
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.annotations.AdminCommand
@@ -10,22 +10,22 @@ import me.mrkirby153.KirBot.utils.deleteAfter
 import java.util.concurrent.TimeUnit
 
 
-class CommandErrorAck {
+class CommandErrorTrace {
 
-    @Command(name = "eack", arguments = ["<id:string>"])
+    @Command(name = "etrace", arguments = ["<id:string>"])
     @AdminCommand
     fun execute(context: Context, cmdContext: CommandContext) {
         val id = cmdContext.get<String>("id") ?: throw CommandException("Specify an ID")
-        if (id.equals("all", true)) {
-            ErrorLogger.ackAll()
-            context.success()
-            context.deleteAfter(10, TimeUnit.SECONDS)
-            return
-        }
 
         val trace = ErrorLogger.getTrace(id) ?: throw CommandException(
                 "There is no error with that ID!")
-        ErrorLogger.acknowledge(id)
+
+        if (trace.length > 1900) {
+            // Too large, send file
+            context.channel.sendFile(trace.toByteArray(), "error-$id.txt").queue()
+        } else {
+            context.channel.sendMessage("```$trace```").queue()
+        }
         context.deleteAfter(10, TimeUnit.SECONDS)
     }
 }

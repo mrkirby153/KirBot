@@ -30,6 +30,7 @@ import net.dv8tion.jda.api.events.guild.GuildJoinEvent
 import net.dv8tion.jda.api.events.guild.GuildLeaveEvent
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent
 import net.dv8tion.jda.api.events.guild.member.GuildMemberLeaveEvent
+import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRoleAddEvent
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRoleRemoveEvent
 import net.dv8tion.jda.api.events.guild.update.GuildUpdateIconEvent
@@ -62,8 +63,13 @@ class ShardListener {
     }
 
     @Subscribe
-    fun onGuildMemberLeave(event: GuildMemberLeaveEvent) {
-        UserPersistenceHandler.createBackup(event.member)
+    fun onGuildMemberLeave(event: GuildMemberRemoveEvent) {
+        val member = event.member
+        if(member != null) {
+            UserPersistenceHandler.createBackup(member)
+        } else {
+            Bot.LOG.debug("cannot create a backup of ${event.user} because they are not cached")
+        }
     }
 
     @Subscribe

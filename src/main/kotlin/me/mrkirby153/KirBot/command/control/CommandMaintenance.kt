@@ -5,6 +5,7 @@ import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.annotations.AdminCommand
 import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.args.CommandContext
+import me.mrkirby153.KirBot.listener.WaitUtils
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.Redis
 import me.mrkirby153.KirBot.utils.Context
@@ -14,27 +15,26 @@ import me.mrkirby153.kcutils.utils.argparser.ArgumentParser
 import me.mrkirby153.kcutils.utils.argparser.MissingArgumentException
 import me.mrkirby153.kcutils.utils.argparser.Option
 import net.dv8tion.jda.api.OnlineStatus
+import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Activity
 import java.util.concurrent.TimeUnit
 
 
 class CommandClearArchives {
 
-    @Command(name = "clear-archives")
+    @Command(name = "clear-archives", permissions = [Permission.MESSAGE_ADD_REACTION])
     @AdminCommand
     fun execute(context: Context, cmdContext: CommandContext) {
-        promptForConfirmation(context,
-                ":warning: Are you sure you want to delete **all** archives? This cannot be undone.",
-                {
-                    doClean(context)
-                    true
-                }, {
-            context.channel.sendMessage("Canceled!").queue {
-                it.deleteAfter(10, TimeUnit.SECONDS)
-                context.deleteAfter(10, TimeUnit.SECONDS)
-            }
-            true
-        })
+        context.channel.sendMessage(":warning: Are you sure you want to delete **all** archives? This cannot be undone").queue { msg ->
+            WaitUtils.confirmYesNo(msg, context.author, {
+                doClean(context)
+            }, {
+                msg.editMessage("Canceled!").queue {
+                    it.deleteAfter(10, TimeUnit.SECONDS)
+                    context.deleteAfter(10, TimeUnit.SECONDS)
+                }
+            })
+        }
     }
 
     private fun doClean(context: Context) {

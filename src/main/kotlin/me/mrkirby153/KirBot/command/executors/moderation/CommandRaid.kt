@@ -11,6 +11,8 @@ import me.mrkirby153.KirBot.modules.AntiRaid
 import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.embed.b
+import me.mrkirby153.KirBot.utils.uploadToArchive
+import net.dv8tion.jda.api.Permission
 
 class CommandRaid {
 
@@ -21,10 +23,7 @@ class CommandRaid {
         val raid = ModuleManager[AntiRaid::class.java].getRaid(context.guild,
                 cmdContext.getNotNull("id")) ?: throw CommandException("Raid not found")
 
-        val msg = buildString {
-            appendln(b("==[ RAID ${raid.id} ] =="))
-            appendln("${raid.members.size} members were involved in the raid")
-        }
+
 
         val users = buildString {
             raid.members.forEach { member ->
@@ -35,12 +34,18 @@ class CommandRaid {
             appendln("Only IDs:")
             appendln(raid.members.joinToString("\n") { it.id })
         }
-        context.channel.sendMessage(msg).addFile(users.toByteArray(),
-                "raid_members_${cmdContext.getNotNull<String>("id")}.txt").queue()
+        val uploadUrl = uploadToArchive(users)
+        val msg = buildString {
+            appendln(b("==[ RAID ${raid.id} ] =="))
+            appendln("${raid.members.size} members were involved in the raid")
+            appendln()
+            appendln("View the list of users: $uploadUrl")
+        }
+        context.channel.sendMessage(msg).queue()
     }
 
     @Command(name = "ban", arguments = ["<id:string>"], parent = "raid", clearance = CLEARANCE_MOD,
-            category = CommandCategory.MODERATION)
+            category = CommandCategory.MODERATION, permissions = [Permission.BAN_MEMBERS])
     @LogInModlogs
     @IgnoreWhitelist
     fun raidBan(context: Context, cmdContext: CommandContext) {
@@ -52,7 +57,7 @@ class CommandRaid {
     }
 
     @Command(name = "kick", arguments = ["<id:string>"], parent = "raid", clearance = CLEARANCE_MOD,
-            category = CommandCategory.MODERATION)
+            category = CommandCategory.MODERATION, permissions = [Permission.KICK_MEMBERS])
     @LogInModlogs
     @IgnoreWhitelist
     fun raidKick(context: Context, cmdContext: CommandContext) {
@@ -64,7 +69,7 @@ class CommandRaid {
     }
 
     @Command(name = "unmute", arguments = ["<id:string>"], parent = "raid",
-            clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION)
+            clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION, permissions = [Permission.MANAGE_ROLES])
     @LogInModlogs
     @IgnoreWhitelist
     fun raidUnmute(context: Context, cmdContext: CommandContext) {

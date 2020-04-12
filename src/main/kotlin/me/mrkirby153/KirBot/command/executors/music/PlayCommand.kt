@@ -19,8 +19,7 @@ import net.dv8tion.jda.api.entities.TextChannel
 
 
 class PlayCommand {
-    @Command(name = "play", arguments = ["[query/url:string...]"],
-            permissions = [Permission.MESSAGE_EMBED_LINKS], category = CommandCategory.MUSIC)
+    @Command(name = "play", arguments = ["[query/url:string...]"], category = CommandCategory.MUSIC)
     @CommandDescription("Play music")
     fun execute(context: Context, cmdContext: CommandContext) {
         if (!GuildSettings.musicEnabled.get(context.guild))

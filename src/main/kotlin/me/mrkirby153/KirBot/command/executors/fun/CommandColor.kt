@@ -6,6 +6,7 @@ import me.mrkirby153.KirBot.command.annotations.CommandDescription
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.getMember
+import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.Role
 import java.awt.Color
@@ -13,7 +14,7 @@ import java.awt.Color
 
 class CommandColor {
 
-    @Command(name = "color", arguments = ["<color:string>"], category = CommandCategory.FUN)
+    @Command(name = "color", arguments = ["<color:string>"], category = CommandCategory.FUN, permissions = [Permission.MANAGE_ROLES])
     @CommandDescription("Sets a user's color in the member list")
     fun execute(context: Context, cmdContext: CommandContext) {
         val colorString = cmdContext.get<String>("color")

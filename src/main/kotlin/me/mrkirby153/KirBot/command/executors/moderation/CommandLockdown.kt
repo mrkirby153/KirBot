@@ -19,7 +19,7 @@ private val lockdownMessages = mutableMapOf<String, String>()
 class CommandLockdown {
 
     @Command(name = "lock", clearance = CLEARANCE_MOD, arguments = ["[msg:string...]"],
-            category = CommandCategory.MODERATION)
+            category = CommandCategory.MODERATION, permissions = [Permission.MANAGE_CHANNEL, Permission.MANAGE_ROLES])
     @LogInModlogs
     @IgnoreWhitelist
     fun execute(context: Context, cmdContext: CommandContext) {
@@ -43,7 +43,7 @@ class CommandLockdown {
 
 
 class CommandUnlock {
-    @Command(name = "unlock", clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION)
+    @Command(name = "unlock", clearance = CLEARANCE_MOD, category = CommandCategory.MODERATION, permissions = [Permission.MANAGE_CHANNEL, Permission.MANAGE_ROLES])
     @LogInModlogs
     @IgnoreWhitelist
     fun execute(context: Context, cmdContext: CommandContext) {

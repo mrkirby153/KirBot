@@ -179,7 +179,7 @@ class LogManager(private val guild: KirBotGuild) {
     }
 
     fun process() {
-        this.channelLoggers.forEach { chan, logger ->
+        this.channelLoggers.forEach { _, logger ->
             logger.log()
         }
     }

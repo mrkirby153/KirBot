@@ -14,6 +14,7 @@ import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.FuzzyMatchException
 import me.mrkirby153.KirBot.utils.GREEN_TICK
 import me.mrkirby153.KirBot.utils.RED_TICK
+import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.KirBot.utils.embed.b
 import me.mrkirby153.KirBot.utils.embed.embed
 import me.mrkirby153.KirBot.utils.embed.inlineCode
@@ -123,6 +124,9 @@ class CommandReactionRole {
                     }
                     return@handle
                 } else {
+                    if(!message.channel.checkPermissions(Permission.MESSAGE_ADD_REACTION)) {
+                        context.send().error("I cannot add reactions to the given message. You will have to add it manually").queue()
+                    }
                     ModuleManager[ReactionRoles::class.java].addReactionRole(message, role,
                             effectiveEmote, custom)
                     msg.editMessage("$GREEN_TICK Added $emojiRaw as a reaction role for ${b(

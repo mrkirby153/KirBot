@@ -35,8 +35,10 @@ import net.dv8tion.jda.api.OnlineStatus
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Activity
 import net.dv8tion.jda.api.events.ReadyEvent
+import net.dv8tion.jda.api.requests.GatewayIntent
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder
 import net.dv8tion.jda.api.sharding.ShardManager
+import net.dv8tion.jda.api.utils.cache.CacheFlag
 import okhttp3.Request
 import org.json.JSONObject
 import org.json.JSONTokener
@@ -111,7 +113,12 @@ object Bot {
 
         state = BotState.CONNECTING
 
-        shardManager = DefaultShardManagerBuilder(token).apply {
+        val gatewayIntents = listOf(GatewayIntent.GUILD_MEMBERS,
+                GatewayIntent.GUILD_BANS, GatewayIntent.GUILD_VOICE_STATES,
+                GatewayIntent.GUILD_PRESENCES, GatewayIntent.GUILD_MESSAGES,
+                GatewayIntent.GUILD_MESSAGE_REACTIONS, GatewayIntent.GUILD_EMOJIS)
+        shardManager = DefaultShardManagerBuilder.create(gatewayIntents).apply {
+            setToken(token)
             addEventListeners(AdminControl, ShardListener())
             setEventManagerProvider { PriorityEventManager() }
             setStatus(OnlineStatus.IDLE)

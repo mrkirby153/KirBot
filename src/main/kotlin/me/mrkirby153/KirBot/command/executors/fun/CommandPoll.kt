@@ -16,25 +16,18 @@ import me.mrkirby153.KirBot.utils.embed.embed
 import me.mrkirby153.KirBot.utils.escapeMarkdown
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import me.mrkirby153.kcutils.Time
+import net.dv8tion.jda.api.Permission
 import java.awt.Color
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 
 
 class CommandPoll {
-    val time = mutableMapOf<String, Int>()
-
-    init {
-        time.clear()
-        time.put("s", 1)
-        time.put("m", 60)
-        time.put("h", 3600)
-        time.put("d", 86400)
-        time.put("w", 604800)
-    }
 
     @Command(name = "poll",
-            arguments = ["<duration:string>", "<question:string>", "<options:string...>"], category = CommandCategory.FUN)
+            arguments = ["<duration:string>", "<question:string>", "<options:string...>"],
+            category = CommandCategory.FUN,
+            permissions = [Permission.MESSAGE_ATTACH_FILES, Permission.MESSAGE_ADD_REACTION])
     @CommandDescription("Create polls")
     @IgnoreWhitelist
     fun execute(context: Context, cmdContext: CommandContext) {
@@ -99,48 +92,9 @@ class CommandPoll {
             val task = PollTask(context.guild.id, context.channel.id, it.id,
                     context.author.effectiveAvatarUrl, context.author.nameAndDiscrim, endsAt,
                     filteredOptions.toTypedArray(), question)
-            ModuleManager[Scheduler::class.java].submit(task, duration.toLong(), TimeUnit.MILLISECONDS)
+            ModuleManager[Scheduler::class.java].submit(task, duration.toLong(),
+                    TimeUnit.MILLISECONDS)
         }
-    }
-
-    private fun timeOffset(timestamp: String): Int {
-        // Define regex to match one or more digits and a letter
-        val dateRegex = "(\\d+\\D)"
-        // Compile it
-        val datePattern = Pattern.compile(dateRegex)
-        // Create a matcher
-        val dateMatcher = datePattern.matcher(timestamp)
-        // Compile regex to match the letter part of the timestamp
-        val multiplierRegex = Pattern.compile("(\\D+)")
-        // Compile regex to match the number part of the timestamp
-        val timeRegex = Pattern.compile("(\\d+)")
-        // Define a time offset variable
-        var timeOffset = 0
-        // For every "\d\D" in the timestamp
-        while (dateMatcher.find()) {
-            // Get the time plus the multiplier
-            val part = timestamp.substring(dateMatcher.start(), dateMatcher.end())
-            // Compile matchers
-            val multiplierMatcher = multiplierRegex.matcher(part)
-            val timeMatcher = timeRegex.matcher(part)
-            var mult = "0"
-            var time = "0"
-            // Find the first occurance of a multiplier
-            if (multiplierMatcher.find()) {
-                mult = part.substring(multiplierMatcher.start(), multiplierMatcher.end())
-            }
-            // Find the first occurance of the time
-            if (timeMatcher.find()) {
-                time = part.substring(timeMatcher.start(), timeMatcher.end())
-            }
-            // Add the time times the multiplier to the timeOffset variable
-            timeOffset += (Integer.parseInt(time) * timeMult(mult))
-        }
-        return timeOffset
-    }
-
-    private fun timeMult(`val`: String): Int {
-        return this.time[`val`] ?: return 0
     }
 
     class PollTask(var guildId: String, var channelId: String, var messageId: String,

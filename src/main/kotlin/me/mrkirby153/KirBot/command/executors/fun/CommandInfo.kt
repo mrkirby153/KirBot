@@ -89,7 +89,7 @@ class CommandInfo {
                         System.currentTimeMillis() - (user.timeCreated.toEpochSecond() * 1000),
                         Time.TimeUnit.MINUTES)} ago (`${SimpleDateFormat(
                         "MM-dd-yy HH:mm:ss").format(user.timeCreated.toEpochSecond() * 1000)}`)")
-                appendln("Status: $onlineStatus ${getOnlineEmoji(onlineStatus)}")
+//                appendln("Status: $onlineStatus ${getOnlineEmoji(onlineStatus)}")
                 appendln("Profile: ${user.asMention}")
                 if (jdaMember?.activities?.isNotEmpty() == true)
                     appendln(getPlayingStatus(jdaMember))

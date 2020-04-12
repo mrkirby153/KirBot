@@ -115,8 +115,8 @@ object Bot {
 
         val gatewayIntents = listOf(GatewayIntent.GUILD_MEMBERS,
                 GatewayIntent.GUILD_BANS, GatewayIntent.GUILD_VOICE_STATES,
-                GatewayIntent.GUILD_PRESENCES, GatewayIntent.GUILD_MESSAGES,
-                GatewayIntent.GUILD_MESSAGE_REACTIONS, GatewayIntent.GUILD_EMOJIS)
+                GatewayIntent.GUILD_MESSAGES, GatewayIntent.GUILD_MESSAGE_REACTIONS,
+                GatewayIntent.GUILD_EMOJIS)
         shardManager = DefaultShardManagerBuilder.create(gatewayIntents).apply {
             setToken(token)
             addEventListeners(AdminControl, ShardListener())
@@ -125,6 +125,7 @@ object Bot {
             setShardsTotal(numShards)
             setAutoReconnect(true)
             setBulkDeleteSplittingEnabled(false)
+            disableCache(CacheFlag.ACTIVITY, CacheFlag.CLIENT_STATUS)
             setActivity(Activity.playing("Starting up..."))
             if (!System.getProperty("os.name").contains("Mac"))
                 setAudioSendFactory(NativeAudioSendFactory())

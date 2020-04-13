@@ -219,6 +219,7 @@ class CommandInfo {
                 flags.add(flag)
             }
         }
+        resp.close()
         return flags
     }
 

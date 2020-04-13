@@ -41,6 +41,7 @@ class CommandServer {
             fields {
                 field {
                     title = "ID"
+                    // TODO 4/12/20 This shouldn't be using the context guild
                     description = context.guild.id
                     inline = true
                 }

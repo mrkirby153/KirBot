@@ -47,7 +47,7 @@ class NicknameCensor : Module("nick_censor") {
     private fun tryCensor(member: Member) {
         val rules = Censor.getEffectiveSettings(member.user, member.guild)
         rules.forEach { rule ->
-            val tokens = rule.optJSONArray("blocked_nicks").toTypedArray(String::class.java)
+            val tokens = rule.optJSONArray("blocked_nicks")?.toTypedArray(String::class.java) ?: emptyList()
             val matchedTokens = mutableListOf<String>()
             tokens.forEach { token ->
                 if (token.startsWith("r:")) {

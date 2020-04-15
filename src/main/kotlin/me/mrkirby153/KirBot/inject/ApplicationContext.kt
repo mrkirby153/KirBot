@@ -89,6 +89,17 @@ class ApplicationContext {
         return get(clazz, name, emptyArray())
     }
 
+    /**
+     * Constructs a new instance of an arbitrary class using values from the application context
+     *
+     * @param clazz The class
+     *
+     * @return A new instance of the class
+     */
+    fun <T> newInstance(clazz: Class<T>): T {
+        return doInjection(clazz, arrayOf(clazz as Class<*>))
+    }
+
     private fun <T> get(clazz: Class<T>, name: String?, callChain: Array<Class<*>>): T {
         applicationContextLogger.trace("Retrieving $clazz from the application context")
 
@@ -111,13 +122,23 @@ class ApplicationContext {
             }
             applicationContextLogger.trace("$clazz has not been constructed, constructing")
         }
+        val instance = doInjection(clazz, callChain)
 
+
+        applicationContextLogger.trace("Constructed $clazz as $instance")
+        if (registeredObject.injectionType == InjectionType.SINGLETON) {
+            registeredObject.objectValue = instance
+        }
+        return instance
+    }
+
+    private fun <T> doInjection(clazz: Class<T>, callChain: Array<Class<*>>): T {
         // Do some reflection to create the class
         val constructor = findConstructor(clazz)
 
         val constructorArguments = mutableListOf<Any>()
         constructor.parameters.forEach { param ->
-            val paramName = param.getAnnotation(Named::class.java)?.value ?: null
+            val paramName = param.getAnnotation(Named::class.java)?.value
             constructorArguments.add(get(param.type, paramName, arrayOf(*callChain, clazz)))
         }
 
@@ -133,11 +154,6 @@ class ApplicationContext {
             }
             val toInject = get(field.type, fieldName, arrayOf(*callChain, clazz))
             field.set(instance, toInject)
-        }
-
-        applicationContextLogger.trace("Constructed $clazz as $instance")
-        if (registeredObject.injectionType == InjectionType.SINGLETON) {
-            registeredObject.objectValue = instance
         }
         return instance
     }
@@ -202,9 +218,10 @@ class ApplicationContext {
             if (currentClass != null) {
 
                 fields.addAll(currentClass.declaredFields.filter { field ->
-                    if(!field.canAccess(instance))
+                    if (!field.canAccess(instance))
                         field.isAccessible = true
-                    field.isAnnotationPresent(Inject::class.java) || field.kotlinProperty?.findAnnotation<Inject>() != null
+                    field.isAnnotationPresent(
+                            Inject::class.java) || field.kotlinProperty?.findAnnotation<Inject>() != null
                 })
 
                 currentClass = currentClass.superclass

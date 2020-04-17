@@ -19,9 +19,10 @@ import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.entities.User
 import java.util.concurrent.TimeUnit
+import javax.inject.Inject
 
 
-class CommandMute {
+class CommandMute @Inject constructor(private val infractions: Infractions) {
     @Command(name = "mute", arguments = ["<user:user>", "[reason:string...]"],
             clearance = CLEARANCE_MOD, permissions = [Permission.MANAGE_ROLES],
             category = CommandCategory.MODERATION)
@@ -41,7 +42,7 @@ class CommandMute {
             throw CommandException("Missing permissions")
 
         val highest = context.guild.selfMember.roles.map { it.position }.max() ?: 0
-        val mutedRole = Infractions.getMutedRole(context.guild) ?: throw CommandException(
+        val mutedRole = infractions.getMutedRole(context.guild) ?: throw CommandException(
                 "The muted role is not configured on this server!")
         if (mutedRole.position > highest)
             throw CommandException("Cannot assign the muted role")
@@ -57,7 +58,7 @@ class CommandMute {
                         throw CommandException("Please specify a duration greater than zero")
                     val r = if (split.size > 1) split.drop(1).joinToString(" ") else null
 
-                    Infractions.tempMute(user.id, context.guild, context.author.id, time,
+                    infractions.tempMute(user.id, context.guild, context.author.id, time,
                             TimeUnit.MILLISECONDS, r).handle { result, t ->
                         if (t != null || !result.successful) {
                             context.send().error("Could not temp-mute ${user.nameAndDiscrim}: ${t
@@ -87,7 +88,7 @@ class CommandMute {
                 return
             }
         }
-        Infractions.mute(user.id, context.guild, context.author.id, reason).handle { result, t ->
+        infractions.mute(user.id, context.guild, context.author.id, reason).handle { result, t ->
             if (t != null || !result.successful) {
                 context.send().error("An error occurred when muting ${user.nameAndDiscrim}: ${t
                         ?: result.errorMessage}").queue()

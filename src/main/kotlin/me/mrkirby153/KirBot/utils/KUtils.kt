@@ -26,7 +26,7 @@ import javax.imageio.ImageIO
  * @return A URL to the archive
  */
 fun uploadToArchive(text: String, ttl: Int = 604800): String {
-    ModuleManager[Redis::class.java].getConnection().use {
+    Bot.applicationContext.get(Redis::class.java).getConnection().use {
         val key = UUID.randomUUID().toString()
         Bot.LOG.debug("Archive created $key (Expires in ${Time.formatLong(ttl * 1000L,
                 Time.TimeUnit.SECONDS).toLowerCase()})")

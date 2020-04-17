@@ -15,8 +15,9 @@ import me.mrkirby153.KirBot.utils.getMember
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.entities.User
+import javax.inject.Inject
 
-class CommandUnmute {
+class CommandUnmute @Inject constructor(private val infractions: Infractions) {
 
     @Command(name = "unmute", arguments = ["<user:user>", "[reason:string...]"],
             clearance = CLEARANCE_MOD, permissions = [Permission.MANAGE_ROLES],
@@ -37,13 +38,13 @@ class CommandUnmute {
             throw CommandException("Missing permissions")
 
         val highest = context.guild.selfMember.roles.map { it.position }.max() ?: 0
-        val mutedRole = Infractions.getMutedRole(context.guild) ?: throw CommandException(
-                "could not get the muted role")
+        val mutedRole = infractions.getMutedRole(context.guild) ?: throw CommandException(
+                "The muted role is not configured on this server")
         if (mutedRole.position > highest)
             throw CommandException("cannot un-assign the muted role")
         if (mutedRole !in member.roles)
             throw CommandException("That user isn't muted!")
-        Infractions.unmute(user.id, context.guild, context.author.id, cmdContext.get("reason"))
+        infractions.unmute(user.id, context.guild, context.author.id, cmdContext.get("reason"))
         context.send().success("Unmuted **${user.name}#${user.discriminator}**", true).queue()
     }
 }

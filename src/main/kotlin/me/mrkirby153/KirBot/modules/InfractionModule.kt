@@ -21,8 +21,9 @@ import net.dv8tion.jda.api.events.guild.GuildUnbanEvent
 import net.dv8tion.jda.api.events.guild.member.GuildMemberLeaveEvent
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent
 import java.sql.Timestamp
+import javax.inject.Inject
 
-class InfractionModule : Module("infractions") {
+class InfractionModule @Inject constructor(private val infractions: Infractions) : Module("infractions") {
 
     val ignoreBans = mutableListOf<String>()
     val ignoreUnbans = mutableListOf<String>()
@@ -45,7 +46,7 @@ class InfractionModule : Module("infractions") {
     @Subscribe
     fun onGuildBan(event: GuildBanEvent) {
         if (debouncer.find(GuildBanEvent::class.java, Pair("user", event.user.id),
-                        Pair("guild", event.guild.id)))
+                        Pair("guild", event.guild.id)) || ignoreBans.remove(event.user.id))
             return
         var actor: User? = null
         var reason = "No reason specified"
@@ -79,10 +80,10 @@ class InfractionModule : Module("infractions") {
     @Subscribe
     fun onGuildUnban(event: GuildUnbanEvent) {
         if (debouncer.find(GuildUnbanEvent::class.java, Pair("user", event.user.id),
-                        Pair("guild", event.guild.id)))
+                        Pair("guild", event.guild.id)) || ignoreUnbans.remove(event.user.id))
             return
         // Revoke any active bans/tempbans on the user
-        Infractions.getActiveInfractions(event.user.id,
+        infractions.getActiveInfractions(event.user.id,
                 event.guild).filter { it.type == InfractionType.BAN || it.type == InfractionType.TEMPBAN }.forEach { ban ->
             ban.revoke()
         }
@@ -90,7 +91,7 @@ class InfractionModule : Module("infractions") {
         if (manualActionsEnabled(event.guild)) {
             responsibleMember = findUnbannedUser(event.guild, event.user)
             if (responsibleMember != event.jda.selfUser) {
-                Infractions.createInfraction(event.user.id, event.guild,
+                infractions.createInfraction(event.user.id, event.guild,
                         responsibleMember?.id ?: "", "Unbanned", InfractionType.UNBAN)
             }
         }
@@ -114,7 +115,7 @@ class InfractionModule : Module("infractions") {
                     ?: return
             if (action.user == event.jda.selfUser)
                 return // Ignore ourselves
-            Infractions.createInfraction(event.user.id, event.guild, action.user?.id ?: "",
+            infractions.createInfraction(event.user.id, event.guild, action.user?.id ?: "",
                     action.reason ?: "No reason specified", InfractionType.KICK)
             event.guild.kirbotGuild.logManager.genericLog(LogEvent.USER_KICK, ":boot:",
                     buildString {

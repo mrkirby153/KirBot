@@ -57,10 +57,6 @@ abstract class Module(val name: String) {
         loaded = false
     }
 
-    fun getUnmetDeps(): List<Class<out Module>> {
-        return dependencies.filter { it !in ModuleManager.loadedModules.map { it.javaClass } }
-    }
-
     fun log(message: Any) {
         Bot.LOG.info("[${name.toUpperCase()}] $message")
     }

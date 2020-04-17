@@ -4,6 +4,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.models.DiscordUser
+import me.mrkirby153.KirBot.inject.Injectable
 import me.mrkirby153.KirBot.logger.LogEvent
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.InfractionModule
@@ -33,8 +34,12 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
+import javax.inject.Inject
+import javax.inject.Singleton
 
-object Infractions {
+@Singleton
+@Injectable
+class Infractions @Inject constructor(private val logger: Logger) {
 
     private var nextTask: ScheduledFuture<*>? = null
     private var nextInfractionId: Long? = null
@@ -86,24 +91,25 @@ object Infractions {
     private fun onInfractionExpire(infraction: Infraction) {
         val guild = Bot.shardManager.getGuildById(infraction.guild)
         val user = Bot.shardManager.getUserById(infraction.userId)
-        if (guild == null || user == null) {
-            // User or guild was not found. Revoke and do nothing
+        if (guild == null ) {
+            // Guild was not found. Revoke and do nothing
             infraction.revoke()
             return
         }
         try {
             when (infraction.type) {
                 InfractionType.TEMPMUTE -> {
-                    if (guild.getMember(user) == null) {
-                        infraction.revoke()
-                        Bot.LOG.debug(
-                                "User $user is no longer a member of $guild. Skipping infraction")
-                        return
+                    if(user != null) {
+                        if (guild.getMember(user) == null) {
+                            Bot.LOG.debug(
+                                    "User $user is no longer a member of $guild. Skipping infraction")
+                            return
+                        }
+                        unmute(user.id, guild, guild.jda.selfUser.id, "Timed mute expired")
                     }
-                    unmute(user.id, guild, guild.jda.selfUser.id, "Timed mute expired")
                 }
                 InfractionType.TEMPBAN -> {
-                    ModuleManager[InfractionModule::class.java].ignoreUnbans.add(infraction.userId)
+                    Bot.applicationContext.get(InfractionModule::class.java).ignoreUnbans.add(infraction.userId)
                     guild.unban(infraction.userId).queue()
                     guild.kirbotGuild.logManager.genericLog(LogEvent.USER_UNBAN, ":rotating_light:",
                             buildString {
@@ -115,14 +121,14 @@ object Infractions {
                 InfractionType.TEMPROLE -> {
                     // Remove the role from the user
                     val roleId = infraction.metadata
-                    if (roleId != null) {
+                    if (roleId != null && user != null) {
                         val role = guild.getRoleById(roleId)
                         val member = guild.getMember(user)
                         if (role != null && member != null && role in member.roles) {
                             if (guild.checkPermission(
                                             Permission.MANAGE_ROLES) && guild.selfMember.canAssign(
                                             role)) {
-                                ModuleManager[Logger::class.java].debouncer.create(
+                                logger.debouncer.create(
                                         GuildMemberRoleRemoveEvent::class.java,
                                         Pair("user", infraction.userId), Pair("role", role.id))
                                 guild.kirbotGuild.logManager.genericLog(LogEvent.ROLE_REMOVE,
@@ -155,14 +161,14 @@ object Infractions {
         }
         val future = CompletableFuture<InfractionResult>()
 
-        ModuleManager[Logger::class.java].debouncer.create(GuildMemberRemoveEvent::class.java,
+        logger.debouncer.create(GuildMemberRemoveEvent::class.java,
                 Pair("user", user), Pair("guild", guild.id))
 
         val inf = createInfraction(user, guild, if (issuer == "1") user else issuer, reason,
                 InfractionType.KICK)
         val result = dmUser(user, guild, inf).get()
         try {
-            ModuleManager[InfractionModule::class.java].debouncer.create(
+            Bot.applicationContext.get(InfractionModule::class.java).debouncer.create(
                     GuildMemberRemoveEvent::class.java, Pair("user", user), Pair("guild", guild.id));
             guild.kick(guild.getMemberById(user) ?: return CompletableFuture.completedFuture(
                     InfractionResult(false, result, "Member not found")), reason ?: "").queue {
@@ -203,9 +209,9 @@ object Infractions {
                     InfractionResult(false, Infractions.DmResult.UNKNOWN,
                             "Missing `BAN_MEMBEBRS` permission"))
 
-        ModuleManager[InfractionModule::class.java].debouncer.create(GuildBanEvent::class.java,
+        Bot.applicationContext.get(InfractionModule::class.java).debouncer.create(GuildBanEvent::class.java,
                 Pair("user", user), Pair("guild", guild.id))
-        ModuleManager[Logger::class.java].debouncer.create(GuildMemberRemoveEvent::class.java,
+        logger.debouncer.create(GuildMemberRemoveEvent::class.java,
                 Pair("user", user), Pair("guild", guild.id))
 
         val future = CompletableFuture<InfractionResult>()
@@ -235,11 +241,11 @@ object Infractions {
             return CompletableFuture.completedFuture(
                     InfractionResult(false, Infractions.DmResult.UNKNOWN, "Missing BAN_MEMBERS"))
 
-        ModuleManager[InfractionModule::class.java].debouncer.create(GuildBanEvent::class.java,
+        Bot.applicationContext.get(InfractionModule::class.java).debouncer.create(GuildBanEvent::class.java,
                 Pair("user", user), Pair("guild", guild.id))
-        ModuleManager[InfractionModule::class.java].debouncer.create(GuildUnbanEvent::class.java,
+        Bot.applicationContext.get(InfractionModule::class.java).debouncer.create(GuildUnbanEvent::class.java,
                 Pair("user", user), Pair("guild", guild.id))
-        ModuleManager[Logger::class.java].debouncer.create(GuildMemberRemoveEvent::class.java,
+        logger.debouncer.create(GuildMemberRemoveEvent::class.java,
                 Pair("user", user), Pair("guild", guild.id))
 
         val future = CompletableFuture<InfractionResult>()
@@ -270,7 +276,7 @@ object Infractions {
         if (!guild.selfMember.hasPermission(Permission.BAN_MEMBERS))
             return CompletableFuture.completedFuture(
                     InfractionResult(false, Infractions.DmResult.UNKNOWN, "Missing BAN_MEMBERS"))
-        ModuleManager[InfractionModule::class.java].debouncer.create(GuildUnbanEvent::class.java,
+        Bot.applicationContext.get(InfractionModule::class.java).debouncer.create(GuildUnbanEvent::class.java,
                 Pair("user", user), Pair("guild", guild.id))
         val future = CompletableFuture<InfractionResult>()
         try {
@@ -416,7 +422,7 @@ object Infractions {
             return CompletableFuture.completedFuture(
                     InfractionResult(false, Infractions.DmResult.UNKNOWN, "Missing BAN_MEMBERS"))
 
-        ModuleManager[InfractionModule::class.java].ignoreBans.add(user)
+        Bot.applicationContext.get(InfractionModule::class.java).ignoreBans.add(user)
         val inf = createInfraction(user, guild, issuer, reason, InfractionType.TEMPBAN,
                 Timestamp.from(
                         Instant.now().plusMillis(TimeUnit.MILLISECONDS.convert(duration, units))))

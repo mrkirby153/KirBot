@@ -19,9 +19,10 @@ import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.api.Permission
 import java.sql.Timestamp
 import java.time.Instant
+import javax.inject.Inject
 
 
-class TempRoleCommands {
+class TempRoleCommands @Inject constructor(private val infractions: Infractions) {
 
     @Command(name = "temprole",
             arguments = ["<user:snowflake>", "<role:string>", "<duration:string>", "[reason:string...]"],
@@ -64,7 +65,7 @@ class TempRoleCommands {
             throw CommandException("${target.user.nameAndDiscrim} is already in that role")
 
         context.guild.addRoleToMember(target, role).queue {
-            Infractions.createInfraction(userId, context.guild, context.author.id,
+            infractions.createInfraction(userId, context.guild, context.author.id,
                     "${role.name} - $reason",
                     InfractionType.TEMPROLE, Timestamp.from(timestamp), role.id)
             context.send().success(

@@ -15,9 +15,10 @@ import me.mrkirby153.KirBot.utils.getMember
 import me.mrkirby153.KirBot.utils.logName
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.User
+import javax.inject.Inject
 
 
-class CommandKick {
+class CommandKick @Inject constructor(private val infractions: Infractions) {
 
     @Command(name = "kick", arguments = ["<user:user>", "[reason:string...]"],
             clearance = CLEARANCE_MOD, permissions = [Permission.KICK_MEMBERS], category = CommandCategory.MODERATION)
@@ -33,7 +34,7 @@ class CommandKick {
             throw CommandException("I cannot kick this user")
         if (!context.author.canInteractWith(context.guild, user))
             throw CommandException("Missing permissions")
-       Infractions.kick(user.id, context.guild, context.author.id, reason).handle { result, t ->
+       infractions.kick(user.id, context.guild, context.author.id, reason).handle { result, t ->
            if(t != null || !result.successful) {
                context.send().error("An error occurred when kicking ${user.logName}: ${t?: result.errorMessage}")
                return@handle

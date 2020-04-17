@@ -44,15 +44,15 @@ import net.dv8tion.jda.api.events.user.update.UserUpdateNameEvent
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
-class ShardListener {
+class ShardListener @Inject constructor(private val accessModule: AccessModule, private val userPersistenceHandler: UserPersistenceHandler) {
 
     private val idGenerator = IdGenerator(IdGenerator.ALPHA + IdGenerator.NUMBERS)
     private val guildLeavesIgnore = mutableSetOf<String>()
 
     @Subscribe
     fun onGuildMemberJoin(event: GuildMemberJoinEvent) {
-        UserPersistenceHandler.restore(event.user, event.guild)
-        UserPersistenceHandler.deleteBackup(event.member)
+        userPersistenceHandler.restore(event.user, event.guild)
+        userPersistenceHandler.deleteBackup(event.member)
         val user = Model.where(DiscordUser::class.java, "id", event.user.id).first()
         if (user == null) {
             val u = DiscordUser()
@@ -67,7 +67,7 @@ class ShardListener {
     fun onGuildMemberLeave(event: GuildMemberRemoveEvent) {
         val member = event.member
         if(member != null) {
-            UserPersistenceHandler.createBackup(member)
+            userPersistenceHandler.createBackup(member)
         } else {
             Bot.LOG.debug("cannot create a backup of ${event.user} because they are not cached")
         }
@@ -97,8 +97,8 @@ class ShardListener {
 
     @Subscribe
     fun onGuildVoiceJoin(event: GuildVoiceJoinEvent) {
-        UserPersistenceHandler.restoreVoiceState(event.member.user, event.guild)
-        UserPersistenceHandler.deleteBackup(event.member)
+        userPersistenceHandler.restoreVoiceState(event.member.user, event.guild)
+        userPersistenceHandler.deleteBackup(event.member)
     }
 
     @Subscribe
@@ -142,7 +142,6 @@ class ShardListener {
         }
 
 
-        val accessModule = Bot.applicationContext.get(AccessModule::class.java)
         if (accessModule.onList(event.guild, AccessModule.WhitelistMode.BLACKLIST)) {
             Bot.LOG.debug("left guild ${event.guild.id} because it was blacklisted")
             AdminControl.log("Attempted to join blacklisted guild\n${getGuildInfo()}")

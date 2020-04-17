@@ -17,9 +17,10 @@ import me.mrkirby153.KirBot.utils.logName
 import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.api.Permission
 import java.util.concurrent.TimeUnit
+import javax.inject.Inject
 
 
-class CommandBan {
+class CommandBan @Inject constructor(private val infractions: Infractions) {
 
     @Command(name = "ban", arguments = ["<user:snowflake>", "[reason:string...]"],
             clearance = CLEARANCE_MOD,
@@ -43,7 +44,7 @@ class CommandBan {
                 if (!context.author.canInteractWith(context.guild, member.user))
                     throw CommandException("Missing permissions")
             }
-            Infractions.ban(id!!, context.guild, context.author.id, reason,
+            infractions.ban(id!!, context.guild, context.author.id, reason,
                     0).handle { result, t ->
                 if (t != null || !result.successful) {
                     val msg = if (t != null) t.message else result.errorMessage
@@ -89,7 +90,7 @@ class CommandBan {
 }
 
 
-class CommandUnban {
+class CommandUnban @Inject constructor(private val infractions: Infractions){
     @Command(name = "unban", arguments = ["<user:snowflake>", "[reason:string...]"],
             clearance = CLEARANCE_MOD, permissions = [Permission.BAN_MEMBERS],
             category = CommandCategory.MODERATION)
@@ -99,7 +100,7 @@ class CommandUnban {
     fun execute(context: Context, cmdContext: CommandContext) {
         val user = cmdContext.get<String>("user") ?: throw CommandException("Please specify a user")
         val reason = cmdContext.get<String>("reason") ?: ""
-        Infractions.unban(user, context.guild, context.author.id, reason).handle { result, t ->
+        infractions.unban(user, context.guild, context.author.id, reason).handle { result, t ->
             if (t != null || !result.successful) {
                 context.send().error("An error occurred when unbanning the user: ${t
                         ?: result.errorMessage}").queue()
@@ -110,7 +111,7 @@ class CommandUnban {
     }
 }
 
-class CommandTempban {
+class CommandTempban @Inject constructor(private val infractions: Infractions){
 
     @Command(name = "tempban",
             arguments = ["<user:snowflake>", "<time:string>", "[reason:string...]"],
@@ -132,7 +133,7 @@ class CommandTempban {
             if (!context.author.canInteractWith(context.guild, resolvedUser))
                 throw CommandException("Missing permissions")
         }
-        Infractions.tempban(user, context.guild, context.author.id, time, TimeUnit.MILLISECONDS,
+        infractions.tempban(user, context.guild, context.author.id, time, TimeUnit.MILLISECONDS,
                 reason).handle { result, t ->
             if (t != null || !result.successful) {
                 context.send().error(
@@ -158,7 +159,7 @@ class CommandTempban {
 
 }
 
-class CommandSoftban {
+class CommandSoftban @Inject constructor(private val infractions: Infractions){
 
     @Command(name = "softban", arguments = ["<user:snowflake>", "[reason:string...]"],
             clearance = CLEARANCE_MOD, permissions = [Permission.BAN_MEMBERS],
@@ -174,7 +175,7 @@ class CommandSoftban {
             if (!context.author.canInteractWith(context.guild, resolvedUser))
                 throw CommandException("Missing permissions")
         }
-        Infractions.softban(user, context.guild, context.author.id).handle { result, t ->
+        infractions.softban(user, context.guild, context.author.id).handle { result, t ->
             if (t != null || !result.successful) {
                 context.send().error(
                         "An error occurred when softbanning ${resolvedUser?.logName ?: user}: ${t

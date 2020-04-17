@@ -103,6 +103,10 @@ object Bot {
             throw IllegalStateException("Bot has already been initialized!")
         initialized = true
 
+        // Register everything into the application context
+        ModuleManager.discoverModules()
+        applicationContext.scanForInjectables("me.mrkirby153.KirBot")
+
         // Get the number of shards to start with
         numShards = if (properties.getProperty("shards") == null || properties.getProperty(
                         "shards") == "auto") {
@@ -170,7 +174,7 @@ object Bot {
 
         scheduler.scheduleAtFixedRate(FeedTask(), 0, 15, TimeUnit.MINUTES)
         ModuleManager.startScheduler()
-        Infractions.waitForInfraction()
+        applicationContext.get(Infractions::class.java).waitForInfraction()
 
         // Register listener for nick changes
         SettingsRepository.registerSettingsListener("bot_nick") { guild, value ->
@@ -242,7 +246,7 @@ object Bot {
         state = BotState.SHUTTING_DOWN
         AdminControl.log("Bot shutting down...")
         shardManager.shutdown()
-        ModuleManager.loadedModules.forEach { it.unload(true) }
+        ModuleManager.unloadAll()
         LOG.info("Bot is disconnecting from Discord")
         state = BotState.SHUT_DOWN
         System.exit(0)

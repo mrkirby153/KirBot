@@ -18,9 +18,10 @@ import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.entities.User
 import java.util.concurrent.TimeUnit
+import javax.inject.Inject
 
 
-class TempMute {
+class TempMute @Inject constructor(private val infractions: Infractions) {
 
     @Command(name = "tempmute", arguments = ["<user:user>", "<time:string>", "[reason:string...]"],
             permissions = [Permission.MANAGE_ROLES], clearance = CLEARANCE_MOD,
@@ -50,12 +51,12 @@ class TempMute {
             throw CommandException("Missing permissions")
 
         val highest = context.guild.selfMember.roles.map { it.position }.max() ?: 0
-        val mutedRole = Infractions.getMutedRole(context.guild) ?: throw CommandException(
+        val mutedRole = infractions.getMutedRole(context.guild) ?: throw CommandException(
                 "could not get the muted role")
         if (mutedRole.position > highest)
             throw CommandException("cannot assign the muted role")
 
-        Infractions.tempMute(user.id, context.guild, context.author.id, timeParsed,
+        infractions.tempMute(user.id, context.guild, context.author.id, timeParsed,
                 TimeUnit.MILLISECONDS, reason).handle { result, t ->
             if (t != null || !result.successful) {
                 context.send().error("Could not temp-mute ${user.nameAndDiscrim}: ${t

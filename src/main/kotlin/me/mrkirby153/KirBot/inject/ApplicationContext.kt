@@ -1,5 +1,7 @@
 package me.mrkirby153.KirBot.inject
 
+import me.mrkirby153.KirBot.Bot
+import org.reflections.Reflections
 import org.slf4j.LoggerFactory
 import java.lang.reflect.Constructor
 import java.lang.reflect.Field
@@ -28,6 +30,25 @@ class ApplicationContext {
     private val injectableFieldCache: ConcurrentHashMap<Class<*>, List<Field>> = ConcurrentHashMap()
 
     private val applicationContextLogger = LoggerFactory.getLogger("Application Context")
+
+    /**
+     * Scans the provided packages for classes with the [Injectable] annotation and automatically
+     * registers them into the context
+     */
+    fun scanForInjectables(vararg packages: String) {
+        val reflections = Reflections(packages)
+
+        val injectableClasses = reflections.getTypesAnnotatedWith(Injectable::class.java)
+        Bot.LOG.debug("Discovered ${injectableClasses.size} injectable classes")
+        injectableClasses.forEach { clazz ->
+            val name = clazz.getAnnotation(Injectable::class.java).name
+            if(name == "") {
+                register(clazz, null)
+            } else {
+                register(clazz, name)
+            }
+        }
+    }
 
 
     /**

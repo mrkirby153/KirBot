@@ -4,6 +4,7 @@ import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.models.guild.GuildMember
 import me.mrkirby153.KirBot.database.models.guild.GuildMemberRole
+import me.mrkirby153.KirBot.inject.Injectable
 import me.mrkirby153.KirBot.logger.LogEvent
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.Logger
@@ -20,8 +21,12 @@ import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRoleAddEvent
 import net.dv8tion.jda.api.events.guild.member.update.GuildMemberUpdateNicknameEvent
+import javax.inject.Inject
+import javax.inject.Singleton
 
-object UserPersistenceHandler {
+@Injectable
+@Singleton
+class UserPersistenceHandler @Inject constructor(private val logger: Logger){
 
     fun restore(user: User, guild: Guild) {
         Bot.LOG.debug("Restoring user $user on $guild")
@@ -33,7 +38,6 @@ object UserPersistenceHandler {
         }
         val member = user.getMember(guild) ?: return
         val backup = getBackup(member) ?: return
-        val logger = ModuleManager[Logger::class.java]
         var changed = false
         if (member.nickname != backup.nick && guild.checkPermission(
                         Permission.NICKNAME_MANAGE) && Mode.NICK in mode) {

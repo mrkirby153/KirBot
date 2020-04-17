@@ -1,6 +1,7 @@
 package me.mrkirby153.KirBot.backfill
 
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.inject.Injectable
 import me.mrkirby153.KirBot.logger.LogManager
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.Database
@@ -15,8 +16,12 @@ import java.util.Date
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import javax.inject.Inject
+import javax.inject.Singleton
 
-object RecoveryManager {
+@Singleton
+@Injectable
+class RecoveryManager @Inject constructor(private val database: Database){
 
     fun globalRecovery(duration: Long, pool: Int = 10): ActiveRecovery {
         val threadPool = Executors.newFixedThreadPool(pool)
@@ -28,7 +33,7 @@ object RecoveryManager {
         val end = Instant.now()
         val ar = ActiveRecovery(channels, threadPool)
         channels.forEach {
-            val task = RecoveryTask(ar, it, start, end)
+            val task = RecoveryTask(database, ar, it, start, end)
             threadPool.submit(task)
         }
         return ar
@@ -44,7 +49,7 @@ object RecoveryManager {
         val end = Instant.now()
         val ar = ActiveRecovery(channels, threadPool)
         channels.forEach {
-            val task = RecoveryTask(ar, it, start, end)
+            val task = RecoveryTask(database, ar, it, start, end)
             threadPool.submit(task)
         }
         return ar
@@ -55,7 +60,7 @@ data class ActiveRecovery(val channels: List<TextChannel>, val pool: ExecutorSer
                           val completed: CopyOnWriteArrayList<TextChannel> = CopyOnWriteArrayList(),
                           var recoveredMessages: Long = 0L)
 
-class RecoveryTask(private val recovery: ActiveRecovery, val channel: TextChannel,
+class RecoveryTask(private val database: Database, private val recovery: ActiveRecovery, val channel: TextChannel,
                    val start: Instant,
                    val end: Instant) : Runnable {
 
@@ -76,7 +81,7 @@ class RecoveryTask(private val recovery: ActiveRecovery, val channel: TextChanne
             }
             Bot.LOG.debug("Retrieved ${action.retrievedHistory.size} messages")
 
-            val connection = ModuleManager[Database::class.java].database.getConnection()
+            val connection = database.database.getConnection()
             connection.use {
                 val ps = connection.prepareStatement(
                         "INSERT IGNORE INTO `server_messages` (id, server_id, author, channel, message, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)")

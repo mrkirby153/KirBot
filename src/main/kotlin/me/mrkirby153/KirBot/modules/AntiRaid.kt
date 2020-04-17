@@ -23,7 +23,7 @@ import org.json.JSONObject
 import org.json.JSONTokener
 import javax.inject.Inject
 
-class AntiRaid @Inject constructor(private val redis: Redis) : Module("AntiRaid") {
+class AntiRaid @Inject constructor(private val redis: Redis, private val infractions: Infractions) : Module("AntiRaid") {
 
     private val guildBucketCache = CacheBuilder.newBuilder().maximumSize(100).build(
             object : CacheLoader<String, LeakyBucket>() {
@@ -62,7 +62,7 @@ class AntiRaid @Inject constructor(private val redis: Redis) : Module("AntiRaid"
         val raid = this.activeRaids[guild.id] ?: return
         raid.active = false
         raid.members.forEach {
-            Infractions.unmute(it, guild, guild.selfMember.user.id)
+            infractions.unmute(it, guild, guild.selfMember.user.id)
         }
     }
 
@@ -121,21 +121,21 @@ class AntiRaid @Inject constructor(private val redis: Redis) : Module("AntiRaid"
                 // Do nothing
             }
             "kick" -> {
-                Infractions.kick(member.user.id, member.guild, member.guild.selfMember.user.id, msg)
+                infractions.kick(member.user.id, member.guild, member.guild.selfMember.user.id, msg)
             }
             "mute" -> {
-                Infractions.mute(member.user.id, member.guild, member.guild.selfMember.user.id, msg,
+                infractions.mute(member.user.id, member.guild, member.guild.selfMember.user.id, msg,
                         false)
             }
             "ban" -> {
-                Infractions.ban(member.user.id, member.guild, member.guild.selfMember.user.id, msg)
+                infractions.ban(member.user.id, member.guild, member.guild.selfMember.user.id, msg)
             }
         }
     }
 
     fun unmuteAllRaiders(guild: Guild, raid: String) {
         getRaid(guild, raid)?.members?.mapNotNull { guild.getMemberById(it.id) }?.forEach {
-            Infractions.removeMutedRole(it.user, guild)
+            infractions.removeMutedRole(it.user, guild)
         }
     }
 

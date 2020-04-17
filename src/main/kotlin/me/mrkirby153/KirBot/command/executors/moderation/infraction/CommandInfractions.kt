@@ -25,9 +25,10 @@ import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import me.mrkirby153.kcutils.Time
 import me.mrkirby153.kcutils.utils.TableBuilder
 import net.dv8tion.jda.api.Permission
+import javax.inject.Inject
 import kotlin.system.measureTimeMillis
 
-class CommandInfractions {
+class CommandInfractions @Inject constructor(private val infractions: Infractions) {
 
     @Command(name = "infraction", aliases = ["inf"], clearance = CLEARANCE_MOD,
             category = CommandCategory.MODERATION)
@@ -203,7 +204,7 @@ class CommandInfractions {
             WaitUtils.confirmYesNo(msg, context.author, {
                 context.channel.sendMessage(":timer: Importing from the banlist...").queue {
                     val timeTaken = measureTimeMillis {
-                        Infractions.importFromBanlist(context.guild.kirbotGuild)
+                        infractions.importFromBanlist(context.guild.kirbotGuild)
                     }
                     it.editMessage("Completed in ${Time.format(1, timeTaken)}").queue()
                 }

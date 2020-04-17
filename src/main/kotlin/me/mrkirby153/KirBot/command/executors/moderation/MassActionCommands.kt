@@ -18,8 +18,9 @@ import me.mrkirby153.kcutils.utils.argparser.Option
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Guild
 import java.util.concurrent.CompletableFuture
+import javax.inject.Inject
 
-class MassActionCommands {
+class MassActionCommands @Inject constructor(private val infractions: Infractions){
 
     private val argumentParser = ArgumentParser().apply {
         addOption(Option("ids", required = true, help = "The ids to ban"))
@@ -38,7 +39,7 @@ class MassActionCommands {
     @CommandDescription("Mass bans users")
     fun mban(context: Context, cmdContext: CommandContext) {
         doMassAction(cmdContext, context, "ban") { id, guild, reason ->
-            Infractions.ban(id, guild, context.author.id, reason)
+            infractions.ban(id, guild, context.author.id, reason)
         }
     }
 
@@ -49,7 +50,7 @@ class MassActionCommands {
     @CommandDescription("Mass unban users")
     fun munban(context: Context, cmdContext: CommandContext) {
         doMassAction(cmdContext, context, "unban") { id, guild, reason ->
-            Infractions.unban(id, guild, context.author.id, reason)
+            infractions.unban(id, guild, context.author.id, reason)
         }
     }
 
@@ -60,7 +61,7 @@ class MassActionCommands {
     @CommandDescription("Mass kick")
     fun mkick(context: Context, cmdContext: CommandContext) {
         doMassAction(cmdContext, context, "kick") { id, guild, reason ->
-            Infractions.kick(id, guild, context.author.id, reason)
+            infractions.kick(id, guild, context.author.id, reason)
         }
     }
 

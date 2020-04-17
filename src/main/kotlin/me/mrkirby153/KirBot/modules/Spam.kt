@@ -29,7 +29,7 @@ import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
-class Spam @Inject constructor(private val redis: Redis) : Module("spam") {
+class Spam @Inject constructor(private val redis: Redis, private val infractions: Infractions) : Module("spam") {
 
     private val locks = mutableMapOf<String, Semaphore>()
 
@@ -138,27 +138,27 @@ class Spam @Inject constructor(private val redis: Redis) : Module("spam") {
                         // Do nothing
                     }
                     "MUTE" -> {
-                        Infractions.mute(violation.user.id, violation.guild,
+                        infractions.mute(violation.user.id, violation.guild,
                                 violation.guild.selfMember.user.id,
                                 reason)
                     }
                     "KICK" -> {
-                        Infractions.kick(violation.user.id, violation.guild,
+                        infractions.kick(violation.user.id, violation.guild,
                                 violation.guild.selfMember.user.id,
                                 reason)
                     }
                     "BAN" -> {
-                        Infractions.ban(violation.user.id, violation.guild,
+                        infractions.ban(violation.user.id, violation.guild,
                                 violation.guild.selfMember.user.id,
                                 reason)
                     }
                     "TEMPMUTE" -> {
-                        Infractions.tempMute(violation.user.id, violation.guild,
+                        infractions.tempMute(violation.user.id, violation.guild,
                                 violation.guild.selfMember.user.id,
                                 duration, TimeUnit.SECONDS, reason)
                     }
                     "TEMPBAN" -> {
-                        Infractions.tempban(violation.user.id, violation.guild,
+                        infractions.tempban(violation.user.id, violation.guild,
                                 violation.guild.selfMember.user.id, duration, TimeUnit.SECONDS,
                                 reason)
                     }

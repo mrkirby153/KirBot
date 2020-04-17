@@ -11,9 +11,10 @@ import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.canInteractWith
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
+import javax.inject.Inject
 
 
-class CommandWarn {
+class CommandWarn @Inject constructor(private val infractions: Infractions) {
 
     @Command(name = "warn", arguments = ["<user:snowflake>", "<reason:string...>"],
             category = CommandCategory.MODERATION, clearance = CLEARANCE_MOD)
@@ -30,7 +31,7 @@ class CommandWarn {
             if (!context.author.canInteractWith(context.guild, member.user))
                 throw CommandException("Missing permissions")
         }
-        Infractions.warn(userId, context.guild, context.author.id, reason).handle { result, t ->
+        infractions.warn(userId, context.guild, context.author.id, reason).handle { result, t ->
             if (t != null || !result.successful) {
                 context.send().error("An error occurred when warning ${member?.user?.nameAndDiscrim
                         ?: userId}: ${t ?: result.errorMessage}").queue()
@@ -38,7 +39,7 @@ class CommandWarn {
             }
             context.send().success(buildString {
                 append("Warned user ")
-                append(Infractions.lookupUser(userId, true))
+                append(infractions.lookupUser(userId, true))
                 append(" (`$reason`)")
                 when (result.dmResult) {
                     Infractions.DmResult.SENT ->

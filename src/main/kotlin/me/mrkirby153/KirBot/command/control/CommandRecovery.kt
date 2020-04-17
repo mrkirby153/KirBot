@@ -8,8 +8,9 @@ import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.kcutils.Time
+import javax.inject.Inject
 
-class CommandRecovery {
+class CommandRecovery @Inject constructor(private val recoveryManager: RecoveryManager) {
 
     @AdminCommand
     @Command(name = "global", arguments = ["<duration:string>", "[pool:int]"], parent = "recover")
@@ -21,7 +22,7 @@ class CommandRecovery {
         }
         val pool = cmdContext.get<Int>("pool") ?: 10
         context.channel.sendMessage("Recovery started with $pool threads").complete()
-        val ar = RecoveryManager.globalRecovery(duration, pool)
+        val ar = recoveryManager.globalRecovery(duration, pool)
         val msg = context.channel.sendMessage(
                 "Recovery status: ${ar.completed.size}/${ar.channels.size}").complete()
         val start = System.currentTimeMillis()

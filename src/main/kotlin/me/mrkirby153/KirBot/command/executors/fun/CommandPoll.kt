@@ -20,9 +20,10 @@ import net.dv8tion.jda.api.Permission
 import java.awt.Color
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
+import javax.inject.Inject
 
 
-class CommandPoll {
+class CommandPoll @Inject constructor(private val scheduler: Scheduler){
 
     @Command(name = "poll",
             arguments = ["<duration:string>", "<question:string>", "<options:string...>"],
@@ -86,14 +87,13 @@ class CommandPoll {
                 millis(endsAt)
             }
         }.rest().queue {
-            for (i in 0 until options.size) {
+            for (i in options.indices) {
                 it.addReaction("${'\u0030' + i}\u20E3").queue()
             }
             val task = PollTask(context.guild.id, context.channel.id, it.id,
                     context.author.effectiveAvatarUrl, context.author.nameAndDiscrim, endsAt,
                     filteredOptions.toTypedArray(), question)
-            ModuleManager[Scheduler::class.java].submit(task, duration.toLong(),
-                    TimeUnit.MILLISECONDS)
+            scheduler.submit(task, duration, TimeUnit.MILLISECONDS)
         }
     }
 

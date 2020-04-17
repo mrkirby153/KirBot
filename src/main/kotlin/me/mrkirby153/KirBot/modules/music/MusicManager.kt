@@ -51,8 +51,8 @@ class MusicManager(val guild: Guild) {
         audioPlayer.playTrack(null)
         boundChannelId = null
         queue.clear()
-        ModuleManager[MusicModule::class.java].stopPlaying(this.guild)
-        ModuleManager[Redis::class.java].getConnection().use {
+        Bot.applicationContext.get(MusicModule::class.java).stopPlaying(this.guild)
+        Bot.applicationContext.get(Redis::class.java).getConnection().use {
             it.del("music.queue:${this.guild.id}")
             it.del("music.playing:${this.guild.id}")
             it.del(*it.keys("music:${guild.id}:channel:*").toTypedArray())
@@ -84,7 +84,7 @@ class MusicManager(val guild: Guild) {
         this.boundChannelId = channelToBind?.id
         this.guild.audioManager.openAudioConnection(channel)
         connected = true
-        ModuleManager[MusicModule::class.java].startPlaying(this.guild)
+        Bot.applicationContext.get(MusicModule::class.java).startPlaying(this.guild)
     }
 
     /**
@@ -139,12 +139,12 @@ class MusicManager(val guild: Guild) {
 
     fun updateQueue() {
         if (playing && this.nowPlaying != null) {
-            ModuleManager[Redis::class.java].getConnection().use {
+            Bot.applicationContext.get(Redis::class.java).getConnection().use {
                 it.set("music.playing:${guild.id}",
                         serializeQueuedSong(this.nowPlaying!!, null).toString())
             }
         }
-        ModuleManager[Redis::class.java].getConnection().use {
+        Bot.applicationContext.get(Redis::class.java).getConnection().use {
             val queue = this.queue.map { serializeQueuedSong(it.track, it.queuedBy) }
             val arr = JSONArray()
             queue.forEach { arr.put(it) }
@@ -153,7 +153,7 @@ class MusicManager(val guild: Guild) {
     }
 
     fun updateVoiceState() {
-        ModuleManager[Redis::class.java].getConnection().use { redis ->
+        Bot.applicationContext.get(Redis::class.java).getConnection().use { redis ->
             val keys = redis.keys("music:${guild.id}:channel:*")
             this.guild.selfMember.voiceState!!.channel?.members?.forEach {
                 redis.set("music:${guild.id}:channel:${it.user.id}", "true")

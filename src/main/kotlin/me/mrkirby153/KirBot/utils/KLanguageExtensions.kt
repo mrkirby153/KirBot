@@ -331,7 +331,7 @@ fun User.getOnlineStats(): OnlineStatus {
  * If the [User] is a global admin
  */
 val User.globalAdmin: Boolean
-    get() = ModuleManager.getLoadedModule(Redis::class.java)?.getConnection()?.use {
+    get() = Bot.applicationContext.get(Redis::class.java).getConnection()?.use {
         it.sismember("admins", this.id)
     } ?: false
 

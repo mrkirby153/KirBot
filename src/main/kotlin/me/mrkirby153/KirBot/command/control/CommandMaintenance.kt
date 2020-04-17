@@ -18,9 +18,10 @@ import net.dv8tion.jda.api.OnlineStatus
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Activity
 import java.util.concurrent.TimeUnit
+import javax.inject.Inject
 
 
-class CommandClearArchives {
+class CommandClearArchives @Inject constructor(private val redis: Redis){
 
     @Command(name = "clear-archives", permissions = [Permission.MESSAGE_ADD_REACTION])
     @AdminCommand
@@ -38,7 +39,7 @@ class CommandClearArchives {
     }
 
     private fun doClean(context: Context) {
-        ModuleManager[Redis::class.java].getConnection().use { con ->
+        redis.getConnection().use { con ->
             val keys = con.keys("archive:*")
             if (keys.isEmpty()) {
                 context.send().info(":warning: There are no archives to delete!").queue()

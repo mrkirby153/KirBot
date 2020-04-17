@@ -18,9 +18,10 @@ import java.util.UUID
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
+import javax.inject.Inject
 import kotlin.math.roundToLong
 
-class Scheduler : Module("scheduler") {
+class Scheduler @Inject constructor(private val redis: Redis): Module("scheduler") {
 
     private var keyFormat = "task:%s"
     private var list = "tasks"
@@ -47,7 +48,7 @@ class Scheduler : Module("scheduler") {
         val item = ScheduledItem(id, schedulable)
         val t = System.currentTimeMillis() + convert
 
-        ModuleManager[Redis::class.java].getConnection().use {
+        redis.getConnection().use {
             val key = keyFormat.format(id)
             it.set(key, gson.toJson(item))
             it.zadd(list, t.toDouble(), key)
@@ -58,7 +59,7 @@ class Scheduler : Module("scheduler") {
 
     fun cancel(id: String): Boolean {
         val key = keyFormat.format(id)
-        ModuleManager[Redis::class.java].getConnection().use {
+        redis.getConnection().use {
             it.zrem(list, key)
             return it.del(key) > 0
         }
@@ -67,7 +68,7 @@ class Scheduler : Module("scheduler") {
     private fun runOldTasks() {
         Bot.LOG.debug("Running all expired tasks...")
         // Run expired tasks
-        ModuleManager[Redis::class.java].getConnection().use { jedis ->
+        redis.getConnection().use { jedis ->
             val keys = jedis.zrangeByScore(list, "-inf",
                     (System.currentTimeMillis() + 100).toString())
             val toRemove = mutableListOf<String>()
@@ -96,7 +97,7 @@ class Scheduler : Module("scheduler") {
 
     private fun queueTasks() {
         Bot.LOG.debug("Queueing tasks")
-        ModuleManager[Redis::class.java].getConnection().use { jedis ->
+        redis.getConnection().use { jedis ->
             val nextKey = jedis.zrangeByScore(list, System.currentTimeMillis().toString(),
                     "+inf", 0, 1)?.firstOrNull()
             if (nextKey == null) {
@@ -143,7 +144,7 @@ class Scheduler : Module("scheduler") {
 }
 
 
-class SchedulerStats{
+class SchedulerStats @Inject constructor(private val redis: Redis){
 
     @Command(name = "sstats")
     @AdminCommand
@@ -153,7 +154,7 @@ class SchedulerStats{
                 +"Current scheduler statistics"
             }
             fields {
-                ModuleManager[Redis::class.java].getConnection().use { jedis ->
+                redis.getConnection().use { jedis ->
                     // Next Task
                     val pendingTasks = jedis.zrangeByScore("tasks",
                             System.currentTimeMillis().toString(), "+inf")

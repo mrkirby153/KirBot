@@ -11,9 +11,10 @@ import me.mrkirby153.KirBot.modules.music.MusicModule.Companion.isDJ
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.settings.GuildSettings
 import net.dv8tion.jda.api.Permission
+import javax.inject.Inject
 
 
-class CommandMove {
+class CommandMove @Inject constructor(private val musicModule: MusicModule){
 
     @Command(name = "move", arguments = ["<from:int>", "[to:int]"], category = CommandCategory.MUSIC)
     @CommandDescription("Move songs around in the queue")
@@ -23,7 +24,7 @@ class CommandMove {
         if(!isDJ(context.member)) {
             throw CommandException("You must be a DJ to do that")
         }
-        val manager = ModuleManager[MusicModule::class.java].getManager(context.guild)
+        val manager = musicModule.getManager(context.guild)
         val song = cmdContext.get<Int>("from")?.toInt()!!
 
         val toPosition = cmdContext.get<Int>("to")?.toInt() ?: 0

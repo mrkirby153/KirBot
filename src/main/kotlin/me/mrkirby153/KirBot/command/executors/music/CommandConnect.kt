@@ -15,16 +15,17 @@ import me.xdrop.fuzzywuzzy.FuzzySearch
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.GuildChannel
 import net.dv8tion.jda.api.entities.VoiceChannel
+import javax.inject.Inject
 
 
-class CommandConnect{
+class CommandConnect @Inject constructor(private val musicModule: MusicModule){
 
     @Command(name = "connect", arguments = ["[channel:string...]"], category = CommandCategory.MUSIC, aliases = ["summon"])
     @CommandDescription("Connects the bot to the voice channel")
     fun execute(context: Context, cmdContext: CommandContext) {
         if (!GuildSettings.musicEnabled.get(context.guild))
             return
-        val manager = ModuleManager[MusicModule::class.java].getManager(context.guild)
+        val manager = musicModule.getManager(context.guild)
         val chanName = cmdContext.get<String>("channel")
         val channel = if (chanName != null) fuzzyMatchChannel(chanName,
                 context.guild.voiceChannels) as VoiceChannel else context.member!!.voiceState!!.channel

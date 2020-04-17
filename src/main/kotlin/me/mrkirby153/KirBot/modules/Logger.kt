@@ -42,8 +42,9 @@ import net.dv8tion.jda.api.events.role.update.RoleUpdateNameEvent
 import net.dv8tion.jda.api.events.role.update.RoleUpdatePermissionsEvent
 import net.dv8tion.jda.api.events.user.update.UserUpdateNameEvent
 import org.json.JSONObject
+import javax.inject.Inject
 
-class Logger : Module("logging") {
+class Logger @Inject constructor(private val redis: Redis): Module("logging") {
 
     private val logDelay = 100L
 
@@ -320,7 +321,7 @@ class Logger : Module("logging") {
             obj.put(it.toString(), it.permission)
         }
         Bot.LOG.debug("Registering log events in redis: $obj")
-        ModuleManager[Redis::class.java].getConnection().use {
+       redis.getConnection().use {
             it.set("log_events", obj.toString())
         }
     }

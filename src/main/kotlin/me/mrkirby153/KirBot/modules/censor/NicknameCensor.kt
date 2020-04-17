@@ -16,8 +16,9 @@ import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent
 import net.dv8tion.jda.api.events.guild.member.update.GuildMemberUpdateNicknameEvent
 import net.dv8tion.jda.api.events.user.update.UserUpdateNameEvent
+import javax.inject.Inject
 
-class NicknameCensor : Module("nick_censor") {
+class NicknameCensor @Inject constructor(private val redis: Redis): Module("nick_censor") {
 
     private val idGenerator = IdGenerator(IdGenerator.ALPHANUMERIC)
 
@@ -70,7 +71,7 @@ class NicknameCensor : Module("nick_censor") {
     private fun censor(member: Member, blacklistedToken: String) {
         // Check for our last censor attempt
         val redisKey = "nick_censor:${member.guild.id}:${member.user.id}"
-        ModuleManager[Redis::class.java].getConnection().use {
+        redis.getConnection().use {
             if (it.get(redisKey) != null) {
                 Bot.LOG.debug("Ignoring censor for $member as they've been censored too frequently")
                 return
@@ -86,7 +87,7 @@ class NicknameCensor : Module("nick_censor") {
                     ":no_entry_sign:",
                     "Renamed ${member.user.logName} to ${newName.sanitize()}. Blacklisted char sequence `$blacklistedToken`")
         }
-        ModuleManager[Redis::class.java].getConnection().use {
+        redis.getConnection().use {
             it.set(redisKey, System.currentTimeMillis().toString())
             it.expire(redisKey, 30)
         }

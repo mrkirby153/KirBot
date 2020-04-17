@@ -9,16 +9,17 @@ import me.mrkirby153.KirBot.modules.music.MusicModule
 import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.settings.GuildSettings
+import javax.inject.Inject
 
 
-class CommandVolume {
+class CommandVolume @Inject constructor(private val musicModule: MusicModule) {
 
     @Command(name = "volume", clearance = CLEARANCE_MOD, arguments = ["[volume:string]"], category = CommandCategory.MUSIC)
     @CommandDescription("Sets the bot's volume")
     fun execute(context: Context, cmdContext: CommandContext) {
         if (!GuildSettings.musicEnabled.get(context.guild))
             return
-        val manager = ModuleManager[MusicModule::class.java].getManager(context.guild)
+        val manager = musicModule.getManager(context.guild)
         val audioPlayer = manager.audioPlayer
 
         if (!cmdContext.has("volume")) {

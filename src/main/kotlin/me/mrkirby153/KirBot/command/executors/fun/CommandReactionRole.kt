@@ -25,8 +25,9 @@ import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.sanitize
 import net.dv8tion.jda.api.Permission
 import java.awt.Color
+import javax.inject.Inject
 
-class CommandReactionRole {
+class CommandReactionRole @Inject constructor(private val reactionRoles: ReactionRoles) {
 
     val emojiRegex = Regex("<a?:.*:([0-9]*)>")
 
@@ -127,7 +128,7 @@ class CommandReactionRole {
                     if(!message.channel.checkPermissions(Permission.MESSAGE_ADD_REACTION)) {
                         context.send().error("I cannot add reactions to the given message. You will have to add it manually").queue()
                     }
-                    ModuleManager[ReactionRoles::class.java].addReactionRole(message, role,
+                    reactionRoles.addReactionRole(message, role,
                             effectiveEmote, custom)
                     msg.editMessage("$GREEN_TICK Added $emojiRaw as a reaction role for ${b(
                             role.name.sanitize())}").queue()
@@ -142,7 +143,7 @@ class CommandReactionRole {
     fun removeRole(context: Context, cmdContext: CommandContext) {
         val id = cmdContext.getNotNull<String>("id")
         try {
-            ModuleManager[ReactionRoles::class.java].removeReactionRole(id, context.guild)
+            reactionRoles.removeReactionRole(id, context.guild)
             context.send().success("Reaction role has been removed").queue()
         } catch (e: IllegalArgumentException) {
             throw CommandException(e.localizedMessage)

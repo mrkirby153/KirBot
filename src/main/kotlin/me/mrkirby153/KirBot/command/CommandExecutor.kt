@@ -57,7 +57,7 @@ object CommandExecutor {
 
             Bot.LOG.info("Found ${commands.size} classes")
 
-            val instances = commands.map { it.newInstance() }
+            val instances = commands.map { Bot.applicationContext.newInstance(it) }
 
             instances.forEach(CommandExecutor::register)
         }

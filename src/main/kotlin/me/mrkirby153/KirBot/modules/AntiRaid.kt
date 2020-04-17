@@ -21,14 +21,15 @@ import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent
 import org.json.JSONArray
 import org.json.JSONObject
 import org.json.JSONTokener
+import javax.inject.Inject
 
-class AntiRaid : Module("AntiRaid") {
+class AntiRaid @Inject constructor(private val redis: Redis) : Module("AntiRaid") {
 
     private val guildBucketCache = CacheBuilder.newBuilder().maximumSize(100).build(
             object : CacheLoader<String, LeakyBucket>() {
                 override fun load(key: String): LeakyBucket {
                     val g = Bot.shardManager.getGuildById(key)!!
-                    return LeakyBucket("antiraid:join:$key",
+                    return LeakyBucket(redis, "antiraid:join:$key",
                             GuildSettings.antiRaidCount.get(g).toInt(),
                             GuildSettings.antiRaidPeriod.get(g).toInt() * 1000)
                 }
@@ -74,7 +75,7 @@ class AntiRaid : Module("AntiRaid") {
     }
 
     fun getRaid(guild: Guild, id: String): RaidInfo? {
-        ModuleManager[Redis::class].getConnection().use {
+        redis.getConnection().use {
             val str = it.get("raid:${guild.id}:$id") ?: return null
             val json = JSONObject(JSONTokener(str))
             val users = json.getJSONArray("members").toTypedArray(
@@ -206,7 +207,7 @@ class AntiRaid : Module("AntiRaid") {
 
     private fun recordRaidMembers(raid: Raid) {
         val key = "raid:${raid.guild}:${raid.id}"
-        ModuleManager[Redis::class.java].getConnection().use {
+        redis.getConnection().use {
             val json = JSONObject()
             json.put("id", raid.id)
             json.put("timestamp", Time.now())
@@ -271,11 +272,11 @@ class AntiRaid : Module("AntiRaid") {
         this.activeRaids.entries.removeIf { it.key in toRemove }
     }
 
-    private class LeakyBucket(val key: String, val maxActions: Int, val timePeriod: Int) {
+    private class LeakyBucket(val redis: Redis, val key: String, val maxActions: Int, val timePeriod: Int) {
 
         fun insert(value: String): Boolean {
             this.clearExpired()
-            ModuleManager[Redis::class.java].getConnection().use { con ->
+            redis.getConnection().use { con ->
                 con.zadd(this.key, System.currentTimeMillis().toDouble(), value)
                 con.expire(this.key, this.timePeriod / 1000)
                 val c = con.zcount(this.key, "-inf", "inf")
@@ -285,7 +286,7 @@ class AntiRaid : Module("AntiRaid") {
         }
 
         fun clearExpired() {
-            ModuleManager[Redis::class.java].getConnection().use {
+            redis.getConnection().use {
                 it.zremrangeByScore(this.key, "-inf",
                         (System.currentTimeMillis() - timePeriod).toString())
             }
@@ -293,25 +294,25 @@ class AntiRaid : Module("AntiRaid") {
 
         fun get(): MutableSet<String> {
             this.clearExpired()
-            ModuleManager[Redis::class.java].getConnection().use {
+            redis.getConnection().use {
                 return it.zrangeByScore(this.key, "-inf", "inf")
             }
         }
 
         fun empty() {
-            ModuleManager[Redis::class.java].getConnection().use {
+            redis.getConnection().use {
                 it.zremrangeByScore(this.key, "-inf", "inf")
             }
         }
 
         fun count(): Int {
-            ModuleManager[Redis::class.java].getConnection().use { con ->
+            redis.getConnection().use { con ->
                 return con.zcount(this.key, "-inf", "inf").toInt()
             }
         }
 
         fun time(): Double {
-            ModuleManager[Redis::class.java].getConnection().use { con ->
+            redis.getConnection().use { con ->
                 val d = con.zrangeByScore(this.key, "-inf", "inf")
                 if (d.size <= 1)
                     return 0.0

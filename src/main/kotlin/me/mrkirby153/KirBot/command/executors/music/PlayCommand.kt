@@ -16,15 +16,16 @@ import me.mrkirby153.KirBot.utils.settings.GuildSettings
 import me.mrkirby153.KirBot.utils.toTypedArray
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.TextChannel
+import javax.inject.Inject
 
 
-class PlayCommand {
+class PlayCommand @Inject constructor(private val musicModule: MusicModule){
     @Command(name = "play", arguments = ["[query/url:string...]"], category = CommandCategory.MUSIC)
     @CommandDescription("Play music")
     fun execute(context: Context, cmdContext: CommandContext) {
         if (!GuildSettings.musicEnabled.get(context.guild))
             return
-        val manager = ModuleManager[MusicModule::class.java].getManager(context.guild)
+        val manager = musicModule.getManager(context.guild)
         val cmdPrefix = GuildSettings.commandPrefix.get(context.guild)
         val data = cmdContext.get<String>("query/url")
 

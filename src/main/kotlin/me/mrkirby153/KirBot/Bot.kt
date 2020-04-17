@@ -16,6 +16,7 @@ import me.mrkirby153.KirBot.error.UncaughtErrorReporter
 import me.mrkirby153.KirBot.event.PriorityEventManager
 import me.mrkirby153.KirBot.event.Subscribe
 import me.mrkirby153.KirBot.infraction.Infractions
+import me.mrkirby153.KirBot.inject.ApplicationContext
 import me.mrkirby153.KirBot.listener.ShardListener
 import me.mrkirby153.KirBot.listener.WaitUtilsListener
 import me.mrkirby153.KirBot.module.ModuleManager
@@ -83,6 +84,8 @@ object Bot {
 
     val idGenerator = SnowflakeWorker(1, 1)
 
+    val applicationContext = ApplicationContext()
+
     lateinit var shardManager: ShardManager
 
 
@@ -119,7 +122,7 @@ object Bot {
                 GatewayIntent.GUILD_EMOJIS)
         shardManager = DefaultShardManagerBuilder.create(gatewayIntents).apply {
             setToken(token)
-            addEventListeners(AdminControl, ShardListener())
+            addEventListeners(AdminControl, applicationContext.newInstance(ShardListener::class.java))
             setEventManagerProvider { PriorityEventManager() }
             setStatus(OnlineStatus.IDLE)
             setShardsTotal(numShards)

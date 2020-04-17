@@ -19,11 +19,6 @@ abstract class Module(val name: String) {
 
     fun load(registerListeners: Boolean = true) {
         log("Starting load")
-        val unmetDeps = this.getUnmetDeps()
-        if (unmetDeps.isNotEmpty()) {
-            throw IllegalStateException(
-                    "This module has unloaded dependencies, it will not be loaded ($unmetDeps)")
-        }
         debug("Calling onLoad()")
         onLoad()
         debug("Registering listener")

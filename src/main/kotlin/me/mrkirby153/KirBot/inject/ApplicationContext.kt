@@ -3,6 +3,7 @@ package me.mrkirby153.KirBot.inject
 import org.slf4j.LoggerFactory
 import java.lang.reflect.Constructor
 import java.lang.reflect.Field
+import java.lang.reflect.Modifier
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Named
@@ -73,6 +74,21 @@ class ApplicationContext {
 
         this.registeredObjects.computeIfAbsent(obj.javaClass) { mutableListOf() }.add(
                 RegisteredObject(InjectionType.SINGLETON, obj.javaClass, name, obj))
+    }
+
+    fun <T> registerLazySingleton(clazz: Class<T>, name: String? = null) {
+        val registeredObjects = this.registeredObjects[clazz]
+        if (registeredObjects != null) {
+            val found = registeredObjects.firstOrNull { it.objectClass == clazz && it.name == name }
+            if (found != null) {
+                throw java.lang.IllegalArgumentException(
+                        "Provided $clazz is already registered in the context")
+            }
+        }
+        applicationContextLogger.debug(
+                "Registering lazy singleton $clazz into the context")
+        this.registeredObjects.computeIfAbsent(clazz) { mutableListOf() }.add(
+                RegisteredObject(InjectionType.SINGLETON, clazz, name))
     }
 
     /**
@@ -218,6 +234,8 @@ class ApplicationContext {
             if (currentClass != null) {
 
                 fields.addAll(currentClass.declaredFields.filter { field ->
+                    if(Modifier.isStatic(field.modifiers))
+                        return@filter false
                     if (!field.canAccess(instance))
                         field.isAccessible = true
                     field.isAnnotationPresent(

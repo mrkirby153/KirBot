@@ -22,8 +22,9 @@ import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.Role
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRoleAddEvent
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRoleRemoveEvent
+import javax.inject.Inject
 
-class RoleCommands {
+class RoleCommands @Inject constructor(private val logger: Logger) {
 
     @Command(name = "role", clearance = CLEARANCE_MOD, aliases = ["roles", "r"], category = CommandCategory.MODERATION)
     @CommandDescription("List all the roles and their IDs")
@@ -71,7 +72,7 @@ class RoleCommands {
         if (!context.guild.selfMember.canAssign(role))
             throw CommandException("I cannot assign that role")
 
-        ModuleManager[Logger::class.java].debouncer.create(GuildMemberRoleAddEvent::class.java,
+        logger.debouncer.create(GuildMemberRoleAddEvent::class.java,
                 Pair("user", member.user.id), Pair("role", role.id))
         context.guild.addRoleToMember(member, role).queue()
         context.kirbotGuild.logManager.genericLog(LogEvent.ROLE_ADD, ":key:",

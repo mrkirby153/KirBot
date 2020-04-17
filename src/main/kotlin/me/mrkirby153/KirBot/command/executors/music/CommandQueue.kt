@@ -13,10 +13,11 @@ import me.mrkirby153.KirBot.utils.escapeMarkdown
 import me.mrkirby153.KirBot.utils.settings.GuildSettings
 import net.dv8tion.jda.api.Permission
 import java.util.Random
+import javax.inject.Inject
 import kotlin.math.roundToInt
 
 
-class CommandQueue {
+class CommandQueue @Inject constructor(private val musicModule: MusicModule) {
 
     @Command(name = "queue", arguments = ["[option:string]"], aliases = ["np", "nowplaying"],
             permissions = [Permission.MESSAGE_EMBED_LINKS], category = CommandCategory.MUSIC)
@@ -24,7 +25,7 @@ class CommandQueue {
     fun execute(context: Context, cmdContext: CommandContext) {
         if (!GuildSettings.musicEnabled.get(context.guild))
             return
-        val manager = ModuleManager[MusicModule::class.java].getManager(context.guild)
+        val manager = musicModule.getManager(context.guild)
         if (cmdContext.has("option")) {
             when (cmdContext.get<String>("option")!!.toLowerCase()) {
                 "clear" -> {

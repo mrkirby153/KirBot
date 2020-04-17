@@ -7,10 +7,8 @@ import me.mrkirby153.KirBot.event.Subscribe
 import me.mrkirby153.KirBot.infraction.Infractions
 import me.mrkirby153.KirBot.logger.LogEvent
 import me.mrkirby153.KirBot.module.Module
-import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.utils.Bucket
 import me.mrkirby153.KirBot.utils.EMOJI_RE
-import me.mrkirby153.KirBot.utils.settings.SettingsRepository
 import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.KirBot.utils.getClearance
 import me.mrkirby153.KirBot.utils.kirbotGuild
@@ -29,8 +27,9 @@ import java.sql.Timestamp
 import java.time.Instant
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
+import javax.inject.Inject
 
-class Spam : Module("spam") {
+class Spam @Inject constructor(private val redis: Redis) : Module("spam") {
 
     private val locks = mutableMapOf<String, Semaphore>()
 
@@ -102,7 +101,7 @@ class Spam : Module("spam") {
         val count = dupeSettings.getInt("count")
         val period = dupeSettings.getInt("period")
 
-        ModuleManager[Redis::class.java].getConnection().use { jedis ->
+        redis.getConnection().use { jedis ->
             val key = "spam:duplicates:${message.guild.id}:${message.author.id}:${message.contentRaw}"
             val n = jedis.incr(key)
             if (n == 1L) {
@@ -116,7 +115,7 @@ class Spam : Module("spam") {
     }
 
     private fun violate(violation: ViolationException) {
-        ModuleManager[Redis::class.java].getConnection().use { con ->
+        redis.getConnection().use { con ->
             val key = "lv:${violation.guild.id}:${violation.user.id}"
             val last = (con.get(key) ?: "0").toLong()
             con.setex(key, 60, System.currentTimeMillis().toString())
@@ -234,7 +233,7 @@ class Spam : Module("spam") {
         val ruleJson = getRule(guild, level)?.optJSONObject(rule) ?: return null
         if (!ruleJson.has("count") || !ruleJson.has("period"))
             return null
-        return Bucket("spam:$rule:$guild:%s", ruleJson.getInt("count"),
+        return Bucket(redis, "spam:$rule:$guild:%s", ruleJson.getInt("count"),
                 ruleJson.getInt("period") * 1000)
     }
 

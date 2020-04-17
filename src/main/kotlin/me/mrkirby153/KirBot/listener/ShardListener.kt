@@ -42,6 +42,7 @@ import net.dv8tion.jda.api.events.role.RoleDeleteEvent
 import net.dv8tion.jda.api.events.role.update.GenericRoleUpdateEvent
 import net.dv8tion.jda.api.events.user.update.UserUpdateNameEvent
 import java.util.concurrent.TimeUnit
+import javax.inject.Inject
 
 class ShardListener {
 
@@ -141,8 +142,8 @@ class ShardListener {
         }
 
 
-        val module = ModuleManager[AccessModule::class.java]
-        if (module.onList(event.guild, AccessModule.WhitelistMode.BLACKLIST)) {
+        val accessModule = Bot.applicationContext.get(AccessModule::class.java)
+        if (accessModule.onList(event.guild, AccessModule.WhitelistMode.BLACKLIST)) {
             Bot.LOG.debug("left guild ${event.guild.id} because it was blacklisted")
             AdminControl.log("Attempted to join blacklisted guild\n${getGuildInfo()}")
             guildLeavesIgnore.add(event.guild.id)
@@ -150,7 +151,7 @@ class ShardListener {
             return
         }
         if (Bot.properties.getOrDefault("guild-whitelist", "false").toString().toBoolean()) {
-            if (!module.onList(event.guild, AccessModule.WhitelistMode.WHITELIST)) {
+            if (!accessModule.onList(event.guild, AccessModule.WhitelistMode.WHITELIST)) {
                 Bot.LOG.debug("Left guild ${event.guild.id} because it was not whitelisted")
                 AdminControl.log("Attempted to join non-whitelisted guild\n${getGuildInfo()}")
                 guildLeavesIgnore.add(event.guild.id)

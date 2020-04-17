@@ -1,9 +1,10 @@
 package me.mrkirby153.KirBot.module
 
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.modules.Database
+import me.mrkirby153.KirBot.modules.Redis
 import me.mrkirby153.kcutils.Time
 import org.reflections.Reflections
-import java.lang.IllegalArgumentException
 import java.util.concurrent.TimeUnit
 import kotlin.reflect.KClass
 import kotlin.system.measureTimeMillis
@@ -15,52 +16,46 @@ object ModuleManager {
 
     private var tickCount = 0
 
+    @Deprecated("Use dependency injection instead or retrieve from application context",
+            ReplaceWith("Bot.applicationContext.get(clazz)", "me.mrkirby153.KirBot.Bot"))
     fun <T : Module> getLoadedModule(clazz: Class<T>): T? {
-        return loadedModules.firstOrNull { it.javaClass == clazz } as? T
+        return Bot.applicationContext.get(clazz)
     }
 
-    fun <T : Module> getModule(clazz: Class<T>): T? {
-        return availableModules.firstOrNull { it.javaClass == clazz } as? T
-    }
-
+    @Deprecated("Use Dependency injection instead or retrieve from application context",
+            ReplaceWith("Bot.applicationContext.get(clazz)", "me.mrkirby153.KirBot.Bot"))
     operator fun <T : Module> get(clazz: Class<T>): T = getLoadedModule(clazz)
             ?: throw IllegalArgumentException("The provided module wasn't loaded")
 
+    @Deprecated("Use dependency injection instead or retrieve from application context",
+            ReplaceWith("Bot.applicationContext.get(clazz)", "me.mrkirby153.KirBot.Bot"))
     operator fun <T : Module> get(clazz: KClass<T>): T = get(clazz.java)
 
     fun load(registerListeners: Boolean = true) {
-        val startTime = System.currentTimeMillis()
-        Bot.LOG.info("Module Manager Starting Up...")
-        // Populate the available modules
-        val reflections = Reflections("me.mrkirby153.KirBot")
+        val loadTime = measureTimeMillis {
+            val reflections = Reflections("me.mrkirby153.KirBot")
 
-        val modules = reflections.getSubTypesOf(Module::class.java)
+            val modules = reflections.getSubTypesOf(Module::class.java)
+            Bot.LOG.info("Discovered ${modules.size} modules")
 
-        Bot.LOG.info("Found ${modules.size} modules")
-        modules.forEach { availableModules.add(it.newInstance()) }
+            modules.forEach { Bot.applicationContext.registerLazySingleton(it) }
 
-        // Dependency resolution
-        Bot.LOG.debug("Beginning module dependency resolution")
-        val resolved = mutableListOf<Module>()
-        val depResolveTime = measureTimeMillis {
-            availableModules.forEach {
-                resolveDependencies(it, resolved)
+            Bot.LOG.info("Starting load of modules")
+
+            // These modules should be loaded before the rest of the modules as these are considered
+            // critical modules
+            val eagerLoad = arrayOf(Database::class.java, Redis::class.java)
+            modules.removeAll(eagerLoad)
+
+            eagerLoad.forEach {
+                Bot.applicationContext.get(it).load(registerListeners)
+            }
+
+            modules.forEach {
+                Bot.applicationContext.get(it).load(registerListeners)
             }
         }
-        Bot.LOG.debug("Dependencies resolved in ${Time.format(2, depResolveTime)}")
-
-        Bot.LOG.debug("Load order:")
-        resolved.forEachIndexed { index, mod ->
-            Bot.LOG.debug("  ${index + 1} - $mod")
-        }
-
-        // Beginning load of module
-        Bot.LOG.debug("Loading modules...")
-        resolved.forEach {
-            it.load(registerListeners)
-            loadedModules.add(it)
-        }
-        Bot.LOG.info("Modules loaded in ${Time.format(1, System.currentTimeMillis() - startTime)}")
+        Bot.LOG.info("Modules loaded in ${Time.format(1, loadTime)}")
     }
 
     fun startScheduler() {

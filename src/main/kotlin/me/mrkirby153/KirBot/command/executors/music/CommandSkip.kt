@@ -19,9 +19,10 @@ import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.api.Permission
 import java.awt.Color
 import java.util.concurrent.TimeUnit
+import javax.inject.Inject
 
 
-class CommandSkip {
+class CommandSkip @Inject constructor(private val musicModule: MusicModule){
     private val skipCooldown = mutableMapOf<String, Long>()
 
     @Command(name = "skip", aliases = ["next"],
@@ -31,7 +32,7 @@ class CommandSkip {
     fun execute(context: Context, cmdContext: CommandContext) {
         if (!GuildSettings.musicEnabled.get(context.guild))
             return
-        val manager = ModuleManager[MusicModule::class.java].getManager(context.guild)
+        val manager = musicModule.getManager(context.guild)
         if (!manager.playing) {
             throw CommandException("I am not playing anything right now")
         }
@@ -116,6 +117,6 @@ class CommandSkip {
         if (!isDJ(context.member))
             throw CommandException("You must be a DJ to use this command! (Have a role named `DJ`)")
         context.channel.sendMessage("Skipping song").queue()
-        ModuleManager[MusicModule::class.java].getManager(context.guild).playNextTrack()
+        musicModule.getManager(context.guild).playNextTrack()
     }
 }

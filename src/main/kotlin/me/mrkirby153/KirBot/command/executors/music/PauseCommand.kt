@@ -10,16 +10,17 @@ import me.mrkirby153.KirBot.modules.music.MusicModule
 import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.settings.GuildSettings
+import javax.inject.Inject
 
 
-class PauseCommand {
+class PauseCommand @Inject constructor(private val musicModule: MusicModule){
 
     @Command(name = "pause", clearance = CLEARANCE_MOD, category = CommandCategory.MUSIC)
     @CommandDescription("Pause the music that is currently playing")
     fun execute(context: Context, cmdContext: CommandContext) {
         if (!GuildSettings.musicEnabled.get(context.guild))
             return
-        val manager = ModuleManager[MusicModule::class.java].getManager(context.guild)
+        val manager = musicModule.getManager(context.guild)
         if (!manager.playing)
             throw CommandException("Music is already paused")
         manager.pause()

@@ -9,9 +9,10 @@ import me.mrkirby153.KirBot.listener.WaitUtils
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.AccessModule
 import me.mrkirby153.KirBot.utils.Context
+import javax.inject.Inject
 
 
-class CommandGuildAccess {
+class CommandGuildAccess @Inject constructor(private val accessModule: AccessModule){
 
     @Command(name = "add", arguments = ["<list:string>", "<guild:snowflake>"],
             parent = "guild-access")
@@ -26,7 +27,7 @@ class CommandGuildAccess {
                             ", ")}")
         }
 
-        ModuleManager[AccessModule::class.java].addToList(guild, list)
+        accessModule.addToList(guild, list)
         context.send().success("Added `$guild` to the $list list").queue()
         if (list == AccessModule.WhitelistMode.BLACKLIST) {
             Bot.shardManager.getGuildById(guild)?.leave()?.queue()
@@ -47,7 +48,7 @@ class CommandGuildAccess {
                             ", ")}")
         }
 
-        ModuleManager[AccessModule::class.java].removeFromList(guild, list)
+        accessModule.removeFromList(guild, list)
         context.send().success("Removed `$guild` from the $list list").queue()
     }
 
@@ -62,7 +63,7 @@ class CommandGuildAccess {
                             ", ")}")
         }
 
-        val guilds = ModuleManager[AccessModule::class.java].getList(list).map { it ->
+        val guilds = accessModule.getList(list).map { it ->
             if (Bot.shardManager.getGuildById(it) != null) {
                 val guild = Bot.shardManager.getGuildById(it)!!
                 "${guild.name} (`${guild.id}`)"
@@ -92,7 +93,6 @@ class CommandGuildAccess {
         context.channel.sendMessage(
                 "Are you sure you want to import all guilds into the whitelist?").queue { msg ->
             WaitUtils.confirmYesNo(msg, context.author, {
-                val accessModule = ModuleManager[AccessModule::class.java]
                 Bot.shardManager.guilds.forEach { g ->
                     accessModule.addToList(g.id, AccessModule.WhitelistMode.WHITELIST)
                 }

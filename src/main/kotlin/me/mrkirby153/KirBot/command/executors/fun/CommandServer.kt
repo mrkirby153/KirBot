@@ -18,17 +18,19 @@ import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.api.OnlineStatus
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Member
+import net.dv8tion.jda.api.sharding.ShardManager
 import java.awt.Color
 import java.text.SimpleDateFormat
+import javax.inject.Inject
 
 
-class CommandServer {
+class CommandServer @Inject constructor(private val shardManager: ShardManager) {
     @Command(name = "server", arguments = ["[server:snowflake]"], clearance = CLEARANCE_MOD,
             category = CommandCategory.FUN, permissions = [Permission.MESSAGE_ATTACH_FILES])
     @IgnoreWhitelist
     fun execute(context: Context, cmdContext: CommandContext) {
         val serverId = cmdContext.get<String>("server") ?: context.guild.id
-        val server = Bot.shardManager.getGuildById(serverId) ?: throw CommandException(
+        val server = shardManager.getGuildById(serverId) ?: throw CommandException(
                 "Server not found")
 
         context.channel.sendMessage(embed {

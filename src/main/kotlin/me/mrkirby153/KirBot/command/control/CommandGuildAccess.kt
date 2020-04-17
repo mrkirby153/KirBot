@@ -9,10 +9,11 @@ import me.mrkirby153.KirBot.listener.WaitUtils
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.AccessModule
 import me.mrkirby153.KirBot.utils.Context
+import net.dv8tion.jda.api.sharding.ShardManager
 import javax.inject.Inject
 
 
-class CommandGuildAccess @Inject constructor(private val accessModule: AccessModule){
+class CommandGuildAccess @Inject constructor(private val accessModule: AccessModule, private val shardManager: ShardManager){
 
     @Command(name = "add", arguments = ["<list:string>", "<guild:snowflake>"],
             parent = "guild-access")
@@ -30,7 +31,7 @@ class CommandGuildAccess @Inject constructor(private val accessModule: AccessMod
         accessModule.addToList(guild, list)
         context.send().success("Added `$guild` to the $list list").queue()
         if (list == AccessModule.WhitelistMode.BLACKLIST) {
-            Bot.shardManager.getGuildById(guild)?.leave()?.queue()
+            shardManager.getGuildById(guild)?.leave()?.queue()
         }
     }
 
@@ -64,8 +65,8 @@ class CommandGuildAccess @Inject constructor(private val accessModule: AccessMod
         }
 
         val guilds = accessModule.getList(list).map { it ->
-            if (Bot.shardManager.getGuildById(it) != null) {
-                val guild = Bot.shardManager.getGuildById(it)!!
+            if (shardManager.getGuildById(it) != null) {
+                val guild = shardManager.getGuildById(it)!!
                 "${guild.name} (`${guild.id}`)"
             } else {
                 it
@@ -93,10 +94,10 @@ class CommandGuildAccess @Inject constructor(private val accessModule: AccessMod
         context.channel.sendMessage(
                 "Are you sure you want to import all guilds into the whitelist?").queue { msg ->
             WaitUtils.confirmYesNo(msg, context.author, {
-                Bot.shardManager.guilds.forEach { g ->
+                shardManager.guilds.forEach { g ->
                     accessModule.addToList(g.id, AccessModule.WhitelistMode.WHITELIST)
                 }
-                msg.editMessage("Done! Added ${Bot.shardManager.guilds.size} to the list").queue()
+                msg.editMessage("Done! Added ${shardManager.guilds.size} to the list").queue()
             })
         }
     }

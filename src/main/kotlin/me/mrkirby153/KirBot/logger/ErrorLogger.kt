@@ -26,7 +26,7 @@ object ErrorLogger {
     private val gson = Gson()
 
     private val channel: TextChannel? by lazy {
-         AdminControl.logChannel
+         Bot.applicationContext.get(AdminControl::class.java).logChannel
     }
 
     init {

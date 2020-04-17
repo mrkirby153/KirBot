@@ -8,10 +8,12 @@ import me.mrkirby153.KirBot.command.args.CommandContext
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.deleteAfter
 import net.dv8tion.jda.api.MessageBuilder
+import net.dv8tion.jda.api.sharding.ShardManager
 import java.util.concurrent.TimeUnit
+import javax.inject.Inject
 
 
-class CommandGuildChat {
+class CommandGuildChat @Inject constructor(private val shardManager: ShardManager) {
 
     private val lastChannel = mutableMapOf<String, String>()
     @AdminCommand
@@ -24,7 +26,7 @@ class CommandGuildChat {
 
         lastChannel[context.author.id] = channel
 
-        val resolvedChannel = Bot.shardManager.shards.flatMap { it.guilds }.flatMap { it.textChannels }.firstOrNull { it.id == channel }
+        val resolvedChannel = shardManager.shards.flatMap { it.guilds }.flatMap { it.textChannels }.firstOrNull { it.id == channel }
                 ?: throw CommandException(
                         "That channel was not found!")
         val msg = cmdContext.get<String>("msg")

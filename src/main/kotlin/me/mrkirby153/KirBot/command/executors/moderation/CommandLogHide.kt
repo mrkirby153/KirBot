@@ -13,10 +13,12 @@ import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import me.mrkirby153.KirBot.utils.toTypedArray
 import net.dv8tion.jda.api.entities.User
+import net.dv8tion.jda.api.sharding.ShardManager
 import org.json.JSONArray
+import javax.inject.Inject
 
 
-class CommandModlogs {
+class CommandModlogs @Inject constructor(private val shardManager: ShardManager){
 
     @Command(name = "hide", arguments = ["<user:user>"], clearance = CLEARANCE_ADMIN,
             category = CommandCategory.MODERATION, parent = "modlog")
@@ -82,7 +84,7 @@ class CommandModlogs {
         context.send().text(buildString {
             appendln("The following users are hidden from the logs: ```")
             currentlyHidden.forEach {
-                val user = Bot.shardManager.getUserById(it)
+                val user = shardManager.getUserById(it)
                 if (user != null) {
                     appendln(user.nameAndDiscrim)
                 } else {

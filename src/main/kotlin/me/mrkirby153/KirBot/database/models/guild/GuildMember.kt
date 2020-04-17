@@ -8,6 +8,7 @@ import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.kcutils.utils.IdGenerator
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.User
+import net.dv8tion.jda.api.sharding.ShardManager
 
 @Table("guild_members")
 class GuildMember(member: Member? = null) : Model() {
@@ -34,7 +35,7 @@ class GuildMember(member: Member? = null) : Model() {
     var muted = false
 
     var user: User?
-        get() = Bot.shardManager.getUserById(this.userId)
+        get() = Bot.applicationContext.get(ShardManager::class.java).getUserById(this.userId)
         set(user) {
             if (user != null) {
                 this.userId = user.id
@@ -62,7 +63,7 @@ class GuildMember(member: Member? = null) : Model() {
                 userId).get()
 
     fun updateMember() {
-        val guild = Bot.shardManager.getGuildById(this.serverId) ?: return
+        val guild = Bot.applicationContext.get(ShardManager::class.java).getGuildById(this.serverId) ?: return
         val member = guild.getMemberById(this.userId)
         if (member == null) {
             Bot.LOG.debug("Guild member $this was not found (left the guild?) deleting")

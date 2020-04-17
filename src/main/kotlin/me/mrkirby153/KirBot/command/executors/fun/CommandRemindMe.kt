@@ -17,11 +17,13 @@ import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent
+import net.dv8tion.jda.api.sharding.ShardManager
 import java.text.SimpleDateFormat
 import java.util.concurrent.TimeUnit
+import javax.inject.Inject
 
 
-class CommandRemindMe {
+class CommandRemindMe @Inject constructor(private val scheduler: Scheduler){
 
     @Command(name = "remind", arguments = ["<time:string>", "<query:string...>"],
             category = CommandCategory.FUN)
@@ -35,7 +37,7 @@ class CommandRemindMe {
             throw CommandException("I need something to remind you about!")
         }
 
-        ModuleManager[Scheduler::class].submit(
+        scheduler.submit(
                 RemindAction(System.currentTimeMillis(), context.guild.id, context.channel.id,
                         context.author.id,
                         query), time, TimeUnit.MILLISECONDS)
@@ -53,8 +55,9 @@ class CommandRemindMe {
                        val query: String) : Schedulable {
 
         override fun run() {
-            Bot.shardManager.getUserById(user)?.let { user ->
-                Bot.shardManager.getGuildById(guild)?.let {
+            val shardManager = Bot.applicationContext.get(ShardManager::class.java)
+            shardManager.getUserById(user)?.let { user ->
+                shardManager.getGuildById(guild)?.let {
                     it.getTextChannelById(channel)?.sendMessage(
                             "<@${this.user}> ${Time.formatLong(
                                     System.currentTimeMillis() - startTime).toLowerCase()} ago, you asked me to remind you about `$query`. React with $RED_TICK to delete this message")?.queue {

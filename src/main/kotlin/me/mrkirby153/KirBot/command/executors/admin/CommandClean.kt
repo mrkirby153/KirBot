@@ -14,9 +14,11 @@ import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.checkPermissions
 import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.api.Permission
+import net.dv8tion.jda.api.sharding.ShardManager
 import java.util.concurrent.CompletableFuture
+import javax.inject.Inject
 
-class CommandClean {
+class CommandClean @Inject constructor(private val shardManager: ShardManager) {
 
     private val confirmAmount = 100
 
@@ -100,7 +102,7 @@ class CommandClean {
             val cf = mutableListOf<CompletableFuture<*>>()
             var failedChannels = 0
             buckets.forEach { (channelId, messages) ->
-                val channel = Bot.shardManager.getTextChannelById(channelId)
+                val channel = shardManager.getTextChannelById(channelId)
                 if (channel == null || !channel.checkPermissions(Permission.MESSAGE_MANAGE)) {
                     failedChannels++
                     return@forEach

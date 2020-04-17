@@ -6,12 +6,13 @@ import me.mrkirby153.KirBot.module.Module
 import me.mrkirby153.KirBot.utils.Context
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.events.message.MessageUpdateEvent
+import javax.inject.Inject
 
 
-class Commands : Module("commands") {
+class Commands @Inject constructor(private val commandExecutor: CommandExecutor) : Module("commands") {
 
     override fun onLoad() {
-        CommandExecutor.loadAll()
+        commandExecutor.loadAll()
     }
 
     @Subscribe
@@ -21,7 +22,7 @@ class Commands : Module("commands") {
 
         val context = Context(event)
 
-        CommandExecutor.executeAsync(context)
+        commandExecutor.executeAsync(context)
     }
 
     @Subscribe
@@ -34,7 +35,7 @@ class Commands : Module("commands") {
                     return
 
                 val context = Context(event.message)
-                CommandExecutor.executeAsync(context)
+                commandExecutor.executeAsync(context)
             }
     }
 }

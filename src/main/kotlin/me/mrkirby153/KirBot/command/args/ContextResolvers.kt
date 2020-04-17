@@ -1,9 +1,15 @@
 package me.mrkirby153.KirBot.command.args
 
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.inject.Injectable
+import net.dv8tion.jda.api.sharding.ShardManager
 import java.util.regex.Pattern
+import javax.inject.Inject
+import javax.inject.Singleton
 
-object ContextResolvers {
+@Injectable
+@Singleton
+class ContextResolvers @Inject constructor(private val shardManager: ShardManager) {
 
     private val resolvers = mutableMapOf<String, (ArgumentList) -> Any?>()
 
@@ -79,7 +85,7 @@ object ContextResolvers {
             if (id.toLongOrNull() == null)
                 throw ArgumentParseException("Cannot convert `$id` to user")
 
-            return@registerResolver Bot.shardManager.getUserById(id)
+            return@registerResolver shardManager.getUserById(id)
                     ?: throw ArgumentParseException(
                             "The user `$id` was not found")
         }

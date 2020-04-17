@@ -3,8 +3,10 @@ package me.mrkirby153.KirBot.modules
 import me.mrkirby153.KirBot.module.Module
 import me.mrkirby153.KirBot.redis.RedisConnector
 import me.mrkirby153.KirBot.utils.redis.RedisConnection
+import net.dv8tion.jda.api.sharding.ShardManager
+import javax.inject.Inject
 
-class Redis : Module("redis") {
+class Redis @Inject constructor(private val shardManager: ShardManager): Module("redis") {
 
     lateinit var redisConnection: RedisConnection
 
@@ -21,7 +23,7 @@ class Redis : Module("redis") {
         this.redisConnection = RedisConnection(host, port,
                 if (password.isEmpty()) null else password, dbNum)
 
-        connector = RedisConnector(redisConnection)
+        connector = RedisConnector(shardManager, redisConnection)
 
         connector.listen()
     }

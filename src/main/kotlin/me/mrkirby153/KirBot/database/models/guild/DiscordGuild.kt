@@ -5,6 +5,7 @@ import com.mrkirby153.bfs.annotations.Table
 import com.mrkirby153.bfs.model.SoftDeletingModel
 import me.mrkirby153.KirBot.Bot
 import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.sharding.ShardManager
 
 @Table("guild")
 class DiscordGuild(guild: Guild? = null) : SoftDeletingModel() {
@@ -19,7 +20,7 @@ class DiscordGuild(guild: Guild? = null) : SoftDeletingModel() {
     var owner = ""
 
     val ownerUser
-        get() = Bot.shardManager.getUserById(this.owner)
+        get() = Bot.applicationContext.get(ShardManager::class.java).getUserById(this.owner)
 
 
     init {

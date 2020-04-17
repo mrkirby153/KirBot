@@ -5,6 +5,7 @@ import com.mrkirby153.bfs.annotations.Table
 import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.Bot
 import net.dv8tion.jda.api.entities.User
+import net.dv8tion.jda.api.sharding.ShardManager
 
 @Table("user_info")
 class UserInfo : Model() {
@@ -18,5 +19,5 @@ class UserInfo : Model() {
     var lastName = ""
 
     val user: User?
-        get() = Bot.shardManager.getUserById(this.id)
+        get() = Bot.applicationContext.get(ShardManager::class.java).getUserById(this.id)
 }

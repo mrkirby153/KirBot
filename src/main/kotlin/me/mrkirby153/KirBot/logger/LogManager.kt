@@ -19,6 +19,7 @@ import me.mrkirby153.KirBot.utils.uploadToArchive
 import me.mrkirby153.KirBot.utils.urlEscape
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.TextChannel
+import net.dv8tion.jda.api.sharding.ShardManager
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
@@ -86,7 +87,7 @@ class LogManager(private val guild: KirBotGuild) {
             return
         val msg = Model.where(GuildMessage::class.java, "id", id).first() ?: return
 
-        val author = Bot.shardManager.getUserById(msg.author) ?: return
+        val author = Bot.applicationContext.get(ShardManager::class.java).getUserById(msg.author) ?: return
         val chan = guild.getTextChannelById(msg.channel) ?: return
 
         var ignored = emptyList<String>()

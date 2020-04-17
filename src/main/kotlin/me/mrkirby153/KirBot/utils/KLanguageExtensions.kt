@@ -16,6 +16,7 @@ import net.dv8tion.jda.api.entities.MessageChannel
 import net.dv8tion.jda.api.entities.Role
 import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.entities.User
+import net.dv8tion.jda.api.sharding.ShardManager
 import net.dv8tion.jda.api.utils.MarkdownSanitizer
 import org.json.JSONArray
 import java.io.InputStream
@@ -270,7 +271,7 @@ fun String.resolveMentions(): String {
  * @return A string with role mentions resolved
  */
 fun String.resolveRoles(): String {
-    val roleList = Bot.shardManager.shards.flatMap { it.roles }
+    val roleList = Bot.applicationContext.get(ShardManager::class.java).shards.flatMap { it.roles }
     val regex = Regex("<@&(\\d{17,18})>")
     var mutableMsg = this
     var matched: Boolean
@@ -295,7 +296,7 @@ fun String.resolveRoles(): String {
  * @return A string with the user mentions resolved
  */
 fun String.resolveUserMentions(): String {
-    val members = Bot.shardManager.shards.flatMap { it.users }
+    val members = Bot.applicationContext.get(ShardManager::class.java).shards.flatMap { it.users }
     val regex = Regex("<@!?(\\d{17,18})>")
     var mutableMsg = this
     var matched: Boolean

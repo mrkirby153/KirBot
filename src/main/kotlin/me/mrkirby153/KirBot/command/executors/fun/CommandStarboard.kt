@@ -13,9 +13,10 @@ import me.mrkirby153.KirBot.modules.StarboardModule
 import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
+import net.dv8tion.jda.api.sharding.ShardManager
 import javax.inject.Inject
 
-class CommandStarboard @Inject constructor(private val starboardModule: StarboardModule) {
+class CommandStarboard @Inject constructor(private val starboardModule: StarboardModule, private val shardManager: ShardManager) {
 
     @Command(name = "update", clearance = CLEARANCE_MOD, arguments = ["<mid:snowflake>"],
             parent = "starboard", category = CommandCategory.FUN)
@@ -65,7 +66,7 @@ class CommandStarboard @Inject constructor(private val starboardModule: Starboar
     @CommandDescription(
             "Blocks a user from the starboard. They cannot star messages and their messages cannot be starred")
     fun blockUser(context: Context, cmdContext: CommandContext) {
-        val user = Bot.shardManager.getUserById(cmdContext.getNotNull<String>("user"))
+        val user = shardManager.getUserById(cmdContext.getNotNull<String>("user"))
                 ?: throw CommandException("User not found")
         starboardModule.block(context.guild, user)
         context.send().success("Blocked ${user.nameAndDiscrim} from the starboard", true).queue()
@@ -76,7 +77,7 @@ class CommandStarboard @Inject constructor(private val starboardModule: Starboar
     @LogInModlogs
     @CommandDescription("Unblocks a user from the starboard")
     fun unblockUser(context: Context, cmdContext: CommandContext) {
-        val user = Bot.shardManager.getUserById(cmdContext.getNotNull<String>("user"))
+        val user = shardManager.getUserById(cmdContext.getNotNull<String>("user"))
                 ?: throw CommandException("User not found")
         starboardModule.unblock(context.guild, user)
         context.send().success("Unblocked ${user.nameAndDiscrim} from the starboard", true).queue()

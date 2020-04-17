@@ -57,12 +57,7 @@ class BackfillJob(val jobId: String, val guild: Guild, val id: String, val jobTy
 
 
     fun backfillGuild() {
-        val guild = Bot.shardManager.getGuildById(this.id)
-        if (guild == null) {
-            log(":warning: Guild `${this.id}` was not found")
-            return
-        }
-        val remainingChannels = LinkedList<String>(guild.textChannels.map { it.id })
+        val remainingChannels = LinkedList(guild.textChannels.map { it.id })
         var currentChannel = ""
         fun getNextChannel() {
             currentChannel = if (remainingChannels.peek() != null) {

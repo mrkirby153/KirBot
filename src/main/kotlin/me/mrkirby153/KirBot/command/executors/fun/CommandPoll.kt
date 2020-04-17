@@ -17,6 +17,7 @@ import me.mrkirby153.KirBot.utils.escapeMarkdown
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.api.Permission
+import net.dv8tion.jda.api.sharding.ShardManager
 import java.awt.Color
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
@@ -101,7 +102,7 @@ class CommandPoll @Inject constructor(private val scheduler: Scheduler){
                    var avatarUrl: String, var nameAndDiscrim: String, var endsAt: Long,
                    var options: Array<String>, var question: String?) : Schedulable {
         override fun run() {
-            val guild = Bot.shardManager.getGuildById(this.guildId) ?: return
+            val guild = Bot.applicationContext.get(ShardManager::class.java).getGuildById(this.guildId) ?: return
             val channel = guild.getTextChannelById(channelId) ?: return
             val message = channel.retrieveMessageById(messageId).complete() ?: return
             message.editMessage(embed("Poll") {

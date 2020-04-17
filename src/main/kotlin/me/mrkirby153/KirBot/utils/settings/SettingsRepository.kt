@@ -8,6 +8,7 @@ import com.mrkirby153.bfs.sql.elements.Pair
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.models.GuildSetting
 import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.sharding.ShardManager
 
 object SettingsRepository {
 
@@ -69,7 +70,7 @@ object SettingsRepository {
             settingsCache.put("$guildId-$key", newValue) // Update our cached value
         else
             settingsCache.invalidate("$guildId-$key")
-        val guild = Bot.shardManager.getGuildById(guildId) ?: return
+        val guild = Bot.applicationContext.get(ShardManager::class.java).getGuildById(guildId) ?: return
         settingsListeners[key]?.forEach {
             try {
                 it.invoke(guild, newValue)

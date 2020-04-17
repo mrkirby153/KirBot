@@ -4,20 +4,26 @@ import club.minnced.discord.webhook.WebhookClient
 import club.minnced.discord.webhook.WebhookClientBuilder
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.event.Subscribe
+import me.mrkirby153.KirBot.inject.Injectable
 import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.events.DisconnectEvent
 import net.dv8tion.jda.api.events.ResumedEvent
 import net.dv8tion.jda.api.requests.CloseCode
+import net.dv8tion.jda.api.sharding.ShardManager
 import java.text.SimpleDateFormat
 import java.util.LinkedList
+import javax.inject.Inject
+import javax.inject.Singleton
 
-object AdminControl {
+@Injectable
+@Singleton
+class AdminControl @Inject constructor(private val shardManager: ShardManager) {
 
     val logChannel: TextChannel?
         get() {
-            Bot.shardManager.shards.flatMap { it.guilds }.forEach { guild ->
+            shardManager.shards.flatMap { it.guilds }.forEach { guild ->
                 if (Bot.properties.getProperty("control-channel") == null)
                     return null
                 if (guild.getTextChannelById(Bot.properties.getProperty("control-channel")) != null)

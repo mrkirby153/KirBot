@@ -1,6 +1,7 @@
 package me.mrkirby153.KirBot.module
 
 import me.mrkirby153.KirBot.Bot
+import net.dv8tion.jda.api.sharding.ShardManager
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 
@@ -23,7 +24,7 @@ abstract class Module(val name: String) {
         onLoad()
         debug("Registering listener")
         if (registerListeners)
-            Bot.shardManager.addEventListener(this)
+            Bot.applicationContext.get(ShardManager::class.java).addEventListener(this)
         debug("Registering periodic tasks")
         this.javaClass.declaredMethods.filter {
             it.getAnnotation(Periodic::class.java) != null
@@ -51,7 +52,7 @@ abstract class Module(val name: String) {
         onUnload()
         debug("Removing listener")
         if (unregisterListener)
-            Bot.shardManager.removeEventListener(this)
+            Bot.applicationContext.get(ShardManager::class.java).removeEventListener(this)
         periodicTasks.clear()
         log("Unloading complete")
         loaded = false

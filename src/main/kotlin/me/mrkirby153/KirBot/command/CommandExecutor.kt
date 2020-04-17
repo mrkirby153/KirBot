@@ -9,9 +9,11 @@ import me.mrkirby153.KirBot.command.annotations.IgnoreWhitelist
 import me.mrkirby153.KirBot.command.annotations.LogInModlogs
 import me.mrkirby153.KirBot.command.args.ArgumentParseException
 import me.mrkirby153.KirBot.command.args.ArgumentParser
+import me.mrkirby153.KirBot.command.args.ContextResolvers
 import me.mrkirby153.KirBot.command.tree.CommandNode
 import me.mrkirby153.KirBot.command.tree.CommandNodeMetadata
 import me.mrkirby153.KirBot.database.models.CustomCommand
+import me.mrkirby153.KirBot.inject.Injectable
 import me.mrkirby153.KirBot.logger.ErrorLogger
 import me.mrkirby153.KirBot.logger.LogEvent
 import me.mrkirby153.KirBot.stats.Statistics
@@ -26,6 +28,7 @@ import me.mrkirby153.KirBot.utils.toTypedArray
 import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.api.entities.ChannelType
 import net.dv8tion.jda.api.entities.GuildChannel
+import net.dv8tion.jda.api.sharding.ShardManager
 import org.reflections.Reflections
 import org.reflections.scanners.MethodAnnotationsScanner
 import java.lang.reflect.InvocationTargetException
@@ -33,9 +36,11 @@ import java.util.LinkedList
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
+import javax.inject.Inject
 import kotlin.system.measureTimeMillis
 
-object CommandExecutor {
+@Injectable
+class CommandExecutor @Inject constructor(private val shardManager: ShardManager, private val contextResolvers: ContextResolvers) {
 
     private val rootNode = CommandNode("<<ROOT>>").apply {
         rootNode = true
@@ -59,7 +64,7 @@ object CommandExecutor {
 
             val instances = commands.map { Bot.applicationContext.newInstance(it) }
 
-            instances.forEach(CommandExecutor::register)
+            instances.forEach(this::register)
         }
         Bot.LOG.info("Commands registered in ${Time.format(1, time, Time.TimeUnit.FIT)}")
     }
@@ -201,7 +206,7 @@ object CommandExecutor {
             return
         }
         Bot.LOG.debug("Beginning parsing of arguments: [${args.joinToString(", ")}]")
-        val parser = ArgumentParser(args.toTypedArray())
+        val parser = ArgumentParser(contextResolvers, args.toTypedArray())
 
         val cmdContext = try {
             parser.parse(metadata.arguments.toTypedArray())
@@ -306,7 +311,7 @@ object CommandExecutor {
     }
 
     private fun isMention(message: String): Boolean {
-        return message.matches(Regex("^<@!?${Bot.shardManager.getShardById(0)!!.selfUser.id}>.*"))
+        return message.matches(Regex("^<@!?${shardManager.getShardById(0)!!.selfUser.id}>.*"))
     }
 
     fun executeCustomCommand(context: Context, command: String, args: Array<String>) {

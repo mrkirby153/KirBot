@@ -28,6 +28,7 @@ import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRoleRemoveEvent
 import net.dv8tion.jda.api.exceptions.ErrorResponseException
 import net.dv8tion.jda.api.requests.ErrorResponse
+import net.dv8tion.jda.api.sharding.ShardManager
 import java.sql.Timestamp
 import java.time.Instant
 import java.util.concurrent.CompletableFuture
@@ -39,7 +40,7 @@ import javax.inject.Singleton
 
 @Singleton
 @Injectable
-class Infractions @Inject constructor(private val logger: Logger) {
+class Infractions @Inject constructor(private val logger: Logger, private val shardManager: ShardManager) {
 
     private var nextTask: ScheduledFuture<*>? = null
     private var nextInfractionId: Long? = null
@@ -89,8 +90,8 @@ class Infractions @Inject constructor(private val logger: Logger) {
 
 
     private fun onInfractionExpire(infraction: Infraction) {
-        val guild = Bot.shardManager.getGuildById(infraction.guild)
-        val user = Bot.shardManager.getUserById(infraction.userId)
+        val guild = shardManager.getGuildById(infraction.guild)
+        val user = shardManager.getUserById(infraction.userId)
         if (guild == null ) {
             // Guild was not found. Revoke and do nothing
             infraction.revoke()
@@ -555,7 +556,7 @@ class Infractions @Inject constructor(private val logger: Logger) {
         if (id == "1") {
             return "Automatic"
         } else {
-            val user = Bot.shardManager.getUserById(id)?.nameAndDiscrim
+            val user = shardManager.getUserById(id)?.nameAndDiscrim
             val model = Model.where(DiscordUser::class.java, "id", id).first()
 
             if (user != null) {
@@ -582,7 +583,7 @@ class Infractions @Inject constructor(private val logger: Logger) {
     }
 
     fun dmUser(user: String, guild: Guild, infraction: Infraction): CompletableFuture<DmResult> {
-        val u = Bot.shardManager.getUserById(user)
+        val u = shardManager.getUserById(user)
         if (u != null)
             return dmUser(u, guild, infraction)
         val reason = infraction.reason ?: return CompletableFuture.completedFuture(

@@ -11,8 +11,9 @@ import me.mrkirby153.KirBot.utils.getMember
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.User
+import javax.inject.Inject
 
-class CommandSu {
+class CommandSu @Inject constructor(private val commandExecutor: CommandExecutor){
 
     @Command(name = "sudo", arguments = ["<user:user>", "<command:string...>"])
     @AdminCommand
@@ -24,7 +25,7 @@ class CommandSu {
         val c = SudoContext(context, user, command)
         Bot.LOG.warn(
                 "Executing command \"$command\" as ${c.author} - Requested by ${context.author}")
-        CommandExecutor.execute(c)
+        commandExecutor.execute(c)
     }
 
     class SudoContext(message: Message, val customAuthor: User? = null,

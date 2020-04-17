@@ -9,6 +9,7 @@ import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.Role
 import net.dv8tion.jda.api.entities.TextChannel
+import net.dv8tion.jda.api.sharding.ShardManager
 import java.util.concurrent.CompletableFuture
 
 @Table("reaction_roles")
@@ -40,7 +41,7 @@ class ReactionRole : Model() {
 
 
     var guild: Guild?
-        get() = Bot.shardManager.getGuildById(this.guildId)
+        get() = Bot.applicationContext.get(ShardManager::class.java).getGuildById(this.guildId)
         set(value) {
             if (value != null) {
                 guildId = value.id

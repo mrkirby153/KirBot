@@ -2,8 +2,9 @@ package me.mrkirby153.KirBot.logger
 
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.server.KirBotGuild
+import net.dv8tion.jda.api.sharding.ShardManager
 
-class LogPump(private val delay: Long) : Thread() {
+class LogPump(private val shardManager: ShardManager, private val delay: Long) : Thread() {
 
     init {
         isDaemon = true
@@ -19,7 +20,7 @@ class LogPump(private val delay: Long) : Thread() {
         Bot.LOG.debug("Log Pump starting up with ($delay ms delay)")
         while (running || shuttingDown) {
             try {
-                Bot.shardManager.shards.forEach { shard ->
+                shardManager.shards.forEach { shard ->
                     shard.guilds.forEach { guild ->
                         KirBotGuild[guild].logManager.process()
                     }

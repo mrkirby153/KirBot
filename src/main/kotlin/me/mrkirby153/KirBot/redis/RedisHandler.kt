@@ -2,11 +2,12 @@ package me.mrkirby153.KirBot.redis
 
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.logger.ErrorLogger
+import net.dv8tion.jda.api.sharding.ShardManager
 import org.json.JSONObject
 import org.json.JSONTokener
 import redis.clients.jedis.JedisPubSub
 
-class RedisHandler : JedisPubSub() {
+class RedisHandler(val shardManager: ShardManager) : JedisPubSub() {
 
     override fun onMessage(channel: String?, message: String?) {
         if (channel == null || message == null || channel != "kirbot")
@@ -22,8 +23,8 @@ class RedisHandler : JedisPubSub() {
             }
             val serverId = payload.optString("guild", null)
             val userId = payload.optString("user", null)
-            val server = if (serverId != null) Bot.shardManager.getGuildById(serverId) else null
-            val user = if (userId != null) Bot.shardManager.getUserById(userId) else null
+            val server = if (serverId != null) shardManager.getGuildById(serverId) else null
+            val user = if (userId != null) shardManager.getUserById(userId) else null
             val body = payload.optJSONObject("data") ?: JSONObject()
 
             Bot.LOG.debug(

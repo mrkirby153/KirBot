@@ -18,12 +18,14 @@ import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.events.message.MessageDeleteEvent
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
 import net.dv8tion.jda.api.events.message.react.MessageReactionRemoveEvent
+import net.dv8tion.jda.api.sharding.ShardManager
 import org.json.JSONArray
 import java.sql.Timestamp
 import java.time.Instant
+import javax.inject.Inject
 
 
-class StarboardModule : Module("starboard") {
+class StarboardModule @Inject constructor(private val shardManager: ShardManager): Module("starboard") {
 
     private val STAR = "⭐"
     private val GILD_STAR = "\uD83C\uDF1F"
@@ -108,7 +110,7 @@ class StarboardModule : Module("starboard") {
     fun updateStarboardMessage(guild: Guild, mid: String) {
         var entry = getStarboardEntry(mid)
         val message = Model.where(GuildMessage::class.java, "id", mid).first() ?: return
-        val apiMsg = Bot.shardManager.getGuildById(message.serverId)?.getTextChannelById(
+        val apiMsg = shardManager.getGuildById(message.serverId)?.getTextChannelById(
                 message.channel)?.retrieveMessageById(mid)?.complete()
         if (apiMsg != null) {
             // Update the star count

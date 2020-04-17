@@ -25,10 +25,11 @@ import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import me.mrkirby153.kcutils.Time
 import me.mrkirby153.kcutils.utils.TableBuilder
 import net.dv8tion.jda.api.Permission
+import net.dv8tion.jda.api.sharding.ShardManager
 import javax.inject.Inject
 import kotlin.system.measureTimeMillis
 
-class CommandInfractions @Inject constructor(private val infractions: Infractions) {
+class CommandInfractions @Inject constructor(private val infractions: Infractions, private val shardManager: ShardManager) {
 
     @Command(name = "infraction", aliases = ["inf"], clearance = CLEARANCE_MOD,
             category = CommandCategory.MODERATION)
@@ -105,7 +106,7 @@ class CommandInfractions @Inject constructor(private val infractions: Infraction
             }
             author {
                 name = user.nameAndDiscrim
-                val jdaUser = Bot.shardManager.getUserById(user.id)
+                val jdaUser = shardManager.getUserById(user.id)
                 if(jdaUser != null) {
                     iconUrl = jdaUser.effectiveAvatarUrl
                 }

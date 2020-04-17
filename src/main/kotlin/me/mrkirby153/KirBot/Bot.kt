@@ -51,6 +51,7 @@ import java.time.Instant
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
+import java.util.function.IntFunction
 import kotlin.system.measureTimeMillis
 
 object Bot {
@@ -86,7 +87,7 @@ object Bot {
 
     val applicationContext = ApplicationContext()
 
-    lateinit var shardManager: ShardManager
+    private lateinit var shardManager: ShardManager
 
 
     fun start(token: String) {
@@ -126,7 +127,6 @@ object Bot {
                 GatewayIntent.GUILD_EMOJIS)
         shardManager = DefaultShardManagerBuilder.create(gatewayIntents).apply {
             setToken(token)
-            addEventListeners(AdminControl, applicationContext.newInstance(ShardListener::class.java))
             setEventManagerProvider { PriorityEventManager() }
             setStatus(OnlineStatus.IDLE)
             setShardsTotal(numShards)
@@ -137,6 +137,11 @@ object Bot {
             if (!System.getProperty("os.name").contains("Mac"))
                 setAudioSendFactory(NativeAudioSendFactory())
         }.build()
+        applicationContext.register(shardManager)
+        val sl = applicationContext.newInstance(ShardListener::class.java)
+        val ac = applicationContext.newInstance(AdminControl::class.java)
+        shardManager.addEventListener(sl, ac)
+
 
         Bot.LOG.info("Waiting for shards to start..")
 
@@ -172,7 +177,7 @@ object Bot {
 
         HttpUtils.clearCache()
 
-        scheduler.scheduleAtFixedRate(FeedTask(), 0, 15, TimeUnit.MINUTES)
+        scheduler.scheduleAtFixedRate(applicationContext.newInstance(FeedTask::class.java), 0, 15, TimeUnit.MINUTES)
         ModuleManager.startScheduler()
         applicationContext.get(Infractions::class.java).waitForInfraction()
 
@@ -191,8 +196,8 @@ object Bot {
                 memberSet.add(it.user.id)
         }
         val guildCount = shardManager.shards.flatMap { it.guilds }.count()
-        AdminControl.sendQueuedMessages()
-        AdminControl.log("Bot startup complete in ${Time.formatLong(
+        applicationContext.get(AdminControl::class.java).sendQueuedMessages()
+        applicationContext.get(AdminControl::class.java).log("Bot startup complete in ${Time.formatLong(
                 System.currentTimeMillis() - startTime).toLowerCase()}. On $guildCount guilds with ${memberSet.size} users")
 
         CommandDocumentationGenerator.generate(files.data.child("commands.md"))
@@ -244,7 +249,7 @@ object Bot {
 
     fun stop() {
         state = BotState.SHUTTING_DOWN
-        AdminControl.log("Bot shutting down...")
+        applicationContext.get(AdminControl::class.java).log("Bot shutting down...")
         shardManager.shutdown()
         ModuleManager.unloadAll()
         LOG.info("Bot is disconnecting from Discord")

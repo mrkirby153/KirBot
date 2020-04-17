@@ -16,9 +16,10 @@ import me.mrkirby153.kcutils.child
 import net.dv8tion.jda.api.Permission
 import java.awt.Color
 import java.util.LinkedList
+import javax.inject.Inject
 
 
-class CommandHelp {
+class CommandHelp @Inject constructor(private val commandExecutor: CommandExecutor){
 
     @Command(name = "help", arguments = ["[command:string...]"],
             permissions = [Permission.MESSAGE_EMBED_LINKS],
@@ -43,7 +44,7 @@ class CommandHelp {
 
     private fun displayAllCommands(context: Context) {
         val cmdPrefix = GuildSettings.commandPrefix.get(context.guild)
-        val root = CommandExecutor.getRoot()
+        val root = commandExecutor.getRoot()
         val categorized = root.getChildren().filter { it.metadata != null && it.metadata?.admin == false }.groupBy { it.metadata!!.category }
         var msg = ""
         fun sendHelp() {
@@ -91,7 +92,7 @@ class CommandHelp {
 
     private fun displayHelpForCommand(context: Context, args: Array<String>) {
         val cmdPrefix = GuildSettings.commandPrefix.get(context.guild)
-        val node = CommandExecutor.resolve(LinkedList(args.toList())) ?: throw CommandException(
+        val node = commandExecutor.resolve(LinkedList(args.toList())) ?: throw CommandException(
                 "No command was found")
         val cmdString = "$cmdPrefix${node.parentString.trim()} ${node.name}"
         context.channel.sendMessage(embed {

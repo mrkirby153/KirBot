@@ -10,6 +10,7 @@ import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.GuildChannel
 import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.entities.VoiceChannel
+import net.dv8tion.jda.api.sharding.ShardManager
 
 @Table("channels")
 class Channel(channel: GuildChannel? = null) : Model() {
@@ -36,7 +37,7 @@ class Channel(channel: GuildChannel? = null) : Model() {
         }
 
     var guild: Guild?
-        get() = Bot.shardManager.getGuildById(this.guildId)
+        get() = Bot.applicationContext.get(ShardManager::class.java).getGuildById(this.guildId)
         set(guild) {
             this.guildId = guild!!.id
         }

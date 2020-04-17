@@ -24,10 +24,11 @@ import me.mrkirby153.KirBot.utils.findMessage
 import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.sanitize
 import net.dv8tion.jda.api.Permission
+import net.dv8tion.jda.api.sharding.ShardManager
 import java.awt.Color
 import javax.inject.Inject
 
-class CommandReactionRole @Inject constructor(private val reactionRoles: ReactionRoles) {
+class CommandReactionRole @Inject constructor(private val reactionRoles: ReactionRoles, private val shardManager: ShardManager) {
 
     val emojiRegex = Regex("<a?:.*:([0-9]*)>")
 
@@ -105,7 +106,7 @@ class CommandReactionRole @Inject constructor(private val reactionRoles: Reactio
             val id = emojiRegex.find(emojiRaw)?.groups?.get(1)?.value ?: throw CommandException(
                     "Regex match failed. This shouldn't happen")
             var found = false
-            Bot.shardManager.guilds.forEach { guild ->
+            shardManager.guilds.forEach { guild ->
                 if (id in guild.emotes.map { it.id })
                     found = true
             }

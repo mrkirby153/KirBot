@@ -8,7 +8,7 @@ import java.io.File
 object CommandDocumentationGenerator {
 
     fun generate(output: File) {
-        val commands = CommandExecutor.getAllLeaves()
+        val commands = Bot.applicationContext.get(CommandExecutor::class.java).getAllLeaves()
 
         val builder = StringBuilder()
         builder.appendln("# Command List")

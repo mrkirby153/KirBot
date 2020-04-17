@@ -14,9 +14,11 @@ import net.dv8tion.jda.api.events.guild.voice.GuildVoiceJoinEvent
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceLeaveEvent
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceMoveEvent
 import net.dv8tion.jda.api.hooks.SubscribeEvent
+import net.dv8tion.jda.api.sharding.ShardManager
+import javax.inject.Inject
 
 
-class MusicModule : Module("music") {
+class MusicModule @Inject constructor(private val shardManager: ShardManager): Module("music") {
 
     val playingGuilds = mutableSetOf<String>()
 
@@ -28,7 +30,7 @@ class MusicModule : Module("music") {
 
     @Periodic(5)
     fun updateQueue() {
-        playingGuilds.mapNotNull { Bot.shardManager.getGuildById(it) }.map {
+        playingGuilds.mapNotNull { shardManager.getGuildById(it) }.map {
             getManager(it)
         }.forEach {
             it.updateQueue()

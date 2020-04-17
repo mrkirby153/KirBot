@@ -4,10 +4,11 @@ import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.logger.ErrorLogger
 import me.mrkirby153.KirBot.utils.redis.RedisConnection
 import me.mrkirby153.kcutils.Time
+import net.dv8tion.jda.api.sharding.ShardManager
 
 private const val MAX_RETRIES = 4
 
-class RedisConnector(val connector: RedisConnection) {
+class RedisConnector(val shardManager: ShardManager, val connector: RedisConnection) {
 
     var running = true
 
@@ -19,7 +20,7 @@ class RedisConnector(val connector: RedisConnection) {
                 try {
                     connector.get().use {
                         retries = 0
-                        it.subscribe(RedisHandler(), "kirbot")
+                        it.subscribe(RedisHandler(shardManager), "kirbot")
                     }
                 } catch (e: Exception) {
                     ErrorLogger.logThrowable(e)

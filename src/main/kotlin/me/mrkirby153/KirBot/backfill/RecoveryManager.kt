@@ -10,6 +10,7 @@ import me.mrkirby153.KirBot.utils.toSnowflake
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.TextChannel
+import net.dv8tion.jda.api.sharding.ShardManager
 import java.sql.Timestamp
 import java.time.Instant
 import java.util.Date
@@ -21,11 +22,11 @@ import javax.inject.Singleton
 
 @Singleton
 @Injectable
-class RecoveryManager @Inject constructor(private val database: Database){
+class RecoveryManager @Inject constructor(private val database: Database, private val shardManager: ShardManager) {
 
     fun globalRecovery(duration: Long, pool: Int = 10): ActiveRecovery {
         val threadPool = Executors.newFixedThreadPool(pool)
-        val channels = Bot.shardManager.textChannels.filter {
+        val channels = shardManager.textChannels.filter {
             it.checkPermissions(Permission.MESSAGE_READ, Permission.MESSAGE_HISTORY)
         }
         Bot.LOG.info("!!! Global Recovery Started (${channels.size} channels) !!!")

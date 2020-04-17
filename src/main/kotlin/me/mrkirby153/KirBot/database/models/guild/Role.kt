@@ -6,6 +6,7 @@ import com.mrkirby153.bfs.annotations.Table
 import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.Bot
 import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.sharding.ShardManager
 
 @Table("roles")
 class Role(role: net.dv8tion.jda.api.entities.Role? = null) : Model() {
@@ -23,7 +24,7 @@ class Role(role: net.dv8tion.jda.api.entities.Role? = null) : Model() {
     var order = 0
 
     var guild: Guild?
-        get() = Bot.shardManager.getGuildById(serverId)
+        get() = Bot.applicationContext.get(ShardManager::class.java).getGuildById(serverId)
         set(guild) {
             if (guild == null) {
                 return

@@ -5,12 +5,14 @@ import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.models.rss.RssFeed
 import me.mrkirby153.KirBot.utils.embed.b
 import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.sharding.ShardManager
 import java.sql.Timestamp
+import javax.inject.Inject
 
-class FeedTask : Runnable {
+class FeedTask @Inject constructor(val shardManager: ShardManager) : Runnable {
 
     override fun run() {
-        Bot.shardManager.shards.forEach { shard ->
+        shardManager.shards.forEach { shard ->
             shard.guilds.forEach { guild ->
                 // Get the feeds for the guild
                 Bot.LOG.debug("Checking feeds for ${guild.id}")

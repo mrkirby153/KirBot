@@ -4,6 +4,7 @@ import com.mrkirby153.bfs.annotations.Table
 import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.Bot
 import net.dv8tion.jda.api.entities.User
+import net.dv8tion.jda.api.sharding.ShardManager
 
 @Table("seen_users")
 class DiscordUser(user: User? = null) : Model() {
@@ -17,7 +18,7 @@ class DiscordUser(user: User? = null) : Model() {
     var bot: Boolean = false
 
     var user: User?
-        get() = Bot.shardManager.getUserById(this.id)
+        get() = Bot.applicationContext.get(ShardManager::class.java).getUserById(this.id)
         set(user) {
             this.id = user?.id ?: ""
         }
@@ -37,7 +38,7 @@ class DiscordUser(user: User? = null) : Model() {
     }
 
     fun updateUser(){
-        val u = Bot.shardManager.getUserById(this.id) ?: return
+        val u = Bot.applicationContext.get(ShardManager::class.java).getUserById(this.id) ?: return
         this.username = u.name
         this.discriminator = u.discriminator.toInt()
         this.bot = u.isBot

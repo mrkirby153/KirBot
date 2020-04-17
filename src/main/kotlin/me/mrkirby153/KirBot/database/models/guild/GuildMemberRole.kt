@@ -9,6 +9,7 @@ import me.mrkirby153.kcutils.utils.IdGenerator
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.User
+import net.dv8tion.jda.api.sharding.ShardManager
 
 @Table("guild_member_roles")
 class GuildMemberRole(member: Member? = null, role: net.dv8tion.jda.api.entities.Role? = null) : Model() {
@@ -27,13 +28,13 @@ class GuildMemberRole(member: Member? = null, role: net.dv8tion.jda.api.entities
 
 
     var server: Guild?
-        get() = Bot.shardManager.getGuildById(this.serverId)
+        get() = Bot.applicationContext.get(ShardManager::class.java).getGuildById(this.serverId)
         set(guild) {
             this.serverId = guild!!.id
         }
 
     var user: User?
-        get() = Bot.shardManager.getUserById(this.userId)
+        get() = Bot.applicationContext.get(ShardManager::class.java).getUserById(this.userId)
         set(user) {
             this.userId = user!!.id
         }

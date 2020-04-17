@@ -17,6 +17,7 @@ import me.mrkirby153.kcutils.utils.argparser.Option
 import net.dv8tion.jda.api.OnlineStatus
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Activity
+import net.dv8tion.jda.api.sharding.ShardManager
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -52,7 +53,7 @@ class CommandClearArchives @Inject constructor(private val redis: Redis){
 }
 
 
-class CommandSetStatus {
+class CommandSetStatus @Inject constructor(private val shardManager: ShardManager){
     @Command(name = "setstatus",
             arguments = ["<status:string>", "[type:string]", "[game:string...]"])
     @AdminCommand
@@ -74,18 +75,18 @@ class CommandSetStatus {
                         "type")}` was not found. Valid values are `${Activity.ActivityType.values().joinToString(
                         ", ")}`")
             }
-            Bot.shardManager.setActivity(Activity.of(gameType, gameString?: ""))
+            shardManager.setActivity(Activity.of(gameType, gameString?: ""))
         }
         if (gameTypeRaw == null && gameString == null) {
-            Bot.shardManager.setGame(null)
+            shardManager.setActivity(null)
         }
-        Bot.shardManager.setStatus(onlineStatus)
+        shardManager.setStatus(onlineStatus)
         context.send().success("Presence has been updated!").queue()
     }
 
 }
 
-class CommandRestart {
+class CommandRestart @Inject constructor(private val shardManager: ShardManager){
 
     @Command(name = "restart", arguments = ["[query:string...]"])
     @AdminCommand
@@ -107,18 +108,18 @@ class CommandRestart {
         val shard = parsed["shard"]
 
         if (guild != null) {
-            val guildShard = guild.toLong().shr(22) % Bot.shardManager.shardsTotal
+            val guildShard = guild.toLong().shr(22) % shardManager.shardsTotal
             context.channel.sendMessage(
                     "Guild $guild is on shard `$guildShard`. Restarting it...").queue()
-            Bot.shardManager.restart(guildShard.toInt())
+            shardManager.restart(guildShard.toInt())
         }
         if (shard != null) {
             if (shard.equals("all", true)) {
                 context.channel.sendMessage("Restarting all shards").queue()
-                Bot.shardManager.restart()
+                shardManager.restart()
             } else {
                 context.channel.sendMessage("Restarting shard `$shard`").queue()
-                Bot.shardManager.restart(shard.toInt())
+                shardManager.restart(shard.toInt())
             }
         }
     }

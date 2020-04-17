@@ -8,6 +8,7 @@ import me.mrkirby153.kcutils.Time
 import me.xdrop.fuzzywuzzy.FuzzySearch
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
+import net.dv8tion.jda.api.sharding.ShardManager
 import okhttp3.Request
 import java.awt.Color
 import java.awt.image.BufferedImage
@@ -194,7 +195,7 @@ fun findMessage(string: String): CompletableFuture<Message> {
         val channelId = match[2]!!
         val messageId = match[3]!!
 
-        val guild = Bot.shardManager.getGuildById(guildId.value)
+        val guild = Bot.applicationContext.get(ShardManager::class.java).getGuildById(guildId.value)
         val channel = guild?.getTextChannelById(channelId.value)
         if (guild == null || channel == null) {
             return CompletableFuture.failedFuture(NoSuchElementException("Message not found"))
@@ -206,7 +207,7 @@ fun findMessage(string: String): CompletableFuture<Message> {
         })
     } else {
         Bot.scheduler.submit {
-            Bot.shardManager.guilds.forEach guilds@{ guild ->
+            Bot.applicationContext.get(ShardManager::class.java).guilds.forEach guilds@{ guild ->
                 guild.textChannels.forEach channels@{ chan ->
                     try {
                         val msg = chan.retrieveMessageById(string).complete()

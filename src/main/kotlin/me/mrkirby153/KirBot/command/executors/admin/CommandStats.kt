@@ -10,10 +10,12 @@ import me.mrkirby153.KirBot.utils.globalAdmin
 import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.sharding.ShardManager
 import java.awt.Color
+import javax.inject.Inject
 
 
-class CommandStats {
+class CommandStats @Inject constructor(private val shardManager: ShardManager){
 
     @Command(name = "stats", category = CommandCategory.UTILITY, permissions = [Permission.MESSAGE_EMBED_LINKS])
     @CommandDescription("Displays statistics about the bot")
@@ -21,7 +23,7 @@ class CommandStats {
         var guilds = 0
         val users = mutableSetOf<String>()
 
-        for (shard in Bot.shardManager.shards) {
+        for (shard in shardManager.shards) {
             guilds += shard.guilds.size
             users.addAll(shard.users.map { it.id })
         }

@@ -8,7 +8,6 @@ import me.mrkirby153.KirBot.database.models.guild.DiscordGuild
 import me.mrkirby153.KirBot.database.models.guild.Role
 import me.mrkirby153.KirBot.event.EventPriority
 import me.mrkirby153.KirBot.event.Subscribe
-import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.AccessModule
 import me.mrkirby153.KirBot.modules.AdminControl
 import me.mrkirby153.KirBot.server.KirBotGuild
@@ -22,17 +21,13 @@ import net.dv8tion.jda.api.events.ShutdownEvent
 import net.dv8tion.jda.api.events.channel.text.TextChannelCreateEvent
 import net.dv8tion.jda.api.events.channel.text.TextChannelDeleteEvent
 import net.dv8tion.jda.api.events.channel.text.update.GenericTextChannelUpdateEvent
-import net.dv8tion.jda.api.events.channel.text.update.TextChannelUpdatePermissionsEvent
 import net.dv8tion.jda.api.events.channel.voice.VoiceChannelCreateEvent
 import net.dv8tion.jda.api.events.channel.voice.VoiceChannelDeleteEvent
 import net.dv8tion.jda.api.events.channel.voice.update.GenericVoiceChannelUpdateEvent
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent
 import net.dv8tion.jda.api.events.guild.GuildLeaveEvent
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent
-import net.dv8tion.jda.api.events.guild.member.GuildMemberLeaveEvent
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent
-import net.dv8tion.jda.api.events.guild.member.GuildMemberRoleAddEvent
-import net.dv8tion.jda.api.events.guild.member.GuildMemberRoleRemoveEvent
 import net.dv8tion.jda.api.events.guild.update.GuildUpdateIconEvent
 import net.dv8tion.jda.api.events.guild.update.GuildUpdateNameEvent
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceJoinEvent
@@ -44,7 +39,9 @@ import net.dv8tion.jda.api.events.user.update.UserUpdateNameEvent
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
-class ShardListener @Inject constructor(private val accessModule: AccessModule, private val userPersistenceHandler: UserPersistenceHandler) {
+class ShardListener @Inject constructor(private val accessModule: AccessModule,
+                                        private val userPersistenceHandler: UserPersistenceHandler,
+                                        private val adminControl: AdminControl) {
 
     private val idGenerator = IdGenerator(IdGenerator.ALPHA + IdGenerator.NUMBERS)
     private val guildLeavesIgnore = mutableSetOf<String>()
@@ -66,7 +63,7 @@ class ShardListener @Inject constructor(private val accessModule: AccessModule, 
     @Subscribe
     fun onGuildMemberLeave(event: GuildMemberRemoveEvent) {
         val member = event.member
-        if(member != null) {
+        if (member != null) {
             userPersistenceHandler.createBackup(member)
         } else {
             Bot.LOG.debug("cannot create a backup of ${event.user} because they are not cached")
@@ -110,7 +107,7 @@ class ShardListener @Inject constructor(private val accessModule: AccessModule, 
     fun onGuildLeave(event: GuildLeaveEvent) {
         val guild = event.guild
         if (!guildLeavesIgnore.contains(event.guild.id)) {
-            AdminControl.log("Left guild ${guild.name} (`${guild.id}`)")
+            adminControl.log("Left guild ${guild.name} (`${guild.id}`)")
         }
         guildLeavesIgnore.remove(event.guild.id)
         Model.where(DiscordGuild::class.java, "id", event.guild.id).first()?.delete()
@@ -144,7 +141,7 @@ class ShardListener @Inject constructor(private val accessModule: AccessModule, 
 
         if (accessModule.onList(event.guild, AccessModule.WhitelistMode.BLACKLIST)) {
             Bot.LOG.debug("left guild ${event.guild.id} because it was blacklisted")
-            AdminControl.log("Attempted to join blacklisted guild\n${getGuildInfo()}")
+            adminControl.log("Attempted to join blacklisted guild\n${getGuildInfo()}")
             guildLeavesIgnore.add(event.guild.id)
             event.guild.leave().queue()
             return
@@ -152,13 +149,13 @@ class ShardListener @Inject constructor(private val accessModule: AccessModule, 
         if (Bot.properties.getOrDefault("guild-whitelist", "false").toString().toBoolean()) {
             if (!accessModule.onList(event.guild, AccessModule.WhitelistMode.WHITELIST)) {
                 Bot.LOG.debug("Left guild ${event.guild.id} because it was not whitelisted")
-                AdminControl.log("Attempted to join non-whitelisted guild\n${getGuildInfo()}")
+                adminControl.log("Attempted to join non-whitelisted guild\n${getGuildInfo()}")
                 guildLeavesIgnore.add(event.guild.id)
                 event.guild.leave().queue()
                 return
             }
         }
-        AdminControl.log("Joined guild \n${getGuildInfo()}")
+        adminControl.log("Joined guild \n${getGuildInfo()}")
         event.guild.kirbotGuild.loadSettings()
         Bot.scheduler.schedule({
             event.guild.kirbotGuild.sync()

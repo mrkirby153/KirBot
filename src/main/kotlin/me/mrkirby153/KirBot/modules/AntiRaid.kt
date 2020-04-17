@@ -18,17 +18,18 @@ import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.Role
 import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent
+import net.dv8tion.jda.api.sharding.ShardManager
 import org.json.JSONArray
 import org.json.JSONObject
 import org.json.JSONTokener
 import javax.inject.Inject
 
-class AntiRaid @Inject constructor(private val redis: Redis, private val infractions: Infractions) : Module("AntiRaid") {
+class AntiRaid @Inject constructor(private val redis: Redis, private val infractions: Infractions, private val shardManager: ShardManager) : Module("AntiRaid") {
 
     private val guildBucketCache = CacheBuilder.newBuilder().maximumSize(100).build(
             object : CacheLoader<String, LeakyBucket>() {
                 override fun load(key: String): LeakyBucket {
-                    val g = Bot.shardManager.getGuildById(key)!!
+                    val g = shardManager.getGuildById(key)!!
                     return LeakyBucket(redis, "antiraid:join:$key",
                             GuildSettings.antiRaidCount.get(g).toInt(),
                             GuildSettings.antiRaidPeriod.get(g).toInt() * 1000)
@@ -153,7 +154,7 @@ class AntiRaid @Inject constructor(private val redis: Redis, private val infract
 
     private fun alert(raid: Raid, amount: Int, time: Double) {
         Bot.LOG.debug("RAID DETECTED: $raid")
-        val guild = Bot.shardManager.getGuildById(raid.guild) ?: return
+        val guild = shardManager.getGuildById(raid.guild) ?: return
         val alertRole = GuildSettings.antiRaidAlertRole.nullableGet(guild)
         val toPing: Role? = if (alertRole != null && (alertRole == "@everyone" || alertRole == "@here")) null else guild.getRoleById(
                 alertRole!!)
@@ -183,7 +184,7 @@ class AntiRaid @Inject constructor(private val redis: Redis, private val infract
     }
 
     private fun updateStatusMessage(raid: Raid) {
-        val guild = Bot.shardManager.getGuildById(raid.guild) ?: return
+        val guild = shardManager.getGuildById(raid.guild) ?: return
         fun buildStatusMessage(): String {
             return "Total Raiders: ${raid.members.size}\nTime until reset: ${Time.format(1,
                     this.getResetTime(
@@ -213,7 +214,7 @@ class AntiRaid @Inject constructor(private val redis: Redis, private val infract
             json.put("timestamp", Time.now())
             json.put("member_count", raid.members.size)
             val memberArray = JSONArray()
-            val guild = Bot.shardManager.getGuildById(raid.guild)
+            val guild = shardManager.getGuildById(raid.guild)
             raid.members.forEach { m ->
                 val memberJson = JSONObject()
                 memberJson.put("id", m)
@@ -238,7 +239,7 @@ class AntiRaid @Inject constructor(private val redis: Redis, private val infract
     @Periodic(1)
     private fun dismissExpiredRaids() {
         val toRemove = mutableListOf<String>()
-        this.activeRaids.keys.mapNotNull { Bot.shardManager.getGuildById(it) }.forEach { guild ->
+        this.activeRaids.keys.mapNotNull { shardManager.getGuildById(it) }.forEach { guild ->
             if (getResetTime(guild) <= 0) {
                 // Dismiss the raid
                 val raid = activeRaids[guild.id]!!

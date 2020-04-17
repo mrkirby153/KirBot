@@ -11,13 +11,15 @@ import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import me.mrkirby153.KirBot.utils.resolveMentions
 import me.mrkirby153.kcutils.Time
+import net.dv8tion.jda.api.sharding.ShardManager
 import java.util.Hashtable
 import java.util.Random
 import java.util.Vector
+import javax.inject.Inject
 import kotlin.system.measureTimeMillis
 
 
-class MarkovCommand {
+class MarkovCommand @Inject constructor(private val shardManager: ShardManager){
 
     private val chains = mutableMapOf<String, MarkovChain>()
 
@@ -26,7 +28,7 @@ class MarkovCommand {
     fun execute(context: Context, cmdContext: CommandContext) {
         val userChain = chains[cmdContext.get<String>("user")!!] ?: throw CommandException(
                 "No chain found. Did you generate one?")
-        val user = Bot.shardManager.getUserById(cmdContext.get<String>("user")!!)?.nameAndDiscrim
+        val user = shardManager.getUserById(cmdContext.get<String>("user")!!)?.nameAndDiscrim
                 ?: cmdContext.get<String>("user")!!
         val chain = StringBuilder()
         for (i in 0..(cmdContext.get<Int>("amount") ?: 1)) {

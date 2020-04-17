@@ -41,10 +41,11 @@ import net.dv8tion.jda.api.events.role.update.RoleUpdateMentionableEvent
 import net.dv8tion.jda.api.events.role.update.RoleUpdateNameEvent
 import net.dv8tion.jda.api.events.role.update.RoleUpdatePermissionsEvent
 import net.dv8tion.jda.api.events.user.update.UserUpdateNameEvent
+import net.dv8tion.jda.api.sharding.ShardManager
 import org.json.JSONObject
 import javax.inject.Inject
 
-class Logger @Inject constructor(private val redis: Redis): Module("logging") {
+class Logger @Inject constructor(private val redis: Redis, private val shardManager: ShardManager): Module("logging") {
 
     private val logDelay = 100L
 
@@ -59,7 +60,7 @@ class Logger @Inject constructor(private val redis: Redis): Module("logging") {
 
     override fun onLoad() {
         log("Starting logger....")
-        logPump = LogPump(logDelay)
+        logPump = LogPump(shardManager, logDelay)
         logPump.start()
         registerLogEvents()
     }
@@ -269,7 +270,7 @@ class Logger @Inject constructor(private val redis: Redis): Module("logging") {
 
     @Subscribe
     fun onUserUpdateName(event: UserUpdateNameEvent) {
-        Bot.shardManager.shards.forEach { shard ->
+        shardManager.shards.forEach { shard ->
             shard.guilds.forEach { guild ->
                 if (event.user.id in guild.members.map { it.user.id } && guild.kirbotGuild.ready)
                     guild.kirbotGuild.logManager.genericLog(LogEvent.USER_NAME_CHANGE,

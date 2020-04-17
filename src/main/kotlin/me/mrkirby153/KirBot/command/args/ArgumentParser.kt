@@ -2,7 +2,7 @@ package me.mrkirby153.KirBot.command.args
 
 import me.mrkirby153.KirBot.Bot
 
-class ArgumentParser(val arguments: Array<String>) {
+class ArgumentParser(private val contextResolvers: ContextResolvers, val arguments: Array<String>) {
 
     init {
         Bot.LOG.debug(
@@ -30,7 +30,7 @@ class ArgumentParser(val arguments: Array<String>) {
                 throw ArgumentParseException("The argument `<$name:$type>` is required!")
             }
             if (argList.hasNext()) {
-                    val parse = ContextResolvers.getResolver(type)?.invoke(argList)
+                    val parse = contextResolvers.getResolver(type)?.invoke(argList)
                     context.put(name, parse)
             }
         }

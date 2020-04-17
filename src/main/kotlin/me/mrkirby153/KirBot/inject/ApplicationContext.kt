@@ -146,8 +146,7 @@ class ApplicationContext {
                     "Circular dependency chain detected! Call chain is [$chain]")
         }
 
-        val registeredObjects = registeredObjects[clazz] ?: throw IllegalArgumentException(
-                "$clazz was not found in the application context")
+        val registeredObjects = registeredObjects.filterKeys { clazz.isAssignableFrom(it)  }.flatMap { it.value }
         val registeredObject = registeredObjects.firstOrNull { it.name == name }
                 ?: throw IllegalArgumentException(
                         "$clazz ($name) was not found in the application context")
@@ -159,7 +158,7 @@ class ApplicationContext {
             }
             applicationContextLogger.trace("$clazz has not been constructed, constructing")
         }
-        val instance = doInjection(clazz, callChain)
+        val instance = clazz.cast(doInjection(registeredObject.objectClass, callChain))
 
 
         applicationContextLogger.trace("Constructed $clazz as $instance")

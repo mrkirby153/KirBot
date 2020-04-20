@@ -85,9 +85,8 @@ class CommandInfo {
             description {
                 appendln("**\\> User Information**")
                 appendln("ID: `${user.id}`")
-                appendln("Created: ${Time.formatLong(
-                        System.currentTimeMillis() - (user.timeCreated.toEpochSecond() * 1000),
-                        Time.TimeUnit.MINUTES)} ago (`${SimpleDateFormat(
+                appendln("Created: ${Time.format(1,
+                        System.currentTimeMillis() - (user.timeCreated.toEpochSecond() * 1000))} ago (`${SimpleDateFormat(
                         "MM-dd-yy HH:mm:ss").format(user.timeCreated.toEpochSecond() * 1000)}`)")
 //                appendln("Status: $onlineStatus ${getOnlineEmoji(onlineStatus)}")
                 appendln("Profile: ${user.asMention}")
@@ -97,9 +96,8 @@ class CommandInfo {
                 appendln("**\\> Member Information**")
                 if (jdaMember != null) {
                     val joinTime = jdaMember.timeJoined.toEpochSecond() * 1000
-                    appendln("Joined: ${Time.formatLong(
-                            System.currentTimeMillis() - joinTime,
-                            Time.TimeUnit.MINUTES).toLowerCase()} ago (`${SimpleDateFormat(
+                    appendln("Joined: ${Time.format(1, 
+                            System.currentTimeMillis() - joinTime).toLowerCase()} ago (`${SimpleDateFormat(
                             "MM-dd-yy HH:mm:ss").format(joinTime)}`)")
                 }
                 val flags = getUserFlags(user)
@@ -205,7 +203,7 @@ class CommandInfo {
     // TODO 4/8/20 Temporary hack while JDA doesn't support getting flags
     fun getUserFlags(user: User): List<Flag> {
         val request = Request.Builder().url(
-                "https://discordapp.com/api/v6/users/${user.id}").header("Authorization",
+                "https://discordapp.com/api/v6/users/" + user.id).header("Authorization",
                 user.jda.token).build()
         val resp = HttpUtils.CLIENT.newCall(request).execute()
 

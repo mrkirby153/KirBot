@@ -1,8 +1,7 @@
 package me.mrkirby153.KirBot.command.executors.moderation.infraction
 
 import com.mrkirby153.bfs.model.Model
-import com.mrkirby153.bfs.sql.DB
-import me.mrkirby153.KirBot.Bot
+import com.mrkirby153.bfs.query.DB
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.annotations.Command
@@ -46,12 +45,12 @@ class CommandInfractions @Inject constructor(private val infractions: Infraction
     fun search(context: Context, cmdContext: CommandContext) {
         val query = cmdContext.get<String>("query") ?: ""
 
-        val infractions = DB.getResults(
+        val infractions = DB.raw(
                 "SELECT DISTINCT * FROM infractions WHERE (`user_id` = ? AND `guild` = ?) OR (`issuer` = ? AND `guild` = ?) OR (`id` = ?) OR (`reason` LIKE ? AND `guild` = ?) ORDER BY `id` DESC LIMIT 5",
                 query, context.guild.id, query, context.guild.id, query,
                 "%$query%", context.guild.id).map {
             val inf = Infraction()
-            inf.setData(it)
+            inf.hydrate(it)
             return@map inf
         }
 

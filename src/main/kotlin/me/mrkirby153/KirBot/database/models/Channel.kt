@@ -1,9 +1,11 @@
 package me.mrkirby153.KirBot.database.models
 
-import com.mrkirby153.bfs.annotations.Column
-import com.mrkirby153.bfs.annotations.PrimaryKey
-import com.mrkirby153.bfs.annotations.Table
 import com.mrkirby153.bfs.model.Model
+import com.mrkirby153.bfs.model.annotations.Column
+import com.mrkirby153.bfs.model.annotations.PrimaryKey
+import com.mrkirby153.bfs.model.annotations.Table
+import com.mrkirby153.bfs.model.annotations.Timestamps
+import com.mrkirby153.bfs.model.enhancers.TimestampEnhancer
 import me.mrkirby153.KirBot.Bot
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Guild
@@ -11,8 +13,10 @@ import net.dv8tion.jda.api.entities.GuildChannel
 import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.entities.VoiceChannel
 import net.dv8tion.jda.api.sharding.ShardManager
+import java.sql.Timestamp
 
 @Table("channels")
+@Timestamps
 class Channel(channel: GuildChannel? = null) : Model() {
 
     @PrimaryKey
@@ -36,6 +40,14 @@ class Channel(channel: GuildChannel? = null) : Model() {
             this.typeRaw = value.toString()
         }
 
+    @TimestampEnhancer.CreatedAt
+    @Column("created_at")
+    var createdAt: Timestamp? = null
+
+    @TimestampEnhancer.UpdatedAt
+    @Column("updated_at")
+    var updatedAt: Timestamp? = null
+
     var guild: Guild?
         get() = Bot.applicationContext.get(ShardManager::class.java).getGuildById(this.guildId)
         set(guild) {
@@ -57,7 +69,6 @@ class Channel(channel: GuildChannel? = null) : Model() {
         }
 
     init {
-        this.incrementing = false
         if(channel != null){
             this.id = channel.id
             this.guildId = channel.guild.id

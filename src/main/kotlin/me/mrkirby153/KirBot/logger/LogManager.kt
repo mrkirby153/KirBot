@@ -1,7 +1,7 @@
 package me.mrkirby153.KirBot.logger
 
 import com.mrkirby153.bfs.model.Model
-import com.mrkirby153.bfs.sql.DB
+import com.mrkirby153.bfs.query.DB
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.models.guild.GuildMessage
 import me.mrkirby153.KirBot.database.models.guild.LogSettings
@@ -123,7 +123,7 @@ class LogManager(private val guild: KirBotGuild) {
         val realString = selector.substring(
                 0, selector.lastIndexOf(","))
         val query = "SELECT `server_messages`.`id` as `message_id`, `server_messages`.`server_id`, `author` as 'author_id', `channel`, `message`, `username`, `discriminator`, `attachments` FROM `server_messages` LEFT JOIN `seen_users` ON `server_messages`.`author` = `seen_users`.`id` LEFT JOIN `attachments` ON `server_messages`.`id` = `attachments`.`id` WHERE `server_messages`.`id` IN ($realString)"
-        val results = DB.getResults(query, *(messages.toTypedArray()))
+        val results = DB.raw(query, *(messages.toTypedArray()))
         val msgs = mutableListOf<String>()
         results.forEach { result ->
             val msgId = result.getString("message_id")

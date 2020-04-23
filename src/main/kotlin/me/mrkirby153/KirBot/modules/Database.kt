@@ -1,10 +1,9 @@
 package me.mrkirby153.KirBot.modules
 
-import com.mrkirby153.bfs.ConnectionFactory
-import com.mrkirby153.bfs.sql.QueryBuilder
+import com.mrkirby153.bfs.connection.ConnectionFactory
+import com.mrkirby153.bfs.query.QueryBuilder
 import me.mrkirby153.KirBot.database.DatabaseConnection
 import me.mrkirby153.KirBot.module.Module
-import java.sql.Connection
 
 class Database : Module("database") {
 
@@ -22,11 +21,6 @@ class Database : Module("database") {
         log("Connecting to database $database at $host:$port ($username)")
 
         this.database = DatabaseConnection(host, port, database, username, password)
-        QueryBuilder.connectionFactory = object: ConnectionFactory {
-            override fun getConnection(): Connection {
-                return this@Database.database.getConnection()
-            }
-
-        }
+        QueryBuilder.defaultConnectionFactory = ConnectionFactory { this@Database.database.getConnection() }
     }
 }

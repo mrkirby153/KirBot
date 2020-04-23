@@ -1,17 +1,14 @@
 package me.mrkirby153.KirBot.infraction
 
-import com.mrkirby153.bfs.annotations.Column
-import com.mrkirby153.bfs.annotations.PrimaryKey
-import com.mrkirby153.bfs.annotations.Table
 import com.mrkirby153.bfs.model.Model
+import com.mrkirby153.bfs.model.annotations.Column
+import com.mrkirby153.bfs.model.annotations.PrimaryKey
+import com.mrkirby153.bfs.model.annotations.Table
 import java.sql.Timestamp
+import java.time.Instant
 
 @Table("infractions")
 class Infraction : Model() {
-
-    init {
-        this.timestamps = false
-    }
 
     @PrimaryKey
     var id: Long? = null
@@ -32,6 +29,9 @@ class Infraction : Model() {
     var active: Boolean = true
 
     var metadata: String? = null
+
+    @Column("created_at")
+    var createdAt: Timestamp = Timestamp.from(Instant.now())
 
     @Column("expires_at")
     var expiresAt: Timestamp? = null

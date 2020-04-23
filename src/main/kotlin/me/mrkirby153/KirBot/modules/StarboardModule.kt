@@ -1,8 +1,7 @@
 package me.mrkirby153.KirBot.modules
 
 import com.mrkirby153.bfs.model.Model
-import com.mrkirby153.bfs.sql.DB
-import me.mrkirby153.KirBot.Bot
+import com.mrkirby153.bfs.query.DB
 import me.mrkirby153.KirBot.database.models.guild.GuildMessage
 import me.mrkirby153.KirBot.database.models.guild.starboard.StarboardEntry
 import me.mrkirby153.KirBot.event.Subscribe

@@ -1,17 +1,22 @@
 package me.mrkirby153.KirBot.database.models.guild
 
-import com.mrkirby153.bfs.annotations.Column
-import com.mrkirby153.bfs.annotations.PrimaryKey
-import com.mrkirby153.bfs.annotations.Table
+
 import com.mrkirby153.bfs.model.Model
+import com.mrkirby153.bfs.model.annotations.Column
+import com.mrkirby153.bfs.model.annotations.PrimaryKey
+import com.mrkirby153.bfs.model.annotations.Table
+import com.mrkirby153.bfs.model.annotations.Timestamps
+import com.mrkirby153.bfs.model.enhancers.TimestampEnhancer
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.kcutils.utils.IdGenerator
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.sharding.ShardManager
+import java.sql.Timestamp
 
 @Table("guild_member_roles")
+@Timestamps
 class GuildMemberRole(member: Member? = null, role: net.dv8tion.jda.api.entities.Role? = null) : Model() {
 
     @PrimaryKey
@@ -25,6 +30,14 @@ class GuildMemberRole(member: Member? = null, role: net.dv8tion.jda.api.entities
 
     @Column("role_id")
     var roleId = ""
+
+    @TimestampEnhancer.CreatedAt
+    @Column("created_at")
+    var createdAt: Timestamp? = null
+
+    @TimestampEnhancer.UpdatedAt
+    @Column("updated_at")
+    var updatedAt: Timestamp? = null
 
 
     var server: Guild?
@@ -48,7 +61,6 @@ class GuildMemberRole(member: Member? = null, role: net.dv8tion.jda.api.entities
 
 
     init {
-        this.incrementing = false
         if(member != null && role != null){
             this.id = idGenerator.generate(10)
             this.serverId = member.guild.id

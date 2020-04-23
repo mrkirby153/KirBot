@@ -1,7 +1,7 @@
 package me.mrkirby153.KirBot.command.executors.moderation
 
-import com.mrkirby153.bfs.sql.DB
-import com.mrkirby153.bfs.sql.DbRow
+import com.mrkirby153.bfs.query.DB
+import com.mrkirby153.bfs.query.DbRow
 import me.mrkirby153.KirBot.command.annotations.CommandDescription
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
@@ -26,7 +26,7 @@ class CommandArchive{
     fun archiveUser(context: Context, cmdContext: CommandContext) {
         val amount = cmdContext.get<Int>("amount") ?: 50
         val user = cmdContext.get<String>("user")!!
-        val messages = DB.getResults(
+        val messages = DB.raw(
                 "SELECT * FROM server_messages WHERE author = ? AND server_id = ? ORDER BY id DESC LIMIT ?", user,
                 context.guild.id, amount).map { decode(it) }.reversed()
         val archiveUrl = createArchive(messages)
@@ -42,7 +42,7 @@ class CommandArchive{
         val chan = cmdContext.get<String>("channel")!!
         if(context.guild.getTextChannelById(chan) == null)
             throw CommandException("That channel doesn't exist")
-        val messages = DB.getResults(
+        val messages = DB.raw(
                 "SELECT * FROM server_messages WHERE channel = ? ORDER BY id DESC LIMIT ?", chan,
                 amount).map { decode(it) }.reversed()
         val archiveUrl = createArchive(messages)
@@ -55,7 +55,7 @@ class CommandArchive{
         val userIds = messages.map { it.author }.toSet()
         val userMap = mutableMapOf<String, String>()
         if (userIds.isNotEmpty()) {
-            val results = DB.getResults(
+            val results = DB.raw(
                     "SELECT id, username, discriminator FROM seen_users WHERE id IN (${userIds.joinToString(
                             ", ")})")
             results.forEach {
@@ -75,7 +75,7 @@ class CommandArchive{
 
     private fun decode(row: DbRow): GuildMessage {
         val msg = GuildMessage()
-        msg.setData(row)
+        msg.hydrate(row)
         return msg
     }
 }

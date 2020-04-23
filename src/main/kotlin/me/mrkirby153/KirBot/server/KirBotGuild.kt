@@ -5,12 +5,12 @@ import com.mrkirby153.bfs.model.SoftDeletingModel
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.models.Channel
 import me.mrkirby153.KirBot.database.models.CustomCommand
-import me.mrkirby153.KirBot.database.models.DiscordUser
 import me.mrkirby153.KirBot.database.models.RoleClearance
 import me.mrkirby153.KirBot.database.models.guild.CommandAlias
 import me.mrkirby153.KirBot.database.models.guild.DiscordGuild
 import me.mrkirby153.KirBot.logger.LogManager
 import me.mrkirby153.KirBot.module.ModuleManager
+import me.mrkirby153.KirBot.modules.Database
 import me.mrkirby153.KirBot.modules.Redis
 import me.mrkirby153.KirBot.user.CLEARANCE_ADMIN
 import me.mrkirby153.KirBot.utils.fuzzyMatch
@@ -136,7 +136,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
                     channels.map { it.id }.toTypedArray()).where("server", this.id).delete()
             val storedChannels = Model.where(Channel::class.java, "server", this.id).get()
             storedChannels.forEach(Channel::updateChannel) // Update existing channels
-            channels.filter { it.id !in storedChannels.map { it.id } }.forEach {
+            channels.filter { chan -> chan.id !in storedChannels.map { it.id } }.forEach {
                 Bot.LOG.debug("adding channel: $it")
                 Channel(it).save()
             }
@@ -247,16 +247,22 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         return clearance
     }
 
-    fun syncSeenUsers(): CompletableFuture<Unit> {
+    fun syncSeenUsers(): CompletableFuture<Any> {
         return runAsyncTask {
             Bot.LOG.debug("Syncing seen users on $this")
-            val guildUsers = Model.query(DiscordUser::class.java).whereIn("id",
-                    members.map { it.id }.toTypedArray()).get()
-            guildUsers.forEach(DiscordUser::updateUser)
-            val newMembers = members.filter { it.id !in guildUsers.map { it.id } }
-            Bot.LOG.debug("Found ${newMembers.size} new members")
-            newMembers.map { it.user }.forEach { user ->
-                DiscordUser(user).save()
+            Bot.applicationContext.get(Database::class.java).database.getConnection().use { con ->
+                val ps = con.prepareStatement(
+                        "INSERT INTO `seen_users` (id, username, discriminator, bot, created_at, updated_at) VALUE (?, ?, ?, ?, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP) ON DUPLICATE KEY UPDATE username = ?, discriminator = ?")
+                guild.members.forEach { member ->
+                    ps.setString(1, member.id)
+                    ps.setString(2, member.user.name)
+                    ps.setString(3, member.user.discriminator)
+                    ps.setBoolean(4, member.user.isBot)
+                    ps.setString(5, member.user.name)
+                    ps.setString(6, member.user.discriminator)
+                    ps.addBatch()
+                }
+                ps.executeBatch()
             }
         }
     }

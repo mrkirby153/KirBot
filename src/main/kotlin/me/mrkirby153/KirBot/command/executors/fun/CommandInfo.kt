@@ -1,31 +1,24 @@
 package me.mrkirby153.KirBot.command.executors.`fun`
 
-import com.mrkirby153.bfs.model.Model
-import com.mrkirby153.bfs.sql.DB
+import com.mrkirby153.bfs.query.DB
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.annotations.Command
 import me.mrkirby153.KirBot.command.annotations.CommandDescription
 import me.mrkirby153.KirBot.command.annotations.LogInModlogs
 import me.mrkirby153.KirBot.command.args.CommandContext
-import me.mrkirby153.KirBot.database.models.guild.GuildMember
 import me.mrkirby153.KirBot.user.CLEARANCE_MOD
 import me.mrkirby153.KirBot.utils.BUG_HUNTER
-import me.mrkirby153.KirBot.utils.BUG_HUNTER_TIER_2
 import me.mrkirby153.KirBot.utils.Context
 import me.mrkirby153.KirBot.utils.CustomEmoji
-import me.mrkirby153.KirBot.utils.EARLY_SUPPORTER
 import me.mrkirby153.KirBot.utils.HS_BALANCE
 import me.mrkirby153.KirBot.utils.HS_BRAVERY
 import me.mrkirby153.KirBot.utils.HS_BRILLIANCE
 import me.mrkirby153.KirBot.utils.HYPESQUAD_EVENTS
 import me.mrkirby153.KirBot.utils.HttpUtils
-import me.mrkirby153.KirBot.utils.PARTNER
-import me.mrkirby153.KirBot.utils.STAFF
 import me.mrkirby153.KirBot.utils.STATUS_AWAY
 import me.mrkirby153.KirBot.utils.STATUS_DND
 import me.mrkirby153.KirBot.utils.STATUS_OFFLINE
 import me.mrkirby153.KirBot.utils.STATUS_ONLINE
-import me.mrkirby153.KirBot.utils.VERIFIED_DEVELOPER
 import me.mrkirby153.KirBot.utils.convertSnowflake
 import me.mrkirby153.KirBot.utils.getMember
 import me.mrkirby153.KirBot.utils.getOnlineStats
@@ -96,7 +89,7 @@ class CommandInfo {
                 appendln("**\\> Member Information**")
                 if (jdaMember != null) {
                     val joinTime = jdaMember.timeJoined.toEpochSecond() * 1000
-                    appendln("Joined: ${Time.format(1, 
+                    appendln("Joined: ${Time.format(1,
                             System.currentTimeMillis() - joinTime).toLowerCase()} ago (`${SimpleDateFormat(
                             "MM-dd-yy HH:mm:ss").format(joinTime)}`)")
                 }
@@ -104,7 +97,7 @@ class CommandInfo {
                 if (flags.isNotEmpty()) {
                     val flagString = flags.joinToString("\n") { flag ->
                         val emoji = flag.emoji
-                        if(emoji != null) {
+                        if (emoji != null) {
                             "   <:${emoji.name}:${emoji.id}> ${flag.displayName}"
                         } else {
                             "   ${flag.displayName}"
@@ -154,7 +147,7 @@ class CommandInfo {
     private fun getPlayingStatus(member: Member): String {
         val activities = member.activities
         return activities.joinToString(", ") { activity ->
-            when(activity.type) {
+            when (activity.type) {
                 Activity.ActivityType.DEFAULT -> "Playing ${activity.name}"
                 Activity.ActivityType.LISTENING -> "Listening to ${activity.name}"
                 Activity.ActivityType.STREAMING -> "Streaming ${activity.name}"
@@ -232,6 +225,7 @@ class CommandInfo {
         EARLY_SUPPORTER(512, "Early Supporter", me.mrkirby153.KirBot.utils.EARLY_SUPPORTER),
         BUG_HUNTER_TIER_2(16384, "Bug Hunter Tier 2", me.mrkirby153.KirBot.utils.BUG_HUNTER_TIER_2),
         VERIFIED_BOT(65536, "Verified Bot"),
-        VERIFIED_DEVELOPER(131072, "Verified Developer", me.mrkirby153.KirBot.utils.VERIFIED_DEVELOPER)
+        VERIFIED_DEVELOPER(131072, "Verified Developer",
+                me.mrkirby153.KirBot.utils.VERIFIED_DEVELOPER)
     }
 }

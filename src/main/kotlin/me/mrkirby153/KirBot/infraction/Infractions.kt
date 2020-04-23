@@ -2,6 +2,7 @@ package me.mrkirby153.KirBot.infraction
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.mrkirby153.bfs.model.Model
+import com.mrkirby153.bfs.query.elements.OrderElement
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.models.DiscordUser
 import me.mrkirby153.KirBot.inject.Injectable
@@ -51,7 +52,7 @@ class Infractions @Inject constructor(private val logger: Logger, private val sh
     fun waitForInfraction() {
         Bot.LOG.debug("Queueing Infractions")
         val nextInfraction = Model.query(Infraction::class.java).whereNotNull("expires_at").where(
-                "active", true).orderBy("expires_at", "ASC").limit(1).first()
+                "active", true).orderBy("expires_at", OrderElement.Direction.ASC).limit(1).first()
         if (nextInfraction == null) {
             Bot.LOG.debug("No infractions left to wait for")
             return

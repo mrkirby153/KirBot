@@ -1,6 +1,6 @@
 package me.mrkirby153.KirBot.command.control
 
-import com.mrkirby153.bfs.sql.DB
+import com.mrkirby153.bfs.query.DB
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.annotations.AdminCommand
 import me.mrkirby153.KirBot.command.annotations.Command
@@ -24,7 +24,7 @@ class CommandEncryptMessages {
                         context.channel.sendMessage(
                                 "Encrypting messages, this may take some time").queue()
                         var m = 0
-                        val results = DB.getResults("SELECT * FROM server_messages WHERE message NOT LIKE 'e:%'")
+                        val results = DB.raw("SELECT * FROM server_messages WHERE message NOT LIKE 'e:%'")
                         results.forEach { result ->
                             val msg = LogManager.encrypt(result.getString("message"))
                             if (msg != result.getString("message")) {
@@ -65,7 +65,7 @@ class CommandDecryptMessage{
                                 "Decrypting messages, this may take some time").queue()
                         var m = 0
                         var a = 0
-                        val results = DB.getResults("SELECT * FROM server_messages WHERE message LIKE 'e:%'")
+                        val results = DB.raw("SELECT * FROM server_messages WHERE message LIKE 'e:%'")
                         results.forEach { result ->
                             val msg = LogManager.decrypt(result.getString("message"))
                             if (msg != result.getString("message")) {
@@ -79,7 +79,7 @@ class CommandDecryptMessage{
                             }
                         }
                         context.channel.sendMessage("Decrypted `$m` messages").queue()
-                        val attachments = DB.getResults("SELECT * FROM attachments WHERE attachments LIKE 'e:%'")
+                        val attachments = DB.raw("SELECT * FROM attachments WHERE attachments LIKE 'e:%'")
                         attachments.forEach { attachment ->
                             val attach = LogManager.decrypt(attachment.getString("attachments"))
                             DB.executeUpdate("UPDATE attachments SET attachments = ? WHERE id = ?", attach, attachment.getString("id"))

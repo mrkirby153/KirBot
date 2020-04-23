@@ -1,9 +1,8 @@
 package me.mrkirby153.KirBot.utils
 
+import com.mrkirby153.bfs.Pair
 import com.mrkirby153.bfs.model.Model
-import com.mrkirby153.bfs.sql.elements.Pair
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.Redis
 import me.mrkirby153.KirBot.server.KirBotGuild
 import net.dv8tion.jda.api.OnlineStatus
@@ -101,7 +100,7 @@ fun TextChannel.hide(exceptUsers: List<User> = emptyList(), exceptRoles: List<Ro
         }
     }
     Model.query(me.mrkirby153.KirBot.database.models.Channel::class.java).where("id",
-            this.id).update(Pair("hidden", true))
+            this.id).update(listOf(Pair<String, Any>("hidden", true)))
 }
 
 /**
@@ -111,7 +110,7 @@ fun TextChannel.unhide() {
     val public = this.getPermissionOverride(this.guild.publicRole) ?: return
     public.manager.clear(Permission.MESSAGE_READ).queue()
     Model.query(me.mrkirby153.KirBot.database.models.Channel::class.java).where("id",
-            this.id).update(Pair("hidden", false))
+            this.id).update(listOf(Pair<String, Any>("hidden", false)))
 }
 
 /**

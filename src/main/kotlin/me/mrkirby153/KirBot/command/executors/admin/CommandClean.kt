@@ -1,6 +1,7 @@
 package me.mrkirby153.KirBot.command.executors.admin
 
-import com.mrkirby153.bfs.sql.QueryBuilder
+import com.mrkirby153.bfs.query.QueryBuilder
+import com.mrkirby153.bfs.query.elements.OrderElement
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.annotations.Command
@@ -140,7 +141,7 @@ class CommandClean @Inject constructor(private val shardManager: ShardManager) {
     private fun getBuilder(amount: Long? = 50): QueryBuilder {
         return QueryBuilder().table("server_messages").where("deleted", false).select(
                 "server_messages.id")
-                .orderBy("server_messages.id", "DESC").apply {
+                .orderBy("server_messages.id", OrderElement.Direction.DESC).apply {
                     if (amount != null)
                         limit(amount)
                 }

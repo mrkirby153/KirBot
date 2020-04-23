@@ -2,10 +2,10 @@ package me.mrkirby153.KirBot
 
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
+import com.mrkirby153.bfs.Pair
 import com.mrkirby153.bfs.model.Model
 import com.mrkirby153.bfs.model.SoftDeletingModel
-import com.mrkirby153.bfs.sql.QueryBuilder
-import com.mrkirby153.bfs.sql.elements.Pair
+import com.mrkirby153.bfs.query.QueryBuilder
 import com.sedmelluq.discord.lavaplayer.jdaudp.NativeAudioSendFactory
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
@@ -39,7 +39,6 @@ import net.dv8tion.jda.api.events.ReadyEvent
 import net.dv8tion.jda.api.requests.GatewayIntent
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder
 import net.dv8tion.jda.api.sharding.ShardManager
-import net.dv8tion.jda.api.utils.cache.CacheFlag
 import okhttp3.Request
 import org.json.JSONObject
 import org.json.JSONTokener
@@ -51,7 +50,6 @@ import java.time.Instant
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
-import java.util.function.IntFunction
 import kotlin.system.measureTimeMillis
 
 object Bot {
@@ -176,7 +174,8 @@ object Bot {
 
         HttpUtils.clearCache()
 
-        scheduler.scheduleAtFixedRate(applicationContext.newInstance(FeedTask::class.java), 0, 15, TimeUnit.MINUTES)
+        scheduler.scheduleAtFixedRate(applicationContext.newInstance(FeedTask::class.java), 0, 15,
+                TimeUnit.MINUTES)
         ModuleManager.startScheduler()
         applicationContext.get(Infractions::class.java).waitForInfraction()
 
@@ -196,8 +195,9 @@ object Bot {
         }
         val guildCount = shardManager.shards.flatMap { it.guilds }.count()
         applicationContext.get(AdminControl::class.java).sendQueuedMessages()
-        applicationContext.get(AdminControl::class.java).log("Bot startup complete in ${Time.formatLong(
-                System.currentTimeMillis() - startTime).toLowerCase()}. On $guildCount guilds with ${memberSet.size} users")
+        applicationContext.get(AdminControl::class.java).log(
+                "Bot startup complete in ${Time.formatLong(
+                        System.currentTimeMillis() - startTime).toLowerCase()}. On $guildCount guilds with ${memberSet.size} users")
 
         CommandDocumentationGenerator.generate(files.data.child("commands.md"))
         state = BotState.RUNNING
@@ -221,14 +221,15 @@ object Bot {
         val threshold = Instant.now().minus(Duration.ofDays(30))
         LOG.info("Removing guilds that we left before ${SimpleDateFormat(
                 "MM-dd-yy HH:mm:ss").format(threshold.toEpochMilli())}")
-        val guilds = SoftDeletingModel.trashed(DiscordGuild::class.java).where("deleted_at", "<",
+        val guilds = SoftDeletingModel.withTrashed(DiscordGuild::class.java).where("deleted_at",
+                "<",
                 Timestamp.from(threshold)).get()
         LOG.info("${guilds.size} guilds being purged")
         guilds.forEach { it.forceDelete() }
         val guildList = shardManager.shards.flatMap { it.guilds }
         Model.query(DiscordGuild::class.java).whereNotIn("id",
                 guildList.map { it.id }.toTypedArray()).whereNull("deleted_at").update(
-                Pair("deleted_at", Timestamp(System.currentTimeMillis())))
+                listOf(Pair<String, Any>("deleted_at", Timestamp(System.currentTimeMillis()))))
     }
 
     private fun configureLogging() {
@@ -236,11 +237,10 @@ object Bot {
             (LOG as? Logger)?.let { logger ->
                 logger.level = Level.DEBUG
             }
-            QueryBuilder.logQueries = System.getProperty("kirbot.logQueries",
-                    "false")?.toBoolean() ?: false
-            if (QueryBuilder.logQueries) {
-                LOG.warn("Query logging is enabled. This will generate a lot of console output!")
-            }
+        }
+        if(System.getProperty("kirbot.logQueries", "false")?.toBoolean() == true) {
+            LOG.warn("Setting log level for bfs to TRACE")
+            (LoggerFactory.getLogger(QueryBuilder::class.java) as? Logger)?.level = Level.TRACE
         }
         (LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME) as? Logger)?.level = Level.valueOf(
                 System.getProperty("kirbot.global_log", "INFO"))

@@ -1,6 +1,6 @@
 package me.mrkirby153.KirBot.command.control
 
-import com.mrkirby153.bfs.sql.DB
+import com.mrkirby153.bfs.query.DB
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.CommandException
 import me.mrkirby153.KirBot.command.annotations.AdminCommand

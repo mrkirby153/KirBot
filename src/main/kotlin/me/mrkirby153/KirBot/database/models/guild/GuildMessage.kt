@@ -1,14 +1,17 @@
 package me.mrkirby153.KirBot.database.models.guild
 
-import com.mrkirby153.bfs.annotations.Column
-import com.mrkirby153.bfs.annotations.PrimaryKey
-import com.mrkirby153.bfs.annotations.Table
 import com.mrkirby153.bfs.model.Model
+import com.mrkirby153.bfs.model.annotations.Column
+import com.mrkirby153.bfs.model.annotations.PrimaryKey
+import com.mrkirby153.bfs.model.annotations.Table
+import com.mrkirby153.bfs.model.annotations.Timestamps
+import com.mrkirby153.bfs.model.enhancers.TimestampEnhancer
 import me.mrkirby153.KirBot.logger.LogManager
 import net.dv8tion.jda.api.entities.Message
 import java.sql.Timestamp
 
 @Table("server_messages")
+@Timestamps
 class GuildMessage(message: Message? = null) : Model() {
 
     @PrimaryKey
@@ -29,6 +32,13 @@ class GuildMessage(message: Message? = null) : Model() {
     @Column("edit_count")
     var editCount = 0
 
+    @TimestampEnhancer.CreatedAt
+    @Column("created_at")
+    var createdAt: Timestamp? = null
+
+    @Column("updated_at")
+    var updatedAt: Timestamp? = null
+
 
     @Transient
     var pendingAttachments: String? = null
@@ -39,7 +49,7 @@ class GuildMessage(message: Message? = null) : Model() {
         }
         set(value) {
             // TODO 2019-03-31 Fix bug where these are inserted before the modal actually exists
-            if(!this.exists) {
+            if(!this.exists()) {
                 this.pendingAttachments = value
                 return;
             }
@@ -63,7 +73,6 @@ class GuildMessage(message: Message? = null) : Model() {
 
 
     init {
-        this.incrementing = false
         if (message != null) {
             this.id = message.id
             this.serverId = message.guild.id

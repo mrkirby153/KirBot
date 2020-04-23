@@ -1,23 +1,24 @@
 package me.mrkirby153.KirBot.database.models.guild
 
-import com.mrkirby153.bfs.annotations.Column
-import com.mrkirby153.bfs.annotations.PrimaryKey
-import com.mrkirby153.bfs.annotations.Table
+
 import com.mrkirby153.bfs.model.Model
+import com.mrkirby153.bfs.model.annotations.Column
+import com.mrkirby153.bfs.model.annotations.PrimaryKey
+import com.mrkirby153.bfs.model.annotations.Table
+import com.mrkirby153.bfs.model.annotations.Timestamps
+import com.mrkirby153.bfs.model.enhancers.TimestampEnhancer
 import me.mrkirby153.KirBot.Bot
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.Role
 import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.sharding.ShardManager
+import java.sql.Timestamp
 import java.util.concurrent.CompletableFuture
 
 @Table("reaction_roles")
+@Timestamps
 class ReactionRole : Model() {
-
-    init {
-        incrementing = false
-    }
 
     @PrimaryKey
     var id: String = ""
@@ -38,6 +39,14 @@ class ReactionRole : Model() {
     var custom: Boolean = false
 
     var emote: String = ""
+
+    @TimestampEnhancer.CreatedAt
+    @Column("created_at")
+    var createdAt: Timestamp? = null
+
+    @TimestampEnhancer.UpdatedAt
+    @Column("updated_at")
+    var updatedAt: Timestamp? = null
 
 
     var guild: Guild?

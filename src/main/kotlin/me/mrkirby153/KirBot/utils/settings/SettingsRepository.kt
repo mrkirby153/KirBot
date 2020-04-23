@@ -3,8 +3,8 @@ package me.mrkirby153.KirBot.utils.settings
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import com.google.common.util.concurrent.UncheckedExecutionException
+import com.mrkirby153.bfs.Pair
 import com.mrkirby153.bfs.model.Model
-import com.mrkirby153.bfs.sql.elements.Pair
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.models.GuildSetting
 import net.dv8tion.jda.api.entities.Guild
@@ -49,7 +49,7 @@ object SettingsRepository {
                     key).exists()
             if (exists) {
                 Model.query(GuildSetting::class.java).where("guild", guildId).where("key",
-                        key).update(Pair("value", value))
+                        key).update(mutableListOf(Pair<String, Any>("one", "two")))
             } else {
                 val gs = GuildSetting()
                 gs.guildId = guildId

@@ -1,10 +1,16 @@
 package me.mrkirby153.KirBot.database.models.guild.starboard
 
-import com.mrkirby153.bfs.annotations.Column
-import com.mrkirby153.bfs.annotations.Table
+
 import com.mrkirby153.bfs.model.Model
+import com.mrkirby153.bfs.model.annotations.AutoIncrementing
+import com.mrkirby153.bfs.model.annotations.Column
+import com.mrkirby153.bfs.model.annotations.Table
+import com.mrkirby153.bfs.model.annotations.Timestamps
+import com.mrkirby153.bfs.model.enhancers.TimestampEnhancer
+import java.sql.Timestamp
 
 @Table("starboard")
+@Timestamps
 class StarboardEntry : Model() {
 
     var id = ""
@@ -17,7 +23,12 @@ class StarboardEntry : Model() {
     @Column("starboard_mid")
     var starboardMid: String? = null
 
-    init {
-        incrementing = false
-    }
+    @TimestampEnhancer.CreatedAt
+    @Column("created_at")
+    var createdAt: Timestamp? = null
+
+    @TimestampEnhancer.UpdatedAt
+    @Column("updated_at")
+    var updatedAt: Timestamp? = null
+
 }

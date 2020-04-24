@@ -22,7 +22,7 @@ services:
         image: mrkirby153/laravel:7.3.11
         restart: always
         ports:
-            - "8580:80"
+            - "127.0.0.1:8580:80"
         volumes:
             - ./KirBotPanel:/var/www
         depends_on:

@@ -12,14 +12,16 @@ import net.dv8tion.jda.api.sharding.ShardManager
 
 object SettingsRepository {
 
-    val settingsCache: Cache<String, String?> = CacheBuilder.newBuilder().maximumSize(
-            10000).build<String, String?>()
+    private const val nullString = "\u0000";
+
+    private val settingsCache: Cache<String, String> = CacheBuilder.newBuilder().maximumSize(
+            10000).build()
 
     private val settingsListeners = mutableMapOf<String, MutableList<(Guild, String?) -> Unit>>()
 
     fun get(guildId: String, key: String): String? {
         try {
-            return settingsCache.get("$guildId-$key") loader@{
+            val cachedValue = settingsCache.get("$guildId-$key") loader@{
                 Bot.LOG.debug("Retrieving $key from the database for $guildId")
                 val setting = Model.query(GuildSetting::class.java).where("guild", guildId).where(
                         "key",
@@ -28,10 +30,14 @@ object SettingsRepository {
                     Bot.LOG.debug("Retrieved \"${setting.value}\" from the database")
                 } else {
                     Bot.LOG.debug("Retrieved \"null\" from the database")
-                    throw NoSuchElementException("Null")
+                    return@loader nullString
                 }
                 return@loader setting.value
             }
+            return if (cachedValue == nullString)
+                null
+            else
+                cachedValue
         } catch (e: UncheckedExecutionException) {
             if (e.cause is NoSuchElementException) {
                 return null // The value does not exist in the database
@@ -69,8 +75,9 @@ object SettingsRepository {
         if (newValue != null)
             settingsCache.put("$guildId-$key", newValue) // Update our cached value
         else
-            settingsCache.invalidate("$guildId-$key")
-        val guild = Bot.applicationContext.get(ShardManager::class.java).getGuildById(guildId) ?: return
+            settingsCache.put("$guildId-$key", nullString)
+        val guild = Bot.applicationContext.get(ShardManager::class.java).getGuildById(guildId)
+                ?: return
         settingsListeners[key]?.forEach {
             try {
                 it.invoke(guild, newValue)

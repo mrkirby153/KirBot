@@ -10,10 +10,12 @@ import me.mrkirby153.KirBot.database.models.guild.CommandAlias
 import me.mrkirby153.KirBot.database.models.guild.DiscordGuild
 import me.mrkirby153.KirBot.logger.LogManager
 import me.mrkirby153.KirBot.module.ModuleManager
+import me.mrkirby153.KirBot.modules.AdminControl
 import me.mrkirby153.KirBot.modules.Database
 import me.mrkirby153.KirBot.modules.Redis
 import me.mrkirby153.KirBot.user.CLEARANCE_ADMIN
 import me.mrkirby153.KirBot.utils.fuzzyMatch
+import me.mrkirby153.KirBot.utils.sanitize
 import me.mrkirby153.KirBot.utils.settings.GuildSettings
 import me.mrkirby153.KirBot.utils.toTypedArray
 import me.mrkirby153.kcutils.child
@@ -57,11 +59,11 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
             "${this.id}.json")
 
     val ready
-        get() = readyFuture.isDone
+        get() = readyFuture?.isDone ?: false
 
     private val runningTasks: CopyOnWriteArrayList<Future<*>> = CopyOnWriteArrayList()
 
-    private lateinit var readyFuture: CompletableFuture<Void>
+    private var readyFuture: CompletableFuture<Void>? = null
 
     /**
      * Load guild-specific settings
@@ -104,7 +106,7 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         ModuleManager[Redis::class.java].getConnection().use {
             it.del("data:${this.id}")
         }
-        KirBotGuild.remove(this)
+        remove(this)
     }
 
     fun updateRoleClearance(role: String, clearance: Int) {
@@ -161,11 +163,13 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         readyFuture = CompletableFuture.allOf(nickFuture, channelFuture, roleFuture,
                 seenUsersFuture)
 
-        readyFuture.thenRun {
+        readyFuture?.thenRun {
             Bot.LOG.info("Guild ${guild.id} is ready")
             removeCompletedTasks()
-        }.exceptionally { ex ->
+        }?.exceptionally { ex ->
             Bot.LOG.error("Guild ${guild.id} did not initialize correctly", ex)
+            Bot.applicationContext.get(AdminControl::class.java).log(
+                    "Guild ${guild.name.sanitize()} (`${guild.id}`) did not initialize correctly: ${ex.localizedMessage}")
             removeCompletedTasks()
             return@exceptionally null
         }

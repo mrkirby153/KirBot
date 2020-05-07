@@ -1,6 +1,8 @@
 package me.mrkirby153.KirBot.command
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
+import io.sentry.Sentry
+import io.sentry.event.UserBuilder
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.annotations.AdminCommand
 import me.mrkirby153.KirBot.command.annotations.Command
@@ -14,7 +16,6 @@ import me.mrkirby153.KirBot.command.tree.CommandNode
 import me.mrkirby153.KirBot.command.tree.CommandNodeMetadata
 import me.mrkirby153.KirBot.database.models.CustomCommand
 import me.mrkirby153.KirBot.inject.Injectable
-import me.mrkirby153.KirBot.logger.ErrorLogger
 import me.mrkirby153.KirBot.logger.LogEvent
 import me.mrkirby153.KirBot.stats.Statistics
 import me.mrkirby153.KirBot.utils.Context
@@ -23,6 +24,7 @@ import me.mrkirby153.KirBot.utils.escapeMentions
 import me.mrkirby153.KirBot.utils.getClearance
 import me.mrkirby153.KirBot.utils.globalAdmin
 import me.mrkirby153.KirBot.utils.logName
+import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import me.mrkirby153.KirBot.utils.settings.GuildSettings
 import me.mrkirby153.KirBot.utils.toTypedArray
 import me.mrkirby153.kcutils.Time
@@ -265,8 +267,16 @@ class CommandExecutor @Inject constructor(private val shardManager: ShardManager
         } catch (e: InterruptedException) {
             // Ignore
         } catch (e: java.lang.Exception) {
-            e.printStackTrace()
-            ErrorLogger.logThrowable(e, context.guild, context.author)
+            Bot.LOG.error("An unknown error occurred when executing the command $rootCommandName", e)
+            Sentry.getContext().user = UserBuilder().apply {
+                setUsername(context.author.nameAndDiscrim)
+                setId(context.author.id)
+            }.build()
+            Sentry.getContext().addExtra("guild", context.guild.id)
+            Sentry.getContext().addExtra("command", rootCommandName)
+            Sentry.getContext().addExtra("context", cmdContext.getContextString())
+            Sentry.capture(e)
+            Sentry.clearContext()
             context.send().error("An unknown error occurred!").queue()
         }
         Bot.LOG.debug("Command execution finished")
@@ -351,7 +361,8 @@ class CommandExecutor @Inject constructor(private val shardManager: ShardManager
                 true
             }
         } catch (e: Throwable) {
-            e.printStackTrace()
+            Bot.LOG.error("An error occurred in canExeuteInChannel", e)
+            Sentry.capture(e)
         }
         return false
     }

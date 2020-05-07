@@ -1,7 +1,7 @@
 package me.mrkirby153.KirBot.redis
 
+import io.sentry.Sentry
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.logger.ErrorLogger
 import net.dv8tion.jda.api.sharding.ShardManager
 import org.json.JSONObject
 import org.json.JSONTokener
@@ -39,7 +39,9 @@ class RedisHandler(val shardManager: ShardManager) : JedisPubSub() {
             }
         } catch (e: Exception) {
             Bot.LOG.error("Error processing payload $message", e)
-            ErrorLogger.logThrowable(e)
+            Sentry.getContext().addTag("payload", message)
+            Sentry.capture(e)
+            Sentry.clearContext()
         }
     }
 }

@@ -1,7 +1,7 @@
 package me.mrkirby153.KirBot.redis
 
+import io.sentry.Sentry
 import me.mrkirby153.KirBot.Bot
-import me.mrkirby153.KirBot.logger.ErrorLogger
 import me.mrkirby153.KirBot.utils.redis.RedisConnection
 import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.api.sharding.ShardManager
@@ -23,7 +23,7 @@ class RedisConnector(val shardManager: ShardManager, val connector: RedisConnect
                         it.subscribe(RedisHandler(shardManager), "kirbot")
                     }
                 } catch (e: Exception) {
-                    ErrorLogger.logThrowable(e)
+                    Sentry.capture(e)
                     if (retries > MAX_RETRIES) {
                         running = false
                         Bot.LOG.error("Reached Max retry count, giving up.")

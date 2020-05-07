@@ -1,5 +1,6 @@
 package me.mrkirby153.KirBot.logger
 
+import io.sentry.Sentry
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.server.KirBotGuild
 import net.dv8tion.jda.api.sharding.ShardManager
@@ -28,8 +29,10 @@ class LogPump(private val shardManager: ShardManager, private val delay: Long) :
                 if (running)
                     sleep(delay)
             } catch (e: Exception) {
-                if(e !is InterruptedException)
-                    e.printStackTrace()
+                if(e !is InterruptedException) {
+                    Bot.LOG.error("Log Pump encountered an error", e)
+                    Sentry.capture(e)
+                }
                 // Ignore all exceptions and continue running
             }
             shuttingDown = false

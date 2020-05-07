@@ -2,6 +2,7 @@ package me.mrkirby153.KirBot.command.executors.rss
 
 import com.mrkirby153.bfs.model.Model
 import com.rometools.rome.io.FeedException
+import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.command.annotations.CommandDescription
 import me.mrkirby153.KirBot.command.CommandCategory
 import me.mrkirby153.KirBot.command.CommandException
@@ -98,7 +99,6 @@ class CommandRss {
                 m.editMessage(
                         "$GREEN_TICK Feed has been registered to <#${context.channel.id}>").queue()
             } catch (e: FeedException) {
-                e.printStackTrace()
                 m.editMessage("$RED_TICK An error occurred when parsing the feed").queue()
             } catch (e: IllegalArgumentException) {
                 m.editMessage("$RED_TICK An invalid URL was provided").queue()

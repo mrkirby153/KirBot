@@ -1,10 +1,12 @@
 package me.mrkirby153.KirBot.database
 
+import io.sentry.Sentry
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.logger.LogManager
 import me.mrkirby153.KirBot.module.ModuleManager
 import me.mrkirby153.KirBot.modules.Database
 import net.dv8tion.jda.api.entities.Message
+import java.lang.RuntimeException
 import java.sql.Timestamp
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executors
@@ -51,7 +53,7 @@ object MessageConcurrencyManager {
     class MessageTask(val message: Array<out Message>, val action: TaskType) : Runnable {
         override fun run() {
             try {
-                val connection = ModuleManager[Database::class].database.getConnection()
+                val connection = Bot.applicationContext.get(Database::class.java).database.getConnection()
                 connection.use {
                     when (action) {
                         MessageConcurrencyManager.TaskType.CREATE -> {
@@ -115,7 +117,7 @@ object MessageConcurrencyManager {
 
     class DeleteTask(val ids: Array<out String>) : Runnable {
         override fun run() {
-            val connection = ModuleManager[Database::class].database.getConnection()
+            val connection = Bot.applicationContext.get(Database::class.java).database.getConnection()
             connection.use {
                 val placeholders = ids.joinToString(",") { "?" }
                 // If the message already is deleted, don't delete it
@@ -130,7 +132,8 @@ object MessageConcurrencyManager {
                     updatePs.close()
                     Bot.LOG.debug("Deleting ${ids.size} messages: (${ids.contentToString()})")
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    Bot.LOG.error("An exception occurred processing a delete task", e)
+                    Sentry.capture(e)
                 }
             }
         }

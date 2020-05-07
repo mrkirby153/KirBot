@@ -21,9 +21,10 @@ target/
 classes/
 src/main/resources/rebel.xml
 /data/*
-sentry\.properties
 .data
 docker-compose.override.yml
 build/
 .gradle/
 out/
+
+logs/

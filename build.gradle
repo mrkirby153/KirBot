@@ -46,6 +46,10 @@ dependencies {
     compile 'io.prometheus:simpleclient_httpserver:0.6.0'
     compile 'javax.inject:javax.inject:1'
     compile 'org.discordbots:DBL-Java-Library:2.0.1'
+
+    compile 'io.sentry:sentry:1.7.30'
+    compile 'io.sentry:sentry-logback:1.7.30'
+
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     implementation "org.jetbrains.kotlin:kotlin-reflect"
 }

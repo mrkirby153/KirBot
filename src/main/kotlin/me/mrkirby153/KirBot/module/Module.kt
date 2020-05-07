@@ -1,5 +1,6 @@
 package me.mrkirby153.KirBot.module
 
+import io.sentry.Sentry
 import me.mrkirby153.KirBot.Bot
 import net.dv8tion.jda.api.sharding.ShardManager
 import java.lang.reflect.InvocationTargetException
@@ -74,17 +75,21 @@ abstract class Module(val name: String) {
             string) ?: default
 
     fun triggerPeriodicTasks(count: Int) {
-        if(count > 0) {
+        if (count > 0) {
             this.periodicTasks.forEach { method, interval ->
                 if ((count % interval) == 0) {
                     try {
                         method.invoke(this@Module)
-                    } catch(e: InvocationTargetException){
+                    } catch (e: InvocationTargetException) {
                         log("An error occurred when executing ${method.name}: ${e.targetException}")
-                        e.targetException.printStackTrace()
-                    } catch(e: Throwable){
+                        Sentry.getContext().addExtra("method", method.name)
+                        Sentry.capture(e.targetException)
+                        Sentry.clearContext()
+                    } catch (e: Throwable) {
                         log("An error occurred when executing ${method.name}: $e")
-                        e.printStackTrace()
+                        Sentry.getContext().addExtra("method", method.name)
+                        Sentry.capture(e)
+                        Sentry.clearContext()
                     }
                 }
             }

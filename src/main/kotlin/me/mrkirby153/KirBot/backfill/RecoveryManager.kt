@@ -1,5 +1,6 @@
 package me.mrkirby153.KirBot.backfill
 
+import io.sentry.Sentry
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.inject.Injectable
 import me.mrkirby153.KirBot.logger.LogManager
@@ -123,8 +124,8 @@ class RecoveryTask(private val database: Database, private val recovery: ActiveR
                 }
             }
         } catch (e: Exception) {
-            Bot.LOG.error("An error occurred when recovering $channel")
-            e.printStackTrace()
+            Bot.LOG.error("An error occurred when recovering $channel", e)
+            Sentry.capture(e)
             recovery.completed.add(channel)
         }
     }

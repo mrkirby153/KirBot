@@ -7,7 +7,8 @@ class CommandContext {
 
     fun <T> get(key: String): T? = arguments[key] as T?
 
-    fun <T> getNotNull(key: String): T = arguments[key] as T ?: throw NullPointerException("key $key is null")
+    fun <T> getNotNull(key: String): T = arguments[key] as T ?: throw NullPointerException(
+            "key $key is null")
 
     fun put(key: String, `object`: Any?) = arguments.put(key, `object`)
 
@@ -22,5 +23,8 @@ class CommandContext {
         return "CommandContext(arguments=$arguments)"
     }
 
+    fun getContextString(): String {
+        return arguments.entries.joinToString(", ") { "${it.key}=${it.value}" }
+    }
 
 }

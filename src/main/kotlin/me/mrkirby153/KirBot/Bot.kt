@@ -10,6 +10,7 @@ import com.sedmelluq.discord.lavaplayer.jdaudp.NativeAudioSendFactory
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers
+import io.sentry.Sentry
 import me.mrkirby153.KirBot.botlists.BotListManager
 import me.mrkirby153.KirBot.botlists.TopGGBotList
 import me.mrkirby153.KirBot.command.CommandDocumentationGenerator
@@ -92,6 +93,7 @@ object Bot {
 
     fun start(token: String) {
         Statistics.export()
+        initializeSentry()
         val startupTime = System.currentTimeMillis()
         state = BotState.INITIALIZING
         configureLogging()
@@ -292,6 +294,16 @@ object Bot {
         }
 
         manager.updateBotLists()
+    }
+
+    private fun initializeSentry() {
+        val sentryDsn = properties.getProperty("sentry-dsn")
+        if (sentryDsn != null) {
+            LOG.info("Initializing sentry")
+            Sentry.init(sentryDsn)
+        } else {
+            LOG.warn("Sentry dsn was not found. Skipping initialization")
+        }
     }
 
 }

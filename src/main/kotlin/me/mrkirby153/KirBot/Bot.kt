@@ -10,6 +10,8 @@ import com.sedmelluq.discord.lavaplayer.jdaudp.NativeAudioSendFactory
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers
+import me.mrkirby153.KirBot.botlists.BotListManager
+import me.mrkirby153.KirBot.botlists.TopGGBotList
 import me.mrkirby153.KirBot.command.CommandDocumentationGenerator
 import me.mrkirby153.KirBot.database.models.guild.DiscordGuild
 import me.mrkirby153.KirBot.error.UncaughtErrorReporter
@@ -135,9 +137,6 @@ object Bot {
                 setAudioSendFactory(NativeAudioSendFactory())
         }.build()
         applicationContext.register(shardManager)
-        val sl = applicationContext.newInstance(ShardListener::class.java)
-        val ac = applicationContext.newInstance(AdminControl::class.java)
-        shardManager.addEventListener(sl, ac)
 
 
         Bot.LOG.info("Waiting for shards to start..")
@@ -148,6 +147,11 @@ object Bot {
 
         val endTime = System.currentTimeMillis()
         LOG.info("\n\n\nSHARDS INITIALIZED! (${Time.format(1, endTime - startTime)})")
+
+        initializeBotLists()
+        val sl = applicationContext.newInstance(ShardListener::class.java)
+        val ac = applicationContext.newInstance(AdminControl::class.java)
+        shardManager.addEventListener(sl, ac)
 
         state = BotState.LOADING
 
@@ -238,7 +242,7 @@ object Bot {
                 logger.level = Level.DEBUG
             }
         }
-        if(System.getProperty("kirbot.logQueries", "false")?.toBoolean() == true) {
+        if (System.getProperty("kirbot.logQueries", "false")?.toBoolean() == true) {
             LOG.warn("Setting log level for bfs to TRACE")
             (LoggerFactory.getLogger(QueryBuilder::class.java) as? Logger)?.level = Level.TRACE
         }
@@ -276,6 +280,18 @@ object Bot {
         val shards = json.getInt("shards")
         LOG.debug("Discord returned $shards shards.")
         return shards
+    }
+
+    private fun initializeBotLists() {
+        val manager = applicationContext.newInstance(BotListManager::class.java)
+        applicationContext.register(manager)
+
+        val topGGKey = properties.getProperty("botlist.topgg")
+        if (topGGKey != null) {
+            manager.registerBotList(TopGGBotList(topGGKey, shardManager.shards.first().selfUser.id))
+        }
+
+        manager.updateBotLists()
     }
 
 }

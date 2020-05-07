@@ -2,6 +2,7 @@ package me.mrkirby153.KirBot.listener
 
 import com.mrkirby153.bfs.model.Model
 import me.mrkirby153.KirBot.Bot
+import me.mrkirby153.KirBot.botlists.BotListManager
 import me.mrkirby153.KirBot.command.executors.admin.CommandStats
 import me.mrkirby153.KirBot.database.models.DiscordUser
 import me.mrkirby153.KirBot.database.models.guild.DiscordGuild
@@ -41,7 +42,8 @@ import javax.inject.Inject
 
 class ShardListener @Inject constructor(private val accessModule: AccessModule,
                                         private val userPersistenceHandler: UserPersistenceHandler,
-                                        private val adminControl: AdminControl) {
+                                        private val adminControl: AdminControl,
+                                        private val botListManager: BotListManager) {
 
     private val idGenerator = IdGenerator(IdGenerator.ALPHA + IdGenerator.NUMBERS)
     private val guildLeavesIgnore = mutableSetOf<String>()
@@ -112,6 +114,7 @@ class ShardListener @Inject constructor(private val accessModule: AccessModule,
         guildLeavesIgnore.remove(event.guild.id)
         Model.where(DiscordGuild::class.java, "id", event.guild.id).first()?.delete()
         event.guild.kirbotGuild.onPart()
+        botListManager.updateBotLists()
     }
 
     @Subscribe(priority = EventPriority.HIGHEST)
@@ -160,6 +163,7 @@ class ShardListener @Inject constructor(private val accessModule: AccessModule,
         Bot.scheduler.schedule({
             event.guild.kirbotGuild.sync()
         }, 0, TimeUnit.MILLISECONDS)
+        botListManager.updateBotLists()
     }
 
     @Subscribe

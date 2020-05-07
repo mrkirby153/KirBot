@@ -40,11 +40,12 @@ dependencies {
     compile 'mysql:mysql-connector-java:5.1.33'
     compile 'commons-codec:commons-codec:1.11'
     compile 'me.xdrop:fuzzywuzzy:1.1.10'
-    compile 'com.mrkirby153:bug-free-spork:2.1'
+    compile 'com.mrkirby153:bug-free-spork:2.2'
     compile 'io.prometheus:simpleclient:0.6.0'
     compile 'io.prometheus:simpleclient_hotspot:0.6.0'
     compile 'io.prometheus:simpleclient_httpserver:0.6.0'
     compile 'javax.inject:javax.inject:1'
+    compile 'org.discordbots:DBL-Java-Library:2.0.1'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     implementation "org.jetbrains.kotlin:kotlin-reflect"
 }

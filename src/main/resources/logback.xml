@@ -5,15 +5,6 @@
         </encoder>
     </appender>
 
-    <appender name="sentry" class="io.sentry.logback.SentryAdapter">
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>WARN</level>
-        </filter>
-        <encoder>
-            <pattern>%d{yyy-MM-dd HH:mm:ss.SSS} [%thread/%-5level] %logger{36} - %msg%n</pattern>
-        </encoder>
-    </appender>
-
     <appender name="file" class="ch.qos.logback.core.FileAppender">
         <file>logs/kirbot.log</file>
         <encoder>
@@ -33,6 +24,5 @@
     <root level="info">
         <appender-ref ref="STDOUT"/>
         <appender-ref ref="file"/>
-        <appender-ref ref="sentry"/>
     </root>
 </configuration>

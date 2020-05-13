@@ -2,6 +2,7 @@ package me.mrkirby153.KirBot.server
 
 import com.mrkirby153.bfs.model.Model
 import com.mrkirby153.bfs.model.SoftDeletingModel
+import io.sentry.Sentry
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.models.Channel
 import me.mrkirby153.KirBot.database.models.CustomCommand
@@ -21,6 +22,7 @@ import me.mrkirby153.KirBot.utils.toTypedArray
 import me.mrkirby153.kcutils.child
 import me.mrkirby153.kcutils.mkdirIfNotExist
 import me.mrkirby153.kcutils.use
+import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.GuildChannel
 import net.dv8tion.jda.api.entities.Member
@@ -125,8 +127,9 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
         val nickFuture = runAsyncTask {
             val botNick = GuildSettings.botNick.nullableGet(this)
             if (this.selfMember.nickname != botNick) {
-                this.selfMember.modifyNickname(
-                        if (botNick?.isEmpty() == true) null else botNick).queue()
+                if (this.selfMember.hasPermission(Permission.NICKNAME_CHANGE))
+                    this.selfMember.modifyNickname(
+                            if (botNick?.isEmpty() == true) null else botNick).queue()
             }
         }
 
@@ -171,6 +174,10 @@ class KirBotGuild(val guild: Guild) : Guild by guild {
             Bot.applicationContext.get(AdminControl::class.java).log(
                     "Guild ${guild.name.sanitize()} (`${guild.id}`) did not initialize correctly: ${ex.localizedMessage}")
             removeCompletedTasks()
+            Sentry.getContext().addExtra("guild", guild.id)
+            Sentry.getContext().addExtra("guild_name", guild.name)
+            Sentry.capture(ex)
+            Sentry.clearContext()
             return@exceptionally null
         }
     }

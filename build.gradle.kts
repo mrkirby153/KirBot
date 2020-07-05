@@ -20,6 +20,11 @@ configurations {
 
 repositories {
     mavenCentral()
+    jcenter()
+    mavenLocal()
+    maven {
+        url = uri("https://repo.mrkirby153.com/repository/maven-public/")
+    }
 }
 
 dependencies {
@@ -34,6 +39,10 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
     }
+
+    runtimeOnly("mysql:mysql-connector-java")
+    implementation("net.dv8tion:JDA:4.2.0_173")
+    implementation("me.mrkirby153:KirbyUtils-Common:3.3")
 }
 
 tasks.withType<Test> {

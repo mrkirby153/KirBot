@@ -38,11 +38,18 @@ dependencies {
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
+        exclude(module = "mockito-core")
     }
 
     runtimeOnly("mysql:mysql-connector-java")
     implementation("net.dv8tion:JDA:4.2.0_173")
     implementation("me.mrkirby153:KirbyUtils-Common:3.3")
+
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.5.2")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.5.2")
+    testImplementation("org.awaitility:awaitility:4.0.1")
+    testRuntimeOnly("com.h2database:h2")
+    testImplementation("com.ninja-squad:springmockk:2.0.2")
 }
 
 tasks.withType<Test> {

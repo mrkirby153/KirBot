@@ -52,7 +52,7 @@ class DiscordConfiguration(@Value("\${bot.token}") private val token: String,
             val connectingShards = shardManager.shards.filter { it.status != JDA.Status.CONNECTED && it.shardInfo.shardId != event.jda.shardInfo.shardId }
             if (connectingShards.isEmpty()) {
                 log.info("All shards have connected")
-                log.info("On ${shardManager.guilds} guilds")
+                log.info("On ${shardManager.guilds.size} guilds")
             }
         }
     }

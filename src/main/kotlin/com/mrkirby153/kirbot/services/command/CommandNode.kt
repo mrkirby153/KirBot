@@ -17,12 +17,21 @@ class CommandNode(
         /**
          * The class of the backing method
          */
-        var clazz: Class<*>? = null) {
+        var clazz: Class<*>? = null,
+        /**
+         * The instance to use when invoking the method
+         */
+        var instance: Any? = null) {
 
     /**
      * The parent command node
      */
     var parent: CommandNode? = null
+
+    /**
+     * A list of names of this node's parents
+     */
+    val parentNames: MutableList<String> = mutableListOf()
 
     private val children = mutableListOf<CommandNode>()
 
@@ -49,7 +58,11 @@ class CommandNode(
      */
     fun addChild(node: CommandNode) {
         this.children.add(node)
+        val newParents = parentNames.toMutableList()
+        newParents.add(name)
         node.parent = this
+        node.parentNames.clear()
+        node.parentNames.addAll(newParents)
     }
 
     override fun equals(other: Any?): Boolean {
@@ -59,7 +72,7 @@ class CommandNode(
         if (other !is CommandNode) return false
 
         if (isSkeleton())
-            // Skeleton commands are equal if their name is the same and they share the same parent
+        // Skeleton commands are equal if their name is the same and they share the same parent
             return other.name == this.name && other.parent == this.parent
 
         // Commands that have the same backing method and clazz are equal

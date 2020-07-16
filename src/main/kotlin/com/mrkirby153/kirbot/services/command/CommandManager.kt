@@ -27,7 +27,7 @@ class CommandManager(private val context: ApplicationContext) : CommandService {
             val annotation = method.getAnnotation(Command::class.java)
 
             val name = annotation.name.split(" ")
-            val node = CommandNode(name.last(), method, realClass)
+            val node = CommandNode(name.last(), method, realClass, clazz)
             insertCommandNode(name.dropLast(1), node)
         }
     }

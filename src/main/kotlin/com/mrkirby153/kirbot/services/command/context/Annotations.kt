@@ -15,3 +15,9 @@ annotation class Max(val value: Long)
  * of the arguments
  */
 annotation class Single
+
+/**
+ * Annotation designating the name of this command argument. If absent, the method's name will be
+ * used instead
+ */
+annotation class Parameter(val value: String)

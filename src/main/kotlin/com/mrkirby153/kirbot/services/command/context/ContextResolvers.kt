@@ -12,7 +12,7 @@ import java.util.regex.Pattern
 import kotlin.reflect.KClass
 
 @Component
-class ContextResolvers(val shardManager: ShardManager) {
+class ContextResolvers(private val shardManager: ShardManager) {
 
     private val log = LogManager.getLogger()
 

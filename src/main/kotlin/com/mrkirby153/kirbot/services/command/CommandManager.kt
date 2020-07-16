@@ -1,16 +1,27 @@
 package com.mrkirby153.kirbot.services.command
 
+import com.mrkirby153.kirbot.services.command.context.ArgumentParseException
+import com.mrkirby153.kirbot.services.command.context.CommandContext
+import com.mrkirby153.kirbot.services.command.context.ContextResolvers
+import com.mrkirby153.kirbot.services.command.context.MissingResolverException
 import me.mrkirby153.kcutils.Time
+import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.User
 import org.apache.logging.log4j.LogManager
 import org.springframework.beans.factory.NoSuchBeanDefinitionException
 import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider
 import org.springframework.core.type.filter.AnnotationTypeFilter
+import org.springframework.stereotype.Service
 import org.springframework.util.ClassUtils
+import java.lang.reflect.InvocationTargetException
 import javax.annotation.PostConstruct
 import kotlin.system.measureTimeMillis
 
-class CommandManager(private val context: ApplicationContext) : CommandService {
+@Service
+class CommandManager(private val context: ApplicationContext,
+                     private val contextResolvers: ContextResolvers,
+                     private val argumentParser: ArgumentParserService) : CommandService {
 
     private val automaticDiscoveryPackage = "com.mrkirby153.kirbot"
 
@@ -44,6 +55,33 @@ class CommandManager(private val context: ApplicationContext) : CommandService {
 
     override fun executeCommand(args: String) {
         TODO("Not yet implemented")
+    }
+
+    override fun invoke(node: CommandNode, args: List<String>, user: User, guild: Guild?) {
+        if (node.isSkeleton())
+            return
+        val mutableArgs = args.toMutableList()
+        val argTypes = argumentParser.parseArguments(node)
+        val parameters = mutableListOf<Any?>()
+
+        argTypes.forEach { arg ->
+            if (mutableArgs.isEmpty()) {
+                if (arg.type == ArgumentParserService.ArgType.REQUIRED)
+                    throw ArgumentParseException("Missing argument ${arg.name}")
+                else
+                    parameters.add(null)
+            }
+            val resolver = contextResolvers.get(arg.param.type) ?: throw MissingResolverException(
+                    arg.param.type)
+            parameters.add(resolver.invoke(CommandContext(mutableArgs, arg.param, user, guild)))
+        }
+
+        try {
+            node.method!!.invoke(node.instance, *parameters.toTypedArray())
+        } catch (e: InvocationTargetException) {
+            val cause = e.cause ?: e
+            throw CommandException(cause.message ?: "An unknown error occurred")
+        }
     }
 
     @PostConstruct

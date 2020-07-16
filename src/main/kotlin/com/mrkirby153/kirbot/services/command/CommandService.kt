@@ -1,5 +1,8 @@
 package com.mrkirby153.kirbot.services.command
 
+import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.User
+
 /**
  * Service for handling the registration and execution of commands
  */
@@ -38,4 +41,14 @@ interface CommandService {
      * @args The command to execute
      */
     fun executeCommand(args: String)
+
+    /**
+     * Invokes a command node
+     *
+     * @param node The command node
+     * @param args The arguments to invoke
+     * @param user The user invoking the command
+     * @param guild The guild that the command is being invoked on
+     */
+    fun invoke(node: CommandNode, args: List<String>, user: User, guild: Guild?)
 }

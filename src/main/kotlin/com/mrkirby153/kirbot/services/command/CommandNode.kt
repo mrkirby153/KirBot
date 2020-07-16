@@ -1,5 +1,7 @@
 package com.mrkirby153.kirbot.services.command
 
+import com.mrkirby153.kirbot.services.command.context.CommandParameter
+import com.mrkirby153.kirbot.services.command.context.Parameter
 import java.lang.reflect.Method
 
 /**
@@ -13,7 +15,7 @@ class CommandNode(
         /**
          * The java method that backs this command
          */
-        var method: Method? = null,
+        method: Method? = null,
         /**
          * The class of the backing method
          */
@@ -33,7 +35,25 @@ class CommandNode(
      */
     val parentNames: MutableList<String> = mutableListOf()
 
+    var method: Method? = null
+        set(value) {
+            field = value
+            parseArguments()
+        }
+
+    val commandParameters: MutableMap<String, CommandParameter> = mutableMapOf()
+
     private val children = mutableListOf<CommandNode>()
+
+    val annotation: Command by lazy {
+        if(method == null)
+            throw IllegalArgumentException("Cannot get annotation of skeleton")
+        method.getAnnotation(Command::class.java)
+    }
+
+    init {
+        this.method = method
+    }
 
     /**
      * Checks if this command is a skeleton node
@@ -77,5 +97,16 @@ class CommandNode(
 
         // Commands that have the same backing method and clazz are equal
         return other.method == this.method && other.clazz == this.clazz
+    }
+
+    private fun parseArguments() {
+        val m = method ?: return
+        commandParameters.clear()
+        var index = 0
+        m.parameters.forEach {
+            val name = it.getAnnotation(Parameter::class.java)?.value ?: it.name
+            commandParameters[name] = CommandParameter(it.type, it, name, index, m.parameterCount)
+            index++
+        }
     }
 }

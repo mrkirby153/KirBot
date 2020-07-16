@@ -19,10 +19,6 @@ class CommandParameter(
          */
         val name: String,
         /**
-         * If the parameter can be nullable
-         */
-        val nullable: Boolean,
-        /**
          * The total number of parameters
          */
         val parameterCount: Int,

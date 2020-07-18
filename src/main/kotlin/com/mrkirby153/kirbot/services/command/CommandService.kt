@@ -51,4 +51,12 @@ interface CommandService {
      * @param guild The guild that the command is being invoked on
      */
     fun invoke(node: CommandNode, args: List<String>, user: User, guild: Guild?)
+
+    /**
+     * Gets the usage string for a command
+     *
+     * @param node The node to get the usage string for
+     * @return The usage string
+     */
+    fun getUsageString(node: CommandNode): String
 }

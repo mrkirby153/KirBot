@@ -21,3 +21,9 @@ annotation class Single
  * used instead
  */
 annotation class Parameter(val value: String)
+
+/**
+ * Marker annotation designating the field as optional. This should not be placed on nullable
+ * fields
+ */
+annotation class Optional

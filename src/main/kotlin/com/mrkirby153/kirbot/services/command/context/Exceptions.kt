@@ -9,3 +9,5 @@ open class ArgumentParseException(msg: String): Exception(msg)
  * Exception thrown when a resolver is missing
  */
 class MissingResolverException(type: Class<*>) : ArgumentParseException("Missing resolver for $type")
+
+class MissingArgumentException(argumentName: String): ArgumentParseException("$argumentName is required")

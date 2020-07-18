@@ -18,6 +18,8 @@ class ContextResolvers(private val shardManager: ShardManager) {
 
     private val snowflakePattern = Pattern.compile("\\d{17,18}")
 
+    private val contexts = mutableMapOf<Class<*>, ContextResolver>()
+
     init {
         register(Int::class) {
             val num = it.popFirst() ?: return@register null
@@ -39,10 +41,10 @@ class ContextResolvers(private val shardManager: ShardManager) {
                 else -> throw ArgumentParseException("Invalid boolean \"$str\"")
             }
         }
-        register(CommandSender::class) {
+        register(CommandSender::class, false) {
             CommandSender(it.issuer)
         }
-        register(CurrentGuild::class) {
+        register(CurrentGuild::class, false) {
             if (it.guild != null)
                 CurrentGuild(it.guild)
             else
@@ -113,18 +115,26 @@ class ContextResolvers(private val shardManager: ShardManager) {
         }
     }
 
-    private val contexts = mutableMapOf<Class<*>, (CommandContext) -> Any?>()
 
-
-    final fun register(clazz: KClass<*>, function: (CommandContext) -> Any?) {
+    /**
+     * Registers a context resolver that consumes input to resolve the class
+     *
+     * @param clazz The type for the resolver
+     * @param consume If the command should consume input
+     * @param function The function to register
+     */
+    final fun register(clazz: KClass<*>, consume: Boolean = true,
+                       function: (CommandContext) -> Any?) {
         if (contexts.containsKey(clazz.java))
             throw IllegalArgumentException(
                     "Attempting to register a resolver for $clazz which already exists")
-        contexts[clazz.java] = function
+        contexts[clazz.java] = ContextResolver(function, consume)
         log.info("Registered resolver for {}", clazz)
     }
 
-    fun get(clazz: Class<*>) = contexts.get(clazz)
+    fun get(clazz: Class<*>) = contexts[clazz]
+
+    fun consumes(clazz: Class<*>) = get(clazz)?.consuming ?: throw MissingResolverException(clazz)
 
     private fun convertAndCheckBounds(str: String, min: Long, max: Long): Long {
         try {
@@ -138,4 +148,6 @@ class ContextResolvers(private val shardManager: ShardManager) {
             throw ArgumentParseException("\$str\" is not a valid number")
         }
     }
+
+    data class ContextResolver(val resolver: (CommandContext) -> Any?, val consuming: Boolean)
 }

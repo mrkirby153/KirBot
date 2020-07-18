@@ -1,6 +1,7 @@
 package com.mrkirby153.kirbot.services.command
 
 import net.dv8tion.jda.api.Permission
+import org.springframework.stereotype.Component
 
 /**
  * Marker annotation designating the annotated method as a command
@@ -18,12 +19,6 @@ annotation class Command(
         val aliases: Array<String> = [],
 
         /**
-         * The command's arguments. `[ ]` indicates optional arguments while `< >` indicates required
-         * arguments
-         */
-        val arguments: Array<String> = [],
-
-        /**
          * The clearance required to execute this command
          */
         val clearance: Long,
@@ -31,7 +26,7 @@ annotation class Command(
         /**
          * True if this command should only be allowed to execute in whitelisted channels
          */
-        val whitelist: Boolean,
+        val whitelist: Boolean = false,
 
         /**
          * True if this command will not show up in the help command
@@ -75,4 +70,5 @@ annotation class Description(val value: String)
  * Marker annotation for automatically discovering command methods
  */
 @Target(AnnotationTarget.CLASS)
+@Component
 annotation class Commands

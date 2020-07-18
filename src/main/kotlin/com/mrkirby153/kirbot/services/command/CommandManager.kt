@@ -1,9 +1,9 @@
 package com.mrkirby153.kirbot.services.command
 
-import com.mrkirby153.kirbot.services.command.context.ArgumentParseException
-import com.mrkirby153.kirbot.services.command.context.CommandContext
+import com.mrkirby153.kirbot.services.command.context.CommandContextResolver
 import com.mrkirby153.kirbot.services.command.context.ContextResolvers
-import com.mrkirby153.kirbot.services.command.context.MissingResolverException
+import com.mrkirby153.kirbot.services.command.context.Optional
+import com.mrkirby153.kirbot.services.command.context.Parameter
 import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.User
@@ -20,14 +20,14 @@ import kotlin.system.measureTimeMillis
 
 @Service
 class CommandManager(private val context: ApplicationContext,
-                     private val contextResolvers: ContextResolvers,
-                     private val argumentParser: ArgumentParserService) : CommandService {
+                     private val commandContextResolver: CommandContextResolver,
+                     private val contextResolver: ContextResolvers) : CommandService {
 
     private val automaticDiscoveryPackage = "com.mrkirby153.kirbot"
 
     private val log = LogManager.getLogger()
 
-    private val commandTree: CommandNode = CommandNode("ROOT")
+    private val commandTree: CommandNode = CommandNode("")
 
 
     override fun registerCommand(clazz: Any) {
@@ -60,27 +60,27 @@ class CommandManager(private val context: ApplicationContext,
     override fun invoke(node: CommandNode, args: List<String>, user: User, guild: Guild?) {
         if (node.isSkeleton())
             return
-        val mutableArgs = args.toMutableList()
-        val argTypes = argumentParser.parseArguments(node)
-        val parameters = mutableListOf<Any?>()
-
-        argTypes.forEach { arg ->
-            if (mutableArgs.isEmpty()) {
-                if (arg.type == ArgumentParserService.ArgType.REQUIRED)
-                    throw ArgumentParseException("Missing argument ${arg.name}")
-                else
-                    parameters.add(null)
-            }
-            val resolver = contextResolvers.get(arg.param.type) ?: throw MissingResolverException(
-                    arg.param.type)
-            parameters.add(resolver.invoke(CommandContext(mutableArgs, arg.param, user, guild)))
-        }
-
+        val parameterValues = commandContextResolver.resolve(node, args, user, guild)
         try {
-            node.method!!.invoke(node.instance, *parameters.toTypedArray())
+            node.method!!.invoke(node.instance, *parameterValues.toTypedArray())
         } catch (e: InvocationTargetException) {
             val cause = e.cause ?: e
             throw CommandException(cause.message ?: "An unknown error occurred")
+        }
+    }
+
+    override fun getUsageString(node: CommandNode): String {
+        if (node.isSkeleton())
+            throw IllegalArgumentException("Can't get usage string for a skeleton command node")
+        return node.method!!.parameters.filter { contextResolver.consumes(it.type) }.joinToString(
+                " ") {
+            val optional = it.isAnnotationPresent(Optional::class.java)
+            val name = it.getAnnotation(Parameter::class.java)?.value ?: it.name
+            if (optional) {
+                "[$name]"
+            } else {
+                "<$name>"
+            }
         }
     }
 

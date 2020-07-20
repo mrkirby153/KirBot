@@ -1,27 +1,48 @@
 package com.mrkirby153.kirbot.services.command
 
+import com.mrkirby153.kirbot.events.CommandExecutedEvent
+import com.mrkirby153.kirbot.services.PermissionService
 import com.mrkirby153.kirbot.services.command.context.CommandContextResolver
 import com.mrkirby153.kirbot.services.command.context.ContextResolvers
 import com.mrkirby153.kirbot.services.command.context.Optional
 import com.mrkirby153.kirbot.services.command.context.Parameter
+import com.mrkirby153.kirbot.services.setting.GuildSettings
+import com.mrkirby153.kirbot.services.setting.SettingsService
+import com.mrkirby153.kirbot.utils.checkPermissions
+import com.mrkirby153.kirbot.utils.getMember
+import com.mrkirby153.kirbot.utils.queue
+import com.mrkirby153.kirbot.utils.responseBuilder
 import me.mrkirby153.kcutils.Time
+import net.dv8tion.jda.api.entities.ChannelType
 import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.MessageChannel
+import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.entities.User
+import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent
+import net.dv8tion.jda.api.sharding.ShardManager
 import org.apache.logging.log4j.LogManager
 import org.springframework.beans.factory.NoSuchBeanDefinitionException
 import org.springframework.context.ApplicationContext
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider
+import org.springframework.context.event.EventListener
 import org.springframework.core.type.filter.AnnotationTypeFilter
+import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
 import org.springframework.util.ClassUtils
 import java.lang.reflect.InvocationTargetException
+import java.util.LinkedList
 import javax.annotation.PostConstruct
 import kotlin.system.measureTimeMillis
 
 @Service
 class CommandManager(private val context: ApplicationContext,
                      private val commandContextResolver: CommandContextResolver,
-                     private val contextResolver: ContextResolvers) : CommandService {
+                     private val contextResolver: ContextResolvers,
+                     private val settingsService: SettingsService,
+                     private val shardManager: ShardManager,
+                     private val permissionService: PermissionService,
+                     private val eventPublisher: ApplicationEventPublisher) : CommandService {
 
     private val automaticDiscoveryPackage = "com.mrkirby153.kirbot"
 
@@ -53,8 +74,81 @@ class CommandManager(private val context: ApplicationContext,
         return curr
     }
 
-    override fun executeCommand(args: String) {
-        TODO("Not yet implemented")
+    override fun executeCommand(message: String, user: User, channel: MessageChannel) {
+        if (channel.type == ChannelType.PRIVATE)
+            return
+        channel as TextChannel
+
+        val prefix = settingsService.getSetting(GuildSettings.commandPrefix, channel.guild)!!
+        val mention = isMention(message)
+        val member = user.getMember(channel.guild) ?: return
+
+        log.debug("Starting processing command \"$message\". Mention? $mention")
+        val time = measureTimeMillis a@{
+            if (!message.startsWith(prefix) && !mention)
+                return@a
+            val commandArgs = LinkedList(stripPrefix(message, prefix).split(" "))
+
+            if (commandArgs.isEmpty()) {
+                if (mention) {
+                    channel.responseBuilder.sendMessage(
+                            "The command prefix on this server is {{`$prefix`}}").queue()
+                    return@a
+                }
+            }
+
+            val node = resolve(commandArgs) ?: return@a
+
+            val cmdClearance = node.annotation.clearance
+            val userClearance = permissionService.getClearance(user, channel.guild)
+
+            fun notifyNoPermission() {
+                val shouldNotify = settingsService.getSetting(GuildSettings.commandSilentFail,
+                        channel.guild) ?: false
+                if (shouldNotify)
+                    channel.responseBuilder.sendMessage(
+                            ":lock: You do not have permission to perform this command").queue()
+            }
+
+            if (cmdClearance > userClearance) {
+                val requiredPerms = node.annotation.userPermissions
+                val missing = requiredPerms.filter { !member.hasPermission(it) }
+                if (missing.isNotEmpty()) {
+                    notifyNoPermission()
+                    return@a
+                }
+            } else {
+                notifyNoPermission()
+                return@a
+            }
+
+            val missingPerms = node.annotation.permissions.filter { !channel.checkPermissions(it) }
+            if (missingPerms.isNotEmpty()) {
+                channel.responseBuilder.sendMessage(
+                        "Missing the following permissions: {{`${missingPerms.joinToString(
+                                ", ")}`}}").queue()
+                return@a
+            }
+            try {
+                eventPublisher.publishEvent(
+                        CommandExecutedEvent(node, commandArgs.toList(), user, channel.guild))
+                invoke(node, commandArgs, user, channel.guild)
+            } catch (e: CommandException) {
+                channel.responseBuilder.sendMessage(
+                        e.message ?: "An unknown error occurred!").queue()
+            } catch (e: Exception) {
+                channel.responseBuilder.sendMessage("An unknown error occurred!").queue()
+            }
+        }
+        log.debug("Finished processing command \"$message\" in $time ms")
+    }
+
+    @EventListener
+    @Async
+    fun onMessage(event: GuildMessageReceivedEvent) {
+        if(event.isWebhookMessage || event.author.isBot)
+            return
+        executeCommand(event.message.contentRaw, event.author, event.channel)
     }
 
     override fun invoke(node: CommandNode, args: List<String>, user: User, guild: Guild?) {
@@ -158,5 +252,26 @@ class CommandManager(private val context: ApplicationContext,
             curr.addChild(node)
             node
         }
+    }
+
+    private fun isMention(message: String) = message.matches(
+            Regex("^<@!?${shardManager.shards[0].selfUser.id}>.*"))
+
+    private fun stripPrefix(message: String, prefix: String) = if (isMention(
+                    message)) message.replace(Regex("^<@!?\\d{17,18}>\\s?"),
+            "") else message.substring(prefix.length)
+
+    private fun resolve(args: LinkedList<String>): CommandNode? {
+        var current = commandTree
+        while (args.isNotEmpty()) {
+            val found = current.getChild(args.peek())
+            if (found == null) {
+                break
+            } else {
+                current = found
+                args.pop()
+            }
+        }
+        return if (current == commandTree) null else current
     }
 }

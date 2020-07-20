@@ -4,7 +4,9 @@ import com.mrkirby153.kirbot.entity.GuildSetting
 import com.mrkirby153.kirbot.entity.repo.GuildSettingRepository
 import net.dv8tion.jda.api.entities.Guild
 import org.apache.logging.log4j.LogManager
+import org.springframework.stereotype.Service
 
+@Service
 class SettingManager(private val settingRepository: GuildSettingRepository) : SettingsService {
 
     private val log = LogManager.getLogger()

@@ -1,6 +1,7 @@
 package com.mrkirby153.kirbot.services.command
 
 import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.MessageChannel
 import net.dv8tion.jda.api.entities.User
 
 /**
@@ -38,9 +39,11 @@ interface CommandService {
     /**
      * Executes a command
      *
-     * @args The command to execute
+     * @param args The command to execute
+     * @param user The user executing the command
+     * @param channel The channel the command is being executed in
      */
-    fun executeCommand(args: String)
+    fun executeCommand(args: String, user: User, channel: MessageChannel)
 
     /**
      * Invokes a command node

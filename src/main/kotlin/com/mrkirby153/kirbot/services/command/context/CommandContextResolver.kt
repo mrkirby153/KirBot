@@ -21,17 +21,22 @@ class CommandContextResolver(private val contextResolvers: ContextResolvers) {
         val params = mutableListOf<Any?>()
         val remainingArgs = args.toMutableList()
         val method = node.method!!
+        var processingOptional = false
         method.parameters.forEachIndexed { index, param ->
             val name = param.getAnnotation(Parameter::class.java)?.value ?: param.name
             val optional = param.isAnnotationPresent(Optional::class.java)
             val resolver = contextResolvers.get(param.type) ?: throw MissingResolverException(
                     param.type)
+            if (!optional && processingOptional)
+                throw ArgumentParseException(
+                        "Cannot parse non-optional arguments after optional arguments")
+            if (optional)
+                processingOptional = true
             if (remainingArgs.isEmpty()) {
                 if (resolver.consuming) {
-                    if (!optional)
+                    if (!optional) {
                         throw MissingArgumentException(name)
-                } else {
-                    if (optional) {
+                    } else {
                         params.add(null)
                         return@forEachIndexed
                     }

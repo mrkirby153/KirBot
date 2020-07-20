@@ -27,18 +27,19 @@ class CommandContextResolver(private val contextResolvers: ContextResolvers) {
             val resolver = contextResolvers.get(param.type) ?: throw MissingResolverException(
                     param.type)
             if (remainingArgs.isEmpty()) {
-                if (resolver.consuming && !optional) {
-                    throw MissingArgumentException(name)
+                if (resolver.consuming) {
+                    if (!optional)
+                        throw MissingArgumentException(name)
                 } else {
                     if (optional) {
                         params.add(null)
+                        return@forEachIndexed
                     }
                 }
-            } else {
-                params.add(resolver.resolver.invoke(CommandContext(remainingArgs,
-                        CommandParameter(param.type, param, param.name,
-                                method.parameterCount, index), issuer, guild)))
             }
+            params.add(resolver.resolver.invoke(CommandContext(remainingArgs,
+                    CommandParameter(param.type, param, param.name,
+                            method.parameterCount, index), issuer, guild)))
         }
         return params.toList()
     }

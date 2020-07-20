@@ -47,6 +47,7 @@ object DiscordTestUtils {
         val mock = mockk<Guild>()
         every { mock.name } returns name
         every { mock.id } returns id
+        every {mock.idLong } returns id.toLong()
         every { mock.roles } returns emptyList()
         return mock
     }

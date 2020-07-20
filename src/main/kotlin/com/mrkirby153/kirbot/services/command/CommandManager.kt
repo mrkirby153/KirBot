@@ -133,7 +133,14 @@ class CommandManager(private val context: ApplicationContext,
     private fun insertCommandNode(path: List<String>, node: CommandNode): CommandNode {
         var curr = commandTree
         path.forEach {
-            curr = node.getChild(it) ?: CommandNode(it)
+            val found = node.getChild(it)
+            curr = if (found != null) {
+                found
+            } else {
+                val new = CommandNode(it)
+                curr.addChild(new)
+                new
+            }
         }
         // We should now be 1 above the expected insertion point
         val existing = curr.getChild(node.name)

@@ -92,6 +92,18 @@ internal class CommandManagerTest {
         assertThat(getCommandParam<String>("name")).isNull()
     }
 
+    @Test
+    fun testUsageString() {
+        fun assertUsage(path: String, expected: String) {
+            assertThat(cs.getUsageString(getCommand(path))).isEqualTo(expected)
+        }
+        assertUsage("test", "<name>")
+        assertUsage("sub.command", "")
+        assertUsage("guild", "")
+        assertUsage("optional", "[name]")
+        assertUsage("mixed", "<one> [two]")
+    }
+
     private fun getCommand(path: String): CommandNode {
         var node = tree
         path.split(".").forEach {
@@ -132,5 +144,12 @@ internal class DemoCommands {
     fun optionalCommand(@Parameter("name") @Optional name: String?) {
         test.commandExecuted = true
         test.commandParameters["name"] = name
+    }
+
+    @Command(name = "mixed", clearance = 0)
+    fun mixedRequiredOptional(user: CommandSender, @Parameter("one") one: String, @Parameter("two") @Optional two: String?) {
+        test.commandExecuted = true
+        test.commandParameters["one"] = one
+        test.commandParameters["two"] = two
     }
 }

@@ -7,6 +7,8 @@ import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.MessageChannel
 import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.entities.User
+import net.dv8tion.jda.api.requests.RestAction
+import java.util.function.Consumer
 
 /**
  * Gets a [Member] for the given user on the guild
@@ -46,3 +48,17 @@ fun MessageChannel.checkPermissions(
  */
 fun Guild.checkPermission(vararg permission: Permission) = this.selfMember.hasPermission(
         *permission)
+
+/**
+ * Queues a nullable rest action if it exists
+ */
+fun <T> RestAction<T>?.queue() {
+    this?.queue()
+}
+
+/**
+ * Queues a nullable rest action  if it exists
+ */
+fun <T> RestAction<T>?.queue(consumer: Consumer<T>) {
+    this?.queue(consumer)
+}

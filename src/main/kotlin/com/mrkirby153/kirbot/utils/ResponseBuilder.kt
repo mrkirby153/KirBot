@@ -1,6 +1,7 @@
 package com.mrkirby153.kirbot.utils
 
 import net.dv8tion.jda.api.MessageBuilder
+import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.IMentionable
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.Message
@@ -9,11 +10,14 @@ import net.dv8tion.jda.api.entities.Role
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.requests.RestAction
 import net.dv8tion.jda.api.utils.MarkdownSanitizer
+import org.apache.logging.log4j.LogManager
 
 /**
  * A builder for sanitizing and handling responses to messages
  */
 class ResponseBuilder(private val channel: MessageChannel) {
+
+    private val log = LogManager.getLogger()
 
     /**
      * A list of mention types that will always be allowed
@@ -34,7 +38,11 @@ class ResponseBuilder(private val channel: MessageChannel) {
      */
     fun sendMessage(message: String, allowMentions: List<Message.MentionType> = emptyList(),
                     mentionRoles: List<String> = emptyList(),
-                    mentionUsers: List<String> = emptyList()): RestAction<Message> {
+                    mentionUsers: List<String> = emptyList()): RestAction<Message>? {
+        if(!channel.checkPermissions(Permission.MESSAGE_WRITE)) {
+            log.debug("No permission to send messages in $channel. Silently failing")
+            return null
+        }
         val mentions = mutableSetOf<Message.MentionType>()
         alwaysMentionable.toCollection(mentions)
         allowMentions.toCollection(mentions)
@@ -62,7 +70,7 @@ class ResponseBuilder(private val channel: MessageChannel) {
      * @return A rest action for sending the message
      */
     fun sendMessage(message: String, allowMentions: List<Message.MentionType> = emptyList(),
-                    mentionable: List<IMentionable> = emptyList()): RestAction<Message> {
+                    mentionable: List<IMentionable> = emptyList()): RestAction<Message>? {
         val users = mutableListOf<String>()
         val roles = mutableListOf<String>()
         mentionable.forEach {

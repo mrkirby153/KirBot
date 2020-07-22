@@ -39,11 +39,11 @@ interface CommandService {
     /**
      * Executes a command
      *
-     * @param args The command to execute
+     * @param message The command to execute
      * @param user The user executing the command
      * @param channel The channel the command is being executed in
      */
-    fun executeCommand(args: String, user: User, channel: MessageChannel)
+    fun executeCommand(message: String, user: User, channel: MessageChannel)
 
     /**
      * Invokes a command node

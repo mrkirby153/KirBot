@@ -1,7 +1,9 @@
 package com.mrkirby153.kirbot.services.command
 
+import com.mrkirby153.kirbot.entity.repo.CommandAliasRepository
 import com.mrkirby153.kirbot.events.CommandExecutedEvent
 import com.mrkirby153.kirbot.services.PermissionService
+import com.mrkirby153.kirbot.services.command.context.ArgumentParseException
 import com.mrkirby153.kirbot.services.command.context.CommandContextResolver
 import com.mrkirby153.kirbot.services.command.context.ContextResolvers
 import com.mrkirby153.kirbot.services.command.context.Optional
@@ -33,6 +35,7 @@ import org.springframework.util.ClassUtils
 import java.lang.reflect.InvocationTargetException
 import java.util.LinkedList
 import javax.annotation.PostConstruct
+import kotlin.math.max
 import kotlin.system.measureTimeMillis
 
 @Service
@@ -42,7 +45,8 @@ class CommandManager(private val context: ApplicationContext,
                      private val settingsService: SettingsService,
                      private val shardManager: ShardManager,
                      private val permissionService: PermissionService,
-                     private val eventPublisher: ApplicationEventPublisher) : CommandService {
+                     private val eventPublisher: ApplicationEventPublisher,
+                     private val commandAliasRepository: CommandAliasRepository) : CommandService {
 
     private val automaticDiscoveryPackage = "com.mrkirby153.kirbot"
 
@@ -83,10 +87,11 @@ class CommandManager(private val context: ApplicationContext,
         val mention = isMention(message)
         val member = user.getMember(channel.guild) ?: return
 
+        if (!message.startsWith(prefix) && !mention)
+            return
+
         log.debug("Starting processing command \"$message\". Mention? $mention")
         val time = measureTimeMillis a@{
-            if (!message.startsWith(prefix) && !mention)
-                return@a
             val commandArgs = LinkedList(stripPrefix(message, prefix).split(" "))
 
             if (commandArgs.isEmpty()) {
@@ -97,9 +102,20 @@ class CommandManager(private val context: ApplicationContext,
                 }
             }
 
+            var aliasClearance: Long? = null
+            commandAliasRepository.getCommandAliasByCommandIgnoringCaseAndServerId(commandArgs[0], channel.guild.id).ifPresent { alias ->
+                log.debug("Overriding command \"{}\" with aliased command \"{}\"", commandArgs[0], alias.alias)
+                if(alias.alias == null) {
+                    return@ifPresent
+                }
+                commandArgs.removeAt(0)
+                commandArgs.add(0, alias.alias)
+                aliasClearance = alias.clearance
+            }
             val node = resolve(commandArgs) ?: return@a
 
-            val cmdClearance = node.annotation.clearance
+            val defaultClearance = commandAliasRepository.getDefaultClearance(channel.guild.id).orElse(0L)
+            val cmdClearance = max(defaultClearance, aliasClearance ?: node.annotation.clearance)
             val userClearance = permissionService.getClearance(user, channel.guild)
 
             fun notifyNoPermission() {
@@ -110,16 +126,17 @@ class CommandManager(private val context: ApplicationContext,
                             ":lock: You do not have permission to perform this command").queue()
             }
 
-            if (cmdClearance > userClearance) {
+            if(userClearance < cmdClearance) {
                 val requiredPerms = node.annotation.userPermissions
+                if(requiredPerms.isEmpty()) {
+                    notifyNoPermission()
+                    return@a
+                }
                 val missing = requiredPerms.filter { !member.hasPermission(it) }
                 if (missing.isNotEmpty()) {
                     notifyNoPermission()
                     return@a
                 }
-            } else {
-                notifyNoPermission()
-                return@a
             }
 
             val missingPerms = node.annotation.permissions.filter { !channel.checkPermissions(it) }
@@ -136,7 +153,18 @@ class CommandManager(private val context: ApplicationContext,
             } catch (e: CommandException) {
                 channel.responseBuilder.sendMessage(
                         e.message ?: "An unknown error occurred!").queue()
+            } catch (e: ArgumentParseException) {
+                val msg = buildString {
+                    if(e.message != null) {
+                        appendln(e.message)
+                    } else {
+                        appendln("An unknown error occurred parsing arguments!")
+                    }
+                    append("Usage: {{`$prefix${node.parentNames} ${getUsageString(node)}`}}")
+                }
+                channel.responseBuilder.sendMessage(msg).queue()
             } catch (e: Exception) {
+                log.error("An unknown error occurred when executing", e)
                 channel.responseBuilder.sendMessage("An unknown error occurred!").queue()
             }
         }
@@ -146,7 +174,7 @@ class CommandManager(private val context: ApplicationContext,
     @EventListener
     @Async
     fun onMessage(event: GuildMessageReceivedEvent) {
-        if(event.isWebhookMessage || event.author.isBot)
+        if (event.isWebhookMessage || event.author.isBot)
             return
         executeCommand(event.message.contentRaw, event.author, event.channel)
     }

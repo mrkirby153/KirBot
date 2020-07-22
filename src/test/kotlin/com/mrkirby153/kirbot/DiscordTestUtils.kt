@@ -3,10 +3,14 @@ package com.mrkirby153.kirbot
 import com.ninjasquad.springmockk.isMock
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Member
+import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.Role
+import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.entities.User
+import java.lang.AssertionError
 
 object DiscordTestUtils {
 
@@ -47,7 +51,7 @@ object DiscordTestUtils {
         val mock = mockk<Guild>()
         every { mock.name } returns name
         every { mock.id } returns id
-        every {mock.idLong } returns id.toLong()
+        every { mock.idLong } returns id.toLong()
         every { mock.roles } returns emptyList()
         return mock
     }

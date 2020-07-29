@@ -1,16 +1,19 @@
 package com.mrkirby153.kirbot
 
+import com.mrkirby153.kirbot.entity.DiscordUser
+import com.mrkirby153.kirbot.utils.nameAndDiscrim
 import com.ninjasquad.springmockk.isMock
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Member
-import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.Role
-import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.entities.User
-import java.lang.AssertionError
+import net.dv8tion.jda.api.requests.RestAction
+import net.dv8tion.jda.api.requests.restaction.AuditableRestAction
+import java.time.OffsetDateTime
+import java.util.concurrent.CompletableFuture
+import java.util.function.Consumer
 
 object DiscordTestUtils {
 
@@ -38,6 +41,8 @@ object DiscordTestUtils {
         every { mock.discriminator } returns discriminator
         every { mock.id } returns id
         every { mock.idLong } returns id.toLong()
+        every { mock.isBot } returns false
+        every { mock.timeCreated } returns OffsetDateTime.now()
         return mock
     }
 
@@ -54,6 +59,52 @@ object DiscordTestUtils {
         every { mock.idLong } returns id.toLong()
         every { mock.roles } returns emptyList()
         return mock
+    }
+
+    /**
+     * Gets a completed rest action. This rest action returns immediately
+     *
+     * @param result The result of the rest action
+     * @return The completed mocked rest action
+     */
+    fun <T> completedRestAction(result: T? = null): RestAction<T> = makeRestAction(result)
+
+    /**
+     * Gets a completed auditable rest action. This rest action returns immediately
+     *
+     * @param result The result of the rest action
+     * @return The completed mocked auditable rest action
+     */
+    fun <T> completedAuditableRestAction(result: T? = null) : AuditableRestAction<T> = makeRestAction(result)
+
+    /**
+     * Mocks a generic completed [RestAction]
+     *
+     * @param result The result of the rest action
+     * @return The completed rest action
+     */
+    inline fun <RESULT, reified CLASS : RestAction<RESULT>> makeRestAction(result: RESULT? = null): CLASS {
+        val mock = mockk<CLASS>()
+        buildRestAction(mock, result)
+        return mock
+    }
+
+
+    /**
+     * Builds a completed rest action, mocking the call functions to return
+     *
+     * @param mock The mock to stub out
+     * @param result The result of the rest action
+     */
+    fun <T> buildRestAction(mock: RestAction<T>, result: T?) {
+        if (!mock.isMock)
+            throw IllegalArgumentException("Attempting to mock a non-mocked rest action")
+        every { mock.submit() } returns CompletableFuture.completedFuture(result)
+        every { mock.queue(any()) } answers {
+            val func = it.invocation.args[0] ?: return@answers Unit
+            func as Consumer<T?>
+            func.accept(result)
+        }
     }
 
 }

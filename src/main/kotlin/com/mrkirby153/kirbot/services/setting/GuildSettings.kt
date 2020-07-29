@@ -15,4 +15,9 @@ object GuildSettings {
      * Controls if commands should silently fail
      */
     val commandSilentFail = BooleanSetting("command_silent_fail", false)
+
+    /**
+     * The muted role on the server
+     */
+    val mutedRole = StringSetting("muted_role")
 }

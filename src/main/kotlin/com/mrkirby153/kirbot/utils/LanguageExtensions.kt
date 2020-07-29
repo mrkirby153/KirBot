@@ -29,15 +29,16 @@ fun <T : GuildChannel> T.checkPermissions(
         vararg permission: Permission) = this.guild.selfMember.hasPermission(this, *permission)
 
 /**
- * Checks if the bot has the given permissions on a channel
+ * Checks if the bot has the given permissions on a channel. If this is a private message channel
+ * this will return true
  *
  * @param permission The permissions to check
  *
  * @return True if the bot has all permissions, false if otherwise
  */
 fun MessageChannel.checkPermissions(
-        vararg permission: Permission) = (this as? TextChannel)?.checkPermissions<TextChannel>(
-        *permission) != false
+        vararg permission: Permission) = if (this is TextChannel) this.checkPermissions<TextChannel>(
+        *permission) else true
 
 /**
  * Checks if the bot has the given permissions on a channel
@@ -62,3 +63,9 @@ fun <T> RestAction<T>?.queue() {
 fun <T> RestAction<T>?.queue(consumer: Consumer<T>) {
     this?.queue(consumer)
 }
+
+/**
+ * The user's name and discriminator in the format `Username#Discriminator` (i.e. `User#0000`)
+ */
+val User.nameAndDiscrim
+    get() = "${this.name}#${this.discriminator}"

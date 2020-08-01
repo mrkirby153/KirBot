@@ -69,3 +69,9 @@ fun <T> RestAction<T>?.queue(consumer: Consumer<T>) {
  */
 val User.nameAndDiscrim
     get() = "${this.name}#${this.discriminator}"
+
+/**
+ * The member's name and discriminator int he format `Username#Discriminator` (.e. `User#0000`)
+ */
+val Member.nameAndDiscrim
+    get() = this.user.nameAndDiscrim

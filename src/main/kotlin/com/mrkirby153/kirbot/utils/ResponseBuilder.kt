@@ -39,7 +39,7 @@ class ResponseBuilder(private val channel: MessageChannel) {
     fun sendMessage(message: String, allowMentions: List<Message.MentionType> = emptyList(),
                     mentionRoles: List<String> = emptyList(),
                     mentionUsers: List<String> = emptyList()): RestAction<Message>? {
-        if(!channel.checkPermissions(Permission.MESSAGE_WRITE)) {
+        if (!channel.checkPermissions(Permission.MESSAGE_WRITE)) {
             log.debug("No permission to send messages in $channel. Silently failing")
             return null
         }
@@ -82,9 +82,72 @@ class ResponseBuilder(private val channel: MessageChannel) {
         return sendMessage(message, allowMentions, users, roles)
     }
 
+    /**
+     * Sends a success message to the channel
+     *
+     * @param message The message to send to the channel. Markdown surrounded with {{ and }} will be
+     * escaped
+     * @param allowMentions Any additional mention types to allow in addition to [alwaysMentionable]
+     * @param mentionRoles A list of role ids to enable mentioning
+     * @param mentionUsers A list of user ids to enable mentioning
+     * @return A rest action for sending the message
+     */
+    fun success(message: String, allowMentions: List<Message.MentionType> = emptyList(),
+                mentionRoles: List<String> = emptyList(),
+                mentionUsers: List<String> = emptyList()): RestAction<Message>? {
+        return sendMessage("{{$GREEN_TICK}} $message", allowMentions, mentionRoles,
+                mentionUsers)
+    }
+
+    /**
+     * Sends a success message to the channel
+     *
+     * @param message The message to send to the channel. Markdown surrounded with {{ and }} will be
+     * escaped
+     * @param allowMentions The types of mentions to allow in addition to [alwaysMentionable]
+     * @param mentionable A list of mentionable entities to mention
+     * @return A rest action for sending the message
+     */
+    fun success(message: String, allowMentions: List<Message.MentionType> = emptyList(),
+                mentionable: List<IMentionable> = emptyList()): RestAction<Message>? {
+        return sendMessage("{{$GREEN_TICK}} $message", allowMentions, mentionable)
+    }
+
+
+    /**
+     * Sends a fail message to the channel
+     *
+     * @param message The message to send to the channel. Markdown surrounded with {{ and }} will be
+     * escaped
+     * @param allowMentions Any additional mention types to allow in addition to [alwaysMentionable]
+     * @param mentionRoles A list of role ids to enable mentioning
+     * @param mentionUsers A list of user ids to enable mentioning
+     * @return A rest action for sending the message
+     */
+    fun error(message: String, allowMentions: List<Message.MentionType> = emptyList(),
+              mentionRoles: List<String> = emptyList(),
+              mentionUsers: List<String> = emptyList()): RestAction<Message>? {
+        return sendMessage("{{$RED_TICK}} $message", allowMentions, mentionRoles,
+                mentionUsers)
+    }
+
+    /**
+     * Sends a fail message to the channel
+     *
+     * @param message The message to send to the channel. Markdown surrounded with {{ and }} will be
+     * escaped
+     * @param allowMentions The types of mentions to allow in addition to [alwaysMentionable]
+     * @param mentionable A list of mentionable entities to mention
+     * @return A rest action for sending the message
+     */
+    fun error(message: String, allowMentions: List<Message.MentionType> = emptyList(),
+                mentionable: List<IMentionable> = emptyList()): RestAction<Message>? {
+        return sendMessage("{{$RED_TICK}} $message", allowMentions, mentionable)
+    }
+
     companion object {
 
-        private val escapePattern = Regex("(?<!\\\\)\\{\\{(.*)}}")
+        private val escapePattern = Regex("(?<!\\\\)\\{\\{(.*?)}}")
 
         /**
          * Escapes all markdown unless surrounded with `{{ }}`
@@ -97,12 +160,14 @@ class ResponseBuilder(private val channel: MessageChannel) {
                 var start = 0
                 escapePattern.findAll(message).forEach { pattern ->
                     append(MarkdownSanitizer.sanitize(
-                            message.subSequence(start until pattern.range.first) as String, MarkdownSanitizer.SanitizationStrategy.ESCAPE))
+                            message.subSequence(start until pattern.range.first) as String,
+                            MarkdownSanitizer.SanitizationStrategy.ESCAPE))
                     val text = pattern.groups[1] ?: return@forEach
                     append(text.value)
                     start = pattern.range.last + 1
                 }
-                append(MarkdownSanitizer.sanitize(message.substring(start), MarkdownSanitizer.SanitizationStrategy.ESCAPE))
+                append(MarkdownSanitizer.sanitize(message.substring(start),
+                        MarkdownSanitizer.SanitizationStrategy.ESCAPE))
             }
         }
     }

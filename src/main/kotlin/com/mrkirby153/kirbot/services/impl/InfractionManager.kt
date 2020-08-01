@@ -68,9 +68,8 @@ class InfractionManager(private val infractionRepository: InfractionRepository,
                 UserKickEvent(
                         infraction, infractionContext.user, infractionContext.guild))
 
-        return infractionContext.guild.kick(infractionContext.user.id,
-                infractionContext.reason).submit().thenCompose { dmFuture }.thenApply {
-            InfractionService.InfractionResult(it, infraction)
+        return dmFuture.thenCompose { infractionContext.guild.kick(infractionContext.user.id, infractionContext.reason).submit() }.thenApply {
+            InfractionService.InfractionResult(dmFuture.get(), infraction)
         }
     }
 
@@ -230,7 +229,7 @@ class InfractionManager(private val infractionRepository: InfractionRepository,
         if (!infraction.reason.startsWith("[DM]") && !infraction.reason.startsWith("[ADM]"))
             return CompletableFuture.completedFuture(InfractionService.DmResult.NOT_SENT)
         val anonymous = infraction.reason.startsWith("[ADM]")
-        val reason = infraction.reason.replace(Regex("\\[A?DM]"), "")
+        val reason = infraction.reason.replace(Regex("\\[A?DM]"), "").trim()
         val future = CompletableFuture<InfractionService.DmResult>()
         try {
             user.openPrivateChannel().queue { channel ->
@@ -248,8 +247,8 @@ class InfractionManager(private val infractionRepository: InfractionRepository,
                         Infraction.InfractionType.WARN -> "warned"
                     })
                     append(when (infraction.type) {
-                        Infraction.InfractionType.WARN, Infraction.InfractionType.MUTE, Infraction.InfractionType.TEMP_MUTE -> "in"
-                        else -> "from"
+                        Infraction.InfractionType.WARN, Infraction.InfractionType.MUTE, Infraction.InfractionType.TEMP_MUTE -> " in"
+                        else -> " from"
                     })
                     append(" {{**${guild.name}**}}")
                     if (!anonymous)

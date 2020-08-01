@@ -2,6 +2,7 @@ package com.mrkirby153.kirbot.services.command.context
 
 import com.mrkirby153.kirbot.services.command.CommandNode
 import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.entities.User
 import org.springframework.stereotype.Component
 
@@ -15,9 +16,10 @@ class CommandContextResolver(private val contextResolvers: ContextResolvers) {
      * @param args The arguments to resolve
      * @param issuer The issuer of the command
      * @param guild The guild that the command is being run on
+     * @param channel The channel that the command is being executed in
      * @return A list of method parameters
      */
-    fun resolve(node: CommandNode, args: List<String>, issuer: User, guild: Guild?): List<Any?> {
+    fun resolve(node: CommandNode, args: List<String>, issuer: User, guild: Guild?, channel: TextChannel): List<Any?> {
         val params = mutableListOf<Any?>()
         val remainingArgs = args.toMutableList()
         val method = node.method!!
@@ -44,7 +46,7 @@ class CommandContextResolver(private val contextResolvers: ContextResolvers) {
             }
             params.add(resolver.resolver.invoke(CommandContext(remainingArgs,
                     CommandParameter(param.type, param, param.name,
-                            method.parameterCount, index), issuer, guild)))
+                            method.parameterCount, index), issuer, guild, channel)))
         }
         return params.toList()
     }

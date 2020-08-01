@@ -50,6 +50,9 @@ class ContextResolvers(private val shardManager: ShardManager) {
             else
                 null
         }
+        register(CurrentChannel::class, false) {
+            CurrentChannel(it.channel)
+        }
         register(String::class) {
             if (!it.hasNext())
                 return@register null
@@ -77,8 +80,8 @@ class ContextResolvers(private val shardManager: ShardManager) {
             val id = it.popFirst() ?: return@register null
             val matcher = snowflakePattern.matcher(id)
             if (matcher.find()) {
-                it.guild?.getMemberById(id) ?: throw ArgumentParseException(
-                        "User with the id of \"$id\" was not found")
+                it.guild?.getMemberById(matcher.group()) ?: throw ArgumentParseException(
+                        "User with the id of \"${matcher.group()}\" was not found")
             } else {
                 throw ArgumentParseException("Could not extract a valid user id out of \"$id\"")
             }

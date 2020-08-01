@@ -4,6 +4,7 @@ import com.mrkirby153.kirbot.services.command.CommandNode
 import io.mockk.MockKAnnotations
 import io.mockk.impl.annotations.MockK
 import io.mockk.mockk
+import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.sharding.ShardManager
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -19,6 +20,9 @@ internal class CommandContextResolverTest {
     @MockK
     private lateinit var shardManager: ShardManager
 
+    @MockK
+    private lateinit var channel: TextChannel
+
     @BeforeEach
     fun setup() {
         MockKAnnotations.init(this)
@@ -31,7 +35,7 @@ internal class CommandContextResolverTest {
         val args = listOf("one", "two", "three")
         val method = javaClass.getMethod("happyPathStub", String::class.java)
         val node = makeNode(method)
-        val resolvedArgs = ccr.resolve(node, args, mockk(), null)
+        val resolvedArgs = ccr.resolve(node, args, mockk(), null, channel)
         assertThat(resolvedArgs[0]).isEqualTo("one two three")
     }
 
@@ -39,7 +43,7 @@ internal class CommandContextResolverTest {
     fun testOptional() {
         val method = javaClass.getMethod("optionalStub", String::class.java)
         val node = makeNode(method)
-        val resolved = ccr.resolve(node, emptyList(), mockk(), null)
+        val resolved = ccr.resolve(node, emptyList(), mockk(), null, channel)
         assertThat(resolved[0]).isNull()
     }
 
@@ -48,11 +52,11 @@ internal class CommandContextResolverTest {
         val method = javaClass.getMethod("otherOptionalStub", String::class.java,
                 String::class.java)
         val node = makeNode(method)
-        val resolved = ccr.resolve(node, listOf("one", "two"), mockk(), null)
+        val resolved = ccr.resolve(node, listOf("one", "two"), mockk(), null, channel)
         assertThat(resolved[0]).isEqualTo("one")
         assertThat(resolved[1]).isEqualTo("two")
 
-        val optionalResolved = ccr.resolve(node, listOf("one"), mockk(), null)
+        val optionalResolved = ccr.resolve(node, listOf("one"), mockk(), null, channel)
         assertThat(optionalResolved[0]).isEqualTo("one")
         assertThat(optionalResolved[1]).isNull()
     }
@@ -61,14 +65,14 @@ internal class CommandContextResolverTest {
     fun testRequired() {
         val method = javaClass.getMethod("happyPathStub", String::class.java)
         val node = makeNode(method)
-        assertThrows<MissingArgumentException> { ccr.resolve(node, emptyList(), mockk(), null) }
+        assertThrows<MissingArgumentException> { ccr.resolve(node, emptyList(), mockk(), null, channel) }
     }
 
     @Test
     fun testNoArgs() {
         val method = javaClass.getMethod("noArgsStub")
         val node = makeNode(method)
-        val resolved = ccr.resolve(node, emptyList(), mockk(), null)
+        val resolved = ccr.resolve(node, emptyList(), mockk(), null, channel)
         assertThat(resolved).isEmpty()
     }
 
@@ -76,7 +80,7 @@ internal class CommandContextResolverTest {
     fun testExtraArgs() {
         val method = javaClass.getMethod("noArgsStub")
         val node = makeNode(method)
-        val resolved = ccr.resolve(node, listOf("one", "two", "three"), mockk(), null)
+        val resolved = ccr.resolve(node, listOf("one", "two", "three"), mockk(), null, channel)
         assertThat(resolved).isEmpty()
     }
 
@@ -86,7 +90,7 @@ internal class CommandContextResolverTest {
                 String::class.java)
         val node = makeNode(method)
         assertThrows<ArgumentParseException> {
-            ccr.resolve(node, listOf("one", "two"), mockk(), null)
+            ccr.resolve(node, listOf("one", "two"), mockk(), null, channel)
         }
     }
 

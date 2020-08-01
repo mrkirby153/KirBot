@@ -10,6 +10,7 @@ import com.mrkirby153.kirbot.services.command.context.Optional
 import com.mrkirby153.kirbot.services.command.context.Parameter
 import com.mrkirby153.kirbot.services.setting.GuildSettings
 import com.mrkirby153.kirbot.services.setting.SettingsService
+import com.mrkirby153.kirbot.utils.RED_TICK
 import com.mrkirby153.kirbot.utils.checkPermissions
 import com.mrkirby153.kirbot.utils.getMember
 import com.mrkirby153.kirbot.utils.queue
@@ -142,30 +143,31 @@ class CommandManager(private val context: ApplicationContext,
             val missingPerms = node.annotation.permissions.filter { !channel.checkPermissions(it) }
             if (missingPerms.isNotEmpty()) {
                 channel.responseBuilder.sendMessage(
-                        "Missing the following permissions: {{`${missingPerms.joinToString(
+                        "$RED_TICK Missing the following permissions: {{`${missingPerms.joinToString(
                                 ", ")}`}}").queue()
                 return@a
             }
             try {
                 eventPublisher.publishEvent(
                         CommandExecutedEvent(node, commandArgs.toList(), user, channel.guild))
-                invoke(node, commandArgs, user, channel.guild)
+                invoke(node, commandArgs, user, channel.guild, channel)
             } catch (e: CommandException) {
-                channel.responseBuilder.sendMessage(
-                        e.message ?: "An unknown error occurred!").queue()
+                channel.responseBuilder.sendMessage("$RED_TICK " +
+                       (e.message ?: "An unknown error occurred!")).queue()
             } catch (e: ArgumentParseException) {
                 val msg = buildString {
+                    append("$RED_TICK")
                     if(e.message != null) {
                         appendln(e.message)
                     } else {
                         appendln("An unknown error occurred parsing arguments!")
                     }
-                    append("Usage: {{`$prefix${node.parentNames} ${getUsageString(node)}`}}")
+                    append("Usage: {{`$prefix${node.fullName} ${getUsageString(node)}`}}")
                 }
                 channel.responseBuilder.sendMessage(msg).queue()
             } catch (e: Exception) {
                 log.error("An unknown error occurred when executing", e)
-                channel.responseBuilder.sendMessage("An unknown error occurred!").queue()
+                channel.responseBuilder.sendMessage("$RED_TICK An unknown error occurred!").queue()
             }
         }
         log.debug("Finished processing command \"$message\" in $time ms")
@@ -179,10 +181,10 @@ class CommandManager(private val context: ApplicationContext,
         executeCommand(event.message.contentRaw, event.author, event.channel)
     }
 
-    override fun invoke(node: CommandNode, args: List<String>, user: User, guild: Guild?) {
+    override fun invoke(node: CommandNode, args: List<String>, user: User, guild: Guild?, channel: TextChannel) {
         if (node.isSkeleton())
             return
-        val parameterValues = commandContextResolver.resolve(node, args, user, guild)
+        val parameterValues = commandContextResolver.resolve(node, args, user, guild, channel)
         try {
             node.method!!.invoke(node.instance, *parameterValues.toTypedArray())
         } catch (e: InvocationTargetException) {

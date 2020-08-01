@@ -91,7 +91,7 @@ internal class CommandManagerTest {
     @Test
     fun testExecution() {
         val node = getCommand("test")
-        cs.invoke(node, listOf("test", "name"), user, guild)
+        cs.invoke(node, listOf("test", "name"), user, guild, channel)
         assertTrue(commandExecuted)
         assertThat(getCommandParam<CommandSender>("user")!!.id).isEqualTo(user.id)
         assertThat(getCommandParam<String>("name")).isEqualTo("test name")
@@ -100,14 +100,14 @@ internal class CommandManagerTest {
     @Test
     fun testSubCommand() {
         val node = getCommand("sub.command")
-        cs.invoke(node, listOf(), user, guild)
+        cs.invoke(node, listOf(), user, guild, channel)
         assertTrue(commandExecuted)
     }
 
     @Test
     fun testGuild() {
         val node = getCommand("guild")
-        cs.invoke(node, listOf(), user, guild)
+        cs.invoke(node, listOf(), user, guild, channel)
         assertTrue(commandExecuted)
         assertThat(getCommandParam<CurrentGuild>("guild")!!.id).isEqualTo(guild.id)
     }
@@ -115,7 +115,7 @@ internal class CommandManagerTest {
     @Test
     fun testOptionalPresent() {
         val node = getCommand("optional")
-        cs.invoke(node, listOf("testing"), user, guild)
+        cs.invoke(node, listOf("testing"), user, guild, channel)
         assertTrue(commandExecuted)
         assertThat(getCommandParam<String>("name")).isEqualTo("testing")
     }
@@ -123,7 +123,7 @@ internal class CommandManagerTest {
     @Test
     fun testOptionalAbsent() {
         val node = getCommand("optional")
-        cs.invoke(node, listOf(), user, guild)
+        cs.invoke(node, listOf(), user, guild, channel)
         assertTrue(commandExecuted)
         assertThat(getCommandParam<String>("name")).isNull()
     }

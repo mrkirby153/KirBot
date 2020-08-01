@@ -51,6 +51,15 @@ class CommandNode(
         method.getAnnotation(Command::class.java)
     }
 
+    val fullName: String
+        get() = buildString {
+            if(parentNames.isNotEmpty()) {
+                append(parentNames.joinToString(" "))
+                append(" ")
+            }
+            append(name)
+        }.trim()
+
     init {
         this.method = method
     }

@@ -1,6 +1,7 @@
 package com.mrkirby153.kirbot.services.command.context
 
 import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.entities.User
 import kotlin.reflect.KClass
 
@@ -19,7 +20,11 @@ class CommandContext(private val args: MutableList<String>,
                      /**
                       * The guild (if any) that this command was executed on
                       */
-                     val guild: Guild?) {
+                     val guild: Guild?,
+                     /**
+                      * The channel that this command was executed in
+                      */
+                     val channel: TextChannel) {
 
 
     /**
@@ -47,8 +52,10 @@ class CommandContext(private val args: MutableList<String>,
      */
     fun getFirst() = if (args.isEmpty()) null else args[0]
 
-    fun <T : Annotation> getAnnotation(clazz: KClass<T>) : T = parameter.parameter.getAnnotation(clazz.java)
+    fun <T : Annotation> getAnnotation(clazz: KClass<T>): T = parameter.parameter.getAnnotation(
+            clazz.java)
 
-    fun hasAnnotation(clazz: KClass<out Annotation>) = parameter.parameter.isAnnotationPresent(clazz.java)
+    fun hasAnnotation(clazz: KClass<out Annotation>) = parameter.parameter.isAnnotationPresent(
+            clazz.java)
 
 }

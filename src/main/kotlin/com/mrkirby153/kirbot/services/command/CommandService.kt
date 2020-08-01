@@ -2,6 +2,7 @@ package com.mrkirby153.kirbot.services.command
 
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.MessageChannel
+import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.entities.User
 
 /**
@@ -52,8 +53,9 @@ interface CommandService {
      * @param args The arguments to invoke
      * @param user The user invoking the command
      * @param guild The guild that the command is being invoked on
+     * @param channel The channel the command is being executed in
      */
-    fun invoke(node: CommandNode, args: List<String>, user: User, guild: Guild?)
+    fun invoke(node: CommandNode, args: List<String>, user: User, guild: Guild?, channel: TextChannel)
 
     /**
      * Gets the usage string for a command

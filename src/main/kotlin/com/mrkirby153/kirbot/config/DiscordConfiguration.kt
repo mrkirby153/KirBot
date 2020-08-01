@@ -4,8 +4,10 @@ import com.mrkirby153.kirbot.services.JdaEventService
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.events.ReadyEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
+import net.dv8tion.jda.api.requests.GatewayIntent
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder
 import net.dv8tion.jda.api.sharding.ShardManager
+import net.dv8tion.jda.api.utils.ChunkingFilter
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -28,6 +30,8 @@ class DiscordConfiguration(@Value("\${bot.token}") private val token: String,
         log.info("Connecting to discord")
         // TODO 7/5/20 Figure out the shards that we need to use dynamically from k8s
         val shardManager = DefaultShardManagerBuilder.createDefault(token).apply {
+            enableIntents(GatewayIntent.GUILD_MEMBERS)
+            setChunkingFilter(ChunkingFilter.ALL)
             if (shardCount.isNotBlank()) {
                 setShardsTotal(shardCount.toInt())
                 log.info("Using manually specified shard count: $shardCount")

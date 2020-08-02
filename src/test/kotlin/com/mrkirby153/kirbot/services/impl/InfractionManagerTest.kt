@@ -53,13 +53,10 @@ internal class InfractionManagerTest {
     @Autowired
     lateinit var seenUsers: DiscordUserRepository
 
-    @Autowired
+    @MockK
     lateinit var shardManager: ShardManager
 
     lateinit var manager: InfractionManager
-
-    @MockkBean
-    lateinit var taskScheduler: TaskScheduler
 
     @MockK
     lateinit var settingsService: SettingsService
@@ -88,7 +85,7 @@ internal class InfractionManagerTest {
         seenUsers.save(DiscordUser(user.id, user.name, user.discriminator.toInt(), false))
         seenUsers.save(DiscordUser(issuer.id, issuer.name, issuer.discriminator.toInt(), false))
 
-        manager = spyk(InfractionManager(repo, eventPublisher, settingsService, taskScheduler, shardManager))
+        manager = spyk(InfractionManager(repo, eventPublisher, settingsService, shardManager))
 
         every { guild.selfMember } returns selfMember
         every { selfMember.hasPermission(any<Permission>()) } returns true
@@ -115,7 +112,7 @@ internal class InfractionManagerTest {
         val restAction = DiscordTestUtils.completedAuditableRestAction<Void>(null)
         every { guild.kick(any<String>(), any()) } returns restAction
         val result = manager.kick(inf).get(1, TimeUnit.SECONDS)
-        val uid = inf.user.id
+        val uid = inf.userId
         verify { guild.kick(eq(uid), any()) }
         assertThat(result.dmResult).isEqualTo(InfractionService.DmResult.NOT_SENT)
         checkInfraction(user, Infraction.InfractionType.KICK)
@@ -144,7 +141,7 @@ internal class InfractionManagerTest {
         } returns DiscordTestUtils.makeRestAction<Message, MessageAction>(mockk())
 
         val result = manager.kick(inf).get(1, TimeUnit.SECONDS)
-        val uid = inf.user.id
+        val uid = inf.userId
         val nad = issuer.nameAndDiscrim
         verify { guild.kick(eq(uid), any()) }
         verify {
@@ -170,7 +167,7 @@ internal class InfractionManagerTest {
         } returns DiscordTestUtils.makeRestAction<Message, MessageAction>(mockk())
 
         val result = manager.kick(inf).get(1, TimeUnit.SECONDS)
-        val uid = inf.user.id
+        val uid = inf.userId
         val nad = issuer.nameAndDiscrim
         verify { guild.kick(eq(uid), any()) }
         verify {
@@ -191,7 +188,7 @@ internal class InfractionManagerTest {
         every { ex.errorResponse } returns ErrorResponse.CANNOT_SEND_TO_USER
         every { user.openPrivateChannel() } throws ex
         val result = manager.kick(inf).get(1, TimeUnit.SECONDS)
-        val uid = inf.user.id
+        val uid = inf.userId
         verify { guild.kick(eq(uid), any()) }
         assertThat(result.dmResult).isEqualTo(InfractionService.DmResult.SEND_ERROR)
         checkInfraction(user, Infraction.InfractionType.KICK)

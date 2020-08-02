@@ -42,11 +42,9 @@ import java.util.concurrent.TimeUnit
 class InfractionManager(private val infractionRepository: InfractionRepository,
                         private val applicationEventPublisher: ApplicationEventPublisher,
                         private val settingsService: SettingsService,
-                        private val scheduler: TaskScheduler,
                         private val shardManager: ShardManager) :
         InfractionService {
 
-    private val infractionLock = Object()
     private var nextInfractionRunsAt: Long? = null
     private var expireTaskRunning = false
 
@@ -63,7 +61,7 @@ class InfractionManager(private val infractionRepository: InfractionRepository,
     private fun createInfraction(context: InfractionService.InfractionContext,
                                  type: Infraction.InfractionType,
                                  save: Boolean = true, expiresAt: Long? = null): Infraction {
-        val entity = Infraction(context.user.id, context.guild.id, type,
+        val entity = Infraction(context.userId, context.guild.id, type,
                 context.reason ?: "No reason specified",
                 expiresAt = if (expiresAt != null) Timestamp(expiresAt) else null)
         return if (save) {
@@ -76,6 +74,10 @@ class InfractionManager(private val infractionRepository: InfractionRepository,
     override fun kick(
             infractionContext: InfractionService.InfractionContext): CompletableFuture<InfractionService.InfractionResult> {
         checkPermission(infractionContext, Permission.KICK_MEMBERS)
+
+        infractionContext.user?.getMember(infractionContext.guild)
+                ?: return CompletableFuture.failedFuture(
+                        IllegalArgumentException("Member not found"))
 
         val infraction = createInfraction(infractionContext, Infraction.InfractionType.KICK)
         val dmFuture = dmUser(infractionContext.user, infractionContext.guild,
@@ -98,12 +100,15 @@ class InfractionManager(private val infractionRepository: InfractionRepository,
         checkPermission(infractionContext, Permission.BAN_MEMBERS)
 
         val infraction = createInfraction(infractionContext, Infraction.InfractionType.BAN)
-        val dmFuture = dmUser(infractionContext.user, infractionContext.guild,
-                infractionContext.issuer, infraction)
+        val dmFuture = if (infractionContext.user != null) dmUser(infractionContext.user,
+                infractionContext.guild,
+                infractionContext.issuer, infraction) else CompletableFuture.completedFuture(
+                InfractionService.DmResult.NOT_SENT)
 
         applicationEventPublisher.publishEvent(
-                UserBanEvent(infraction, infractionContext.user, infractionContext.guild))
-        val banFuture = infractionContext.guild.ban(infractionContext.user.id, 0,
+                UserBanEvent(infraction, infraction.userId, infractionContext.user,
+                        infractionContext.guild))
+        val banFuture = infractionContext.guild.ban(infractionContext.userId, 0,
                 infractionContext.reason).submit()
         return dmFuture.thenCompose { banFuture }.thenApply {
             InfractionService.InfractionResult(dmFuture.get(), infraction)
@@ -118,13 +123,16 @@ class InfractionManager(private val infractionRepository: InfractionRepository,
         val expiresAt = System.currentTimeMillis() + durationMs
         val infraction = createInfraction(infractionContext, Infraction.InfractionType.TEMP_BAN,
                 expiresAt = expiresAt)
-        val dmFuture = dmUser(infractionContext.user, infractionContext.guild,
-                infractionContext.issuer, infraction)
+        val dmFuture = if (infractionContext.user != null) dmUser(infractionContext.user,
+                infractionContext.guild, infractionContext.issuer,
+                infraction) else CompletableFuture.completedFuture(
+                InfractionService.DmResult.NOT_SENT)
 
         applicationEventPublisher.publishEvent(
-                UserTempBanEvent(infraction, infractionContext.user, infractionContext.guild,
+                UserTempBanEvent(infraction, infractionContext.userId, infractionContext.user,
+                        infractionContext.guild,
                         expiresAt))
-        val banFuture = infractionContext.guild.ban(infractionContext.user.id, 0,
+        val banFuture = infractionContext.guild.ban(infractionContext.userId, 0,
                 infractionContext.reason).submit()
         return dmFuture.thenCompose { banFuture }.thenApply {
             InfractionService.InfractionResult(dmFuture.get(), infraction)
@@ -135,7 +143,7 @@ class InfractionManager(private val infractionRepository: InfractionRepository,
             infractionContext: InfractionService.InfractionContext): CompletableFuture<InfractionService.InfractionResult> {
         checkPermission(infractionContext, Permission.MANAGE_ROLES)
 
-        infractionContext.user.getMember(infractionContext.guild)
+        infractionContext.user?.getMember(infractionContext.guild)
                 ?: return CompletableFuture.failedFuture(
                         IllegalArgumentException("Member not found"))
 
@@ -159,7 +167,7 @@ class InfractionManager(private val infractionRepository: InfractionRepository,
             infractionContext: InfractionService.InfractionContext): CompletableFuture<InfractionService.InfractionResult> {
         checkPermission(infractionContext, Permission.MANAGE_ROLES)
 
-        infractionContext.user.getMember(infractionContext.guild)
+        infractionContext.user?.getMember(infractionContext.guild)
                 ?: return CompletableFuture.failedFuture(
                         IllegalArgumentException("Member not found"))
 
@@ -187,7 +195,7 @@ class InfractionManager(private val infractionRepository: InfractionRepository,
                           units: TimeUnit): CompletableFuture<InfractionService.InfractionResult> {
         checkPermission(infractionContext, Permission.MANAGE_ROLES)
 
-        infractionContext.user.getMember(infractionContext.guild)
+        infractionContext.user?.getMember(infractionContext.guild)
                 ?: return CompletableFuture.failedFuture(
                         IllegalArgumentException("Member not found"))
 
@@ -213,10 +221,13 @@ class InfractionManager(private val infractionRepository: InfractionRepository,
             infractionContext: InfractionService.InfractionContext): CompletableFuture<InfractionService.InfractionResult> {
         val infraction = createInfraction(infractionContext, Infraction.InfractionType.WARN)
 
-        val future = dmUser(infractionContext.user, infractionContext.guild,
-                infractionContext.issuer, infraction)
+        val future = if (infractionContext.user != null) dmUser(infractionContext.user,
+                infractionContext.guild,
+                infractionContext.issuer, infraction) else CompletableFuture.completedFuture(
+                InfractionService.DmResult.NOT_SENT)
         applicationEventPublisher.publishEvent(
-                UserWarnEvent(infraction, infractionContext.user, infractionContext.guild))
+                UserWarnEvent(infraction, infractionContext.userId, infractionContext.user,
+                        infractionContext.guild))
         return future.thenApply {
             InfractionService.InfractionResult(it, infraction)
         }
@@ -300,7 +311,12 @@ class InfractionManager(private val infractionRepository: InfractionRepository,
     @EventListener
     fun onReady(event: AllShardsReadyEvent) {
         log.info("Shards are ready. Waiting for next infraction")
-        runExpiredInfractions()
+        try {
+            expireTaskRunning = true
+            runExpiredInfractions()
+        } finally {
+            expireTaskRunning = false
+        }
         waitForNextInfraction()
     }
 

@@ -24,7 +24,7 @@ open class InfractionEvent(
 /**
  * Base infraction for temporary infractions
  */
-open class TempInfractionEvent(infraction: Infraction, user: User, guild: Guild,
+open class TempInfractionEvent(infraction: Infraction, user: User?, guild: Guild,
                                /**
                                 * When the infraction expires
                                 */
@@ -40,13 +40,13 @@ class UserKickEvent(infraction: Infraction, user: User, guild: Guild) :
 /**
  * Event fired when a user is banned
  */
-class UserBanEvent(infraction: Infraction, user: User, guild: Guild) :
+class UserBanEvent(infraction: Infraction, val userId: String, user: User?, guild: Guild) :
         InfractionEvent(infraction, user, guild)
 
 /**
  * Event fired when a user is temporarily banned
  */
-class UserTempBanEvent(infraction: Infraction, user: User, guild: Guild, expiresOn: Long) :
+class UserTempBanEvent(infraction: Infraction, val userId: String, user: User?, guild: Guild, expiresOn: Long) :
         TempInfractionEvent(infraction, user, guild, expiresOn)
 
 /**
@@ -69,7 +69,7 @@ class UserTempMuteEvent(infraction: Infraction, user: User, guild: Guild, expire
 /**
  * Event fired when a user is warned
  */
-class UserWarnEvent(infraction: Infraction, user: User, guild: Guild) :
+class UserWarnEvent(infraction: Infraction, val userId: String, user: User?, guild: Guild) :
         InfractionEvent(infraction, user, guild)
 
 /**

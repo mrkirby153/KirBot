@@ -71,7 +71,7 @@ class ContextResolvers(private val shardManager: ShardManager) {
             val matcher = snowflakePattern.matcher(id)
             if (matcher.find()) {
                 shardManager.getUserById(matcher.group()) ?: throw ArgumentParseException(
-                        "User with the id of \"$id\" was not found")
+                        "User with the id of \"${matcher.group()}\" was not found")
             } else {
                 throw ArgumentParseException("Could not extract a valid user id out of \"$id\"")
             }
@@ -101,7 +101,7 @@ class ContextResolvers(private val shardManager: ShardManager) {
             val matcher = snowflakePattern.matcher(id)
             if (matcher.find()) {
                 it.guild?.getVoiceChannelById(id) ?: throw ArgumentParseException(
-                        "Channel \"$id\" was not found")
+                        "Channel \"${matcher.group()}\" was not found")
             } else {
                 throw ArgumentParseException("No channel id could be extracted from \"$id\"")
             }
@@ -111,9 +111,30 @@ class ContextResolvers(private val shardManager: ShardManager) {
             val matcher = snowflakePattern.matcher(id)
             if (matcher.find()) {
                 shardManager.getGuildById(id) ?: throw ArgumentParseException(
-                        "Guild \"$id\" was not found")
+                        "Guild \"${matcher.group()}\" was not found")
             } else {
                 throw ArgumentParseException("No guild id could be extracted from \"$id\"")
+            }
+        }
+        register(OptionalMember::class) {
+            val id = it.popFirst() ?: return@register null
+            val matcher = snowflakePattern.matcher(id)
+            if (matcher.find()) {
+                val member = it.guild?.getMemberById(id)
+                val user = it.guild?.jda?.getUserById(id)
+                OptionalMember(member, user, matcher.group())
+            } else {
+                throw ArgumentParseException("Could not extract a user id from \"$id\"")
+            }
+        }
+        register(OptionalUser::class) {
+            val id = it.popFirst() ?: return@register null
+            val matcher = snowflakePattern.matcher(id)
+            if(matcher.find()) {
+                val user = it.guild?.jda?.getUserById(id)
+                OptionalUser(user, matcher.group())
+            } else {
+                throw ArgumentParseException("Could not extract a user id from \"$id\"")
             }
         }
     }

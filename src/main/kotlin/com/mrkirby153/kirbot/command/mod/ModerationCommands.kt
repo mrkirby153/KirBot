@@ -8,6 +8,7 @@ import com.mrkirby153.kirbot.services.command.context.CommandSender
 import com.mrkirby153.kirbot.services.command.context.CurrentChannel
 import com.mrkirby153.kirbot.services.command.context.CurrentGuild
 import com.mrkirby153.kirbot.services.command.context.Optional
+import com.mrkirby153.kirbot.services.command.context.OptionalMember
 import com.mrkirby153.kirbot.services.command.context.Parameter
 import com.mrkirby153.kirbot.services.command.context.Single
 import com.mrkirby153.kirbot.utils.getMember
@@ -47,7 +48,8 @@ class ModerationCommands(val infractionService: InfractionService) {
         infractionService.kick(InfractionService.InfractionContext(member.user, guild, sender,
                 reason)).handle { result, throwable ->
             if (throwable != null) {
-                channel.responseBuilder.error(throwable.message ?: "An unknown error occurred")?.queue()
+                channel.responseBuilder.error(
+                        throwable.message ?: "An unknown error occurred")?.queue()
             }
             channel.responseBuilder.success(buildString {
                 append("Kicked ${member.nameAndDiscrim} {{(`${member.id}`)}}")
@@ -65,23 +67,32 @@ class ModerationCommands(val infractionService: InfractionService) {
     @Command(name = "ban", clearance = 50L, userPermissions = [Permission.BAN_MEMBERS],
             permissions = [Permission.BAN_MEMBERS], category = "moderation")
     fun ban(sender: CommandSender, guild: CurrentGuild, channel: CurrentChannel,
-            @Parameter("user") member: Member, @Parameter("reason") @Optional reason: String?) {
-        if (!guild.selfMember.canInteract(member))
-            throw CommandException(
-                    "I can't ban this user. Ensure my highest role is above their highest role")
-        val sendMember = sender.getMember(guild) ?: throw CommandException(
-                "You're not a member of this guild")
-        if (!sendMember.canInteract(member)) {
-            throw CommandException("You can't ban this user")
+            @Parameter("user") member: OptionalMember,
+            @Parameter("reason") @Optional reason: String?) {
+        if (member.member != null) {
+            if (!guild.selfMember.canInteract(member.member))
+                throw CommandException(
+                        "I can't ban this user. Ensure my highest role is above their highest role")
+            val sendMember = sender.getMember(guild) ?: throw CommandException(
+                    "You're not a member of this guild")
+            if (!sendMember.canInteract(member.member)) {
+                throw CommandException("You can't ban this user")
+            }
         }
 
-        infractionService.ban(InfractionService.InfractionContext(member.user, guild, sender,
+        infractionService.ban(InfractionService.InfractionContext(member.userId, guild, sender,
                 reason)).handle { result, throwable ->
             if (throwable != null) {
-                channel.responseBuilder.error(throwable.message ?: "An unknown error occurred")?.queue()
+                channel.responseBuilder.error(
+                        throwable.message ?: "An unknown error occurred")?.queue()
             }
             channel.responseBuilder.success(buildString {
-                append("Banned ${member.nameAndDiscrim} {{(`${member.id}`)}}")
+                append("Banned ")
+                if (member.member != null) {
+                    append("${member.member.nameAndDiscrim} {{(`${member.userId}`)}}")
+                } else {
+                    append(member.userId)
+                }
                 if (reason != null) {
                     append(": {{`$reason`}}")
                 }
@@ -109,7 +120,8 @@ class ModerationCommands(val infractionService: InfractionService) {
         infractionService.mute(InfractionService.InfractionContext(member.user, guild, sender,
                 reason)).handle { result, throwable ->
             if (throwable != null) {
-                channel.responseBuilder.error(throwable.message ?: "An unknown error occurred")?.queue()
+                channel.responseBuilder.error(
+                        throwable.message ?: "An unknown error occurred")?.queue()
             }
             channel.responseBuilder.success(buildString {
                 append("Muted ${member.nameAndDiscrim} {{(`${member.id}`)}}")
@@ -137,7 +149,8 @@ class ModerationCommands(val infractionService: InfractionService) {
         infractionService.warn(InfractionService.InfractionContext(member.user, guild, sender,
                 reason)).handle { result, throwable ->
             if (throwable != null) {
-                channel.responseBuilder.error(throwable.message ?: "An unknown error occurred")?.queue()
+                channel.responseBuilder.error(
+                        throwable.message ?: "An unknown error occurred")?.queue()
             }
             channel.responseBuilder.success(buildString {
                 append("Warned ${member.nameAndDiscrim} {{(`${member.id}`)}}")
@@ -172,14 +185,17 @@ class ModerationCommands(val infractionService: InfractionService) {
             throw CommandException(e.message ?: "An unknown error occurred")
         }
 
-        infractionService.tempMute(InfractionService.InfractionContext(member.user, guild.guild, sender,
-                reason), durationMs, TimeUnit.MILLISECONDS).handle { result, throwable ->
+        infractionService.tempMute(
+                InfractionService.InfractionContext(member.user, guild.guild, sender,
+                        reason), durationMs, TimeUnit.MILLISECONDS).handle { result, throwable ->
             if (throwable != null) {
                 throwable.printStackTrace()
-                channel.responseBuilder.error(throwable.message ?: "An unknown error occurred")?.queue()
+                channel.responseBuilder.error(
+                        throwable.message ?: "An unknown error occurred")?.queue()
             }
             channel.responseBuilder.success(buildString {
-                append("Temporarily muted ${member.nameAndDiscrim} {{(`${member.id}`)}} for ${Time.format(1, durationMs, smallest = Time.TimeUnit.SECONDS)}")
+                append("Temporarily muted ${member.nameAndDiscrim} {{(`${member.id}`)}} for ${Time.format(
+                        1, durationMs, smallest = Time.TimeUnit.SECONDS)}")
                 if (reason != null) {
                     append(": {{`$reason`}}")
                 }
@@ -194,15 +210,18 @@ class ModerationCommands(val infractionService: InfractionService) {
     @Command(name = "tempban", clearance = 50L, userPermissions = [Permission.BAN_MEMBERS],
             permissions = [Permission.BAN_MEMBERS], category = "moderation")
     fun tempban(sender: CommandSender, guild: CurrentGuild, channel: CurrentChannel,
-                @Parameter("user") member: Member, @Parameter("duration") @Single duration: String,
+                @Parameter("user") member: OptionalMember,
+                @Parameter("duration") @Single duration: String,
                 @Parameter("reason") @Optional reason: String?) {
-        if (!guild.selfMember.canInteract(member))
-            throw CommandException(
-                    "I can't ban this user. Ensure my highest role is above their highest role")
-        val sendMember = sender.getMember(guild) ?: throw CommandException(
-                "You're not a member of this guild")
-        if (!sendMember.canInteract(member)) {
-            throw CommandException("You can't ban this user")
+        if(member.member != null) {
+            if (!guild.selfMember.canInteract(member.member))
+                throw CommandException(
+                        "I can't ban this user. Ensure my highest role is above their highest role")
+            val sendMember = sender.getMember(guild) ?: throw CommandException(
+                    "You're not a member of this guild")
+            if (!sendMember.canInteract(member.member)) {
+                throw CommandException("You can't ban this user")
+            }
         }
 
         val durationMs = try {
@@ -211,13 +230,20 @@ class ModerationCommands(val infractionService: InfractionService) {
             throw CommandException(e.message ?: "An unknown error occurred")
         }
 
-        infractionService.tempBan(InfractionService.InfractionContext(member.user, guild, sender,
+        infractionService.tempBan(InfractionService.InfractionContext(member.userId, guild, sender,
                 reason), durationMs, TimeUnit.MILLISECONDS).handle { result, throwable ->
             if (throwable != null) {
-                channel.responseBuilder.error(throwable.message ?: "An unknown error occurred")?.queue()
+                channel.responseBuilder.error(
+                        throwable.message ?: "An unknown error occurred")?.queue()
             }
             channel.responseBuilder.success(buildString {
-                append("Temporarily banned ${member.nameAndDiscrim} {{(`${member.id}`)}} for ${Time.format(1, durationMs, smallest = Time.TimeUnit.SECONDS)}")
+                append("Temporarily banned ")
+                if(member.member != null) {
+                    append("${member.member.nameAndDiscrim} {{(`${member.userId}`)}}")
+                } else {
+                    append(member.userId)
+                }
+                append(" for ${Time.format(1, durationMs, smallest = Time.TimeUnit.SECONDS)}")
                 if (reason != null) {
                     append(": {{`$reason`}}")
                 }

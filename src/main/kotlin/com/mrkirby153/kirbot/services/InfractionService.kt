@@ -97,11 +97,11 @@ interface InfractionService {
     /**
      * DTO for providing a unified interface for all infraction related commands
      */
-    data class InfractionContext(
+    class InfractionContext(
             /**
-             * The user receiving the infraction
+             * The ID of the user receiving the infraction
              */
-            val user: User,
+            val userId: String,
             /**
              * The guild that the infraction is being issued on
              */
@@ -113,7 +113,13 @@ interface InfractionService {
             /**
              * The reason for the infraction
              */
-            val reason: String?)
+            val reason: String?,
+            /**
+             * The user receiving the infraction
+             */
+            val user: User? = null) {
+        constructor(user: User, guild: Guild, issuer: User, reason: String?): this(user.id, guild, issuer, reason, user)
+    }
 
     /**
      * The result of the infraction

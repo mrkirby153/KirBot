@@ -1,12 +1,13 @@
 package com.mrkirby153.kirbot.entity
 
-import net.dv8tion.jda.api.entities.User
 import org.springframework.data.annotation.CreatedDate
+import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import java.sql.Timestamp
 import javax.persistence.AttributeConverter
 import javax.persistence.Column
 import javax.persistence.Convert
 import javax.persistence.Entity
+import javax.persistence.EntityListeners
 import javax.persistence.FetchType
 import javax.persistence.JoinColumn
 import javax.persistence.ManyToOne
@@ -14,6 +15,7 @@ import javax.persistence.Table
 
 @Entity
 @Table(name = "infractions")
+@EntityListeners(AuditingEntityListener::class)
 class Infraction(
         @Column(name = "user_id") var userId: String,
         @Column(name = "guild") var guild: String,

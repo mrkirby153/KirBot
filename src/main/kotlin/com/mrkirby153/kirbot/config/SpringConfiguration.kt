@@ -31,12 +31,4 @@ class SpringConfiguration : AsyncConfigurer {
         threadPoolTaskExecutor.initialize()
         return threadPoolTaskExecutor
     }
-
-    @Bean
-    fun threadPoolTaskScheduler(): TaskScheduler? {
-        val threadPoolTaskScheduler = ThreadPoolTaskScheduler()
-        threadPoolTaskScheduler.poolSize = 5
-        threadPoolTaskScheduler.setThreadNamePrefix("TaskScheduler")
-        return threadPoolTaskScheduler
-    }
 }

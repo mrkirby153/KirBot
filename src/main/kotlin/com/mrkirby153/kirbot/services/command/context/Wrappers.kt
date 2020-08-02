@@ -7,14 +7,14 @@ import net.dv8tion.jda.api.entities.User
 /**
  * Wrapper for the command sender to differentiate it from a normal user
  */
-class CommandSender(user: User) : User by user
+class CommandSender(val user: User) : User by user
 
 /**
  * Wrapper for the current guild to differentiate it from a guild by its id
  */
-class CurrentGuild(guild: Guild) : Guild by guild
+class CurrentGuild(val guild: Guild) : Guild by guild
 
 /**
  * Wrapper for the current channel to differentiate it from a channel
  */
-class CurrentChannel(channel: TextChannel) : TextChannel by channel
+class CurrentChannel(val channel: TextChannel) : TextChannel by channel

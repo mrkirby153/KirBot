@@ -10,6 +10,7 @@ import com.mrkirby153.kirbot.services.InfractionService
 import com.mrkirby153.kirbot.services.setting.GuildSettings
 import com.mrkirby153.kirbot.services.setting.SettingsService
 import com.mrkirby153.kirbot.utils.nameAndDiscrim
+import com.ninjasquad.springmockk.MockkBean
 import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
@@ -28,6 +29,7 @@ import net.dv8tion.jda.api.exceptions.PermissionException
 import net.dv8tion.jda.api.requests.ErrorResponse
 import net.dv8tion.jda.api.requests.restaction.AuditableRestAction
 import net.dv8tion.jda.api.requests.restaction.MessageAction
+import net.dv8tion.jda.api.sharding.ShardManager
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
@@ -35,7 +37,9 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
+import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.context.ApplicationEventPublisher
+import org.springframework.scheduling.TaskScheduler
 import java.time.Instant
 import java.util.Date
 import java.util.concurrent.TimeUnit
@@ -49,7 +53,13 @@ internal class InfractionManagerTest {
     @Autowired
     lateinit var seenUsers: DiscordUserRepository
 
+    @Autowired
+    lateinit var shardManager: ShardManager
+
     lateinit var manager: InfractionManager
+
+    @MockkBean
+    lateinit var taskScheduler: TaskScheduler
 
     @MockK
     lateinit var settingsService: SettingsService
@@ -78,7 +88,7 @@ internal class InfractionManagerTest {
         seenUsers.save(DiscordUser(user.id, user.name, user.discriminator.toInt(), false))
         seenUsers.save(DiscordUser(issuer.id, issuer.name, issuer.discriminator.toInt(), false))
 
-        manager = spyk(InfractionManager(repo, eventPublisher, settingsService))
+        manager = spyk(InfractionManager(repo, eventPublisher, settingsService, taskScheduler, shardManager))
 
         every { guild.selfMember } returns selfMember
         every { selfMember.hasPermission(any<Permission>()) } returns true

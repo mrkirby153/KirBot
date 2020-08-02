@@ -47,7 +47,7 @@ class ModerationCommands(val infractionService: InfractionService) {
         infractionService.kick(InfractionService.InfractionContext(member.user, guild, sender,
                 reason)).handle { result, throwable ->
             if (throwable != null) {
-                throw CommandException(throwable.message ?: "An unknown error occurred")
+                channel.responseBuilder.error(throwable.message ?: "An unknown error occurred")?.queue()
             }
             channel.responseBuilder.success(buildString {
                 append("Kicked ${member.nameAndDiscrim} {{(`${member.id}`)}}")
@@ -78,7 +78,7 @@ class ModerationCommands(val infractionService: InfractionService) {
         infractionService.ban(InfractionService.InfractionContext(member.user, guild, sender,
                 reason)).handle { result, throwable ->
             if (throwable != null) {
-                throw CommandException(throwable.message ?: "An unknown error occurred")
+                channel.responseBuilder.error(throwable.message ?: "An unknown error occurred")?.queue()
             }
             channel.responseBuilder.success(buildString {
                 append("Banned ${member.nameAndDiscrim} {{(`${member.id}`)}}")
@@ -109,7 +109,7 @@ class ModerationCommands(val infractionService: InfractionService) {
         infractionService.mute(InfractionService.InfractionContext(member.user, guild, sender,
                 reason)).handle { result, throwable ->
             if (throwable != null) {
-                throw CommandException(throwable.message ?: "An unknown error occurred")
+                channel.responseBuilder.error(throwable.message ?: "An unknown error occurred")?.queue()
             }
             channel.responseBuilder.success(buildString {
                 append("Muted ${member.nameAndDiscrim} {{(`${member.id}`)}}")
@@ -137,7 +137,7 @@ class ModerationCommands(val infractionService: InfractionService) {
         infractionService.warn(InfractionService.InfractionContext(member.user, guild, sender,
                 reason)).handle { result, throwable ->
             if (throwable != null) {
-                throw CommandException(throwable.message ?: "An unknown error occurred")
+                channel.responseBuilder.error(throwable.message ?: "An unknown error occurred")?.queue()
             }
             channel.responseBuilder.success(buildString {
                 append("Warned ${member.nameAndDiscrim} {{(`${member.id}`)}}")
@@ -172,10 +172,11 @@ class ModerationCommands(val infractionService: InfractionService) {
             throw CommandException(e.message ?: "An unknown error occurred")
         }
 
-        infractionService.tempMute(InfractionService.InfractionContext(member.user, guild, sender,
+        infractionService.tempMute(InfractionService.InfractionContext(member.user, guild.guild, sender,
                 reason), durationMs, TimeUnit.MILLISECONDS).handle { result, throwable ->
             if (throwable != null) {
-                throw CommandException(throwable.message ?: "An unknown error occurred")
+                throwable.printStackTrace()
+                channel.responseBuilder.error(throwable.message ?: "An unknown error occurred")?.queue()
             }
             channel.responseBuilder.success(buildString {
                 append("Temporarily muted ${member.nameAndDiscrim} {{(`${member.id}`)}} for ${Time.format(1, durationMs, smallest = Time.TimeUnit.SECONDS)}")
@@ -213,7 +214,7 @@ class ModerationCommands(val infractionService: InfractionService) {
         infractionService.tempBan(InfractionService.InfractionContext(member.user, guild, sender,
                 reason), durationMs, TimeUnit.MILLISECONDS).handle { result, throwable ->
             if (throwable != null) {
-                throw CommandException(throwable.message ?: "An unknown error occurred")
+                channel.responseBuilder.error(throwable.message ?: "An unknown error occurred")?.queue()
             }
             channel.responseBuilder.success(buildString {
                 append("Temporarily banned ${member.nameAndDiscrim} {{(`${member.id}`)}} for ${Time.format(1, durationMs, smallest = Time.TimeUnit.SECONDS)}")

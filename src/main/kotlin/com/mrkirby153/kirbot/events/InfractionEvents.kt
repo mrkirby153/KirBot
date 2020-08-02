@@ -15,7 +15,7 @@ open class InfractionEvent(
         /**
          * The user that the infraction was issued against
          */
-        val user: User,
+        val user: User?,
         /**
          * The guild that the infraction was issued in
          */
@@ -71,3 +71,8 @@ class UserTempMuteEvent(infraction: Infraction, user: User, guild: Guild, expire
  */
 class UserWarnEvent(infraction: Infraction, user: User, guild: Guild) :
         InfractionEvent(infraction, user, guild)
+
+/**
+ * Event fired when a user is unbanned
+ */
+class UserUnbanEvent(infraction: Infraction, val userId: String, guild: Guild) : InfractionEvent(infraction, null, guild)

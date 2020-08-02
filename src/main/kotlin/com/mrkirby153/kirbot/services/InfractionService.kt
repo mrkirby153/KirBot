@@ -57,6 +57,17 @@ interface InfractionService {
     fun unmute(infractionContext: InfractionContext): CompletableFuture<InfractionResult>
 
     /**
+     * Unbans the user in a guild
+     *
+     * @param guild The guild to unban the user on
+     * @param user The user Id being unbanned
+     * @param issuer The person unbanning the user
+     * @param reason The reason why they're being unbanned
+     * @return A completable future of the dm result
+     */
+    fun unban(guild: Guild, user: String, issuer: User, reason: String): CompletableFuture<InfractionResult>
+
+    /**
      * Temporarily mutes the user in the guild
      *
      * @param infractionContext The infraction context

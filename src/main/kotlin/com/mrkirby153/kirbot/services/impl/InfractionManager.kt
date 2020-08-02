@@ -2,10 +2,13 @@ package com.mrkirby153.kirbot.services.impl
 
 import com.mrkirby153.kirbot.entity.Infraction
 import com.mrkirby153.kirbot.entity.repo.InfractionRepository
+import com.mrkirby153.kirbot.events.AllShardsReadyEvent
+import com.mrkirby153.kirbot.events.InfractionEvent
 import com.mrkirby153.kirbot.events.UserBanEvent
 import com.mrkirby153.kirbot.events.UserKickEvent
 import com.mrkirby153.kirbot.events.UserMuteEvent
 import com.mrkirby153.kirbot.events.UserTempBanEvent
+import com.mrkirby153.kirbot.events.UserUnbanEvent
 import com.mrkirby153.kirbot.events.UserUnmuteEvent
 import com.mrkirby153.kirbot.events.UserWarnEvent
 import com.mrkirby153.kirbot.services.InfractionService
@@ -23,17 +26,31 @@ import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.exceptions.ErrorResponseException
 import net.dv8tion.jda.api.exceptions.PermissionException
 import net.dv8tion.jda.api.requests.ErrorResponse
+import net.dv8tion.jda.api.sharding.ShardManager
+import org.apache.logging.log4j.LogManager
 import org.springframework.context.ApplicationEventPublisher
+import org.springframework.context.event.EventListener
+import org.springframework.scheduling.TaskScheduler
+import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import java.sql.Timestamp
+import java.time.Instant
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 
 @Service
 class InfractionManager(private val infractionRepository: InfractionRepository,
                         private val applicationEventPublisher: ApplicationEventPublisher,
-                        private val settingsService: SettingsService) :
+                        private val settingsService: SettingsService,
+                        private val scheduler: TaskScheduler,
+                        private val shardManager: ShardManager) :
         InfractionService {
+
+    private val infractionLock = Object()
+    private var nextInfractionRunsAt: Long? = null
+    private var expireTaskRunning = false
+
+    private val log = LogManager.getLogger()
 
     private fun checkPermission(context: InfractionService.InfractionContext,
                                 vararg permissions: Permission) {
@@ -68,7 +85,10 @@ class InfractionManager(private val infractionRepository: InfractionRepository,
                 UserKickEvent(
                         infraction, infractionContext.user, infractionContext.guild))
 
-        return dmFuture.thenCompose { infractionContext.guild.kick(infractionContext.user.id, infractionContext.reason).submit() }.thenApply {
+        return dmFuture.thenCompose {
+            infractionContext.guild.kick(infractionContext.user.id,
+                    infractionContext.reason).submit()
+        }.thenApply {
             InfractionService.InfractionResult(dmFuture.get(), infraction)
         }
     }
@@ -119,7 +139,8 @@ class InfractionManager(private val infractionRepository: InfractionRepository,
                 ?: return CompletableFuture.failedFuture(
                         IllegalArgumentException("Member not found"))
 
-        val role = getMutedRole(infractionContext.guild) ?: return CompletableFuture.failedFuture(IllegalStateException("Muted role not found"))
+        val role = getMutedRole(infractionContext.guild) ?: return CompletableFuture.failedFuture(
+                IllegalStateException("Muted role not found"))
 
         val infraction = createInfraction(infractionContext, Infraction.InfractionType.MUTE)
         val dmFuture = dmUser(infractionContext.user, infractionContext.guild,
@@ -142,7 +163,8 @@ class InfractionManager(private val infractionRepository: InfractionRepository,
                 ?: return CompletableFuture.failedFuture(
                         IllegalArgumentException("Member not found"))
 
-        val role = getMutedRole(infractionContext.guild) ?: return CompletableFuture.failedFuture(IllegalStateException("Muted role not found"))
+        val role = getMutedRole(infractionContext.guild) ?: return CompletableFuture.failedFuture(
+                IllegalStateException("Muted role not found"))
 
 
         infractionRepository.getAllActiveInfractionsByType(
@@ -169,7 +191,8 @@ class InfractionManager(private val infractionRepository: InfractionRepository,
                 ?: return CompletableFuture.failedFuture(
                         IllegalArgumentException("Member not found"))
 
-        val role = getMutedRole(infractionContext.guild) ?: return CompletableFuture.failedFuture(IllegalStateException("Muted role not found"))
+        val role = getMutedRole(infractionContext.guild) ?: return CompletableFuture.failedFuture(
+                IllegalStateException("Muted role not found"))
 
         val infraction = createInfraction(infractionContext, Infraction.InfractionType.TEMP_MUTE,
                 expiresAt = System.currentTimeMillis() + TimeUnit.MILLISECONDS.convert(duration,
@@ -196,6 +219,17 @@ class InfractionManager(private val infractionRepository: InfractionRepository,
                 UserWarnEvent(infraction, infractionContext.user, infractionContext.guild))
         return future.thenApply {
             InfractionService.InfractionResult(it, infraction)
+        }
+    }
+
+    override fun unban(guild: Guild, user: String, issuer: User,
+                       reason: String): CompletableFuture<InfractionService.InfractionResult> {
+        var infraction = Infraction(user, guild.id, Infraction.InfractionType.UNBAN, reason)
+        infraction = infractionRepository.save(infraction)
+
+        applicationEventPublisher.publishEvent(UserUnbanEvent(infraction, user, guild))
+        return guild.unban(infraction.userId).reason(infraction.reason).submit().thenApply {
+            InfractionService.InfractionResult(InfractionService.DmResult.NOT_SENT, infraction)
         }
     }
 
@@ -261,5 +295,90 @@ class InfractionManager(private val infractionRepository: InfractionRepository,
                 return CompletableFuture.completedFuture(InfractionService.DmResult.SEND_ERROR)
         }
         return future
+    }
+
+    @EventListener
+    fun onReady(event: AllShardsReadyEvent) {
+        log.info("Shards are ready. Waiting for next infraction")
+        runExpiredInfractions()
+        waitForNextInfraction()
+    }
+
+    @EventListener
+    fun onInfraction(event: InfractionEvent) {
+        log.debug("New infraction. Rescheduling infractions")
+        waitForNextInfraction()
+    }
+
+    @Scheduled(fixedRate = 1000L)
+    fun runExpiredTask() {
+        if (expireTaskRunning) {
+            return
+        }
+        try {
+            expireTaskRunning = true
+            val runAt = nextInfractionRunsAt ?: return
+            if (System.currentTimeMillis() < runAt)
+                return
+            runExpiredInfractions()
+        } finally {
+            expireTaskRunning = false
+        }
+        waitForNextInfraction()
+    }
+
+    fun waitForNextInfraction() {
+        if (expireTaskRunning) {
+            log.debug("Expire task is running")
+            return
+        }
+        infractionRepository.getNextInfractionToExpire().ifPresentOrElse({
+            log.debug("next infraction runs at ${it.expiresAt}")
+            nextInfractionRunsAt = it.expiresAt?.time
+        }, {
+            nextInfractionRunsAt = null
+        })
+    }
+
+    /**
+     * Runs all expired infractions
+     */
+    fun runExpiredInfractions() {
+        log.debug("Running expired infractions")
+        infractionRepository.getAllInfractionsExpiringBefore(
+                Timestamp.from(Instant.now())).forEach {
+            log.debug("Expiring infraction {}", it.id)
+            onInfractionExpire(it)
+        }
+    }
+
+    /**
+     * Handles the [infraction] when it expires
+     */
+    private fun onInfractionExpire(infraction: Infraction) {
+        log.debug("Processing expiration of ${infraction.id} (${infraction.type})")
+        try {
+            val guild = shardManager.getGuildById(infraction.guild) ?: return
+            val user = shardManager.getUserById(infraction.userId)
+            when (infraction.type) {
+                Infraction.InfractionType.TEMP_MUTE -> {
+                    if (user != null) {
+                        unmute(InfractionService.InfractionContext(user, guild, guild.jda.selfUser,
+                                "Timed mute expired"))
+                    } else {
+                        log.debug("User $user is no longer a member of $guild")
+                    }
+                }
+                Infraction.InfractionType.TEMP_BAN -> {
+                    unban(guild, infraction.userId, guild.jda.selfUser, "Timed ban expired")
+                }
+                else -> {
+                    // Not a temp infraction, do nothing
+                }
+            }
+        } finally {
+            infraction.active = false
+            infractionRepository.save(infraction)
+        }
     }
 }

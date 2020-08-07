@@ -1,14 +1,15 @@
 package com.mrkirby153.kirbot
 
-import com.mrkirby153.kirbot.entity.DiscordUser
-import com.mrkirby153.kirbot.utils.nameAndDiscrim
 import com.ninjasquad.springmockk.isMock
 import io.mockk.every
 import io.mockk.mockk
 import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.GuildChannel
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.Role
+import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.entities.User
+import net.dv8tion.jda.api.entities.VoiceChannel
 import net.dv8tion.jda.api.requests.RestAction
 import net.dv8tion.jda.api.requests.restaction.AuditableRestAction
 import java.time.OffsetDateTime
@@ -75,7 +76,8 @@ object DiscordTestUtils {
      * @param result The result of the rest action
      * @return The completed mocked auditable rest action
      */
-    fun <T> completedAuditableRestAction(result: T? = null) : AuditableRestAction<T> = makeRestAction(result)
+    fun <T> completedAuditableRestAction(
+            result: T? = null): AuditableRestAction<T> = makeRestAction(result)
 
     /**
      * Mocks a generic completed [RestAction]
@@ -83,7 +85,8 @@ object DiscordTestUtils {
      * @param result The result of the rest action
      * @return The completed rest action
      */
-    inline fun <RESULT, reified CLASS : RestAction<RESULT>> makeRestAction(result: RESULT? = null): CLASS {
+    inline fun <RESULT, reified CLASS : RestAction<RESULT>> makeRestAction(
+            result: RESULT? = null): CLASS {
         val mock = mockk<CLASS>()
         buildRestAction(mock, result)
         return mock
@@ -105,6 +108,29 @@ object DiscordTestUtils {
             func as Consumer<T?>
             func.accept(result)
         }
+    }
+
+    /**
+     * Builds a mocked [GuildChannel] with the given [id] and [name] in the given [guild]
+     */
+    inline fun <reified T : GuildChannel> mockGuildChannel(id: String, name: String,
+                                                           guild: Guild): T {
+        val mock = mockk<T>()
+        every { mock.id } returns id
+        every { mock.idLong } returns id.toLong()
+        every { mock.name } returns name
+        every { mock.guild } returns guild
+        // Mock out the guild calls
+        if (guild.isMock) {
+            every { guild.getGuildChannelById(id) } returns mock
+            if (mock is TextChannel) {
+                every { guild.getTextChannelById(id) } returns mock
+            }
+            if (mock is VoiceChannel) {
+                every { guild.getVoiceChannelById(id) } returns mock
+            }
+        }
+        return mock
     }
 
 }

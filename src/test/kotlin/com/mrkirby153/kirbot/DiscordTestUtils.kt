@@ -143,6 +143,8 @@ object DiscordTestUtils {
  */
 fun Guild.createMockedMember(user: User): Member {
     val mocked = mockk<Member>()
+    every { mocked.id } returns user.id
+    every { mocked.idLong } returns user.idLong
     every { mocked.user } returns user
     every { mocked.isOwner } returns false
     every { mocked.guild } returns this

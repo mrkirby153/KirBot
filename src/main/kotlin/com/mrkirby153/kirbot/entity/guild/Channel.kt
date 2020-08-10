@@ -32,7 +32,7 @@ class Channel(id: String,
     constructor(channel: GuildChannel) : this(channel.id, channel.guild.id, channel.name, when(channel) {
         is TextChannel -> Type.TEXT
         is VoiceChannel -> Type.VOICE
-        else -> throw IllegalArgumentException("Unrecognized channel type")
+        else -> throw IllegalArgumentException("Unrecognized channel type $channel")
     }, channel.getPermissionOverride(channel.guild.publicRole)?.denied?.contains(Permission.MESSAGE_READ) ?: false)
 
     /**

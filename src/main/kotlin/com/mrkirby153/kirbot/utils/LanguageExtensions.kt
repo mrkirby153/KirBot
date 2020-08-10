@@ -75,3 +75,6 @@ val User.nameAndDiscrim
  */
 val Member.nameAndDiscrim
     get() = this.user.nameAndDiscrim
+
+val GuildChannel.hidden
+    get() = this.getPermissionOverride(this.guild.publicRole)?.denied?.contains(Permission.MESSAGE_READ) ?: false

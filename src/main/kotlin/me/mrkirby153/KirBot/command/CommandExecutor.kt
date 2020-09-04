@@ -39,9 +39,11 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import javax.inject.Inject
+import javax.inject.Singleton
 import kotlin.system.measureTimeMillis
 
 @Injectable
+@Singleton
 class CommandExecutor @Inject constructor(private val shardManager: ShardManager, private val contextResolvers: ContextResolvers) {
 
     private val rootNode = CommandNode("<<ROOT>>").apply {

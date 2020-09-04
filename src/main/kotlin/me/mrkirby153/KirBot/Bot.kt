@@ -42,6 +42,7 @@ import net.dv8tion.jda.api.events.ReadyEvent
 import net.dv8tion.jda.api.requests.GatewayIntent
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder
 import net.dv8tion.jda.api.sharding.ShardManager
+import net.dv8tion.jda.api.utils.cache.CacheFlag
 import okhttp3.Request
 import org.json.JSONObject
 import org.json.JSONTokener
@@ -126,7 +127,7 @@ object Bot {
         val gatewayIntents = listOf(GatewayIntent.GUILD_MEMBERS,
                 GatewayIntent.GUILD_BANS, GatewayIntent.GUILD_VOICE_STATES,
                 GatewayIntent.GUILD_MESSAGES, GatewayIntent.GUILD_MESSAGE_REACTIONS,
-                GatewayIntent.GUILD_EMOJIS, GatewayIntent.GUILD_PRESENCES)
+                GatewayIntent.GUILD_EMOJIS)
         shardManager = DefaultShardManagerBuilder.create(gatewayIntents).apply {
             setToken(token)
             setEventManagerProvider { PriorityEventManager() }
@@ -134,6 +135,7 @@ object Bot {
             setShardsTotal(numShards)
             setAutoReconnect(true)
             setBulkDeleteSplittingEnabled(false)
+            disableCache(CacheFlag.ACTIVITY, CacheFlag.CLIENT_STATUS)
             setActivity(Activity.playing("Starting up..."))
             if (!System.getProperty("os.name").contains("Mac"))
                 setAudioSendFactory(NativeAudioSendFactory())

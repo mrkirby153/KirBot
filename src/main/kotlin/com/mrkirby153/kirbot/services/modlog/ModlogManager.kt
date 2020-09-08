@@ -1,21 +1,32 @@
 package com.mrkirby153.kirbot.services.modlog
 
+import com.mrkirby153.kirbot.entity.guild.LoggedMessage
+import com.mrkirby153.kirbot.entity.guild.repo.LoggedMessageRepository
 import com.mrkirby153.kirbot.entity.repo.LogChannelRepository
 import com.mrkirby153.kirbot.events.AllShardsReadyEvent
+import com.mrkirby153.kirbot.services.UserService
+import com.mrkirby153.kirbot.utils.convertSnowflake
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.events.guild.GuildLeaveEvent
+import net.dv8tion.jda.api.events.message.MessageBulkDeleteEvent
+import net.dv8tion.jda.api.events.message.guild.GuildMessageDeleteEvent
+import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent
+import net.dv8tion.jda.api.events.message.guild.GuildMessageUpdateEvent
 import net.dv8tion.jda.api.sharding.ShardManager
 import org.apache.logging.log4j.LogManager
 import org.springframework.context.event.EventListener
 import org.springframework.core.task.TaskExecutor
+import org.springframework.transaction.annotation.Transactional
+import java.text.SimpleDateFormat
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CopyOnWriteArraySet
 import javax.annotation.PreDestroy
 
-class ModlogManager(private val taskExecutor: TaskExecutor,
-                    private val logChannelRepository: LogChannelRepository,
-                    private val shardManager: ShardManager) : ModlogService {
+open class ModlogManager(private val taskExecutor: TaskExecutor,
+                         private val logChannelRepository: LogChannelRepository,
+                         private val shardManager: ShardManager,
+                         private val loggedMessageRepository: LoggedMessageRepository,
+                         private val userService: UserService) : ModlogService {
 
     private val log = LogManager.getLogger()
     private val channelLoggers = ConcurrentHashMap<String, MutableList<ChannelLogger>>()
@@ -57,7 +68,7 @@ class ModlogManager(private val taskExecutor: TaskExecutor,
     }
 
     override fun hush(guild: Guild, hushed: Boolean) {
-        if(hushed) {
+        if (hushed) {
             this.hushed.add(guild.id)
         } else {
             this.hushed.remove(guild.id)
@@ -65,10 +76,15 @@ class ModlogManager(private val taskExecutor: TaskExecutor,
     }
 
     override fun log(event: LogEvent, guild: Guild, message: String) {
-        if(this.hushed.contains(guild.id) && event.hushable)
+        if (this.hushed.contains(guild.id) && event.hushable)
             return
         channelLoggers[guild.id]?.forEach { it.submit(message, event) }
+        if (channelLoggers[guild.id]?.any { it.hasPendingMessages() } == true && loggerUpdater.waiting) {
+            log.debug("Notifying waiting logger updater of new messages")
+            loggerUpdater.notifyUpdater()
+        }
     }
+
 
     @EventListener
     fun ready(event: AllShardsReadyEvent) {
@@ -80,6 +96,7 @@ class ModlogManager(private val taskExecutor: TaskExecutor,
     fun destroy() {
         log.info("Shutting down LoggerUpdater")
         loggerUpdater.running = false
+        loggerUpdater.notifyUpdater()
     }
 
     @EventListener
@@ -88,11 +105,81 @@ class ModlogManager(private val taskExecutor: TaskExecutor,
         channelLoggers.remove(event.guild.id)
     }
 
+    @EventListener
+    fun onMessageSend(event: GuildMessageReceivedEvent) {
+        loggedMessageRepository.save(LoggedMessage(event.message))
+    }
+
+    @EventListener
+    fun onMessageEdit(event: GuildMessageUpdateEvent) {
+        val existing = loggedMessageRepository.findById(event.messageId)
+        existing.ifPresent { msg ->
+            // Send a log event
+            val old = msg.message
+            val new = event.message.contentRaw
+            val chanName = shardManager.getGuildChannelById(msg.channel)?.name ?: msg.channel
+            userService.findUser(msg.author).thenAccept {
+                log(LogEvent.MESSAGE_EDIT, event.guild, buildString {
+                    append(it.nameAndDiscriminator)
+                    appendln("message edited in {{**}}$chanName{{**}}")
+                    appendln("{{**B:**}} $old\n{{**A:**}} $new")
+                })
+            }
+            msg.update(event.message)
+            loggedMessageRepository.save(msg)
+        }
+    }
+
+    @EventListener
+    @Transactional
+    open fun onMessageDelete(event: GuildMessageDeleteEvent) {
+        val existing = loggedMessageRepository.findById(event.messageId)
+        existing.ifPresent { msg ->
+            val content = msg.message
+            val chanName = shardManager.getGuildChannelById(msg.channel)?.name ?: msg.channel
+            // TODO: 9/7/20 Filter log ignored users
+            userService.findUser(msg.author).thenAccept {
+                log(LogEvent.MESSAGE_DELETE, event.guild, buildString {
+                    append(it.nameAndDiscriminator)
+                    appendln(" message deleted in {{**}}$chanName{{**}}")
+                    append(content)
+                    if (msg.attachments != null && msg.attachments!!.attachments.isNotEmpty()) {
+                        append("(")
+                        append(msg.attachments!!.attachments.joinToString(", ") { "<$it>" })
+                    }
+                })
+            }
+            msg.deleted = true
+            loggedMessageRepository.save(msg)
+        }
+    }
+
+    @EventListener
+    fun onMessageBulkDelete(event: MessageBulkDeleteEvent) {
+        val existing = loggedMessageRepository.findAllById(event.messageIds)
+        val userIds = existing.map { it.author }.toSet()
+        userService.findUsers(userIds).thenAccept { users ->
+            val userMap = users.map { it.id to it.nameAndDiscriminator }.toMap()
+            val timeFormat = SimpleDateFormat("YYYY-MM-dd HH:MM:ss")
+            val rawMsg = buildString {
+                existing.forEach {
+                    val username = userMap.getOrDefault(it.author, it.id)
+                    val attachments = it.attachments?.attachments?.joinToString(", ") ?: ""
+                    appendln("${
+                        timeFormat.format(convertSnowflake(it.id!!))
+                    } (${it.serverId} / ${it.channel} / ${it.author}) $username: ${it.message} ($attachments)")
+                }
+            }
+        }
+        loggedMessageRepository.setDeleted(existing.mapNotNull { it.id }.toList())
+    }
+
 
     private class LoggerUpdater(val manager: ModlogManager) : Runnable {
         private val log = LogManager.getLogger()
 
         var running = true
+        var waiting = false
 
         private val syncObject = Object()
 
@@ -106,9 +193,12 @@ class ModlogManager(private val taskExecutor: TaskExecutor,
                         toExecute.forEach { it.log() }
                     } else {
                         log.debug("No pending log events. Waiting")
+                        waiting = true
                         synchronized(syncObject) {
                             syncObject.wait()
                         }
+                        log.debug("Notified")
+                        waiting = false
                         continue // We don't want to wait 500ms
                     }
                 } catch (e: Throwable) {

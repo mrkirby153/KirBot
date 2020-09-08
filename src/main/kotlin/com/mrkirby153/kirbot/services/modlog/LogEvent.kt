@@ -3,7 +3,7 @@ package com.mrkirby153.kirbot.services.modlog
 /**
  * Enum of all log events supported
  */
-enum class LogEvent(val friendlyMessage: String, val hushable: Boolean = false) {
+enum class LogEvent(val friendlyMessage: String, val hushable: Boolean = false, val emoji: String = "") {
 
     MESSAGE_EDIT("Message edits"),
     MESSAGE_DELETE("Deleted messages", true),

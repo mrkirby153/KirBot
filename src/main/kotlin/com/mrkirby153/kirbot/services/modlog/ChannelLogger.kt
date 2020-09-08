@@ -1,6 +1,7 @@
 package com.mrkirby153.kirbot.services.modlog
 
 import com.mrkirby153.kirbot.utils.checkPermissions
+import com.mrkirby153.kirbot.utils.responseBuilder
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.exceptions.RateLimitedException
 import net.dv8tion.jda.api.sharding.ShardManager
@@ -72,7 +73,7 @@ class ChannelLogger(val shardManager: ShardManager, val guildId: String, val cha
             val events = getNextLogMessage()
             val msgStr = events.joinToString("\n")
             try {
-                chan.sendMessage(msgStr).complete(false)
+                chan.responseBuilder.sendMessage(msgStr)?.complete(false)
             } catch (e: RateLimitedException) {
                 log.debug("Ratelimited. Entering quiet period for the next 60s")
                 pendingLogMessages.addAll(0, events.reversed())

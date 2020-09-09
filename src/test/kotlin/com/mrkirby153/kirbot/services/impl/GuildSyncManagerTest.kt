@@ -65,6 +65,8 @@ internal class GuildSyncManagerTest {
         every { publicOverride.denied } returns EnumSet.noneOf(Permission::class.java)
 
         every { guild.channels } returns listOf(existingChannelMock, newChannelMock)
+        every { guild.textChannels } returns listOf(existingChannelMock)
+        every { guild.voiceChannels } returns listOf(newChannelMock)
         every { guild.publicRole } returns publicRole
 
         every { existingChannelMock.getPermissionOverride(any()) } returns hiddenOverride

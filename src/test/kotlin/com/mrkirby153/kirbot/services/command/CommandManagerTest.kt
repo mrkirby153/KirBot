@@ -10,7 +10,9 @@ import com.mrkirby153.kirbot.services.command.context.CurrentGuild
 import com.mrkirby153.kirbot.services.command.context.Optional
 import com.mrkirby153.kirbot.services.command.context.Parameter
 import com.ninjasquad.springmockk.MockkBean
+import com.ninjasquad.springmockk.MockkClear
 import com.ninjasquad.springmockk.SpykBean
+import com.ninjasquad.springmockk.clear
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -42,7 +44,7 @@ internal class CommandManagerTest {
     private lateinit var permissionService: PermissionService
 
     @SpykBean
-    private lateinit var cs: CommandService
+    private lateinit var cs: CommandManager
     @Autowired
     private lateinit var demoCommands: DemoCommands
 
@@ -75,6 +77,7 @@ internal class CommandManagerTest {
         val selfUser = mockk<SelfUser>()
         every { jda.selfUser } returns selfUser
         every { selfUser.id } returns "888888888888888888"
+        every { selfUser.idLong } returns selfUser.id.toLong()
         every { shardManager.shards } returns listOf(jda)
         guild.createMockedMember(user)
         every { permissionService.getClearance(any(), any()) } returns 0
@@ -158,7 +161,7 @@ internal class CommandManagerTest {
         every { event.message } returns msg
         every { event.isWebhookMessage } returns false
         every { event.channel } returns channel
-        eventPublisher.publishEvent(event)
+        cs.onMessage(event)
         verify { cs.executeCommand(eq(rawMsg), eq(user), eq(channel)) }
     }
 
@@ -170,8 +173,8 @@ internal class CommandManagerTest {
         every { botUser.isBot } returns true
         every { event.isWebhookMessage } returns false
 
-        eventPublisher.publishEvent(event)
-        verify(inverse = true) { cs.executeCommand(any(), any(), any()) }
+        cs.onMessage(event)
+        verify(inverse = true) { cs.executeCommand(any(), eq(botUser), any()) }
     }
 
     @Test

@@ -4,6 +4,7 @@ import com.mrkirby153.kirbot.entity.guild.LoggedMessage
 import com.mrkirby153.kirbot.entity.guild.repo.LoggedMessageRepository
 import com.mrkirby153.kirbot.entity.repo.LogChannelRepository
 import com.mrkirby153.kirbot.events.AllShardsReadyEvent
+import com.mrkirby153.kirbot.services.ArchiveService
 import com.mrkirby153.kirbot.services.UserService
 import com.mrkirby153.kirbot.utils.convertSnowflake
 import net.dv8tion.jda.api.entities.Guild
@@ -16,17 +17,20 @@ import net.dv8tion.jda.api.sharding.ShardManager
 import org.apache.logging.log4j.LogManager
 import org.springframework.context.event.EventListener
 import org.springframework.core.task.TaskExecutor
+import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.text.SimpleDateFormat
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArraySet
 import javax.annotation.PreDestroy
 
-open class ModlogManager(private val taskExecutor: TaskExecutor,
+@Service
+class ModlogManager(private val taskExecutor: TaskExecutor,
                          private val logChannelRepository: LogChannelRepository,
                          private val shardManager: ShardManager,
                          private val loggedMessageRepository: LoggedMessageRepository,
-                         private val userService: UserService) : ModlogService {
+                         private val userService: UserService,
+                         private val archiveService: ArchiveService) : ModlogService {
 
     private val log = LogManager.getLogger()
     private val channelLoggers = ConcurrentHashMap<String, MutableList<ChannelLogger>>()
@@ -51,7 +55,7 @@ open class ModlogManager(private val taskExecutor: TaskExecutor,
 
             // If there are no events included, add all events except ones that are excluded
             if (included.isEmpty()) {
-                events.addAll(LogEvent.values().filter { it in excluded })
+                events.addAll(LogEvent.values().filter { it !in excluded })
             } else {
                 events.addAll(included)
             }
@@ -90,6 +94,7 @@ open class ModlogManager(private val taskExecutor: TaskExecutor,
     fun ready(event: AllShardsReadyEvent) {
         log.info("Starting logger updater")
         taskExecutor.execute(loggerUpdater)
+        shardManager.guilds.forEach { cache(it) }
     }
 
     @PreDestroy
@@ -107,7 +112,11 @@ open class ModlogManager(private val taskExecutor: TaskExecutor,
 
     @EventListener
     fun onMessageSend(event: GuildMessageReceivedEvent) {
-        loggedMessageRepository.save(LoggedMessage(event.message))
+        val msg = loggedMessageRepository.save(LoggedMessage(event.message))
+        if(event.message.attachments.isNotEmpty()) {
+            msg.attachments = LoggedMessage.MessageAttachments(event.message)
+            loggedMessageRepository.save(msg)
+        }
     }
 
     @EventListener
@@ -120,8 +129,8 @@ open class ModlogManager(private val taskExecutor: TaskExecutor,
             val chanName = shardManager.getGuildChannelById(msg.channel)?.name ?: msg.channel
             userService.findUser(msg.author).thenAccept {
                 log(LogEvent.MESSAGE_EDIT, event.guild, buildString {
-                    append(it.nameAndDiscriminator)
-                    appendln("message edited in {{**}}$chanName{{**}}")
+                    append(it.logName)
+                    appendln(" message edited in {{**}}$chanName{{**}}")
                     appendln("{{**B:**}} $old\n{{**A:**}} $new")
                 })
             }
@@ -132,7 +141,7 @@ open class ModlogManager(private val taskExecutor: TaskExecutor,
 
     @EventListener
     @Transactional
-    open fun onMessageDelete(event: GuildMessageDeleteEvent) {
+    fun onMessageDelete(event: GuildMessageDeleteEvent) {
         val existing = loggedMessageRepository.findById(event.messageId)
         existing.ifPresent { msg ->
             val content = msg.message
@@ -140,12 +149,13 @@ open class ModlogManager(private val taskExecutor: TaskExecutor,
             // TODO: 9/7/20 Filter log ignored users
             userService.findUser(msg.author).thenAccept {
                 log(LogEvent.MESSAGE_DELETE, event.guild, buildString {
-                    append(it.nameAndDiscriminator)
-                    appendln(" message deleted in {{**}}$chanName{{**}}")
+                    append(it.logName)
+                    appendln(" message deleted in {{**}}#$chanName{{**}}")
                     append(content)
                     if (msg.attachments != null && msg.attachments!!.attachments.isNotEmpty()) {
-                        append("(")
+                        append(" (")
                         append(msg.attachments!!.attachments.joinToString(", ") { "<$it>" })
+                        append(")")
                     }
                 })
             }
@@ -169,6 +179,9 @@ open class ModlogManager(private val taskExecutor: TaskExecutor,
                         timeFormat.format(convertSnowflake(it.id!!))
                     } (${it.serverId} / ${it.channel} / ${it.author}) $username: ${it.message} ($attachments)")
                 }
+            }
+            archiveService.uploadToArchive(rawMsg).thenAccept { url ->
+                log(LogEvent.MESSAGE_BULKDELETE, event.guild, "${existing.size} messages deleted in {{**}}#${event.channel.name}{{**}} $url")
             }
         }
         loggedMessageRepository.setDeleted(existing.mapNotNull { it.id }.toList())

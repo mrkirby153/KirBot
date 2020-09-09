@@ -23,6 +23,7 @@ interface UserService {
                 user.discriminator)
 
         val nameAndDiscriminator: String = "${username}#${discriminator}"
+        val logName = "$nameAndDiscriminator {{(`$id`)}}"
     }
 
     class UserNotFoundException : Exception("The requested user was not found")

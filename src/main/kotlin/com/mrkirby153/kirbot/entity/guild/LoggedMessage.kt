@@ -29,12 +29,13 @@ class LoggedMessage(id: String,
                     @Column(name = "updated_at") @LastModifiedDate var updatedAt: Timestamp? = null) :
         AbstractJpaEntity<String>(id) {
 
+    @OneToOne(targetEntity = MessageAttachments::class, cascade = [CascadeType.ALL],
+            fetch = FetchType.LAZY)
+    @JoinColumn(name = "id", referencedColumnName = "id")
+    var attachments: MessageAttachments? = null
+
     constructor(message: Message) : this(message.id, message.guild.id, message.author.id,
-            message.channel.id, message.contentRaw) {
-        if(message.attachments.isNotEmpty()) {
-            attachments = MessageAttachments(message)
-        }
-    }
+            message.channel.id, message.contentRaw)
 
     fun update(message: Message) {
         if (message.contentRaw != this.message) {
@@ -42,11 +43,6 @@ class LoggedMessage(id: String,
             this.message = message.contentRaw
         }
     }
-
-    @OneToOne(targetEntity = MessageAttachments::class, cascade = [CascadeType.ALL],
-            fetch = FetchType.LAZY)
-    @JoinColumn(name = "id", referencedColumnName = "id")
-    var attachments: MessageAttachments? = null
 
     @Entity
     @Table(name = "attachments")
@@ -56,6 +52,9 @@ class LoggedMessage(id: String,
                              @Column(name = "created_at") @CreatedDate var createdAt: Timestamp? = null,
                              @Column(name = "updated_at") @LastModifiedDate var updatedAt: Timestamp? = null) :
             AbstractJpaEntity<String>(id) {
+
+        @OneToOne(mappedBy = "attachments")
+        lateinit var message: LoggedMessage
 
         constructor(message: Message) : this(message.id, message.attachments.joinToString(",") { it.url })
 

@@ -4,9 +4,11 @@ import com.mrkirby153.kirbot.entity.repo.DiscordUserRepository
 import com.mrkirby153.kirbot.services.UserService
 import net.dv8tion.jda.api.sharding.ShardManager
 import org.apache.logging.log4j.LogManager
+import org.springframework.stereotype.Service
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
 
+@Service
 class UserManager(private val seenUserRepository: DiscordUserRepository,
                   private val shardManager: ShardManager) : UserService {
 

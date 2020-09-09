@@ -47,6 +47,7 @@ dependencies {
     implementation("me.mrkirby153:KirbyUtils-Common:3.3")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.11.1")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.11.+")
+//    implementation("io.lettuce:lettuce-core:5.3.3.RELEASE")
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.5.2")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.5.2")

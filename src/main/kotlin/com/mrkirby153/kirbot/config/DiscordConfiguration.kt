@@ -38,6 +38,7 @@ private val taskScheduler: TaskScheduler) {
         val shardManager = DefaultShardManagerBuilder.createDefault(token).apply {
             enableIntents(GatewayIntent.GUILD_MEMBERS)
             setChunkingFilter(ChunkingFilter.ALL)
+            setBulkDeleteSplittingEnabled(false)
             if (shardCount.isNotBlank()) {
                 setShardsTotal(shardCount.toInt())
                 log.info("Using manually specified shard count: $shardCount")

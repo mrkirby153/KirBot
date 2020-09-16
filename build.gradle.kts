@@ -54,6 +54,9 @@ dependencies {
     testImplementation("org.awaitility:awaitility:4.0.1")
     testRuntimeOnly("com.h2database:h2")
     testImplementation("com.ninja-squad:springmockk:2.0.2")
+    testImplementation("it.ozimov:embedded-redis:0.7.3") {
+        exclude(group = "org.slf4j", module = "slf4j-simple")
+    }
 }
 
 tasks.withType<Test> {

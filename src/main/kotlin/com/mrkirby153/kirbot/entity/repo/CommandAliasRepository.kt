@@ -1,11 +1,12 @@
 package com.mrkirby153.kirbot.entity.repo
 
 import com.mrkirby153.kirbot.entity.CommandAlias
+import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
 import java.util.Optional
 
-interface CommandAliasRepository : CrudRepository<CommandAlias, String> {
+interface CommandAliasRepository : JpaRepository<CommandAlias, String> {
 
     /**
      * Gets the default clearance for a guild

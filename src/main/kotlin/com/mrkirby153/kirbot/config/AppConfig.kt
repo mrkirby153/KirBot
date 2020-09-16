@@ -7,14 +7,18 @@ import org.springframework.context.ApplicationEventPublisher
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
+import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories
 import org.springframework.data.redis.connection.RedisConnectionFactory
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory
 import org.springframework.data.redis.listener.PatternTopic
 import org.springframework.data.redis.listener.RedisMessageListenerContainer
 import org.springframework.data.redis.listener.adapter.MessageListenerAdapter
+import org.springframework.data.redis.repository.configuration.EnableRedisRepositories
 
 @Configuration
+@EnableJdbcRepositories
+@EnableRedisRepositories
 class AppConfig(@Value("\${redis.host:localhost}") val redisHost: String,
                 @Value("\${redis.port:6379}") val redisPort: Int,
                 @Value("\${redis.topic-prefix:kirbot}") private val redisTopic: String) {

@@ -1,5 +1,6 @@
 package me.mrkirby153.KirBot.modules
 
+import com.mrkirby153.bfs.query.DB
 import me.mrkirby153.KirBot.Bot
 import me.mrkirby153.KirBot.database.MessageConcurrencyManager
 import me.mrkirby153.KirBot.event.EventPriority
@@ -13,6 +14,7 @@ import me.mrkirby153.KirBot.utils.kirbotGuild
 import me.mrkirby153.KirBot.utils.logName
 import me.mrkirby153.KirBot.utils.nameAndDiscrim
 import me.mrkirby153.KirBot.utils.sanitize
+import me.mrkirby153.KirBot.utils.toSnowflake
 import me.mrkirby153.kcutils.Time
 import net.dv8tion.jda.api.events.ShutdownEvent
 import net.dv8tion.jda.api.events.channel.text.TextChannelCreateEvent
@@ -43,6 +45,7 @@ import net.dv8tion.jda.api.events.role.update.RoleUpdatePermissionsEvent
 import net.dv8tion.jda.api.events.user.update.UserUpdateNameEvent
 import net.dv8tion.jda.api.sharding.ShardManager
 import org.json.JSONObject
+import java.util.Calendar
 import javax.inject.Inject
 
 class Logger @Inject constructor(private val redis: Redis, private val shardManager: ShardManager): Module("logging") {
@@ -311,6 +314,28 @@ class Logger @Inject constructor(private val redis: Redis, private val shardMana
     fun onGuildVoiceMove(event: GuildVoiceMoveEvent) {
         event.guild.kirbotGuild.logManager.genericLog(LogEvent.VOICE_ACTION, ":telephone:",
                 "${event.member.user.logName} moved from **${event.channelLeft.name}** to **${event.channelJoined.name}**")
+    }
+
+    /**
+     * Removes messages older than 30 days from the database. This should be run asynchronously
+     */
+    fun purgeExpiredMessages() {
+        val calendar = Calendar.getInstance()
+        calendar.add(Calendar.DATE, -30)
+        val snowflake = toSnowflake(calendar.time)
+        Bot.LOG.debug("[MESSAGE PURGE] Purging messages created before ${calendar.time} ($snowflake)")
+        val start = System.currentTimeMillis()
+        val attachments = DB.executeUpdate("DELETE FROM attachments WHERE id < ?", snowflake)
+        val count = DB.executeUpdate("DELETE FROM server_messages WHERE id < ?", snowflake)
+        Bot.LOG.info("[MESSAGE PURGE] Deleted $count messages and $attachments attachments in ${Time.format(1, System.currentTimeMillis() - start)}")
+    }
+
+    // Run every hour
+    @Periodic(60 * 60)
+    fun expireMessageTask() {
+        Bot.scheduler.submit {
+            purgeExpiredMessages()
+        }
     }
 
     /**

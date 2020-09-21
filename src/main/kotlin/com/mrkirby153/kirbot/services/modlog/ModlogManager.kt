@@ -184,7 +184,8 @@ class ModlogManager(private val taskExecutor: TaskExecutor,
                 log(LogEvent.MESSAGE_BULKDELETE, event.guild, "${existing.size} messages deleted in {{**}}#${event.channel.name}{{**}} $url")
             }
         }
-        loggedMessageRepository.setDeleted(existing.mapNotNull { it.id }.toList())
+        val messageId = existing.mapNotNull { it.id }.toList()
+        loggedMessageRepository.setDeleted(messageId)
     }
 
 

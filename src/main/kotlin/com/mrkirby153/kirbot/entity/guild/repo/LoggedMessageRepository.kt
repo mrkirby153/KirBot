@@ -31,8 +31,9 @@ interface LoggedMessageRepository : JpaRepository<LoggedMessage, String> {
     @Transactional
     fun setDeleted(messageId: List<String>)
 
-    interface AttachmentRepository : JpaRepository<LoggedMessage.MessageAttachments, String> {
 
-    }
 }
 
+interface AttachmentRepository : JpaRepository<LoggedMessage.MessageAttachments, String> {
+
+}

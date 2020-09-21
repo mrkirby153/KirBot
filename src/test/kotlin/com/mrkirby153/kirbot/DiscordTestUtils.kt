@@ -59,6 +59,8 @@ object DiscordTestUtils {
         every { mock.id } returns id
         every { mock.idLong } returns id.toLong()
         every { mock.roles } returns emptyList()
+        every { mock.textChannels } returns emptyList()
+        every { mock.voiceChannels } returns emptyList()
         return mock
     }
 
@@ -171,4 +173,30 @@ fun Guild.createMockedRole(id: String, name: String): Role {
         every { this@createMockedRole.roles } returns roles
     }
     return mocked
+}
+
+inline fun <reified T : GuildChannel> Guild.createMockedChannel(id: String, name: String): T {
+    val mock = mockk<T>()
+    every { mock.id } returns id
+    every { mock.idLong } returns id.toLong()
+    every { mock.name } returns name
+    every { mock.guild } returns this
+
+    if (this.isMock) {
+        if (mock is TextChannel) {
+            every { this@createMockedChannel.getTextChannelById(id) } returns mock
+            val chans = mutableListOf<TextChannel>()
+            chans.addAll(this.textChannels)
+            chans.add(mock)
+            every { this@createMockedChannel.textChannels } returns chans
+        }
+        if (mock is VoiceChannel) {
+            every { this@createMockedChannel.getVoiceChannelById(id) } returns mock
+            val chans = mutableListOf<VoiceChannel>()
+            chans.addAll(this.voiceChannels)
+            chans.add(mock)
+            every { this@createMockedChannel.voiceChannels } returns chans
+        }
+    }
+    return mock
 }

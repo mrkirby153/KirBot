@@ -1,5 +1,6 @@
 package com.mrkirby153.kirbot
 
+import com.mrkirby153.kirbot.utils.getMember
 import com.ninjasquad.springmockk.isMock
 import io.mockk.every
 import io.mockk.mockk
@@ -110,6 +111,7 @@ object DiscordTestUtils {
             func as Consumer<T?>
             func.accept(result)
         }
+        every { mock.complete() } returns result
     }
 
     /**
